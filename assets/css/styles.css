@@ -1,0 +1,6390 @@
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      :root {
+        color-scheme: light;
+        --color-background: #f7fbfe;
+        --color-background-soft: #f4f7f8;
+        --color-surface: #ffffff;
+        --color-surface-strong: #ffffff;
+        --color-surface-soft: #eef6fb;
+        --color-text: #10202b;
+        --color-muted: #4f6472;
+        --color-muted-strong: #33454f;
+        --color-border: #d9e7ef;
+        --color-border-strong: #b8d4e4;
+        --color-primary: #0d69a1;
+        --color-primary-strong: #0a4f79;
+        --color-accent: #eb3e8f;
+        --color-accent-strong: #d82f80;
+        --color-danger-surface: #fff4f4;
+        --color-danger-text: #8f1f1f;
+        --color-danger-border: #e1a3a3;
+        --color-success-surface: #eef9f0;
+        --color-success-text: #1d6b32;
+        --color-success-border: #b7dfc0;
+        --shadow-soft: 0 18px 42px rgba(16, 32, 43, 0.08);
+        --shadow-card: 0 16px 36px rgba(16, 32, 43, 0.08);
+        --shadow-panel: 0 22px 54px rgba(16, 32, 43, 0.16);
+      }
+
+      body {
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        margin: 0;
+        color: var(--color-text);
+        background: var(--color-background);
+      }
+
+      header,
+      main,
+      footer {
+        padding: 18px;
+      }
+
+      nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 16px;
+      }
+
+      a,
+      button {
+        color: #0d69a1;
+        background: transparent;
+        border: 1px solid #0d69a1;
+        border-radius: 999px;
+        padding: 8px 10px;
+        text-decoration: none;
+        cursor: pointer;
+      }
+
+      .site-header {
+        align-items: center;
+        background: transparent;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: none;
+        display: flex;
+        gap: 16px;
+        justify-content: space-between;
+        min-height: 80px;
+        padding: 4px 18px;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        transition: background 180ms ease, border-color 180ms ease, box-shadow 180ms ease, backdrop-filter 180ms ease;
+        z-index: 40;
+      }
+
+      body.nav-scrolled .site-header,
+      body:not(.home-page) .site-header {
+        background: rgba(255, 255, 255, 0.86);
+        backdrop-filter: blur(18px);
+        border-bottom-color: rgba(13, 105, 161, 0.13);
+        box-shadow: 0 18px 42px rgba(16, 32, 43, 0.08);
+      }
+
+      body:not(.home-page) main {
+        padding-top: 112px;
+      }
+
+      body[data-app-entry="admin"] {
+        background: #f4f7f8;
+      }
+
+      body[data-app-entry="admin"] main {
+        padding-top: 18px;
+      }
+
+      .site-footer {
+        background:
+          radial-gradient(circle at 8% 0%, rgba(235, 62, 143, 0.12), transparent 28%),
+          linear-gradient(135deg, #061d31 0%, #0a3854 48%, #082538 100%);
+        border-top: 1px solid rgba(255, 255, 255, 0.14);
+        color: #eaf5fb;
+        padding: 36px 18px 18px;
+      }
+
+      .footer-inner {
+        display: grid;
+        gap: 24px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        margin: 0 auto;
+        max-width: 1180px;
+      }
+
+      .footer-brand {
+        display: grid;
+        gap: 12px;
+        grid-column: 1 / -1;
+      }
+
+      .footer-logo-link,
+      .footer-logo-link:hover {
+        border: 0;
+        border-radius: 0;
+        display: inline-flex;
+        padding: 0;
+      }
+
+      .footer-logo {
+        display: block;
+        filter: brightness(0) invert(1);
+        height: auto;
+        opacity: 0.96;
+        width: 92px;
+      }
+
+      .footer-brand p,
+      .footer-bottom p {
+        color: rgba(234, 245, 251, 0.72);
+        line-height: 1.55;
+        margin: 0;
+      }
+
+      .footer-column {
+        display: grid;
+        gap: 12px;
+        align-content: start;
+      }
+
+      .footer-column h2 {
+        color: #fff;
+        font-size: 0.84rem;
+        letter-spacing: 0.08em;
+        margin: 0;
+        text-transform: uppercase;
+      }
+
+      .footer-links,
+      .footer-contact-list,
+      .footer-socials {
+        display: grid;
+        gap: 8px;
+        margin: 0;
+      }
+
+      .footer-links a,
+      .footer-contact-list a,
+      .footer-socials a {
+        align-items: center;
+        border: 0;
+        border-radius: 10px;
+        color: rgba(234, 245, 251, 0.78);
+        display: inline-flex;
+        gap: 10px;
+        line-height: 1.35;
+        padding: 6px 0;
+        text-decoration: none;
+        transition: color 160ms ease, transform 160ms ease;
+        word-break: break-word;
+      }
+
+      .footer-links a:hover,
+      .footer-contact-list a:hover,
+      .footer-socials a:hover {
+        color: #fff;
+        transform: translateX(3px);
+      }
+
+      .footer-icon,
+      .footer-social-icon {
+        align-items: center;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 999px;
+        color: #fff;
+        display: inline-flex;
+        flex: 0 0 auto;
+        font-size: 0.76rem;
+        height: 28px;
+        justify-content: center;
+        width: 28px;
+      }
+
+      .footer-social-icon {
+        background: linear-gradient(135deg, #eb3e8f, #0d69a1);
+        border: 0;
+        font-size: 0.68rem;
+        font-weight: 800;
+      }
+
+      .footer-bottom {
+        border-top: 1px solid rgba(255, 255, 255, 0.14);
+        margin: 26px auto 0;
+        max-width: 1180px;
+        padding-top: 14px;
+      }
+
+      .footer-bottom p {
+        font-size: 0.88rem;
+      }
+
+      .brand-logo {
+        display: block;
+        height: auto;
+        width: 72px;
+      }
+
+      .brand-link {
+        align-self: flex-start;
+        border: 0;
+        border-radius: 0;
+        display: inline-flex;
+        padding: 0;
+      }
+
+      .site-nav {
+        align-items: center;
+        background: rgba(255, 255, 255, 0.94);
+        border: 1px solid rgba(255, 255, 255, 0.64);
+        border-radius: 22px;
+        box-shadow: 0 22px 54px rgba(16, 32, 43, 0.16);
+        display: none;
+        gap: 4px;
+        left: 18px;
+        margin-top: 0;
+        padding: 10px;
+        position: absolute;
+        right: 18px;
+        top: calc(100% + 8px);
+      }
+
+      body.nav-open .site-nav {
+        display: grid;
+      }
+
+      .site-nav a,
+      .site-nav summary {
+        align-items: center;
+        border-color: transparent;
+        color: #10202b;
+        display: inline-flex;
+        font-size: 0.82rem;
+        font-weight: 750;
+        justify-content: center;
+        letter-spacing: 0.02em;
+        min-height: 40px;
+        padding: 10px 14px;
+        text-transform: uppercase;
+      }
+
+      .site-nav a:hover,
+      .site-nav summary:hover {
+        background: #eef6fb;
+        border-color: #d9e7ef;
+        color: #0d69a1;
+      }
+
+      .nav-dropdown {
+        position: relative;
+      }
+
+      .nav-dropdown summary {
+        border: 1px solid transparent;
+        border-radius: 999px;
+        cursor: pointer;
+        list-style: none;
+      }
+
+      .nav-dropdown summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .nav-dropdown-menu {
+        background: #fff;
+        border: 1px solid #d9e7ef;
+        border-radius: 14px;
+        box-shadow: 0 22px 44px rgba(16, 32, 43, 0.16);
+        display: grid;
+        gap: 4px;
+        margin-top: 8px;
+        min-width: 240px;
+        padding: 12px;
+      }
+
+      .nav-dropdown-menu a {
+        justify-content: flex-start;
+        text-transform: none;
+      }
+
+      .nav-dropdown[open] summary {
+        background: #eef6fb;
+        border-color: #d9e7ef;
+        color: #0d69a1;
+      }
+
+      .nav-dropdown-label {
+        color: #6b7d88;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        padding: 8px 12px 2px;
+        text-transform: uppercase;
+      }
+
+      .site-nav .nav-whatsapp {
+        background: rgba(235, 62, 143, 0.95);
+        border-color: rgba(235, 62, 143, 0.95);
+        color: #fff;
+        min-height: 46px;
+        padding: 0 20px;
+      }
+
+      .site-nav .nav-whatsapp:hover {
+        background: #d82f80;
+        border-color: #d82f80;
+        color: #fff;
+      }
+
+      .mobile-header-actions {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+        margin-left: auto;
+      }
+
+      .mobile-whatsapp {
+        background: rgba(235, 62, 143, 0.94);
+        border-color: rgba(235, 62, 143, 0.94);
+        color: #fff;
+        font-size: 0.82rem;
+        font-weight: 750;
+        min-height: 38px;
+        padding: 0 13px;
+      }
+
+      .nav-toggle {
+        align-items: center;
+        background: rgba(255, 255, 255, 0.9);
+        border-color: rgba(13, 105, 161, 0.16);
+        display: inline-grid;
+        gap: 4px;
+        height: 40px;
+        justify-content: center;
+        padding: 0;
+        width: 40px;
+      }
+
+      .nav-toggle span {
+        background: #10202b;
+        border-radius: 999px;
+        display: block;
+        height: 2px;
+        width: 17px;
+      }
+
+      .layout {
+        display: grid;
+        gap: 24px;
+      }
+
+      .section-map {
+        border-top: 1px solid #ddd;
+        padding-top: 24px;
+      }
+
+      section {
+        border-top: 1px solid #ddd;
+        padding-top: 24px;
+      }
+
+      section:first-child {
+        border-top: 0;
+        padding-top: 0;
+      }
+
+      .items {
+        display: grid;
+        gap: 16px;
+      }
+
+      .item {
+        background: #fff;
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        padding: 16px;
+      }
+
+      .brand-mark {
+        height: 56px;
+        width: 56px;
+      }
+
+      .asset-image {
+        background: #eef6fb;
+        display: block;
+        height: auto;
+        margin-bottom: 12px;
+        max-width: 100%;
+      }
+
+      .package-image {
+        aspect-ratio: 4 / 5;
+        object-fit: cover;
+        width: 100%;
+      }
+
+      .placeholder {
+        align-items: center;
+        background: #f3f3f3;
+        border: 1px dashed #aaa;
+        display: flex;
+        height: 120px;
+        justify-content: center;
+        margin-bottom: 12px;
+      }
+
+      ul {
+        line-height: 1.8;
+      }
+
+      .global-whatsapp {
+        background: rgba(235, 62, 143, 0.92);
+        border-color: rgba(235, 62, 143, 0.92);
+        bottom: 16px;
+        box-shadow: 0 14px 32px rgba(16, 32, 43, 0.14);
+        color: #fff;
+        font-weight: 700;
+        padding: 9px 14px;
+        position: fixed;
+        right: 16px;
+        z-index: 10;
+      }
+
+      body.turismo-page .global-whatsapp,
+      body.turismo-page .mobile-whatsapp,
+      body.turismo-page .site-nav .nav-whatsapp {
+        display: none;
+      }
+
+      .home-layout {
+        gap: 32px;
+      }
+
+      .home-hero {
+        background:
+          linear-gradient(90deg, rgba(2, 15, 28, 0.86) 0%, rgba(5, 35, 58, 0.7) 42%, rgba(2, 15, 28, 0.32) 100%),
+          linear-gradient(180deg, rgba(2, 15, 28, 0.28) 0%, rgba(2, 15, 28, 0.74) 100%),
+          url("../img/home/hero-estudiantes-nieve.webp") center 58% / cover;
+        border: 0;
+        border-radius: 0;
+        color: #fff;
+        margin: -18px -18px 0;
+        min-height: calc(100svh - 78px);
+        padding: clamp(38px, 7vw, 92px) 18px;
+        position: relative;
+      }
+
+      .home-hero a {
+        border-radius: 999px;
+        display: inline-flex;
+        font-weight: 700;
+        justify-content: center;
+        min-height: 48px;
+        padding: 13px 22px;
+      }
+
+      .home-hero .primary-action {
+        background: #eb3e8f;
+        border-color: #eb3e8f;
+        color: #fff;
+        box-shadow: 0 18px 38px rgba(235, 62, 143, 0.26);
+      }
+
+      .home-hero .secondary-action {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.48);
+        color: #fff;
+        backdrop-filter: blur(10px);
+      }
+
+      .home-hero-logo {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 8px;
+        margin-bottom: 12px;
+        padding: 10px;
+        width: 142px;
+      }
+
+      .home-hero-logo img {
+        display: block;
+        height: auto;
+        width: 100%;
+      }
+
+      .not-found-page {
+        align-items: center;
+        background:
+          linear-gradient(135deg, rgba(2, 34, 76, 0.78), rgba(19, 71, 129, 0.72)),
+          url("../img/home/hero-estudiantes-nieve.webp") center / cover;
+        display: grid;
+        min-height: calc(100svh - 86px);
+        padding: 72px 20px;
+      }
+
+      .not-found-card {
+        background: rgba(255, 255, 255, 0.94);
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        border-radius: 8px;
+        box-shadow: 0 28px 70px rgba(4, 24, 54, 0.24);
+        display: grid;
+        gap: 16px;
+        justify-items: start;
+        margin: 0 auto;
+        max-width: 620px;
+        padding: clamp(28px, 5vw, 48px);
+      }
+
+      .not-found-logo {
+        display: block;
+        width: 150px;
+      }
+
+      .not-found-logo img {
+        display: block;
+        height: auto;
+        width: 100%;
+      }
+
+      .not-found-kicker {
+        color: #eb3e8f;
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        margin: 8px 0 0;
+        text-transform: uppercase;
+      }
+
+      .not-found-card h1 {
+        color: #082f6b;
+        font-size: clamp(2rem, 5vw, 3.8rem);
+        line-height: 1;
+        margin: 0;
+      }
+
+      .not-found-card p:not(.not-found-kicker) {
+        color: #38506f;
+        font-size: 1.05rem;
+        line-height: 1.65;
+        margin: 0;
+        max-width: 520px;
+      }
+
+      .not-found-action {
+        align-items: center;
+        background: #eb3e8f;
+        border: 1px solid #eb3e8f;
+        border-radius: 999px;
+        color: #fff;
+        display: inline-flex;
+        font-weight: 800;
+        justify-content: center;
+        margin-top: 6px;
+        min-height: 48px;
+        padding: 13px 22px;
+        text-decoration: none;
+      }
+
+      .not-found-action:hover {
+        background: #d72c7c;
+        border-color: #d72c7c;
+        color: #fff;
+      }
+
+      .hero-content {
+        display: grid;
+        gap: 18px;
+        max-width: 850px;
+        min-height: calc(100svh - 260px);
+        place-content: center;
+      }
+
+      .hero-kicker {
+        color: rgba(255, 255, 255, 0.78);
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .hero-content h1 {
+        font-size: clamp(2.7rem, 7vw, 5.9rem);
+        line-height: 0.92;
+        margin: 0;
+        max-width: 820px;
+        text-wrap: balance;
+      }
+
+      .hero-content > p {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: clamp(1.08rem, 2.2vw, 1.35rem);
+        line-height: 1.55;
+        margin: 0;
+        max-width: 650px;
+      }
+
+      .home-path-selector {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: minmax(0, 1fr);
+        margin-top: 10px;
+      }
+
+      .home-intro {
+        background: #fff;
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        display: grid;
+        gap: 14px;
+        padding: 20px;
+      }
+
+      .home-intro h2,
+      .home-intro p {
+        margin: 0;
+      }
+
+      .home-path-card {
+        background: #fff;
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        color: #10202b;
+        display: grid;
+        gap: 10px;
+        padding: 18px;
+      }
+
+      .home-path-card h2 {
+        color: #0d69a1;
+        margin: 0;
+      }
+
+      .home-path-card p {
+        margin: 0;
+      }
+
+      .home-path-card a {
+        align-self: end;
+        background: #0d69a1;
+        border-color: #0d69a1;
+        color: #fff;
+        display: inline-flex;
+        font-weight: 750;
+        justify-content: center;
+        margin-top: 4px;
+      }
+
+      .home-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 8px;
+      }
+
+      .home-section {
+        border-top: 0;
+        padding-top: 0;
+      }
+
+      .home-trust {
+        background: #fff;
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        padding: 18px;
+      }
+
+      .home-trust h2,
+      .home-cta h2 {
+        margin-top: 0;
+      }
+
+      .home-cta {
+        background: #0d69a1;
+        border: 0;
+        border-radius: 8px;
+        color: #fff;
+        padding: 22px;
+      }
+
+      .home-cta a {
+        background: #eb3e8f;
+        border-color: #eb3e8f;
+        color: #fff;
+        display: inline-flex;
+        font-weight: 700;
+        justify-content: center;
+      }
+
+      .turismo-layout {
+        gap: 30px;
+        grid-template-columns: minmax(0, 1fr);
+        padding-bottom: 108px;
+      }
+
+      .turismo-layout > * {
+        min-width: 0;
+      }
+
+      .turismo-preview-mode-banner {
+        align-items: center;
+        background: #fff7dc;
+        border: 1px solid #f0ca62;
+        border-radius: 12px;
+        color: #654300;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        justify-content: space-between;
+        padding: 14px 16px;
+      }
+
+      .turismo-preview-mode-banner div {
+        display: grid;
+        gap: 3px;
+      }
+
+      .turismo-preview-mode-banner strong {
+        font-size: 0.95rem;
+      }
+
+      .turismo-preview-mode-banner span {
+        font-size: 0.88rem;
+      }
+
+      .turismo-preview-mode-banner button {
+        background: #10202b;
+        border-color: #10202b;
+        color: #fff;
+      }
+
+      .turismo-hero {
+        border: 0;
+        color: #fff;
+        margin: -18px -18px 0;
+        min-height: 78svh;
+        overflow: hidden;
+        padding: 42px 18px;
+        position: relative;
+      }
+
+      .turismo-hero-content {
+        display: grid;
+        gap: 18px;
+        max-width: 660px;
+        min-height: calc(78svh - 84px);
+        place-content: center;
+        position: relative;
+        z-index: 2;
+      }
+
+      .turismo-hero h1 {
+        font-size: clamp(2.7rem, 9vw, 5.7rem);
+        line-height: 0.94;
+        margin: 0;
+        max-width: 760px;
+        text-shadow: 0 3px 28px rgba(12, 10, 8, 0.38);
+      }
+
+      .turismo-hero p {
+        color: rgba(255, 255, 255, 0.92);
+        font-size: clamp(1.05rem, 2.2vw, 1.35rem);
+        line-height: 1.55;
+        margin: 0;
+        max-width: 610px;
+        text-shadow: 0 2px 18px rgba(12, 10, 8, 0.42);
+      }
+
+      .turismo-hero::after {
+        background:
+          linear-gradient(90deg, rgba(12, 10, 8, 0.62), rgba(12, 10, 8, 0.42) 34%, rgba(12, 10, 8, 0.14) 62%, rgba(12, 10, 8, 0.03)),
+          linear-gradient(180deg, rgba(12, 10, 8, 0.06), rgba(12, 10, 8, 0.18));
+        content: "";
+        inset: 0;
+        pointer-events: none;
+        position: absolute;
+        z-index: 1;
+      }
+
+      .turismo-hero-carousel,
+      .turismo-hero-carousel span {
+        inset: 0;
+        position: absolute;
+      }
+
+      .turismo-hero-carousel span {
+        animation: turismoHeroCarousel 40s ease-in-out infinite;
+        background-position: center;
+        background-size: cover;
+        opacity: 0;
+        transform: scale(1.03);
+        will-change: opacity, transform;
+      }
+
+      .turismo-hero-carousel span:nth-child(1) {
+        animation-delay: 0s;
+        background-image: url("../img/turismo/hero/playa-rio.webp");
+      }
+
+      .turismo-hero-carousel span:nth-child(2) {
+        animation-delay: 8s;
+        background-image: url("../img/turismo/hero/montana-patagonia.webp");
+      }
+
+      .turismo-hero-carousel span:nth-child(3) {
+        animation-delay: 16s;
+        background-image: url("../img/turismo/hero/nieve-montana.webp");
+      }
+
+      .turismo-hero-carousel span:nth-child(4) {
+        animation-delay: 24s;
+        background-image: url("../img/turismo/hero/cataratas-iguazu.webp");
+      }
+
+      .turismo-hero-carousel span:nth-child(5) {
+        animation-delay: 32s;
+        background-image: url("../img/turismo/hero/ciudad-rio.webp");
+      }
+
+      @keyframes turismoHeroCarousel {
+        0% {
+          opacity: 0;
+          transform: scale(1.03);
+        }
+
+        8%,
+        24% {
+          opacity: 1;
+        }
+
+        32%,
+        100% {
+          opacity: 0;
+          transform: scale(1.06);
+        }
+      }
+
+      .turismo-kicker,
+      .section-kicker {
+        color: #eb3e8f;
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .turismo-proof {
+        color: rgba(255, 255, 255, 0.78);
+        font-size: 0.95rem;
+        font-weight: 700;
+      }
+
+      .turismo-hero-actions,
+      .package-actions,
+      .mi-consulta-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .turismo-hero a,
+      .turismo-hero button,
+      .package-whatsapp,
+      .turismo-cta a,
+      .turismo-cta button,
+      .mi-consulta-actions button:first-child,
+      .mi-consulta-bar button,
+      .package-actions button:first-child {
+        background: #eb3e8f;
+        border-color: #eb3e8f;
+        color: #fff;
+        display: inline-flex;
+        font-weight: 700;
+        justify-content: center;
+      }
+
+      .turismo-hero button,
+      .turismo-hero a,
+      .package-detail-hero a,
+      .turismo-cta button,
+      .turismo-cta a,
+      .intention-chip,
+      .package-actions a,
+      .package-actions button,
+      .mi-consulta-items button,
+      .mi-consulta-actions button,
+      .mi-consulta-bar button {
+        border: 1px solid currentColor;
+        border-radius: 8px;
+        cursor: pointer;
+        font: inherit;
+        font-size: 0.95rem;
+        line-height: 1;
+        padding: 11px 14px;
+      }
+
+      .turismo-hero button,
+      .package-detail-hero a:not(.package-back-link),
+      .package-actions button:last-child,
+      .mi-consulta-actions button:last-child {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.46);
+        color: #fff;
+      }
+
+      .turismo-intention-section,
+      .mi-consulta-preview,
+      .turismo-detail-preview {
+        background: #fff;
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        padding: 18px;
+      }
+
+      .mi-consulta-preview h2,
+      .mi-consulta-preview p {
+        margin: 0;
+      }
+
+      .intention-chip-row {
+        display: flex;
+        gap: 10px;
+        overflow-x: auto;
+        padding-bottom: 4px;
+      }
+
+      .intention-chip {
+        background: #fff;
+        border-color: #b8d4e4;
+        color: #0d69a1;
+        flex: 0 0 auto;
+        font-weight: 800;
+      }
+
+      .intention-chip.active {
+        background: #0d69a1;
+        border-color: #0d69a1;
+        box-shadow: inset 0 -3px 0 #eb3e8f;
+        color: #fff;
+      }
+
+      .catalog-section {
+        border-top: 0;
+        padding-top: 0;
+      }
+
+      .catalog-heading {
+        display: grid;
+        gap: 8px;
+        margin-bottom: 18px;
+      }
+
+      .catalog-heading h2,
+      .catalog-heading p {
+        margin: 0;
+      }
+
+      .package-grid {
+        display: grid;
+        gap: 16px;
+      }
+
+      .turismo-empty-state {
+        background: #fff;
+        border: 1px dashed #b8d4e4;
+        border-radius: 8px;
+        color: #4f6472;
+        display: grid;
+        gap: 14px;
+        padding: 18px;
+      }
+
+      .turismo-empty-state p {
+        line-height: 1.5;
+        margin: 0;
+      }
+
+      .turismo-empty-state a {
+        align-items: center;
+        border-radius: 8px;
+        display: inline-flex;
+        font-weight: 800;
+        justify-content: center;
+        min-height: 42px;
+        padding: 11px 14px;
+        width: fit-content;
+      }
+
+      .package-card {
+        background: #fff;
+        border: 1px solid rgba(16, 32, 43, 0.1);
+        border-radius: 8px;
+        display: grid;
+        overflow: hidden;
+      }
+
+      .turismo-package-card {
+        box-shadow: 0 16px 36px rgba(16, 32, 43, 0.08);
+      }
+
+      .package-image-wrap {
+        background: #eef5f8;
+        position: relative;
+      }
+
+      .package-card-carousel {
+        aspect-ratio: 4 / 3;
+        overflow: hidden;
+      }
+
+      .package-carousel-track,
+      .package-carousel-track img {
+        inset: 0;
+        position: absolute;
+      }
+
+      .package-carousel-track img {
+        height: 100%;
+        opacity: 0;
+        transition: opacity 240ms ease;
+      }
+
+      .package-carousel-track img.active {
+        opacity: 1;
+        z-index: 1;
+      }
+
+      .package-image-wrap span {
+        background: rgba(16, 32, 43, 0.78);
+        backdrop-filter: blur(10px);
+        border-radius: 999px;
+        color: #fff;
+        font-size: 0.74rem;
+        font-weight: 800;
+        left: 12px;
+        letter-spacing: 0.06em;
+        padding: 7px 11px;
+        position: absolute;
+        text-transform: uppercase;
+        top: 12px;
+        z-index: 3;
+      }
+
+      .package-carousel-arrow {
+        align-items: center;
+        background: rgba(16, 32, 43, 0.62);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        border-radius: 999px;
+        color: #fff;
+        cursor: pointer;
+        display: inline-flex;
+        font: inherit;
+        font-size: 1.45rem;
+        font-weight: 800;
+        height: 42px;
+        justify-content: center;
+        line-height: 1;
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 42px;
+        z-index: 3;
+      }
+
+      .package-carousel-prev {
+        left: 10px;
+      }
+
+      .package-carousel-next {
+        right: 10px;
+      }
+
+      .package-carousel-count {
+        background: rgba(16, 32, 43, 0.68);
+        border-radius: 999px;
+        bottom: 10px;
+        color: #fff;
+        font-size: 0.78rem;
+        font-weight: 800;
+        padding: 6px 9px;
+        position: absolute;
+        right: 10px;
+        z-index: 3;
+      }
+
+      .package-card img {
+        aspect-ratio: 4 / 3;
+        display: block;
+        object-fit: cover;
+        width: 100%;
+      }
+
+      .package-card-body {
+        display: grid;
+        gap: 12px;
+        padding: 16px;
+      }
+
+      .package-card h3,
+      .package-card p {
+        margin: 0;
+      }
+
+      .package-card-head {
+        display: grid;
+        gap: 4px;
+      }
+
+      .package-card h3 {
+        color: #10202b;
+        font-size: 1.42rem;
+        line-height: 1.1;
+      }
+
+      .package-summary {
+        color: #4f6472;
+        line-height: 1.5;
+      }
+
+      .package-duration {
+        color: #0d69a1;
+        font-size: 0.98rem;
+        font-weight: 800;
+      }
+
+      .package-price {
+        align-items: end;
+        background: #f7fbfe;
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        display: grid;
+        gap: 2px;
+        padding: 12px;
+      }
+
+      .package-price span {
+        color: #4f6472;
+        font-size: 0.78rem;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .package-price strong {
+        color: #10202b;
+        font-size: clamp(1.75rem, 8vw, 2.45rem);
+        line-height: 0.95;
+      }
+
+      .package-facts span,
+      .package-detail-facts span {
+        background: #f7fbfe;
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        color: #10202b;
+        font-size: 0.93rem;
+        padding: 9px 10px;
+      }
+
+      .package-includes {
+        display: grid;
+        gap: 8px;
+      }
+
+      .package-includes strong {
+        color: #10202b;
+        font-size: 0.82rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .package-includes div {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .package-includes span {
+        background: #f7fbfe;
+        border: 1px solid #d9e7ef;
+        border-radius: 999px;
+        color: #10202b;
+        font-size: 0.88rem;
+        font-weight: 800;
+        padding: 7px 10px;
+      }
+
+      .package-meta {
+        color: #4f6472;
+        font-size: 0.82rem;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .package-actions a,
+      .package-actions button {
+        align-items: center;
+        flex: 1 1 150px;
+        font-weight: 800;
+        justify-content: center;
+        min-height: 42px;
+        text-align: center;
+      }
+
+      .package-actions a:first-child {
+        background: #fff;
+        border: 1px solid #b8d4e4;
+        color: #0d69a1;
+        display: inline-flex;
+      }
+
+      .package-actions button:last-child {
+        background: #fff;
+        border-color: #b8d4e4;
+        color: #0d69a1;
+        font-weight: 800;
+      }
+
+      .mi-consulta-preview {
+        display: grid;
+        gap: 16px;
+      }
+
+      .mi-consulta-items {
+        display: grid;
+        gap: 12px;
+      }
+
+      .mi-consulta-items article {
+        align-items: center;
+        background: #f7fbfe;
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        display: grid;
+        gap: 12px;
+        grid-template-columns: 74px 1fr;
+        padding: 10px;
+      }
+
+      .mi-consulta-items img {
+        aspect-ratio: 1;
+        border-radius: 8px;
+        height: 74px;
+        object-fit: cover;
+        width: 74px;
+      }
+
+      .mi-consulta-items h3,
+      .mi-consulta-items p {
+        margin: 0 0 5px;
+      }
+
+      .mi-consulta-items button {
+        background: transparent;
+        border-color: #b8d4e4;
+        color: #4f6472;
+        font-size: 0.88rem;
+        padding: 6px 9px;
+      }
+
+      .mi-consulta-note {
+        color: #4f6472;
+        font-size: 0.92rem;
+      }
+
+      .mi-consulta-bar {
+        align-items: center;
+        background: rgba(255, 255, 255, 0.96);
+        border: 1px solid #d9e7ef;
+        border-radius: 8px 8px 0 0;
+        bottom: 0;
+        box-shadow: 0 -18px 42px rgba(16, 32, 43, 0.13);
+        display: grid;
+        gap: 10px;
+        left: 0;
+        padding: 12px 16px;
+        position: fixed;
+        right: 0;
+        z-index: 9;
+      }
+
+      .mi-consulta-bar strong,
+      .mi-consulta-bar span {
+        display: block;
+      }
+
+      .mi-consulta-bar span {
+        color: #4f6472;
+        font-size: 0.92rem;
+      }
+
+      .package-detail-preview-card {
+        background: #f7fbfe;
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        display: grid;
+        gap: 16px;
+        overflow: hidden;
+      }
+
+      .package-detail-visual img {
+        aspect-ratio: 16 / 10;
+        display: block;
+        height: 100%;
+        object-fit: cover;
+        width: 100%;
+      }
+
+      .package-detail-copy {
+        display: grid;
+        gap: 14px;
+        padding: 16px;
+      }
+
+      .package-detail-copy h3,
+      .package-detail-copy p,
+      .package-detail-copy h4 {
+        margin: 0;
+      }
+
+      .package-detail-copy h3 {
+        color: #0d69a1;
+        font-size: clamp(1.8rem, 7vw, 3.2rem);
+        line-height: 1;
+      }
+
+      .package-detail-facts,
+      .package-detail-columns {
+        display: grid;
+        gap: 10px;
+      }
+
+      .package-detail-columns ul {
+        margin: 8px 0 0;
+        padding-left: 18px;
+      }
+
+      .package-detail-hero {
+        background:
+          linear-gradient(90deg, rgba(2, 15, 28, 0.88), rgba(13, 105, 161, 0.46), rgba(2, 15, 28, 0.1)),
+          var(--package-hero-image) center / cover;
+        border: 0;
+        color: #fff;
+        margin: -18px -18px 0;
+        min-height: 62svh;
+        padding: 42px 18px;
+      }
+
+      .package-detail-hero-content {
+        display: grid;
+        gap: 16px;
+        max-width: 780px;
+        min-height: calc(62svh - 84px);
+        place-content: center;
+      }
+
+      .package-detail-hero h1 {
+        font-size: clamp(3rem, 12vw, 6rem);
+        line-height: 0.92;
+        margin: 0;
+      }
+
+      .package-detail-hero p {
+        font-size: 1.05rem;
+        line-height: 1.55;
+        margin: 0;
+      }
+
+      .package-back-link {
+        color: rgba(255, 255, 255, 0.88);
+        font-size: 0.92rem;
+        font-weight: 800;
+        width: fit-content;
+      }
+
+      .package-detail-hero a:not(.package-back-link) {
+        border: 1px solid rgba(255, 255, 255, 0.48);
+        border-radius: 8px;
+        color: #fff;
+        font-weight: 800;
+      }
+
+      .package-detail-hero .turismo-hero-actions a:first-child {
+        background: #eb3e8f;
+        border-color: #eb3e8f;
+      }
+
+      .package-detail-summary,
+      .package-detail-content,
+      .package-detail-gallery,
+      .package-detail-facts-section,
+      .package-detail-payment {
+        background: #fff;
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        padding: 18px;
+      }
+
+      .package-detail-gallery {
+        display: grid;
+        gap: 12px;
+      }
+
+      .package-gallery-main,
+      .package-gallery-strip img {
+        border-radius: 8px;
+        display: block;
+        object-fit: cover;
+        width: 100%;
+      }
+
+      .package-gallery-main {
+        aspect-ratio: 16 / 10;
+      }
+
+      .package-gallery-strip {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      }
+
+      .package-gallery-strip img {
+        aspect-ratio: 4 / 3;
+      }
+
+      .package-detail-summary {
+        display: grid;
+        gap: 8px;
+      }
+
+      .package-detail-summary h2,
+      .package-detail-summary p,
+      .package-detail-facts-section h2,
+      .package-detail-payment h2 {
+        margin: 0;
+      }
+
+      .package-detail-summary p {
+        color: #4f6472;
+        line-height: 1.55;
+      }
+
+      .package-detail-content {
+        display: grid;
+        gap: 18px;
+      }
+
+      .package-detail-content h2,
+      .package-detail-payment h2,
+      .package-detail-gallery h2,
+      .package-detail-gallery p {
+        margin: 0;
+      }
+
+      .package-detail-content ul,
+      .package-detail-payment ul {
+        margin: 10px 0 0;
+        padding-left: 18px;
+      }
+
+      .package-detail-content li,
+      .package-detail-payment li {
+        margin-bottom: 8px;
+      }
+
+      .turismo-trust {
+        background: #fff;
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        padding: 18px;
+      }
+
+      .turismo-trust h2,
+      .turismo-cta h2 {
+        margin-top: 0;
+      }
+
+      .turismo-cta {
+        background: #0d69a1;
+        border: 0;
+        border-radius: 8px;
+        color: #fff;
+        display: grid;
+        gap: 12px;
+        padding: 22px;
+      }
+
+      .turismo-cta h2,
+      .turismo-cta p {
+        margin: 0;
+      }
+
+      .turismo-cta a {
+        align-items: center;
+        background: #fff;
+        border-color: #fff;
+        color: #0d69a1;
+        display: inline-flex;
+        font-weight: 800;
+        justify-content: center;
+        min-height: 42px;
+        width: fit-content;
+      }
+
+      .package-detail-cta .turismo-hero-actions a:last-child {
+        background: transparent;
+        border-color: rgba(255, 255, 255, 0.55);
+        color: #fff;
+      }
+
+      .estudiantil-layout {
+        gap: 28px;
+      }
+
+      .estudiantil-hero {
+        background:
+          linear-gradient(180deg, rgba(235, 62, 143, 0.9), rgba(13, 105, 161, 0.9)),
+          url("../img/brand-estudiantil-egresados.png") center / cover;
+        border: 0;
+        color: #fff;
+        margin: -18px -18px 0;
+        padding: 34px 18px;
+      }
+
+      .estudiantil-hero-content {
+        display: grid;
+        gap: 18px;
+        max-width: 760px;
+      }
+
+      .estudiantil-hero h1 {
+        font-size: clamp(2.1rem, 10vw, 4.2rem);
+        line-height: 1;
+        margin: 0;
+      }
+
+      .estudiantil-hero p {
+        font-size: 1.05rem;
+        line-height: 1.55;
+        margin: 0;
+      }
+
+      .estudiantil-hero a,
+      .student-path-card a,
+      .estudiantil-cta a {
+        background: #eb3e8f;
+        border-color: #eb3e8f;
+        color: #fff;
+        display: inline-flex;
+        font-weight: 700;
+        justify-content: center;
+      }
+
+      .student-experience {
+        background: #fff;
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        padding: 18px;
+      }
+
+      .student-experience h2,
+      .student-experience p,
+      .student-path-heading h2,
+      .student-path-heading p,
+      .estudiantil-trust h2,
+      .estudiantil-cta h2 {
+        margin: 0;
+      }
+
+      .student-path-section {
+        border-top: 0;
+        padding-top: 0;
+      }
+
+      .student-path-heading {
+        display: grid;
+        gap: 8px;
+        margin-bottom: 18px;
+      }
+
+      .student-path-grid {
+        display: grid;
+        gap: 18px;
+      }
+
+      .student-path-card {
+        background: #fff;
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        display: grid;
+        gap: 12px;
+        overflow: hidden;
+      }
+
+      .student-path-card img {
+        aspect-ratio: 4 / 3;
+        display: block;
+        object-fit: cover;
+        width: 100%;
+      }
+
+      .student-path-body {
+        display: grid;
+        gap: 10px;
+        padding: 16px;
+      }
+
+      .student-path-body h3,
+      .student-path-body p {
+        margin: 0;
+      }
+
+      .student-path-kicker {
+        color: #4f6472;
+        font-size: 0.95rem;
+      }
+
+      .estudiantil-trust {
+        background: #fff;
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        padding: 18px;
+      }
+
+      .estudiantil-cta {
+        background: #0d69a1;
+        border: 0;
+        border-radius: 8px;
+        color: #fff;
+        padding: 22px;
+      }
+
+      .student-detail-layout {
+        gap: 28px;
+      }
+
+      .student-detail-hero {
+        background:
+          linear-gradient(180deg, rgba(13, 105, 161, 0.92), rgba(8, 45, 78, 0.9)),
+          url("../img/brand-estudiantil-egresados.png") center / cover;
+        border: 0;
+        color: #fff;
+        margin: -18px -18px 0;
+        padding: 34px 18px;
+      }
+
+      .student-detail-hero.primary {
+        background:
+          linear-gradient(180deg, rgba(235, 62, 143, 0.88), rgba(13, 105, 161, 0.9)),
+          url("../img/brand-estudiantil-egresados.png") center / cover;
+      }
+
+      .student-detail-hero-content {
+        display: grid;
+        gap: 18px;
+        max-width: 760px;
+      }
+
+      .student-detail-hero h1 {
+        font-size: clamp(2.1rem, 10vw, 4.2rem);
+        line-height: 1;
+        margin: 0;
+      }
+
+      .student-detail-hero p {
+        font-size: 1.05rem;
+        line-height: 1.55;
+        margin: 0;
+      }
+
+      .student-detail-hero a,
+      .student-detail-cta a {
+        background: #eb3e8f;
+        border-color: #eb3e8f;
+        color: #fff;
+        display: inline-flex;
+        font-weight: 700;
+        justify-content: center;
+      }
+
+      .student-detail-cta-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .student-detail-cta .student-detail-cta-secondary {
+        background: #fff;
+        border-color: #fff;
+        color: #0d69a1;
+      }
+
+      .student-detail-experience,
+      .student-detail-benefits {
+        background: #fff;
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        padding: 18px;
+      }
+
+      .student-detail-experience h2,
+      .student-detail-experience p,
+      .student-detail-benefits h2,
+      .student-detail-cta h2 {
+        margin: 0;
+      }
+
+      .student-detail-benefits ul {
+        display: grid;
+        gap: 10px;
+        list-style: none;
+        margin: 16px 0 0;
+        padding: 0;
+      }
+
+      .student-detail-benefits li {
+        background: #f7fbfe;
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        padding: 12px;
+      }
+
+      .bariloche-experiences {
+        background: #fff;
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        display: grid;
+        gap: 18px;
+        padding: 18px;
+      }
+
+      .bariloche-experiences h2,
+      .bariloche-experience-category h3,
+      .bariloche-experience-card h4 {
+        margin: 0;
+      }
+
+      .bariloche-experience-photo,
+      .bariloche-experience-video,
+      .bariloche-gallery-slot {
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        overflow: hidden;
+        min-height: 120px;
+      }
+
+      .bariloche-experience-photo,
+      .bariloche-experience-video {
+        aspect-ratio: 16 / 9;
+      }
+
+      .bariloche-gallery-grid,
+      .bariloche-experience-grid {
+        display: grid;
+        gap: 12px;
+      }
+
+      .bariloche-gallery-slot {
+        aspect-ratio: 4 / 3;
+      }
+
+      .bariloche-experience-photo img,
+      .bariloche-gallery-slot img,
+      .bariloche-experience-video video {
+        display: block;
+        height: 100%;
+        object-fit: cover;
+        width: 100%;
+      }
+
+      .bariloche-experience-category {
+        border-top: 1px solid #d9e7ef;
+        display: grid;
+        gap: 12px;
+        padding-top: 16px;
+      }
+
+      .bariloche-experience-category:first-of-type {
+        border-top: 0;
+        padding-top: 0;
+      }
+
+      .bariloche-experience-card {
+        background: #f7fbfe;
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        display: grid;
+        gap: 12px;
+        padding: 14px;
+      }
+
+      .bariloche-experience-description {
+        min-height: 44px;
+      }
+
+      .student-detail-cta {
+        background: #0d69a1;
+        border: 0;
+        border-radius: 8px;
+        color: #fff;
+        padding: 22px;
+      }
+
+      .portal-layout {
+        gap: 24px;
+      }
+
+      .portal-hero {
+        background:
+          linear-gradient(180deg, rgba(13, 105, 161, 0.94), rgba(8, 45, 78, 0.9)),
+          url("../img/brand-estudiantil-egresados.png") center / cover;
+        border: 0;
+        color: #fff;
+        margin: -18px -18px 0;
+        padding: 34px 18px;
+      }
+
+      .portal-hero h1 {
+        font-size: clamp(2.1rem, 10vw, 4.2rem);
+        line-height: 1;
+        margin: 0 0 14px;
+      }
+
+      .portal-hero p {
+        font-size: 1.05rem;
+        line-height: 1.55;
+        margin: 0;
+        max-width: 620px;
+      }
+
+      .portal-panel,
+      .portal-result,
+      .portal-empty,
+      .admin-demo-section {
+        background: #fff;
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        padding: 18px;
+      }
+
+      .portal-notice {
+        background: #fff7fc;
+        border: 1px solid #f4b8d6;
+        border-radius: 8px;
+        color: #7a2450;
+        font-weight: 700;
+        padding: 14px;
+      }
+
+      .portal-form {
+        display: grid;
+        gap: 12px;
+      }
+
+      .portal-form label {
+        font-weight: 700;
+      }
+
+      .portal-form input {
+        border: 1px solid #b8d4e4;
+        border-radius: 8px;
+        color: #10202b;
+        font: inherit;
+        padding: 12px;
+      }
+
+      .portal-form button,
+      .portal-result a,
+      .portal-empty a {
+        background: #eb3e8f;
+        border-color: #eb3e8f;
+        color: #fff;
+        display: inline-flex;
+        font-weight: 700;
+        justify-content: center;
+      }
+
+      .inscripcion-page-hero {
+        background: #fff;
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+
+      .inscripcion-hero-media {
+        min-height: 360px;
+        position: relative;
+      }
+
+      .inscripcion-hero-media::after {
+        background: linear-gradient(90deg, rgba(8, 35, 58, 0.86), rgba(8, 35, 58, 0.48), rgba(8, 35, 58, 0.12));
+        content: "";
+        inset: 0;
+        position: absolute;
+      }
+
+      .inscripcion-hero-media img {
+        display: block;
+        height: 100%;
+        inset: 0;
+        object-fit: cover;
+        position: absolute;
+        width: 100%;
+      }
+
+      .inscripcion-hero-copy {
+        color: #fff;
+        max-width: 620px;
+        padding: 42px 28px;
+        position: relative;
+        z-index: 1;
+      }
+
+      .inscripcion-hero-copy span {
+        display: block;
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        margin-bottom: 12px;
+        text-transform: uppercase;
+      }
+
+      .inscripcion-hero-copy h1 {
+        font-size: clamp(2.45rem, 8vw, 4.6rem);
+        line-height: 1;
+        margin: 0 0 14px;
+      }
+
+      .inscripcion-hero-copy p {
+        font-size: clamp(1.2rem, 3vw, 1.55rem);
+        line-height: 1.35;
+        margin: 0;
+      }
+
+      .inscripcion-hero-steps {
+        padding: 20px 24px 22px;
+      }
+
+      .inscripcion-hero-steps h2 {
+        color: #10202b;
+        font-size: 1.1rem;
+        margin: 0 0 14px;
+      }
+
+      .inscripcion-hero-steps ul {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .inscripcion-hero-steps li {
+        align-items: center;
+        background: #f4f8fb;
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        color: #10202b;
+        display: flex;
+        font-weight: 800;
+        gap: 8px;
+        min-height: 48px;
+        padding: 10px 12px;
+      }
+
+      .inscripcion-hero-steps li::before {
+        color: #0d69a1;
+        content: "✔";
+        font-weight: 900;
+      }
+
+      @media (max-width: 760px) {
+        .inscripcion-hero-media {
+          min-height: 330px;
+        }
+
+        .inscripcion-hero-media::after {
+          background: linear-gradient(180deg, rgba(8, 35, 58, 0.28), rgba(8, 35, 58, 0.9));
+        }
+
+        .inscripcion-hero-copy {
+          display: flex;
+          flex-direction: column;
+          justify-content: flex-end;
+          min-height: 330px;
+          padding: 24px 18px;
+        }
+
+        .inscripcion-hero-steps {
+          padding: 18px;
+        }
+
+        .inscripcion-hero-steps ul {
+          grid-template-columns: 1fr;
+        }
+      }
+
+	      .inscripcion-wizard form {
+	        display: grid;
+	        gap: 18px;
+	      }
+
+	      .inscripcion-progress {
+	        background: #f4f8fb;
+	        border: 1px solid #d9e7ef;
+	        border-radius: 8px;
+	        display: grid;
+	        gap: 8px;
+	        grid-template-columns: repeat(5, minmax(0, 1fr));
+	        padding: 8px;
+	      }
+
+	      .inscripcion-progress span {
+	        background: #fff;
+	        border: 1px solid #e2edf2;
+	        border-radius: 6px;
+	        color: #425460;
+	        font-size: 0.84rem;
+	        font-weight: 800;
+	        line-height: 1.2;
+	        padding: 10px 8px;
+	        text-align: center;
+	      }
+
+	      .inscripcion-progress span.active {
+	        background: #0d69a1;
+	        border-color: #0d69a1;
+	        color: #fff;
+	      }
+
+	      .inscripcion-progress span.done {
+	        background: #e8f4fa;
+	        border-color: #b9d7e7;
+	        color: #0d69a1;
+	      }
+
+	      .inscripcion-form-grid {
+	        align-items: start;
+	        display: grid;
+	        gap: 18px;
+	        grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr);
+	      }
+
+	      .inscripcion-fields {
+	        display: grid;
+	        gap: 12px;
+	      }
+
+	      .inscripcion-section-heading {
+	        display: grid;
+	        gap: 4px;
+	        padding: 2px 0;
+	      }
+
+	      .inscripcion-section-heading span,
+	      .inscripcion-context-summary > span,
+	      .inscripcion-summary > span {
+	        color: #0d69a1;
+	        font-size: 0.78rem;
+	        font-weight: 900;
+	        letter-spacing: 0.04em;
+	        text-transform: uppercase;
+	      }
+
+	      .inscripcion-section-heading h2 {
+	        color: #10202b;
+	        font-size: 1.05rem;
+	        line-height: 1.25;
+	        margin: 0;
+	      }
+
+	      .inscripcion-step,
+	      .inscripcion-context-summary,
+	      .inscripcion-summary {
+	        border: 1px solid #d9e7ef;
+	        border-radius: 8px;
+	        display: grid;
+	        gap: 10px;
+	        padding: 16px;
+	      }
+
+	      .inscripcion-section-heading[hidden],
+	      .inscripcion-step[hidden],
+	      .inscripcion-summary[hidden],
+	      .inscripcion-step-error[hidden],
+	      .inscripcion-step-actions button[hidden] {
+	        display: none;
+	      }
+
+	      .inscripcion-step {
+	        background: #fbfdfe;
+	      }
+
+	      .inscripcion-step span {
+	        color: #5c6c76;
+	        font-size: 0.82rem;
+	        font-weight: 800;
+	        text-transform: uppercase;
+	      }
+
+	      .inscripcion-step label {
+	        color: #10202b;
+	        display: grid;
+	        font-weight: 800;
+	        gap: 8px;
+	      }
+
+	      .inscripcion-step select {
+	        border: 1px solid #c9d8df;
+	        border-radius: 10px;
+	        color: #10202b;
+	        font: inherit;
+	        min-height: 42px;
+	        padding: 9px 10px;
+	        width: 100%;
+	      }
+
+	      .inscripcion-step input {
+	        background: #fff;
+	        border: 1px solid #c9d8df;
+	        border-radius: 8px;
+	        color: #10202b;
+	        font: inherit;
+	        font-weight: 700;
+	        min-height: 48px;
+	        padding: 12px;
+	        width: 100%;
+	      }
+
+	      .inscripcion-step input:focus {
+	        border-color: #0d69a1;
+	        box-shadow: 0 0 0 3px rgba(13, 105, 161, 0.12);
+	        outline: none;
+	      }
+
+	      .inscripcion-step select.inscripcion-native-select {
+	        height: 1px;
+	        opacity: 0;
+	        overflow: hidden;
+	        pointer-events: none;
+	        position: absolute;
+	        width: 1px;
+	      }
+
+      .public-inscripcion-layout {
+        gap: 26px;
+      }
+
+      .public-inscripcion-card {
+        display: grid;
+        gap: 18px;
+      }
+
+      .public-inscripcion-card form {
+        display: grid;
+        gap: 16px;
+      }
+
+      .public-inscripcion-grid {
+        display: grid;
+        gap: 14px;
+      }
+
+      .public-inscripcion-card label {
+        color: #33454f;
+        display: grid;
+        font-size: 0.9rem;
+        font-weight: 800;
+        gap: 8px;
+      }
+
+      .public-inscripcion-card input,
+      .public-inscripcion-card select,
+      .public-inscripcion-card textarea {
+        background: #fff;
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        color: #10202b;
+        font: inherit;
+        font-weight: 500;
+        min-height: 46px;
+        padding: 12px 14px;
+        width: 100%;
+      }
+
+      .public-inscripcion-card textarea {
+        resize: vertical;
+      }
+
+      .public-inscripcion-card input:focus,
+      .public-inscripcion-card select:focus,
+      .public-inscripcion-card textarea:focus {
+        border-color: #0d69a1;
+        box-shadow: 0 0 0 4px rgba(13, 105, 161, 0.12);
+        outline: 0;
+      }
+
+	      .inscripcion-option-group {
+	        display: grid;
+	        gap: 8px;
+	        grid-template-columns: repeat(auto-fit, minmax(138px, 1fr));
+	      }
+
+	      .inscripcion-option-group-wide {
+	        grid-template-columns: 1fr;
+	      }
+
+	      .inscripcion-option-button {
+	        background: #fff;
+	        border: 1px solid #c9d8df;
+	        border-radius: 8px;
+	        color: #10202b;
+	        cursor: pointer;
+	        font: inherit;
+	        font-weight: 800;
+	        line-height: 1.25;
+	        min-height: 48px;
+	        padding: 12px;
+	        text-align: left;
+	      }
+
+	      .inscripcion-option-button:hover {
+	        border-color: #0d69a1;
+	      }
+
+	      .inscripcion-option-button.selected {
+	        background: #0d69a1;
+	        border-color: #0d69a1;
+	        box-shadow: 0 8px 18px rgba(13, 105, 161, 0.16);
+	        color: #fff;
+	      }
+
+	      .inscripcion-step p,
+	      .inscripcion-context-summary ul,
+	      .inscripcion-summary h2,
+	      .inscripcion-summary ul {
+	        margin: 0;
+	      }
+
+	      .inscripcion-step p {
+	        color: #5c6c76;
+	        font-size: 0.92rem;
+	      }
+
+	      .portal-empty .inscripcion-help-link {
+	        align-items: center;
+	        background: transparent;
+	        border-color: #c9d8df;
+	        color: #0d69a1;
+	        justify-self: start;
+	        min-height: 36px;
+	        padding: 8px 12px;
+	      }
+
+	      .inscripcion-context-summary {
+	        align-self: start;
+	        background: #fbfdfe;
+	        position: sticky;
+	        top: 88px;
+	      }
+
+	      .inscripcion-context-summary ul {
+	        display: grid;
+	        gap: 0;
+	        list-style: none;
+	        padding: 0;
+	      }
+
+	      .inscripcion-context-summary li {
+	        border-top: 1px solid #d9e7ef;
+	        color: #425460;
+	        line-height: 1.35;
+	        padding: 10px 0;
+	      }
+
+	      .inscripcion-context-summary li:last-child {
+	        border-bottom: 1px solid #d9e7ef;
+	      }
+
+	      .inscripcion-context-summary strong {
+	        color: #10202b;
+	      }
+
+	      .inscripcion-summary {
+	        background: #f5f9fb;
+	        position: sticky;
+	        top: 88px;
+	      }
+
+	      .inscripcion-summary h2 {
+	        color: #10202b;
+	        font-size: 1.12rem;
+	        line-height: 1.25;
+	      }
+
+	      .inscripcion-summary ul {
+	        display: grid;
+	        gap: 0;
+	        list-style: none;
+	        padding: 0;
+	      }
+
+	      .inscripcion-summary li {
+	        border-top: 1px solid #d9e7ef;
+	        color: #425460;
+	        display: grid;
+	        gap: 3px;
+	        line-height: 1.35;
+	        padding: 10px 0;
+	      }
+
+	      .inscripcion-summary li:last-child {
+	        border-bottom: 1px solid #d9e7ef;
+	      }
+
+	      .inscripcion-summary strong {
+	        color: #10202b;
+	      }
+
+	      .inscripcion-next-note {
+	        color: #5c6c76;
+	        font-size: 0.92rem;
+	        line-height: 1.35;
+	        margin: 0;
+	      }
+
+	      .inscripcion-contract-result {
+	        background: #f5f9fb;
+	        border: 1px solid #d9e7ef;
+	        border-radius: 8px;
+	        color: #425460;
+	        font-size: 0.92rem;
+	        font-weight: 700;
+	        line-height: 1.35;
+	        padding: 10px 12px;
+	      }
+
+	      .inscripcion-contract-result.is-ok {
+	        background: #edf8f1;
+	        border-color: #afd8bd;
+	        color: #24613a;
+	      }
+
+	      .inscripcion-contract-result.is-alert {
+	        background: #fff4f4;
+	        border-color: #f1b8b8;
+	        color: #a23131;
+	      }
+
+	      .inscripcion-contract-result.is-options {
+	        background: #fffaf0;
+	        border-color: #e6c678;
+	        color: #64450d;
+	      }
+
+	      .inscripcion-contract-result button,
+	      .inscripcion-contract-result a {
+	        align-items: center;
+	        background: #0d69a1;
+	        border: 1px solid #0d69a1;
+	        border-radius: 8px;
+	        color: #fff;
+	        display: inline-flex;
+	        font-weight: 800;
+	        justify-content: center;
+	        margin-top: 10px;
+	        min-height: 40px;
+	        padding: 9px 12px;
+	        text-decoration: none;
+	      }
+
+	      .inscripcion-contract-confirmed {
+	        display: grid;
+	        gap: 4px;
+	      }
+
+	      .inscripcion-contract-options {
+	        display: grid;
+	        gap: 8px;
+	        margin-top: 10px;
+	      }
+
+	      .inscripcion-contract-options button {
+	        align-items: start;
+	        background: #fff;
+	        border-color: #e6c678;
+	        color: #10202b;
+	        display: grid;
+	        justify-content: stretch;
+	        margin: 0;
+	        text-align: left;
+	      }
+
+	      .inscripcion-contract-options button span,
+	      .inscripcion-contract-options button small {
+	        color: #5c6c76;
+	      }
+
+	      .inscripcion-summary button {
+	        background: #0d69a1;
+	        border-color: #0d69a1;
+	        color: #fff;
+	        font-weight: 800;
+	        justify-self: stretch;
+	        min-height: 44px;
+	        padding: 10px 16px;
+	      }
+
+	      .inscripcion-step-error {
+	        background: #fff4f4;
+	        border: 1px solid #f1b8b8;
+	        border-radius: 8px;
+	        color: #a23131;
+	        font-weight: 800;
+	        margin: 0;
+	        padding: 10px 12px;
+	      }
+
+	      .inscripcion-step-actions {
+	        display: flex;
+	        gap: 10px;
+	        justify-content: flex-end;
+	      }
+
+	      .inscripcion-step-actions button {
+	        border-radius: 8px;
+	        font-weight: 800;
+	        min-height: 44px;
+	        padding: 10px 16px;
+	      }
+
+	      .inscripcion-step-actions button:disabled {
+	        cursor: not-allowed;
+	        opacity: 0.5;
+	      }
+
+	      .inscripcion-step-actions button:last-child {
+	        background: #0d69a1;
+	        border-color: #0d69a1;
+	        color: #fff;
+	      }
+
+	      @media (max-width: 820px) {
+	        .inscripcion-progress {
+	          grid-template-columns: repeat(2, minmax(0, 1fr));
+	        }
+
+	        .inscripcion-form-grid {
+	          grid-template-columns: 1fr;
+	        }
+
+	        .inscripcion-context-summary,
+	        .inscripcion-summary {
+	          position: static;
+	        }
+	      }
+
+	      @media (max-width: 520px) {
+	        .inscripcion-progress {
+	          grid-template-columns: 1fr;
+	        }
+
+	        .inscripcion-option-group {
+	          grid-template-columns: 1fr;
+	        }
+
+	        .inscripcion-option-button {
+	          min-height: 52px;
+	        }
+
+	        .inscripcion-step,
+	        .inscripcion-summary {
+	          padding: 14px;
+	        }
+	      }
+
+	      .portal-summary {
+        display: grid;
+        gap: 12px;
+        margin: 18px 0;
+      }
+
+      .portal-summary div {
+        background: #f7fbfe;
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        padding: 12px;
+      }
+
+      .portal-summary span {
+        color: #4f6472;
+        display: block;
+        font-size: 0.92rem;
+        margin-bottom: 4px;
+      }
+
+      .portal-result {
+        display: grid;
+        gap: 18px;
+      }
+
+      .portal-result-dashboard {
+        gap: 22px;
+      }
+
+      .portal-result-head {
+        align-items: start;
+        display: grid;
+        gap: 16px;
+      }
+
+      .portal-result-head span,
+      .portal-status-card span,
+      .portal-whatsapp-panel span {
+        color: #4f6472;
+        display: block;
+        font-size: 0.82rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        margin-bottom: 6px;
+        text-transform: uppercase;
+      }
+
+      .portal-result-head h2 {
+        font-size: clamp(1.7rem, 5vw, 2.7rem);
+        line-height: 1.05;
+      }
+
+      .portal-status-grid {
+        display: grid;
+        gap: 12px;
+      }
+
+      .portal-status-card {
+        background: #f7fbfe;
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        display: grid;
+        gap: 8px;
+        padding: 16px;
+      }
+
+      .portal-status-card strong {
+        color: #0d69a1;
+        font-size: 1.2rem;
+        line-height: 1.15;
+      }
+
+      .portal-status-card small {
+        color: #4f6472;
+        font-size: 0.92rem;
+        line-height: 1.45;
+      }
+
+      .portal-result h2,
+      .portal-result h3,
+      .portal-result p {
+        margin: 0;
+      }
+
+      .portal-result-section {
+        border-top: 1px solid #d9e7ef;
+        display: grid;
+        gap: 12px;
+        padding-top: 18px;
+      }
+
+      .portal-result-section:first-child {
+        border-top: 0;
+        padding-top: 0;
+      }
+
+      .portal-installments {
+        display: grid;
+        gap: 10px;
+        margin: 16px 0;
+      }
+
+      .portal-installment {
+        background: #f7fbfe;
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        display: grid;
+        gap: 6px;
+        padding: 12px;
+      }
+
+      .portal-installment strong {
+        color: #0d69a1;
+      }
+
+      .portal-status-pill {
+        align-items: center;
+        border-radius: 999px;
+        display: inline-flex;
+        font-size: 0.9rem;
+        font-weight: 800;
+        justify-content: center;
+        min-height: 30px;
+        padding: 6px 10px;
+        width: fit-content;
+      }
+
+      .portal-status-pill.is-ok {
+        background: #e8f8ef;
+        color: #17683a;
+      }
+
+      .portal-status-pill.is-pending {
+        background: #fff7dc;
+        color: #7b5a00;
+      }
+
+      .portal-status-pill.is-alert {
+        background: #ffe9ef;
+        color: #9b1c42;
+      }
+
+      .portal-payment-panel {
+        background: #f7fbfe;
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        display: grid;
+        gap: 14px;
+        padding: 14px;
+      }
+
+      .portal-payment-meter {
+        background: #d9e7ef;
+        border-radius: 999px;
+        height: 12px;
+        overflow: hidden;
+      }
+
+      .portal-payment-meter span {
+        background: linear-gradient(90deg, #0d69a1, #eb3e8f);
+        display: block;
+        height: 100%;
+      }
+
+      .portal-payment-summary {
+        display: grid;
+        gap: 10px;
+      }
+
+      .portal-payment-summary div,
+      .portal-doc-item,
+      .portal-doc-ok {
+        background: #fff;
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        padding: 12px;
+      }
+
+      .portal-payment-summary span,
+      .portal-doc-item span,
+      .portal-doc-ok span {
+        color: #4f6472;
+        display: block;
+        font-size: 0.9rem;
+        margin-bottom: 4px;
+      }
+
+      .portal-payment-summary strong,
+      .portal-doc-item strong,
+      .portal-doc-ok strong {
+        color: #10202b;
+      }
+
+      .portal-doc-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .portal-doc-ok strong {
+        color: #17683a;
+      }
+
+      .portal-whatsapp-panel {
+        align-items: center;
+        background: #0d69a1;
+        border-radius: 8px;
+        color: #fff;
+        display: grid;
+        gap: 16px;
+        padding: 18px;
+      }
+
+      .portal-whatsapp-panel span,
+      .portal-whatsapp-panel h3,
+      .portal-whatsapp-panel p {
+        color: #fff;
+      }
+
+      .portal-whatsapp-panel p {
+        opacity: 0.88;
+      }
+
+      .portal-whatsapp-panel a {
+        background: #eb3e8f;
+        border-color: #eb3e8f;
+        color: #fff;
+      }
+
+      .admin-demo-grid {
+        display: grid;
+        gap: 14px;
+      }
+
+      .admin-demo-card {
+        background: #f7fbfe;
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        display: grid;
+        gap: 10px;
+        padding: 14px;
+      }
+
+      .admin-demo-card h3,
+      .admin-demo-card p {
+        margin: 0;
+      }
+
+      .admin-config-columns {
+        color: #526979;
+        font-size: 12px;
+        line-height: 1.55;
+        word-break: break-word;
+      }
+
+      .admin-actions-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 12px;
+      }
+
+      .admin-secondary-action {
+        align-items: center;
+        background: #fff;
+        border: 1px solid #cfe3ee;
+        border-radius: 8px;
+        color: #0d4f79;
+        cursor: pointer;
+        display: inline-flex;
+        font-size: 14px;
+        font-weight: 800;
+        justify-content: center;
+        min-height: 38px;
+        padding: 9px 12px;
+        text-decoration: none;
+      }
+
+      .admin-secondary-action:hover {
+        border-color: #65bcec;
+        color: #082e47;
+      }
+
+      .admin-layout {
+        gap: 18px;
+      }
+
+      .admin-login-screen {
+        align-items: center;
+        background:
+          radial-gradient(circle at 18% 18%, rgba(235, 62, 143, 0.34), transparent 30%),
+          radial-gradient(circle at 82% 12%, rgba(101, 188, 236, 0.28), transparent 28%),
+          linear-gradient(135deg, rgba(5, 21, 35, 0.96), rgba(13, 105, 161, 0.84)),
+          url("../img/turismo/hero/montana-patagonia.webp") center/cover;
+        display: grid;
+        justify-items: center;
+        min-height: calc(100svh - 36px);
+        padding: clamp(18px, 4vw, 38px);
+      }
+
+      .admin-login-card {
+        background: color-mix(in srgb, var(--color-surface) 96%, transparent);
+        border: 1px solid color-mix(in srgb, var(--color-border) 72%, transparent);
+        border-radius: 24px;
+        box-shadow: 0 28px 88px rgba(3, 15, 25, 0.36);
+        display: grid;
+        grid-template-columns: minmax(0, 0.95fr) minmax(320px, 1.05fr);
+        min-height: 560px;
+        overflow: hidden;
+        margin: 0 auto;
+        max-width: 980px;
+        width: 100%;
+      }
+
+      .admin-login-panel {
+        align-content: space-between;
+        background:
+          linear-gradient(145deg, rgba(13, 105, 161, 0.95), rgba(8, 37, 56, 0.94)),
+          url("../img/turismo/hero/ciudad-rio.webp") center/cover;
+        color: #fff;
+        display: grid;
+        gap: 26px;
+        min-height: 100%;
+        padding: clamp(24px, 5vw, 42px);
+        position: relative;
+      }
+
+      .admin-login-panel::after {
+        background: linear-gradient(180deg, transparent, rgba(4, 15, 24, 0.24));
+        content: "";
+        inset: 0;
+        pointer-events: none;
+        position: absolute;
+      }
+
+      .admin-login-logo-link {
+        align-items: center;
+        background: rgba(255, 255, 255, 0.94);
+        border: 0;
+        border-radius: 18px;
+        display: inline-flex;
+        justify-self: start;
+        padding: 10px 12px;
+        position: relative;
+        z-index: 1;
+      }
+
+      .admin-login-logo-link img {
+        display: block;
+        height: auto;
+        width: 116px;
+      }
+
+      .admin-login-brand,
+      .admin-login-highlights,
+      .admin-login-access,
+      .admin-login-access-head {
+        display: grid;
+        position: relative;
+        z-index: 1;
+      }
+
+      .admin-login-brand {
+        gap: 8px;
+      }
+
+      .admin-login-brand span {
+        color: rgba(255, 255, 255, 0.76);
+        font-size: 0.82rem;
+        font-weight: 900;
+        letter-spacing: 0.12em;
+        line-height: 1.25;
+        max-width: 100%;
+        overflow-wrap: anywhere;
+        text-align: center;
+        text-transform: uppercase;
+      }
+
+      .admin-login-brand h1,
+      .admin-login-brand p,
+      .admin-login-access-head h2,
+      .admin-login-access-head p {
+        margin: 0;
+      }
+
+      .admin-login-brand h1 {
+        color: #fff;
+        font-size: clamp(2rem, 5vw, 3.5rem);
+        line-height: 1.06;
+        max-width: 9ch;
+      }
+
+      .admin-login-brand p {
+        color: rgba(255, 255, 255, 0.82);
+        font-size: 1rem;
+        line-height: 1.45;
+        max-width: 29ch;
+      }
+
+      .admin-login-highlights {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .admin-login-highlights span {
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 999px;
+        color: #fff;
+        font-size: 0.78rem;
+        font-weight: 850;
+        padding: 8px 10px;
+      }
+
+      .admin-login-access {
+        align-content: center;
+        gap: 20px;
+        padding: clamp(24px, 5vw, 46px);
+      }
+
+      .admin-login-access-head {
+        gap: 8px;
+      }
+
+      .admin-login-access-head > span {
+        color: var(--color-accent);
+        font-size: 0.78rem;
+        font-weight: 900;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .admin-login-access-head h2 {
+        color: var(--color-text);
+        font-size: clamp(1.8rem, 6vw, 2.55rem);
+        line-height: 1;
+      }
+
+      .admin-login-access-head p {
+        color: var(--color-muted);
+        line-height: 1.48;
+        max-width: 36ch;
+      }
+
+      .admin-login-form {
+        display: grid;
+        gap: 16px;
+      }
+
+      .admin-login-form label {
+        color: var(--color-text);
+        display: grid;
+        font-weight: 850;
+        gap: 8px;
+        text-align: left;
+      }
+
+      .admin-login-form input {
+        background: var(--color-surface-strong);
+        border: 1px solid var(--color-border-strong);
+        border-radius: 14px;
+        color: var(--color-text);
+        font: inherit;
+        min-height: 50px;
+        padding: 14px 15px;
+        width: 100%;
+      }
+
+      .admin-login-form input:focus {
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary) 18%, transparent);
+        outline: none;
+      }
+
+      .admin-login-form button {
+        background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+        border: 0;
+        border-radius: 14px;
+        box-shadow: 0 14px 32px color-mix(in srgb, var(--color-primary) 28%, transparent);
+        color: #fff;
+        font-weight: 900;
+        justify-content: center;
+        line-height: 1.25;
+        margin-top: 4px;
+        min-height: 52px;
+        padding-inline: 14px;
+        text-align: center;
+        white-space: normal;
+      }
+
+      .admin-login-error {
+        background: #fff3dc;
+        border: 1px solid #f1ca82;
+        border-radius: 10px;
+        color: #8a5400;
+        font-size: 0.9rem;
+        font-weight: 800;
+        line-height: 1.4;
+        margin: 0;
+        padding: 10px 12px;
+        text-align: center;
+      }
+
+      .admin-login-note {
+        background: var(--color-surface-soft);
+        border: 1px solid var(--color-border);
+        border-radius: 14px;
+        color: var(--color-muted);
+        display: grid;
+        gap: 5px;
+        padding: 12px;
+      }
+
+      .admin-login-note strong {
+        color: var(--color-text);
+        line-height: 1.25;
+      }
+
+      .admin-login-note span {
+        line-height: 1.4;
+      }
+
+      .admin-shell-header {
+        align-items: center;
+        background:
+          linear-gradient(135deg, rgba(235, 62, 143, 0.16), rgba(235, 62, 143, 0) 34%),
+          linear-gradient(135deg, #0b5f95, #073f66);
+        border: 1px solid rgba(235, 62, 143, 0.34);
+        border-radius: 14px;
+        box-shadow: 0 14px 34px rgba(8, 75, 120, 0.14);
+        color: #fff;
+        display: grid;
+        gap: 18px;
+        grid-template-columns: minmax(220px, 1fr) minmax(300px, auto);
+        padding: 18px 28px;
+        padding-block: 18px;
+        padding-inline: 28px;
+      }
+
+      .admin-layout > .admin-shell-header:first-child {
+        padding-block: 18px;
+        padding-inline: 28px;
+      }
+
+      .admin-shell-header strong,
+      .admin-shell-header span {
+        margin: 0;
+      }
+
+      .admin-shell-brand,
+      .admin-shell-session {
+        min-width: 0;
+      }
+
+      .admin-shell-brand {
+        display: grid;
+        gap: 5px;
+        justify-items: start;
+      }
+
+      .admin-shell-brand strong {
+        color: #ffffff;
+        font-size: 1.08rem;
+        font-weight: 950;
+        line-height: 1.12;
+      }
+
+      .admin-shell-brand span {
+        color: rgba(255, 255, 255, 0.72);
+      }
+
+      .admin-shell-brand span,
+      .admin-shell-session span {
+        font-size: 0.76rem;
+        font-weight: 850;
+        letter-spacing: 0.04em;
+        line-height: 1.2;
+        text-transform: uppercase;
+      }
+
+      .admin-shell-session {
+        align-items: center;
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(235, 62, 143, 0.46);
+        border-radius: 12px;
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.12),
+          0 0 0 1px rgba(255, 255, 255, 0.04);
+        display: grid;
+        gap: 7px 16px;
+        grid-column: 2;
+        grid-template-columns: minmax(0, 1fr) auto;
+        justify-content: stretch;
+        justify-self: end;
+        align-self: center;
+        margin-top: 0;
+        max-width: 340px;
+        min-width: 300px;
+        padding: 12px 16px;
+        text-align: left;
+      }
+
+      .admin-shell-session span {
+        color: rgba(255, 255, 255, 0.76);
+        grid-column: 1 / -1;
+        justify-self: start;
+        letter-spacing: 0.08em;
+      }
+
+      .admin-shell-session strong {
+        color: #ffffff;
+        font-size: 1.12rem;
+        font-weight: 950;
+        line-height: 1.15;
+      }
+
+      .admin-shell-session button {
+        background: rgba(235, 62, 143, 0.22);
+        border-color: rgba(255, 171, 214, 0.72);
+        color: #ffffff;
+        font-weight: 800;
+        justify-self: end;
+        line-height: 1.25;
+        min-height: 40px;
+        padding: 9px 12px;
+        text-align: center;
+        white-space: normal;
+      }
+
+      .admin-shell {
+        display: grid;
+        gap: 18px;
+        margin-inline: auto;
+        max-width: 1040px;
+      }
+
+      .admin-sidebar {
+        background: #ffffff;
+        border: 1px solid #d9e7ef;
+        border-radius: 14px;
+        box-shadow: none;
+        display: block;
+        padding: 10px;
+      }
+
+      .admin-sidebar nav {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        margin: 0;
+      }
+
+      .admin-sidebar a {
+        align-content: center;
+        background: #f7fbfe;
+        border: 1px solid #e2ebef;
+        border-radius: 12px;
+        color: #10202b;
+        display: grid;
+        gap: 6px;
+        min-height: 58px;
+        padding: 12px 14px;
+      }
+
+      .admin-sidebar a.active,
+      .admin-sidebar a:hover {
+        background: linear-gradient(180deg, #fff7fb, #eef8fe);
+        border-color: rgba(235, 62, 143, 0.58);
+        color: #0d69a1;
+      }
+
+      .admin-sidebar a.active {
+        box-shadow:
+          inset 0 0 0 1px rgba(235, 62, 143, 0.16),
+          inset 4px 0 0 rgba(235, 62, 143, 0.88);
+      }
+
+      .admin-sidebar small {
+        color: #4f6472;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        line-height: 1.15;
+        text-transform: uppercase;
+      }
+
+      .admin-sidebar span {
+        font-weight: 950;
+        line-height: 1.18;
+      }
+
+      .admin-main {
+        display: grid;
+        gap: 22px;
+      }
+
+      .admin-module-grid {
+        display: grid;
+        gap: 12px;
+      }
+
+      .admin-module-card {
+        background: #f7fbfe;
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        color: #10202b;
+        display: grid;
+        gap: 8px;
+        padding: 14px;
+      }
+
+      .admin-module-card.active {
+        background: #eef8fe;
+        border-color: #0d69a1;
+      }
+
+      .admin-coming-soon,
+      .admin-overview {
+        min-height: 220px;
+      }
+
+      .admin-coming-soon h2,
+      .admin-coming-soon p,
+      .admin-overview h2,
+      .admin-overview p {
+        margin: 0;
+      }
+
+      .admin-turismo-layout {
+        color: #10202b;
+        display: grid;
+        gap: 44px;
+        margin-inline: auto;
+        max-width: 960px;
+        width: 100%;
+      }
+
+      .admin-turismo-layout > .admin-turismo-panel {
+        position: relative;
+      }
+
+      .admin-turismo-layout > .admin-turismo-panel::before {
+        background: #d9e7ef;
+        content: "";
+        height: 1px;
+        left: 24px;
+        position: absolute;
+        right: 24px;
+        top: -22px;
+      }
+
+      .admin-turismo-layout > .admin-turismo-panel:first-of-type::before {
+        display: none;
+      }
+
+      .admin-turismo-hero {
+        align-items: start;
+        background: #ffffff;
+        border: 1px solid #e2ebef;
+        border-radius: 16px;
+        box-shadow: none;
+        color: #10202b;
+        display: grid;
+        gap: 22px;
+        padding: 26px;
+      }
+
+      .admin-turismo-layout > .admin-turismo-hero:first-child {
+        padding-top: 26px;
+      }
+
+      .admin-turismo-hero h1,
+      .admin-turismo-hero p {
+        margin: 0;
+      }
+
+      .admin-turismo-hero h1 {
+        font-size: clamp(1.85rem, 4vw, 2.35rem);
+        letter-spacing: 0;
+        line-height: 1.08;
+      }
+
+      .admin-turismo-hero span {
+        color: #4f6472;
+        display: block;
+        font-size: 0.95rem;
+        line-height: 1.55;
+        margin-top: 8px;
+        max-width: 42ch;
+      }
+
+      .admin-turismo-hero-stats {
+        align-items: stretch;
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .admin-turismo-hero-stats article {
+        align-content: center;
+        background: #f7fbfe;
+        border: 1px solid #dce7ec;
+        border-radius: 12px;
+        display: grid;
+        gap: 7px;
+        justify-items: center;
+        min-width: 0;
+        min-height: 78px;
+        padding: 12px 10px;
+        text-align: center;
+      }
+
+      .admin-turismo-hero-stats strong {
+        color: #10202b;
+        display: block;
+        font-size: 1.28rem;
+        line-height: 1;
+      }
+
+      .admin-turismo-hero-stats span {
+        color: #4f6472;
+        font-size: 0.66rem;
+        font-weight: 800;
+        line-height: 1.15;
+        margin: 0;
+        max-width: 14ch;
+        overflow-wrap: anywhere;
+        text-transform: uppercase;
+      }
+
+      .admin-turismo-hero > button {
+        background: linear-gradient(135deg, #0d69a1, #eb3e8f);
+        border-color: rgba(235, 62, 143, 0.88);
+        color: #fff;
+        font-weight: 800;
+        justify-self: start;
+        line-height: 1.25;
+        min-height: 46px;
+        padding-inline: 18px;
+        text-align: center;
+        white-space: normal;
+      }
+
+      .admin-turismo-workspace {
+        display: grid;
+        gap: 24px;
+      }
+
+      .admin-turismo-main-column {
+        display: grid;
+        gap: 24px;
+        min-width: 0;
+      }
+
+      .admin-turismo-panel {
+        background: #fff;
+        border: 1px solid #e2ebef;
+        border-radius: 16px;
+        box-shadow: none;
+        display: grid;
+        gap: 22px;
+        padding: 28px;
+      }
+
+      .admin-pasajeros-context {
+        align-items: center;
+        border: 1px solid #d9e7ef;
+        border-radius: 14px;
+        display: grid;
+        gap: 8px;
+        padding: 16px;
+      }
+
+      .admin-pasajeros-context--compact {
+        align-items: stretch;
+      }
+
+      .admin-pasajeros-dashboard {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .admin-pasajeros-dashboard article {
+        background: #f7fbfe;
+        border: 1px solid #d9e7ef;
+        border-radius: 14px;
+        display: grid;
+        gap: 4px;
+        min-width: 0;
+        padding: 16px;
+      }
+
+      .admin-pasajeros-dashboard strong {
+        color: #10202b;
+        font-size: 1.55rem;
+        line-height: 1;
+      }
+
+      .admin-pasajeros-dashboard span {
+        color: #516575;
+        font-size: 0.82rem;
+        font-weight: 800;
+      }
+
+      .admin-pasajeros-filter-panel {
+        gap: 16px;
+      }
+
+      .admin-pasajeros-filters {
+        align-items: end;
+        display: grid;
+        gap: 12px;
+        grid-template-columns: minmax(220px, 1.4fr) repeat(4, minmax(150px, 1fr)) auto;
+      }
+
+      .admin-pasajeros-filters label {
+        color: #44545f;
+        display: grid;
+        font-size: 0.88rem;
+        font-weight: 800;
+        gap: 6px;
+      }
+
+      .admin-pasajeros-filters input,
+      .admin-pasajeros-filters select {
+        background: #fff;
+        border: 1px solid #c9d8df;
+        border-radius: 10px;
+        color: #10202b;
+        font: inherit;
+        min-height: 42px;
+        min-width: 0;
+        padding: 9px 10px;
+      }
+
+      .admin-pasajeros-breadcrumb,
+      .admin-pasajeros-selector-list,
+      .admin-pasajeros-section-head,
+      .admin-pasajeros-inline-actions {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .admin-pasajeros-breadcrumb {
+        background: #f7fbfe;
+        border: 1px solid #d9e7ef;
+        border-radius: 14px;
+        padding: 12px;
+      }
+
+      .admin-pasajeros-breadcrumb span {
+        background: #fff;
+        border: 1px solid #d9e7ef;
+        border-radius: 999px;
+        color: #10202b;
+        font-size: 0.9rem;
+        font-weight: 800;
+        padding: 8px 12px;
+      }
+
+      .admin-pasajeros-selector-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .admin-pasajeros-selector-list button.is-active {
+        background: #0d69a1;
+        border-color: #0d69a1;
+        color: #fff;
+      }
+
+      .admin-pasajeros-section-head {
+        justify-content: space-between;
+      }
+
+      .admin-pasajeros-section-head h2 {
+        margin: 0;
+      }
+
+      .admin-pasajeros-assignment {
+        display: grid;
+        gap: 8px;
+        min-width: 260px;
+      }
+
+      .admin-pasajeros-assignment label {
+        color: #516575;
+        display: grid;
+        font-size: 0.72rem;
+        font-weight: 800;
+        gap: 4px;
+        text-transform: uppercase;
+      }
+
+      .admin-pasajeros-assignment select {
+        background: #fff;
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        color: #10202b;
+        font: inherit;
+        min-height: 34px;
+        padding: 6px 8px;
+        text-transform: none;
+      }
+
+      .admin-fichas-flow-summary {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .admin-fichas-flow-summary span,
+      .admin-fichas-message {
+        background: #f7fbfe;
+        border: 1px solid #d9e7ef;
+        border-radius: 999px;
+        color: #10202b;
+        font-size: 0.9rem;
+        font-weight: 800;
+        padding: 8px 12px;
+      }
+
+      .admin-fichas-message {
+        background: #eef6fb;
+        border-color: #cfe3ee;
+        border-radius: 12px;
+        color: #0d4f79;
+      }
+
+      .admin-fichas-table {
+        min-width: 1280px;
+      }
+
+      .admin-fichas-main-cell strong,
+      .admin-fichas-request strong,
+      .admin-fichas-table td > strong {
+        color: #10202b;
+        display: block;
+        font-weight: 800;
+      }
+
+      .admin-fichas-main-cell span,
+      .admin-fichas-request span,
+      .admin-fichas-table td > span {
+        color: #5f747f;
+        display: block;
+        font-size: 12px;
+        margin-top: 3px;
+      }
+
+      .admin-fichas-flow {
+        display: grid;
+        gap: 8px;
+        min-width: 220px;
+      }
+
+      .admin-fichas-flow > span {
+        color: #0d4f79;
+        font-size: 0.82rem;
+        font-weight: 900;
+      }
+
+      .admin-fichas-flow ol {
+        display: flex;
+        gap: 6px;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .admin-fichas-flow li {
+        background: #eef4f7;
+        border: 1px solid #cfdde4;
+        border-radius: 999px;
+        color: #516575;
+        font-size: 0.72rem;
+        font-weight: 900;
+        padding: 5px 8px;
+        white-space: nowrap;
+      }
+
+      .admin-fichas-flow li.is-current {
+        background: #fff7e3;
+        border-color: #efd58e;
+        color: #795600;
+      }
+
+      .admin-fichas-flow li.is-done {
+        background: #eaf7ef;
+        border-color: #b7dec5;
+        color: #146538;
+      }
+
+      .admin-fichas-flow.is-alert > span {
+        color: #8f1f1f;
+      }
+
+      .admin-fichas-request {
+        display: grid;
+        gap: 4px;
+        margin-bottom: 10px;
+        min-width: 260px;
+      }
+
+      .admin-pasajeros-primary-button {
+        background: #0d69a1;
+        border-color: #0d69a1;
+        color: #fff;
+        font-weight: 800;
+        justify-self: start;
+        min-height: 44px;
+        padding: 10px 16px;
+      }
+
+      .admin-pasajeros-secondary-button {
+        background: transparent;
+        border-color: #a9bdc7;
+        color: #10202b;
+      }
+
+      .admin-pasajeros-form-panel h2,
+      .admin-pasajeros-form-panel p {
+        margin: 0;
+      }
+
+      .admin-pasajeros-form {
+        display: grid;
+        gap: 18px;
+      }
+
+      .admin-pasajeros-form fieldset {
+        border: 1px solid #d9e7ef;
+        border-radius: 14px;
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        margin: 0;
+        padding: 18px;
+      }
+
+      .admin-pasajeros-form legend {
+        color: #10202b;
+        font-weight: 800;
+        padding: 0 8px;
+      }
+
+      .admin-pasajeros-form label {
+        color: #44545f;
+        display: grid;
+        font-weight: 700;
+        gap: 6px;
+      }
+
+      .admin-pasajeros-form input,
+      .admin-pasajeros-form select,
+      .admin-pasajeros-form textarea {
+        border: 1px solid #c9d8df;
+        border-radius: 10px;
+        color: #10202b;
+        font: inherit;
+        min-height: 40px;
+        padding: 9px 10px;
+      }
+
+      .admin-pasajeros-form textarea {
+        resize: vertical;
+      }
+
+      .admin-pasajeros-form fieldset:last-of-type {
+        grid-template-columns: 1fr;
+      }
+
+      .admin-pasajeros-form-error {
+        background: #fff4f4;
+        border: 1px solid #e1a3a3;
+        border-radius: 12px;
+        color: #8f1f1f;
+        padding: 12px 14px;
+      }
+
+      .admin-pasajeros-group-modal-card {
+        display: grid;
+        gap: 16px;
+        padding: 26px;
+      }
+
+      .admin-pasajeros-modal-header {
+        display: grid;
+        gap: 6px;
+        padding-right: 38px;
+      }
+
+      .admin-pasajeros-modal-header > span {
+        color: #0d69a1;
+        font-size: 0.76rem;
+        font-weight: 900;
+        letter-spacing: 0;
+        text-transform: uppercase;
+      }
+
+      .admin-pasajeros-modal-header h2 {
+        color: #10202b;
+        margin: 0;
+      }
+
+      .admin-pasajeros-modal-header p {
+        color: #5a6a73;
+        margin: 0;
+      }
+
+      .admin-pasajeros-modal-context {
+        background: #f7fbfe;
+        border: 1px solid #d9e7ef;
+        border-radius: 14px;
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        padding: 14px;
+      }
+
+      .admin-pasajeros-modal-context div {
+        display: grid;
+        gap: 2px;
+        min-width: 0;
+      }
+
+      .admin-pasajeros-modal-context span {
+        color: #6a7b84;
+        font-size: 0.74rem;
+        font-weight: 900;
+      }
+
+      .admin-pasajeros-modal-context strong {
+        color: #10202b;
+        font-size: 0.92rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .admin-pasajeros-group-form {
+        gap: 14px;
+      }
+
+      .admin-pasajeros-group-form fieldset {
+        grid-template-columns: 1fr;
+        padding: 16px;
+      }
+
+      .admin-pasajeros-modal-note {
+        background: #eef6fb;
+        border: 1px solid #cfe3ee;
+        border-radius: 12px;
+        color: #355366;
+        font-size: 0.9rem;
+        margin: 0;
+        padding: 10px 12px;
+      }
+
+      .admin-pasajeros-form-actions,
+      .admin-pasajeros-row-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .admin-pasajeros-row-actions button {
+        border-color: #a9bdc7;
+        color: #10202b;
+        padding: 7px 10px;
+      }
+
+      .admin-pasajeros-table-panel {
+        gap: 14px;
+        min-width: 0;
+      }
+
+      .admin-pasajeros-table-head {
+        align-items: end;
+        display: flex;
+        gap: 16px;
+        justify-content: space-between;
+      }
+
+      .admin-pasajeros-table-head h2,
+      .admin-pasajeros-table-head p {
+        margin: 0;
+      }
+
+      .admin-pasajeros-table-head p {
+        color: #5a6a73;
+        margin-top: 4px;
+      }
+
+      .admin-pasajeros-table-head > strong {
+        background: #eef6fb;
+        border: 1px solid #cfe3ee;
+        border-radius: 999px;
+        color: #0d4f79;
+        padding: 7px 10px;
+        white-space: nowrap;
+      }
+
+      .admin-pasajeros-table-wrap {
+        border: 1px solid #cfdde4;
+        border-radius: 12px;
+        max-width: 100%;
+        min-width: 0;
+        overflow: auto;
+      }
+
+      .admin-pasajeros-table {
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: 14px;
+        min-width: 2200px;
+        width: 100%;
+      }
+
+      .admin-pasajeros-table.admin-pasajeros-table--compact {
+        min-width: 1080px;
+      }
+
+      .admin-pasajeros-table th,
+      .admin-pasajeros-table td {
+        border-bottom: 1px solid #e1e9ee;
+        border-right: 1px solid #e1e9ee;
+        padding: 10px 12px;
+        text-align: left;
+        vertical-align: middle;
+        white-space: nowrap;
+      }
+
+      .admin-pasajeros-table th:last-child,
+      .admin-pasajeros-table td:last-child {
+        border-right: 0;
+      }
+
+      .admin-pasajeros-table thead th {
+        background: #f3f7fa;
+        color: #33454f;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+      }
+
+      .admin-pasajeros-table tbody tr:nth-child(even) {
+        background: #fbfdfe;
+      }
+
+      .admin-pasajeros-table tbody tr:hover {
+        background: #eef6fb;
+      }
+
+      .admin-pasajeros-table tbody tr.is-selected {
+        background: #e8f4fb;
+      }
+
+      .admin-pasajeros-table tbody tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .admin-pasajeros-table td > span {
+        color: #5f747f;
+        display: block;
+        font-size: 12px;
+        margin-top: 3px;
+      }
+
+      .admin-pasajeros-passenger-cell strong,
+      .admin-pasajeros-contact-cell strong,
+      .admin-pasajeros-group-cell strong {
+        color: #10202b;
+        display: block;
+        font-weight: 800;
+      }
+
+      .admin-pasajeros-passenger-cell span,
+      .admin-pasajeros-contact-cell span,
+      .admin-pasajeros-group-cell span {
+        color: #5f747f;
+        display: block;
+        font-size: 12px;
+        margin-top: 3px;
+      }
+
+      .admin-pasajeros-profile {
+        border-color: #bed7e6;
+        gap: 18px;
+      }
+
+      .admin-pasajeros-profile-hero {
+        align-items: center;
+        background: #f7fbfe;
+        border: 1px solid #d9e7ef;
+        border-radius: 14px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        justify-content: space-between;
+        padding: 18px;
+      }
+
+      .admin-pasajeros-profile-hero span,
+      .admin-pasajeros-profile-grid article > span {
+        color: #516575;
+        font-size: 0.76rem;
+        font-weight: 900;
+        letter-spacing: 0;
+        text-transform: uppercase;
+      }
+
+      .admin-pasajeros-profile-hero strong {
+        color: #10202b;
+        display: block;
+        font-size: 1.45rem;
+        line-height: 1.15;
+        margin-top: 4px;
+      }
+
+      .admin-pasajeros-profile-hero p {
+        color: #5a6a73;
+        margin: 4px 0 0;
+      }
+
+      .admin-pasajeros-profile-statuses {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: flex-end;
+      }
+
+      .admin-pasajeros-profile-grid {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .admin-pasajeros-profile-grid article {
+        background: #fff;
+        border: 1px solid #d9e7ef;
+        border-radius: 14px;
+        display: grid;
+        gap: 10px;
+        min-width: 0;
+        padding: 16px;
+      }
+
+      .admin-pasajeros-profile-grid article strong {
+        color: #10202b;
+        font-size: 1.05rem;
+      }
+
+      .admin-pasajeros-profile-grid article p {
+        color: #5a6a73;
+        margin: 0;
+      }
+
+      .admin-pasajeros-profile-grid dl {
+        display: grid;
+        gap: 8px;
+        margin: 0;
+      }
+
+      .admin-pasajeros-profile-grid dl div {
+        display: grid;
+        gap: 2px;
+      }
+
+      .admin-pasajeros-profile-grid dt {
+        color: #6a7b84;
+        font-size: 0.78rem;
+        font-weight: 800;
+      }
+
+      .admin-pasajeros-profile-grid dd {
+        color: #10202b;
+        font-weight: 750;
+        margin: 0;
+      }
+
+      @media (max-width: 980px) {
+        .admin-pasajeros-dashboard {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .admin-pasajeros-filters {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .admin-pasajeros-profile-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 620px) {
+        .admin-pasajeros-dashboard,
+        .admin-pasajeros-filters,
+        .admin-pasajeros-profile-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .admin-pasajeros-group-modal-card {
+          padding: 22px;
+        }
+
+        .admin-pasajeros-modal-context {
+          grid-template-columns: 1fr;
+        }
+
+        .admin-pasajeros-table.admin-pasajeros-table--compact {
+          min-width: 920px;
+        }
+      }
+
+      .admin-installments-strip {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        min-width: 360px;
+      }
+
+      .admin-installment-pill {
+        border: 1px solid #cfdde4;
+        border-radius: 999px;
+        display: inline-flex;
+        font-size: 12px;
+        font-weight: 800;
+        padding: 4px 8px;
+      }
+
+      .admin-installment-pill.is-ok {
+        background: #eaf7ef;
+        border-color: #b7dec5;
+        color: #146538;
+      }
+
+      .admin-installment-pill.is-pending {
+        background: #fff7e3;
+        border-color: #efd58e;
+        color: #795600;
+      }
+
+      .admin-installment-pill.is-alert {
+        background: #fff0f0;
+        border-color: #e5b3b3;
+        color: #8f1f1f;
+      }
+
+      .admin-installment-pill.is-neutral {
+        background: #eef4f7;
+        border-color: #cfdde4;
+        color: #33454f;
+      }
+
+      .admin-payment-dashboard {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .admin-payment-dashboard article,
+      .admin-payment-architecture-grid article {
+        background: #f7fbfe;
+        border: 1px solid #d9e7ef;
+        border-radius: 14px;
+        display: grid;
+        gap: 5px;
+        min-width: 0;
+        padding: 16px;
+      }
+
+      .admin-payment-dashboard strong {
+        color: #10202b;
+        font-size: 1.28rem;
+        line-height: 1.1;
+      }
+
+      .admin-payment-dashboard span,
+      .admin-payment-architecture-grid span {
+        color: #516575;
+        font-size: 0.78rem;
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+
+      .admin-payment-architecture {
+        gap: 14px;
+      }
+
+      .admin-payment-architecture h2,
+      .admin-payment-architecture p {
+        margin: 0;
+      }
+
+      .admin-payment-architecture p {
+        color: #5a6a73;
+        margin-top: 4px;
+      }
+
+      .admin-payment-architecture-grid {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .admin-payment-architecture-grid strong {
+        color: #10202b;
+        font-size: 0.98rem;
+      }
+
+      .admin-payment-table {
+        min-width: 1180px;
+      }
+
+      .admin-payment-passenger-cell strong,
+      .admin-payment-summary-cell strong {
+        color: #10202b;
+        display: block;
+        font-weight: 800;
+      }
+
+      .admin-payment-passenger-cell span,
+      .admin-payment-summary-cell span,
+      .admin-payment-table td > span {
+        color: #5f747f;
+        display: block;
+        font-size: 12px;
+        margin-top: 3px;
+      }
+
+      .admin-payment-history {
+        display: grid;
+        gap: 6px;
+        min-width: 260px;
+      }
+
+      .admin-payment-history-item {
+        background: #fbfdfe;
+        border: 1px solid #e1e9ee;
+        border-radius: 10px;
+        display: grid;
+        gap: 2px;
+        padding: 8px 10px;
+      }
+
+      .admin-payment-history-item span,
+      .admin-payment-history-item small {
+        color: #5f747f;
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .admin-payment-history-item strong {
+        color: #10202b;
+        font-size: 12px;
+      }
+
+      @media (max-width: 980px) {
+        .admin-payment-dashboard,
+        .admin-payment-architecture-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 620px) {
+        .admin-payment-dashboard,
+        .admin-payment-architecture-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .admin-payment-table {
+          min-width: 980px;
+        }
+      }
+
+      .admin-pasajeros-status {
+        border: 1px solid #cfdde4;
+        border-radius: 999px;
+        display: inline-flex;
+        font-size: 12px;
+        font-weight: 800;
+        justify-content: center;
+        min-width: 74px;
+        padding: 4px 8px;
+      }
+
+      .admin-pasajeros-status.is-ok {
+        background: #eaf7ef;
+        border-color: #b7dec5;
+        color: #146538;
+      }
+
+      .admin-pasajeros-status.is-pending {
+        background: #fff7e3;
+        border-color: #efd58e;
+        color: #795600;
+      }
+
+      .admin-pasajeros-status.is-alert {
+        background: #fff0f0;
+        border-color: #e5b3b3;
+        color: #8f1f1f;
+      }
+
+      .ficha-adhesion-layout {
+        display: grid;
+        gap: 24px;
+        max-width: 980px;
+      }
+
+      .ficha-adhesion-hero,
+      .ficha-adhesion-panel {
+        background: #fff;
+        border: 1px solid #d9e7ef;
+        border-radius: 16px;
+        display: grid;
+        gap: 14px;
+        padding: 28px;
+      }
+
+      .ficha-adhesion-hero p,
+      .ficha-adhesion-hero h1 {
+        margin: 0;
+      }
+
+      .ficha-adhesion-form {
+        display: grid;
+        gap: 18px;
+      }
+
+      .ficha-adhesion-context {
+        background: #f5f9fb;
+        border: 1px solid #d9e7ef;
+        border-radius: 12px;
+        display: grid;
+        gap: 6px;
+        padding: 14px;
+      }
+
+      .ficha-adhesion-context span {
+        color: #5c6c76;
+        font-size: 0.85rem;
+        font-weight: 800;
+        text-transform: uppercase;
+      }
+
+      .ficha-adhesion-context strong,
+      .ficha-adhesion-context p {
+        margin: 0;
+      }
+
+      .ficha-adhesion-form fieldset {
+        border: 1px solid #d9e7ef;
+        border-radius: 14px;
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        margin: 0;
+        padding: 18px;
+      }
+
+      .ficha-adhesion-form legend {
+        color: #10202b;
+        font-weight: 800;
+        padding: 0 8px;
+      }
+
+      .ficha-adhesion-form label {
+        color: #44545f;
+        display: grid;
+        font-weight: 700;
+        gap: 6px;
+      }
+
+      .ficha-adhesion-form input,
+      .ficha-adhesion-form select {
+        border: 1px solid #c9d8df;
+        border-radius: 10px;
+        color: #10202b;
+        font: inherit;
+        min-height: 40px;
+        padding: 9px 10px;
+      }
+
+      .ficha-adhesion-check {
+        align-items: center;
+        display: flex !important;
+        gap: 10px;
+        grid-column: 1 / -1;
+      }
+
+      .ficha-adhesion-check input {
+        min-height: auto;
+        width: auto;
+      }
+
+      .ficha-adhesion-signature {
+        display: grid;
+        gap: 10px;
+        grid-column: 1 / -1;
+      }
+
+      .ficha-adhesion-signature canvas {
+        background: #fbfdfe;
+        border: 1px dashed #9fb5c0;
+        border-radius: 12px;
+        height: 220px;
+        max-width: 100%;
+        touch-action: none;
+        width: 100%;
+      }
+
+      .ficha-adhesion-signature button {
+        justify-self: start;
+      }
+
+      .ficha-adhesion-error {
+        background: #fff4f4;
+        border: 1px solid #e1a3a3;
+        border-radius: 12px;
+        color: #8f1f1f;
+        padding: 12px 14px;
+      }
+
+      .ficha-adhesion-success {
+        background: #eaf7ef;
+        border: 1px solid #b7dec5;
+        border-radius: 12px;
+        color: #146538;
+        font-weight: 800;
+        padding: 12px 14px;
+      }
+
+      .ficha-adhesion-success-screen {
+        align-items: start;
+        gap: 14px;
+        margin: 0 auto;
+        max-width: 680px;
+        text-align: left;
+      }
+
+      .ficha-adhesion-success-screen p {
+        color: #425460;
+        font-size: 1rem;
+        line-height: 1.45;
+        margin: 0;
+      }
+
+      .ficha-adhesion-success-large {
+        font-size: 1.18rem;
+      }
+
+      .ficha-adhesion-home-link {
+        align-items: center;
+        background: #0d69a1;
+        border: 1px solid #0d69a1;
+        border-radius: 8px;
+        color: #fff;
+        display: inline-flex;
+        font-weight: 800;
+        min-height: 44px;
+        padding: 10px 16px;
+        text-decoration: none;
+      }
+
+      .ficha-adhesion-submit {
+        background: #0d69a1;
+        border-color: #0d69a1;
+        color: #fff;
+        font-weight: 800;
+        justify-self: start;
+        min-height: 44px;
+        padding: 10px 16px;
+      }
+
+      .admin-turismo-preview-panel {
+        align-self: start;
+      }
+
+      .admin-turismo-side-panel {
+        align-self: start;
+        display: grid;
+        gap: 12px;
+      }
+
+      .admin-turismo-side-card {
+        background: linear-gradient(180deg, #ffffff, #f8fbfd);
+        border: 1px solid #d9e7ef;
+        border-radius: 16px;
+        display: grid;
+        gap: 14px;
+        min-width: 0;
+        padding: 18px;
+      }
+
+      .admin-turismo-side-card p,
+      .admin-turismo-side-card h3,
+      .admin-turismo-side-card strong {
+        margin: 0;
+      }
+
+      .admin-turismo-side-card > p,
+      .admin-turismo-side-card-head p {
+        color: #4f6472;
+        font-size: 0.76rem;
+        font-weight: 900;
+        letter-spacing: 0.05em;
+        line-height: 1.25;
+        overflow-wrap: anywhere;
+        text-transform: uppercase;
+      }
+
+      .admin-turismo-side-card--status strong {
+        color: #10202b;
+        font-size: 1rem;
+        line-height: 1.25;
+        overflow-wrap: anywhere;
+      }
+
+      .admin-turismo-compact-missing {
+        display: grid;
+        gap: 9px;
+      }
+
+      .admin-turismo-compact-missing span {
+        background: #fff7e8;
+        border: 1px solid #f1ca82;
+        border-radius: 9px;
+        color: #8a5400;
+        font-size: 0.82rem;
+        font-weight: 800;
+        line-height: 1.25;
+        overflow-wrap: anywhere;
+        padding: 9px 11px;
+      }
+
+      .admin-turismo-compact-missing .is-ok {
+        background: #e7f8ef;
+        border-color: #bce8ce;
+        color: #147a43;
+      }
+
+      .admin-turismo-side-actions {
+        display: grid;
+        gap: 12px;
+      }
+
+      .admin-turismo-secondary-actions {
+        border-top: 1px solid #d9e7ef;
+        display: grid;
+        gap: 10px;
+        padding-top: 14px;
+      }
+
+      .admin-turismo-secondary-actions button {
+        background: transparent;
+        border: 1px solid #d9e7ef;
+        border-radius: 9px;
+        color: #2f4656;
+        cursor: pointer;
+        font-size: 0.84rem;
+        font-weight: 900;
+        line-height: 1.25;
+        padding: 8px 10px;
+        text-align: center;
+        white-space: normal;
+        width: 100%;
+      }
+
+      .admin-turismo-secondary-actions button:hover {
+        background: #f7fbfe;
+        border-color: #b8d4e4;
+      }
+
+      .admin-turismo-side-actions button {
+        line-height: 1.25;
+        min-height: 42px;
+        padding-inline: 10px;
+        text-align: center;
+        white-space: normal;
+        width: 100%;
+      }
+
+      .admin-turismo-side-actions button:disabled {
+        cursor: not-allowed;
+        opacity: 0.48;
+      }
+
+      .admin-turismo-side-actions button:not(.admin-action-primary):not(.admin-action-publish) {
+        background: #f7fbfe;
+        border-color: #b8d4e4;
+        color: #10202b;
+      }
+
+      .admin-turismo-side-card-head {
+        align-items: start;
+        display: grid;
+        gap: 6px;
+      }
+
+      .admin-turismo-side-card-head h3 {
+        color: #10202b;
+        font-size: 1rem;
+        line-height: 1.2;
+        overflow-wrap: anywhere;
+      }
+
+      .admin-turismo-side-card-head span {
+        color: #637685;
+        font-size: 0.8rem;
+        font-weight: 800;
+        overflow-wrap: anywhere;
+      }
+
+      .admin-turismo-section-head {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 18px;
+        justify-content: space-between;
+      }
+
+      .admin-turismo-section-head > div {
+        display: grid;
+        gap: 7px;
+        max-width: 56ch;
+        min-width: 0;
+      }
+
+      .admin-turismo-section-head h2,
+      .admin-turismo-section-head p {
+        margin: 0;
+      }
+
+      .admin-turismo-section-head p {
+        color: #4f6472;
+        font-size: 0.75rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        line-height: 1.25;
+        text-transform: uppercase;
+      }
+
+      .admin-turismo-section-head h2 {
+        color: #10202b;
+        font-size: clamp(1.28rem, 2.5vw, 1.6rem);
+        letter-spacing: 0;
+        line-height: 1.16;
+        overflow-wrap: anywhere;
+      }
+
+      .admin-turismo-list {
+        display: grid;
+        gap: 0;
+        border-top: 1px solid #e4ecef;
+      }
+
+      .admin-turismo-list-head,
+      .admin-turismo-row {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: minmax(0, 1fr) auto minmax(130px, 0.28fr);
+      }
+
+      .admin-turismo-list-head {
+        color: #4f6472;
+        font-size: 0.75rem;
+        font-weight: 800;
+        line-height: 1.2;
+        padding: 0 0 10px;
+        text-transform: uppercase;
+      }
+
+      .admin-turismo-row {
+        align-items: center;
+        background: transparent;
+        border: 0;
+        border-bottom: 1px solid #e4ecef;
+        border-radius: 0;
+        padding: 18px 0;
+      }
+
+      .admin-turismo-empty-row {
+        grid-template-columns: minmax(0, 1fr);
+        min-height: 82px;
+      }
+
+      .admin-turismo-row.selected {
+        background: transparent;
+        border-color: #bfd8e7;
+      }
+
+      .admin-turismo-row div:first-child {
+        display: grid;
+        gap: 6px;
+        max-width: 52ch;
+        min-width: 0;
+      }
+
+      .admin-turismo-row span {
+        color: #4f6472;
+        line-height: 1.45;
+        overflow-wrap: anywhere;
+      }
+
+      .admin-turismo-row-actions,
+      .admin-turismo-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .admin-turismo-row-actions {
+        justify-content: end;
+      }
+
+      .admin-turismo-row-actions button {
+        flex: 0 1 120px;
+      }
+
+      .admin-turismo-quick-states {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+      }
+
+      .admin-turismo-quick-states span {
+        align-content: center;
+        background: #f7fbfe;
+        border: 1px solid #d9e7ef;
+        border-radius: 10px;
+        color: #4f6472;
+        display: grid;
+        font-size: 0.72rem;
+        font-weight: 800;
+        gap: 2px;
+        line-height: 1.15;
+        min-width: 0;
+        overflow-wrap: anywhere;
+        padding: 9px;
+        text-align: center;
+        text-transform: uppercase;
+      }
+
+      .admin-turismo-quick-states strong {
+        color: #10202b;
+        font-size: 1.05rem;
+        line-height: 1;
+      }
+
+      .admin-turismo-status {
+        align-items: center;
+        border: 1px solid currentColor;
+        border-radius: 999px;
+        display: inline-flex;
+        font-size: 0.76rem;
+        font-weight: 800;
+        justify-content: center;
+        justify-self: start;
+        line-height: 1.15;
+        max-width: 100%;
+        overflow-wrap: anywhere;
+        padding: 6px 10px;
+        text-align: center;
+        white-space: normal;
+      }
+
+      .admin-turismo-status.activo,
+      .admin-turismo-status.listo,
+      .admin-turismo-status.publicado {
+        background: #effaf4;
+        color: #147a43;
+      }
+
+      .admin-turismo-status.borrador,
+      .admin-turismo-status.incompleto {
+        background: #fff9ef;
+        color: #9a5b00;
+      }
+
+      .admin-turismo-status.inactivo,
+      .admin-turismo-status.revision {
+        background: #f4f8fa;
+        color: #4f6472;
+      }
+
+      .admin-turismo-form {
+        display: grid;
+        gap: 0;
+        border-top: 1px solid #e4ecef;
+      }
+
+      .admin-turismo-form-block {
+        background: transparent;
+        border: 0;
+        border-bottom: 1px solid #e4ecef;
+        border-radius: 0;
+        display: grid;
+        gap: 0;
+        padding: 0;
+      }
+
+      .admin-turismo-accordion {
+        box-shadow: none;
+        overflow: hidden;
+        padding: 0;
+      }
+
+      .admin-turismo-accordion[open] {
+        padding-bottom: 26px;
+      }
+
+      .admin-turismo-accordion > *:not(summary) {
+        margin-inline: 0;
+      }
+
+      .admin-turismo-form-block--checklist {
+        background: linear-gradient(180deg, #f7fbfe, #edf8ff);
+      }
+
+      .admin-turismo-form-block-head {
+        align-items: center;
+        border-bottom: 0;
+        cursor: pointer;
+        display: flex;
+        gap: 18px;
+        justify-content: space-between;
+        list-style: none;
+        padding: 22px 0;
+      }
+
+      .admin-turismo-accordion:not([open]) .admin-turismo-form-block-head {
+        border-bottom: 0;
+      }
+
+      .admin-turismo-form-block-head::-webkit-details-marker {
+        display: none;
+      }
+
+      .admin-turismo-form-block-head::before {
+        color: #7b8f9c;
+        content: "▸";
+        flex: 0 0 auto;
+        font-weight: 900;
+        line-height: 1;
+        margin-top: 2px;
+      }
+
+      .admin-turismo-accordion[open] .admin-turismo-form-block-head::before {
+        content: "▾";
+      }
+
+      .admin-turismo-form-block-head > span {
+        display: grid;
+        flex: 1 1 auto;
+        gap: 0;
+        max-width: 62ch;
+        min-width: 0;
+      }
+
+      .admin-turismo-form-block-head h3,
+      .admin-turismo-form-block-head p {
+        margin: 0;
+      }
+
+      .admin-turismo-form-block-head h3 {
+        color: #10202b;
+        font-size: 1.05rem;
+        line-height: 1.22;
+        overflow-wrap: anywhere;
+      }
+
+      .admin-turismo-form-block-head p {
+        display: none;
+        color: #4f6472;
+        font-size: 0.88rem;
+        line-height: 1.55;
+        max-width: 54ch;
+      }
+
+      .admin-turismo-accordion-badge {
+        align-items: center;
+        border: 1px solid currentColor;
+        border-radius: 999px;
+        display: inline-flex;
+        flex: 0 0 auto;
+        font-size: 0.74rem;
+        font-weight: 900;
+        justify-content: center;
+        line-height: 1.15;
+        margin-top: 0;
+        min-width: auto;
+        padding: 6px 10px;
+        text-align: center;
+        white-space: normal;
+      }
+
+      .admin-turismo-accordion-badge.is-complete {
+        background: #effaf4;
+        color: #147a43;
+      }
+
+      .admin-turismo-accordion-badge.is-pending {
+        background: #fff9ef;
+        color: #8a5400;
+      }
+
+      .admin-turismo-accordion-badge.is-optional {
+        background: #f4f8fa;
+        color: #4f6472;
+      }
+
+      .admin-turismo-form-grid {
+        display: grid;
+        gap: 22px 18px;
+      }
+
+      .admin-turismo-form-grid--compact {
+        align-items: start;
+      }
+
+      .admin-turismo-form label {
+        display: grid;
+        gap: 10px;
+        font-weight: 800;
+        min-width: 0;
+      }
+
+      .admin-field-label {
+        color: #10202b;
+        font-size: 0.9rem;
+        font-weight: 900;
+        letter-spacing: 0;
+        line-height: 1.3;
+        overflow-wrap: anywhere;
+      }
+
+      .admin-field-hint,
+      .admin-turismo-check small {
+        color: #6a7d88;
+        font-size: 0.76rem;
+        font-weight: 700;
+        line-height: 1.5;
+        max-width: 46ch;
+        overflow-wrap: anywhere;
+      }
+
+      .admin-turismo-form input,
+      .admin-turismo-form select,
+      .admin-turismo-form textarea {
+        background: #fbfdfe;
+        border: 1px solid #d5e2e8;
+        border-radius: 10px;
+        box-sizing: border-box;
+        color: #10202b;
+        font: inherit;
+        line-height: 1.35;
+        min-height: 50px;
+        min-width: 0;
+        padding: 14px 15px;
+        width: 100%;
+      }
+
+      .admin-turismo-form input:focus,
+      .admin-turismo-form select:focus,
+      .admin-turismo-form textarea:focus {
+        border-color: #0d69a1;
+        box-shadow: 0 0 0 3px rgba(13, 105, 161, 0.12);
+        outline: none;
+      }
+
+      .admin-turismo-form textarea {
+        line-height: 1.55;
+        min-height: 132px;
+        resize: vertical;
+      }
+
+      .admin-turismo-check {
+        align-items: center;
+        background: #fbfdfe;
+        border: 1px solid #dfe9ee;
+        border-radius: 12px;
+        display: flex;
+        flex-direction: row;
+        gap: 12px;
+        min-width: 0;
+        padding: 14px;
+      }
+
+      .admin-turismo-check--featured {
+        align-items: start;
+        min-height: 100%;
+      }
+
+      .admin-turismo-check span {
+        display: grid;
+        gap: 5px;
+        line-height: 1.35;
+        min-width: 0;
+        overflow-wrap: anywhere;
+      }
+
+      .admin-turismo-check input {
+        flex: 0 0 auto;
+        margin-top: 2px;
+        width: auto;
+      }
+
+      .admin-turismo-category-field {
+        border: 0;
+        display: grid;
+        gap: 16px;
+        margin: 0;
+        padding: 0;
+      }
+
+      .admin-turismo-category-field legend {
+        color: #10202b;
+        font-size: 0.92rem;
+        font-weight: 900;
+        line-height: 1.3;
+        overflow-wrap: anywhere;
+        padding: 0 0 2px;
+      }
+
+      .admin-turismo-category-grid {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .admin-turismo-category-grid .admin-turismo-check {
+        padding: 12px;
+      }
+
+      .admin-turismo-validation {
+        border-radius: 14px;
+        display: grid;
+        gap: 16px;
+        padding: 18px 20px;
+      }
+
+      .admin-turismo-validation strong,
+      .admin-turismo-validation p,
+      .admin-turismo-validation h4 {
+        line-height: 1.35;
+        margin: 0;
+      }
+
+      .admin-turismo-validation ul {
+        line-height: 1.55;
+        margin: 0;
+        padding-left: 18px;
+      }
+
+      .admin-turismo-validation-summary {
+        align-items: start;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        min-width: 0;
+      }
+
+      .admin-turismo-validation-summary p {
+        color: #4f6472;
+        max-width: 58ch;
+      }
+
+      .admin-turismo-publication-badge {
+        align-items: center;
+        border: 1px solid currentColor;
+        border-radius: 999px;
+        display: inline-flex;
+        font-size: 0.78rem;
+        font-weight: 900;
+        justify-content: center;
+        line-height: 1.15;
+        max-width: 100%;
+        overflow-wrap: anywhere;
+        padding: 7px 11px;
+        text-align: center;
+        white-space: normal;
+      }
+
+      .admin-turismo-publication-badge.is-listo,
+      .admin-turismo-publication-badge.is-publicado {
+        background: #effaf4;
+        color: #147a43;
+      }
+
+      .admin-turismo-publication-badge.is-borrador,
+      .admin-turismo-publication-badge.is-incompleto {
+        background: #fff9ef;
+        color: #8a5400;
+      }
+
+      .admin-turismo-publication-badge.is-inactivo {
+        background: #f4f8fa;
+        color: #4f6472;
+      }
+
+      .admin-turismo-check-columns {
+        display: grid;
+        gap: 14px;
+      }
+
+      .admin-turismo-check-columns > div {
+        background: rgba(255, 255, 255, 0.62);
+        border: 1px solid rgba(15, 23, 42, 0.08);
+        border-radius: 12px;
+        display: grid;
+        gap: 10px;
+        padding: 14px;
+      }
+
+      .admin-turismo-check-columns h4 {
+        color: #10202b;
+        font-size: 0.9rem;
+        line-height: 1.25;
+      }
+
+      .admin-turismo-check-columns p,
+      .admin-turismo-check-columns li {
+        line-height: 1.5;
+      }
+
+      .admin-turismo-checklist {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .admin-turismo-checklist span {
+        background: transparent;
+        border: 0;
+        border-radius: 0;
+        color: inherit;
+        font-size: 0.86rem;
+        line-height: 1.45;
+        padding: 0;
+      }
+
+      .admin-turismo-checklist > strong {
+        color: #10202b;
+        font-size: 0.78rem;
+        letter-spacing: 0.04em;
+        line-height: 1.25;
+        text-transform: uppercase;
+      }
+
+      .admin-turismo-checklist > div {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 14px;
+      }
+
+      .admin-turismo-checklist .is-complete {
+        color: #147a43;
+      }
+
+      .admin-turismo-checklist .is-pending {
+        color: #8a5400;
+      }
+
+      .admin-turismo-validation.has-errors {
+        background: #fff9ef;
+        border: 1px solid #f3d7a3;
+        color: #8a5400;
+      }
+
+      .admin-turismo-validation.is-ok {
+        background: #effaf4;
+        border: 1px solid #c9ebd7;
+        color: #147a43;
+      }
+
+      .admin-turismo-section-head button,
+      .admin-turismo-row-actions button,
+      .admin-turismo-action-buttons button,
+      .admin-turismo-side-actions button {
+        align-items: center;
+        background: linear-gradient(135deg, #0d69a1, #eb3e8f);
+        border-color: rgba(235, 62, 143, 0.9);
+        color: #fff;
+        display: inline-flex;
+        font-weight: 800;
+        justify-content: center;
+        line-height: 1.2;
+        min-height: 46px;
+        text-align: center;
+      }
+
+      .admin-turismo-action-buttons button {
+        flex: 0 1 auto;
+        width: auto;
+      }
+
+      .admin-turismo-action-buttons button:disabled {
+        cursor: not-allowed;
+        opacity: 0.48;
+      }
+
+      .admin-turismo-action-buttons button:not(.admin-action-primary):not(.admin-action-publish) {
+        background: transparent;
+        border-color: rgba(235, 62, 143, 0.3);
+        color: #10202b;
+      }
+
+      .admin-turismo-action-buttons .admin-action-primary {
+        min-width: 180px;
+        padding-inline: 22px;
+      }
+
+      .admin-turismo-row-actions button:last-child,
+      .admin-turismo-action-buttons .admin-action-publish {
+        background: transparent;
+        border-color: rgba(235, 62, 143, 0.3);
+        color: #10202b;
+      }
+
+      .admin-turismo-action-panel {
+        display: grid;
+        gap: 18px;
+      }
+
+      .admin-turismo-action-group {
+        align-items: center;
+        background: linear-gradient(180deg, #ffffff, #f9fcfe);
+        border: 1px solid #d9e7ef;
+        border-radius: 16px;
+        display: grid;
+        gap: 16px;
+        padding: 18px;
+      }
+
+      .admin-turismo-action-group--publish {
+        background: linear-gradient(180deg, #eef8ff, #ffffff);
+        border-color: #b8d4e4;
+      }
+
+      .admin-turismo-action-group p,
+      .admin-turismo-action-group h3,
+      .admin-turismo-action-group span {
+        margin: 0;
+      }
+
+      .admin-turismo-action-group p {
+        color: #4f6472;
+        font-size: 0.76rem;
+        font-weight: 900;
+        letter-spacing: 0.06em;
+        line-height: 1.25;
+        text-transform: uppercase;
+      }
+
+      .admin-turismo-action-group h3 {
+        color: #10202b;
+        font-size: 1.08rem;
+        line-height: 1.25;
+        margin-top: 5px;
+      }
+
+      .admin-turismo-action-group span {
+        color: #4f6472;
+        display: block;
+        font-size: 0.86rem;
+        line-height: 1.55;
+        margin-top: 7px;
+        max-width: 48ch;
+      }
+
+      .admin-turismo-action-buttons {
+        align-items: stretch;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .admin-turismo-action-buttons--final {
+        align-items: stretch;
+        display: grid;
+        gap: 14px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .admin-turismo-action-buttons--final button {
+        min-height: 56px;
+        width: 100%;
+      }
+
+      .admin-turismo-flow-actions .admin-action-publish {
+        background: linear-gradient(135deg, #10202b, #eb3e8f);
+        border-color: rgba(235, 62, 143, 0.92);
+        color: #fff;
+      }
+
+      .admin-turismo-preview-grid {
+        display: grid;
+        gap: 20px;
+      }
+
+      .admin-turismo-real-card-preview {
+        max-width: 440px;
+      }
+
+      .admin-turismo-side-card--preview .admin-turismo-real-card-preview {
+        max-width: none;
+      }
+
+      .admin-turismo-real-card-preview .package-actions a {
+        pointer-events: none;
+      }
+
+      .admin-turismo-side-card--preview .package-card {
+        box-shadow: none;
+      }
+
+      .admin-turismo-side-card--preview .package-card-body {
+        padding: 14px;
+      }
+
+      .admin-turismo-side-card--preview .package-card-head h3 {
+        font-size: 1.05rem;
+      }
+
+      .admin-turismo-side-card--preview .package-summary {
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        display: -webkit-box;
+        overflow: hidden;
+      }
+
+      .admin-turismo-side-card--preview .package-includes div {
+        gap: 5px;
+      }
+
+      .admin-preview-detail-button {
+        background: #10202b;
+        border: 1px solid #10202b;
+        border-radius: 10px;
+        color: #fff;
+        cursor: pointer;
+        font-weight: 900;
+        padding: 11px 12px;
+        width: 100%;
+      }
+
+      .admin-turismo-side-card--whatsapp {
+        background: #f5fbf7;
+        border-color: #cdebd7;
+      }
+
+      .admin-turismo-whatsapp-copy {
+        background: #ffffff;
+        border: 1px solid #cdebd7;
+        border-radius: 10px;
+        color: #22543b;
+        font-size: 0.86rem;
+        font-weight: 800;
+        line-height: 1.45;
+        overflow-wrap: anywhere;
+        padding: 10px;
+      }
+
+      body.admin-modal-open {
+        overflow: hidden;
+      }
+
+      .admin-turismo-modal {
+        display: none;
+        inset: 0;
+        padding: 22px;
+        position: fixed;
+        z-index: 80;
+      }
+
+      .admin-turismo-modal.is-open {
+        align-items: center;
+        display: flex;
+        justify-content: center;
+      }
+
+      .admin-turismo-modal-backdrop {
+        background: rgba(8, 18, 27, 0.64);
+        inset: 0;
+        position: absolute;
+      }
+
+      .admin-turismo-modal-card {
+        background: #ffffff;
+        border: 1px solid #d9e7ef;
+        border-radius: 16px;
+        box-shadow: 0 28px 80px rgba(8, 18, 27, 0.28);
+        max-height: min(860px, calc(100vh - 44px));
+        max-width: 1040px;
+        overflow: auto;
+        position: relative;
+        width: min(100%, 1040px);
+        z-index: 1;
+      }
+
+      .admin-turismo-modal-card--compact {
+        max-width: 460px;
+      }
+
+      .admin-turismo-demand-preview {
+        display: grid;
+        gap: 14px;
+        padding: 18px;
+      }
+
+      .admin-turismo-demand-preview .admin-turismo-real-card-preview {
+        max-width: none;
+      }
+
+      .admin-turismo-modal-close {
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid #d9e7ef;
+        border-radius: 999px;
+        color: #10202b;
+        cursor: pointer;
+        display: inline-flex;
+        font-size: 1.35rem;
+        font-weight: 900;
+        height: 38px;
+        justify-content: center;
+        position: absolute;
+        right: 14px;
+        top: 14px;
+        width: 38px;
+        z-index: 2;
+      }
+
+      .admin-turismo-modal-hero {
+        background: #10202b;
+        color: #ffffff;
+        display: grid;
+        min-height: 320px;
+      }
+
+      .admin-turismo-modal-hero img,
+      .admin-turismo-modal-empty {
+        display: block;
+        height: 100%;
+        min-height: 320px;
+        object-fit: cover;
+        width: 100%;
+      }
+
+      .admin-turismo-modal-empty {
+        align-items: center;
+        background: linear-gradient(135deg, #d9e7ef, #f7fbfe);
+        color: #4f6472;
+        display: flex;
+        font-weight: 900;
+        justify-content: center;
+      }
+
+      .admin-turismo-modal-hero > div {
+        align-content: center;
+        display: grid;
+        gap: 12px;
+        padding: 24px;
+      }
+
+      .admin-turismo-modal-hero p,
+      .admin-turismo-modal-hero h3,
+      .admin-turismo-modal-hero span,
+      .admin-turismo-modal-body p {
+        margin: 0;
+      }
+
+      .admin-turismo-modal-hero p {
+        color: #b7d4e4;
+        font-size: 0.82rem;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .admin-turismo-modal-hero h3 {
+        font-size: clamp(2rem, 4vw, 3.4rem);
+        line-height: 0.98;
+      }
+
+      .admin-turismo-modal-hero span {
+        color: #ffffff;
+        font-size: 1.05rem;
+        font-weight: 900;
+      }
+
+      .admin-turismo-modal-body {
+        display: grid;
+        gap: 18px;
+        padding: 22px;
+      }
+
+      .admin-turismo-modal-gallery {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .admin-turismo-modal-gallery img {
+        aspect-ratio: 1 / 1;
+        border-radius: 10px;
+        display: block;
+        object-fit: cover;
+        width: 100%;
+      }
+
+      .admin-turismo-modal-columns {
+        display: grid;
+        gap: 14px;
+      }
+
+      .admin-turismo-modal-columns section {
+        background: #f7fbfe;
+        border: 1px solid #d9e7ef;
+        border-radius: 12px;
+        padding: 14px;
+      }
+
+      .admin-turismo-modal-columns h4 {
+        margin: 0 0 10px;
+      }
+
+      .admin-turismo-modal-columns ul {
+        margin: 0;
+        padding-left: 18px;
+      }
+
+      .admin-turismo-modal-cta {
+        align-items: center;
+        background: #f7fbfe;
+        border: 1px solid #d9e7ef;
+        border-radius: 12px;
+        display: flex;
+        gap: 14px;
+        justify-content: space-between;
+        padding: 14px;
+      }
+
+      .admin-turismo-modal-cta span {
+        color: #4f6472;
+        display: block;
+        font-size: 0.78rem;
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+
+      .admin-turismo-modal-cta strong {
+        color: #10202b;
+        display: block;
+        font-size: 1.4rem;
+      }
+
+      .admin-turismo-modal-cta button {
+        background: #0f7f9f;
+        border: 1px solid #0f7f9f;
+        border-radius: 10px;
+        color: #ffffff;
+        font-weight: 900;
+        padding: 12px 18px;
+      }
+
+      .admin-turismo-preview-card,
+      .admin-turismo-detail-preview {
+        background: #f7fbfe;
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+
+      .admin-turismo-preview-card {
+        display: grid;
+      }
+
+      .admin-turismo-preview-card > div:last-child {
+        display: grid;
+        gap: 8px;
+        padding: 14px;
+      }
+
+      .admin-turismo-preview-card h3,
+      .admin-turismo-preview-card p,
+      .admin-turismo-detail-preview h3,
+      .admin-turismo-detail-preview p {
+        margin: 0;
+      }
+
+      .admin-turismo-preview-image {
+        aspect-ratio: 4 / 3;
+        background: linear-gradient(135deg, #d9e7ef, #f7fbfe);
+        position: relative;
+      }
+
+      .admin-turismo-preview-image img,
+      .admin-turismo-detail-hero img {
+        display: block;
+        height: 100%;
+        object-fit: cover;
+        width: 100%;
+      }
+
+      .admin-turismo-preview-image span {
+        align-items: center;
+        color: #4f6472;
+        display: flex;
+        font-weight: 800;
+        height: 100%;
+        justify-content: center;
+      }
+
+      .admin-turismo-preview-image small {
+        background: rgba(16, 32, 43, 0.78);
+        border-radius: 999px;
+        bottom: 12px;
+        color: #fff;
+        font-weight: 800;
+        left: 12px;
+        padding: 6px 10px;
+        position: absolute;
+      }
+
+      .admin-turismo-detail-preview {
+        display: grid;
+        gap: 14px;
+        padding: 14px;
+      }
+
+      .admin-turismo-detail-hero {
+        background: #10202b;
+        border-radius: 8px;
+        color: #fff;
+        display: grid;
+        overflow: hidden;
+      }
+
+      .admin-turismo-detail-hero img {
+        aspect-ratio: 16 / 9;
+      }
+
+      .admin-turismo-detail-hero div {
+        display: grid;
+        gap: 6px;
+        padding: 14px;
+      }
+
+      .admin-turismo-gallery-strip {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .admin-turismo-gallery-strip img {
+        aspect-ratio: 4 / 3;
+        border-radius: 8px;
+        display: block;
+        object-fit: cover;
+        width: 100%;
+      }
+
+      .admin-turismo-detail-columns {
+        display: grid;
+        gap: 12px;
+      }
+
+      .admin-turismo-detail-columns div {
+        background: #fff;
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        padding: 12px;
+      }
+
+      .admin-turismo-detail-columns h4 {
+        margin: 0 0 8px;
+      }
+
+      .admin-turismo-whatsapp {
+        background: #e7f8ef;
+        border: 1px solid #bce8ce;
+        border-radius: 8px;
+        color: #147a43;
+        font-weight: 800;
+        padding: 12px;
+      }
+
+      .installment-status {
+        border-radius: 999px;
+        display: inline-flex;
+        font-size: 0.9rem;
+        font-weight: 700;
+        justify-self: start;
+        padding: 5px 10px;
+      }
+
+      .installment-status.paid {
+        background: #e7f8ef;
+        color: #147a43;
+      }
+
+      .installment-status.pending {
+        background: #fff3dc;
+        color: #9a5b00;
+      }
+
+        @media (max-width: 520px) {
+        .admin-login-screen {
+          align-items: stretch;
+          min-height: calc(100svh - 28px);
+          padding: 14px;
+        }
+
+        .admin-login-card {
+          grid-template-columns: minmax(0, 1fr);
+          min-height: 0;
+        }
+
+        .admin-login-panel {
+          min-height: 270px;
+          padding: 22px;
+        }
+
+        .admin-login-brand h1 {
+          font-size: clamp(2rem, 12vw, 2.7rem);
+          max-width: 11ch;
+        }
+
+        .admin-login-access {
+          padding: 22px;
+        }
+
+        .admin-login-access-head h2 {
+          font-size: 1.8rem;
+        }
+
+        body[data-app-entry="admin"] main {
+          padding: 14px;
+        }
+
+        .admin-sidebar {
+          padding: 12px;
+        }
+
+        .admin-shell-header {
+          gap: 14px;
+          grid-template-columns: minmax(0, 1fr);
+          padding: 18px;
+          padding-block: 18px;
+          padding-inline: 18px;
+        }
+
+        .admin-layout > .admin-shell-header:first-child {
+          padding-block: 18px;
+          padding-inline: 18px;
+        }
+
+        .admin-shell-session {
+          grid-column: auto;
+          justify-self: stretch;
+          margin-top: 4px;
+          min-width: 0;
+        }
+
+        .admin-sidebar nav {
+          grid-template-columns: minmax(0, 1fr);
+        }
+
+        .admin-turismo-layout {
+          gap: 34px;
+        }
+
+        .admin-turismo-layout > .admin-turismo-panel::before {
+          left: 18px;
+          right: 18px;
+          top: -17px;
+        }
+
+        .admin-turismo-hero,
+        .admin-turismo-panel {
+          border-radius: 16px;
+          padding: 18px;
+        }
+
+        .admin-turismo-hero {
+          gap: 20px;
+        }
+
+        .admin-turismo-layout > .admin-turismo-hero:first-child {
+          padding-top: 18px;
+        }
+
+        .admin-turismo-hero-stats {
+          gap: 10px;
+        }
+
+        .admin-turismo-hero-stats article {
+          min-height: 76px;
+          padding: 11px 8px;
+        }
+
+        .admin-turismo-section-head {
+          align-items: start;
+          gap: 14px;
+        }
+
+        .admin-turismo-workspace,
+        .admin-turismo-main-column {
+          gap: 22px;
+        }
+
+        .admin-turismo-list-head {
+          display: none;
+        }
+
+        .admin-turismo-row {
+          grid-template-columns: minmax(0, 1fr);
+          gap: 12px;
+        }
+
+        .admin-turismo-row-actions {
+          justify-content: start;
+        }
+
+        .admin-turismo-row-actions button {
+          flex: 1 1 132px;
+        }
+
+        .admin-turismo-form-block {
+          padding: 0;
+        }
+
+        .admin-turismo-form-block-head {
+          align-items: start;
+          flex-wrap: wrap;
+          gap: 12px;
+          padding: 20px 0;
+        }
+
+        .admin-turismo-form-block-head::before {
+          margin-top: 5px;
+        }
+
+        .admin-turismo-form-block-head > span {
+          flex-basis: calc(100% - 30px);
+        }
+
+        .admin-turismo-accordion > *:not(summary) {
+          margin-inline: 0;
+        }
+
+        .admin-turismo-accordion-badge {
+          margin-left: 0;
+          min-width: 0;
+        }
+
+        .admin-turismo-validation {
+          padding: 16px;
+        }
+
+        .admin-turismo-validation-summary {
+          display: grid;
+          gap: 12px;
+          grid-template-columns: minmax(0, 1fr);
+        }
+
+        .admin-turismo-checklist {
+          grid-template-columns: minmax(0, 1fr);
+        }
+
+        .admin-turismo-action-buttons--final {
+          align-items: stretch;
+          flex-direction: column;
+          grid-template-columns: minmax(0, 1fr);
+        }
+
+        .admin-turismo-action-buttons button {
+          width: 100%;
+        }
+      }
+
+      @media (min-width: 720px) {
+        .site-header {
+          align-items: center;
+          flex-direction: row;
+          gap: 32px;
+          justify-content: space-between;
+          min-height: 80px;
+          padding: 4px 40px;
+        }
+
+        .site-nav {
+          background: transparent;
+          border: 0;
+          border-radius: 0;
+          box-shadow: none;
+          display: flex;
+          gap: 14px;
+          justify-content: flex-end;
+          margin-left: auto;
+          padding: 0;
+          position: static;
+        }
+
+        .mobile-header-actions {
+          display: none;
+        }
+
+        body.home-page:not(.nav-scrolled) .site-nav a,
+        body.home-page:not(.nav-scrolled) .site-nav summary {
+          color: #fff;
+          text-shadow: 0 1px 20px rgba(2, 15, 28, 0.34);
+        }
+
+        body.home-page:not(.nav-scrolled) .site-nav a:hover,
+        body.home-page:not(.nav-scrolled) .site-nav summary:hover {
+          background: rgba(255, 255, 255, 0.11);
+          border-color: rgba(255, 255, 255, 0.16);
+          color: #fff;
+        }
+
+        body.home-page:not(.nav-scrolled) .site-nav .nav-whatsapp {
+          background: rgba(235, 62, 143, 0.88);
+          border-color: rgba(235, 62, 143, 0.88);
+          color: #fff;
+        }
+
+        .nav-dropdown-menu {
+          position: absolute;
+          right: 0;
+          top: 100%;
+        }
+
+        main {
+          padding: 32px;
+        }
+
+        .site-footer {
+          padding: 42px 40px 20px;
+        }
+
+        .footer-inner {
+          grid-template-columns: minmax(260px, 1.4fr) repeat(3, minmax(150px, 1fr));
+          gap: 32px;
+        }
+
+        .footer-brand {
+          grid-column: auto;
+        }
+
+        .footer-brand p {
+          max-width: 330px;
+        }
+
+        .footer-bottom {
+          align-items: center;
+          display: flex;
+          justify-content: space-between;
+        }
+
+        .home-hero {
+          margin: -32px -32px 0;
+          min-height: 100svh;
+          padding: 80px 32px 64px;
+        }
+
+        .hero-content {
+          margin-left: clamp(28px, 7vw, 116px);
+          min-height: calc(100svh - 144px);
+        }
+
+        .turismo-hero {
+          margin: -32px -32px 0;
+          padding: 64px 32px;
+        }
+
+        .turismo-hero-content {
+          margin-left: clamp(28px, 7vw, 116px);
+        }
+
+        .turismo-intention-section,
+        .mi-consulta-preview,
+        .turismo-detail-preview,
+        .package-detail-summary,
+        .package-detail-content,
+        .package-detail-gallery {
+          padding: 24px;
+        }
+
+        .mi-consulta-preview {
+          grid-template-columns: 1fr minmax(320px, 0.8fr);
+        }
+
+        .mi-consulta-actions,
+        .mi-consulta-note {
+          grid-column: 1 / -1;
+        }
+
+        .mi-consulta-bar {
+          border-radius: 8px;
+          bottom: 18px;
+          grid-template-columns: 1fr auto;
+          left: 50%;
+          max-width: 920px;
+          right: auto;
+          transform: translateX(-50%);
+          width: calc(100% - 48px);
+        }
+
+        .package-detail-preview-card {
+          grid-template-columns: minmax(280px, 0.9fr) 1.1fr;
+        }
+
+        .package-detail-visual img {
+          min-height: 100%;
+        }
+
+        .package-detail-columns,
+        .package-detail-content {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .package-detail-hero {
+          margin: -32px -32px 0;
+          padding: 64px 32px;
+        }
+
+        .package-detail-hero-content {
+          margin-left: clamp(28px, 7vw, 116px);
+        }
+
+        .estudiantil-hero {
+          margin: -32px -32px 0;
+          padding: 64px 32px;
+        }
+
+        .student-detail-hero {
+          margin: -32px -32px 0;
+          padding: 64px 32px;
+        }
+
+        .portal-hero {
+          margin: -32px -32px 0;
+          padding: 64px 32px;
+        }
+
+        .home-path-selector {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .home-intro {
+          grid-template-columns: minmax(260px, 0.8fr) minmax(0, 1.2fr);
+          padding: 26px;
+        }
+
+        .items {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .package-grid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .student-path-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .student-detail-benefits ul {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .bariloche-gallery-grid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .bariloche-experience-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .portal-summary {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .portal-result-head,
+        .portal-whatsapp-panel {
+          grid-template-columns: minmax(0, 1fr) auto;
+        }
+
+        .portal-status-grid,
+        .portal-payment-summary {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .public-inscripcion-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .admin-module-grid {
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .admin-turismo-hero {
+          grid-template-columns: minmax(0, 1.3fr) minmax(360px, 0.7fr);
+        }
+
+        .admin-turismo-hero-stats {
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .admin-turismo-form-grid,
+        .admin-turismo-preview-grid,
+        .admin-turismo-check-columns,
+        .admin-turismo-detail-columns {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .admin-turismo-category-grid {
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .admin-turismo-validation-summary {
+          grid-template-columns: auto 1fr;
+        }
+
+        .admin-turismo-action-group {
+          grid-template-columns: minmax(0, 1.15fr) minmax(220px, 0.85fr);
+        }
+
+        .admin-turismo-modal-hero {
+          grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+        }
+
+        .admin-turismo-modal-hero > div {
+          padding: 34px;
+        }
+
+        .admin-turismo-modal-gallery {
+          grid-template-columns: repeat(6, minmax(0, 1fr));
+        }
+
+        .admin-turismo-modal-columns {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .admin-turismo-preview-card {
+          align-self: start;
+        }
+      }
+
+      body[data-app-entry="admin"] {
+        background: var(--color-background-soft);
+      }
+
+      body.nav-scrolled .site-header,
+      body:not(.home-page) .site-header {
+        background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+        border-bottom-color: var(--color-border);
+        box-shadow: var(--shadow-soft);
+      }
+
+      .site-nav,
+      .nav-dropdown-menu {
+        background: color-mix(in srgb, var(--color-surface) 94%, transparent);
+        border-color: var(--color-border);
+        box-shadow: var(--shadow-panel);
+      }
+
+      .site-nav a,
+      .site-nav summary {
+        color: var(--color-text);
+      }
+
+      .site-nav a:hover,
+      .site-nav summary:hover {
+        background: var(--color-surface-soft);
+        border-color: var(--color-border);
+        color: var(--color-primary);
+      }
+
+      .nav-dropdown-label {
+        color: var(--color-muted);
+      }
+
+      .nav-toggle {
+        background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+        border-color: var(--color-border);
+      }
+
+      .nav-toggle span {
+        background: var(--color-text);
+      }
+
+      section,
+      .section-map {
+        border-top-color: var(--color-border);
+      }
+
+      .item,
+      .home-path-card,
+      .turismo-intention-section,
+      .mi-consulta-preview,
+      .turismo-detail-preview,
+      .package-card,
+      .package-detail-preview-card,
+      .package-detail-summary,
+      .package-detail-content,
+      .package-detail-gallery,
+      .student-path-card,
+      .student-detail-benefits li,
+      .portal-panel,
+      .portal-result,
+      .portal-empty,
+      .admin-login-card,
+      .admin-shell-header,
+      .admin-shell,
+      .admin-turismo-panel,
+      .admin-turismo-action-panel,
+      .admin-turismo-preview-panel,
+      .admin-turismo-side-panel,
+      .admin-turismo-modal-card,
+      .admin-pasajeros-context,
+      .ficha-adhesion-hero,
+      .ficha-adhesion-panel {
+        background: var(--color-surface);
+        border-color: var(--color-border);
+        color: var(--color-text);
+      }
+
+      .home-path-card,
+      .package-card,
+      .turismo-package-card,
+      .student-path-card,
+      .admin-login-card {
+        box-shadow: var(--shadow-card);
+      }
+
+      h1,
+      h2,
+      h3,
+      h4,
+      .package-card h3,
+      .package-price strong,
+      .package-facts span,
+      .package-detail-facts span,
+      .package-includes strong,
+      .package-includes span,
+      .admin-turismo-hero-stats strong,
+      .admin-pasajeros-form legend,
+      .admin-shell-brand strong,
+      .admin-shell-session strong,
+      .ficha-adhesion-context strong,
+      .ficha-adhesion-context p {
+        color: var(--color-text);
+      }
+
+      p,
+      li,
+      figcaption,
+      .package-summary,
+      .package-meta,
+      .mi-consulta-note,
+      .turismo-empty-state,
+      .admin-pasajeros-form label,
+      .admin-pasajeros-table-head p,
+      .admin-turismo-hero-stats span,
+      .admin-shell-brand span,
+      .admin-shell-session span,
+      .admin-login-brand p,
+      .admin-login-note span,
+      .ficha-adhesion-context span {
+        color: var(--color-muted);
+      }
+
+      a,
+      button,
+      .home-path-card h2,
+      .package-duration,
+      .package-actions a:first-child,
+      .package-actions button:last-child,
+      .intention-chip,
+      .portal-result a,
+      .portal-empty a {
+        color: var(--color-primary);
+      }
+
+      .home-path-card,
+      .package-price,
+      .package-facts span,
+      .package-detail-facts span,
+      .package-includes span,
+      .mi-consulta-items article,
+      .turismo-empty-state,
+      .intention-chip,
+      .package-actions a:first-child,
+      .package-actions button:last-child,
+      .portal-summary div,
+      .portal-installment,
+      .portal-status-card,
+      .portal-payment-panel,
+      .portal-payment-summary div,
+      .portal-doc-item,
+      .portal-doc-ok,
+      .admin-turismo-hero-stats > div,
+      .admin-pasajeros-table-head > strong,
+      .admin-turismo-category-card,
+      .admin-turismo-validation-summary,
+      .admin-turismo-checklist li,
+      .ficha-adhesion-context {
+        background: var(--color-surface-soft);
+        border-color: var(--color-border);
+      }
+
+      .package-image-wrap {
+        background: var(--color-surface-soft);
+      }
+
+      .mi-consulta-bar {
+        background: color-mix(in srgb, var(--color-surface) 96%, transparent);
+        border-color: var(--color-border);
+        box-shadow: var(--shadow-soft);
+        color: var(--color-text);
+      }
+
+      input,
+      select,
+      textarea,
+      .portal-form input,
+      .admin-login-form input,
+      .admin-pasajeros-form input,
+      .admin-pasajeros-form select,
+      .admin-pasajeros-form textarea,
+      .admin-turismo-form input,
+      .admin-turismo-form select,
+      .admin-turismo-form textarea,
+      .ficha-adhesion-form input,
+      .ficha-adhesion-form select {
+        background: var(--color-surface-strong);
+        border-color: var(--color-border-strong);
+        color: var(--color-text);
+      }
+
+      input::placeholder,
+      textarea::placeholder {
+        color: color-mix(in srgb, var(--color-muted) 74%, transparent);
+      }
+
+      input:focus,
+      select:focus,
+      textarea:focus,
+      .admin-login-form input:focus,
+      .admin-turismo-form input:focus,
+      .admin-turismo-form select:focus,
+      .admin-turismo-form textarea:focus {
+        border-color: var(--color-primary);
+        outline-color: var(--color-primary);
+      }
+
+      .portal-result-head span,
+      .portal-status-card span,
+      .portal-status-card small,
+      .portal-payment-summary span,
+      .portal-doc-item span,
+      .portal-doc-ok span {
+        color: var(--color-muted);
+      }
+
+      .portal-status-card strong,
+      .portal-payment-summary strong,
+      .portal-doc-item strong,
+      .portal-doc-ok strong {
+        color: var(--color-text);
+      }
+
+      fieldset,
+      .admin-pasajeros-form fieldset,
+      .ficha-adhesion-form fieldset {
+        border-color: var(--color-border);
+      }
+
+      .admin-pasajeros-table-wrap,
+      .admin-pasajeros-table th,
+      .admin-pasajeros-table td {
+        border-color: var(--color-border);
+      }
+
+      .admin-pasajeros-table thead th {
+        background: var(--color-surface-soft);
+        color: var(--color-muted-strong);
+      }
+
+      .admin-pasajeros-table tbody tr:nth-child(even) {
+        background: color-mix(in srgb, var(--color-surface-soft) 58%, transparent);
+      }
+
+      .admin-pasajeros-table tbody tr:hover {
+        background: color-mix(in srgb, var(--color-primary) 14%, var(--color-surface));
+      }
+
+      .admin-pasajeros-row-actions button,
+      .admin-pasajeros-secondary-button,
+      .mi-consulta-items button,
+      .ficha-adhesion-signature button {
+        border-color: var(--color-border-strong);
+        color: var(--color-text);
+      }
+
+      .admin-pasajeros-primary-button,
+      .portal-form button,
+      .admin-login-form button,
+      .ficha-adhesion-submit,
+      .intention-chip.active {
+        background: var(--color-primary);
+        border-color: var(--color-primary);
+        color: #fff;
+      }
+
+      .turismo-hero button,
+      .package-whatsapp,
+      .turismo-cta a,
+      .turismo-cta button,
+      .mi-consulta-actions button:first-child,
+      .mi-consulta-bar button,
+      .package-actions button:first-child,
+      .student-path-card a,
+      .student-detail-cta a {
+        background: var(--color-accent);
+        border-color: var(--color-accent);
+        color: #fff;
+      }
+
+      .admin-login-error,
+      .admin-pasajeros-form-error,
+      .ficha-adhesion-error {
+        background: var(--color-danger-surface);
+        border-color: var(--color-danger-border);
+        color: var(--color-danger-text);
+      }
+
+      .ficha-adhesion-success {
+        background: var(--color-success-surface);
+        border-color: var(--color-success-border);
+        color: var(--color-success-text);
+      }
+
+      .ficha-adhesion-signature canvas {
+        background: #fff;
+        border-color: var(--color-border-strong);
+      }
+
+      .admin-login-panel .admin-login-brand span {
+        color: rgba(255, 255, 255, 0.76);
+      }
+
+      .admin-login-panel .admin-login-brand p {
+        color: rgba(255, 255, 255, 0.82);
+      }
+
+      @media (min-width: 720px) {
+        .site-nav {
+          background: transparent;
+          border: 0;
+          box-shadow: none;
+        }
+
+        body.nav-scrolled .site-nav,
+        body:not(.home-page) .site-nav {
+          background: transparent;
+        }
+      }

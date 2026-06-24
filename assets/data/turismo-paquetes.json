@@ -1,0 +1,126 @@
+[
+  {
+    "id": "demo-bariloche",
+    "slug": "bariloche-nieve-y-lagos",
+    "destino": "Bariloche",
+    "titulo": "Bariloche nieve y lagos",
+    "duracion": "7 dias / 5 noches",
+    "temporada": "Invierno 2026",
+    "precioDesde": "$890.000",
+    "precioValor": 890000,
+    "moneda": "ARS",
+    "categorias": ["nieve", "familiar", "nacional"],
+    "descripcionCorta": "Viaje demo para validar la carga manual, el catalogo publico y el flujo de exportacion.",
+    "descripcionLarga": "Ficha demo de Bariloche para probar el impacto de turismo-paquetes.json en catalogo, filtros, detalle y WhatsApp. Reemplazar por informacion real antes de publicar comercialmente.",
+    "incluye": ["Traslado coordinado", "Alojamiento seleccionado", "Asesoramiento personalizado"],
+    "noIncluye": ["Comidas no detalladas", "Excursiones opcionales", "Gastos personales"],
+    "fotos": [
+      {
+        "url": "assets/img/turismo/package-bariloche-destino.webp",
+        "alt": "Bariloche con montanas y lago",
+        "principal": true
+      },
+      {
+        "url": "assets/img/turismo/hero/nieve-montana.webp",
+        "alt": "Paisaje de nieve en montana",
+        "principal": false
+      },
+      {
+        "url": "assets/img/turismo/hero/montana-patagonia.webp",
+        "alt": "Montana patagonica",
+        "principal": false
+      }
+    ],
+    "estado": "activo",
+    "destacado": true,
+    "orden": 1
+  },
+  {
+    "id": "demo-brasil",
+    "slug": "brasil-playa-y-descanso",
+    "destino": "Brasil",
+    "titulo": "Brasil playa y descanso",
+    "duracion": "7 dias / 6 noches",
+    "temporada": "Verano 2026",
+    "precioDesde": "$1.250.000",
+    "precioValor": 1250000,
+    "moneda": "ARS",
+    "categorias": ["playa", "pareja", "grupo", "internacional"],
+    "descripcionCorta": "Una opcion internacional de playa para viajar con acompanamiento y organizacion.",
+    "descripcionLarga": "Viaje demo para probar el catalogo publico con una propuesta internacional, fotos de galeria, categorias controladas y consulta contextual por WhatsApp.",
+    "incluye": ["Traslado coordinado", "Alojamiento seleccionado", "Asistencia durante el viaje"],
+    "noIncluye": ["Comidas no detalladas", "Gastos personales", "Excursiones opcionales"],
+    "fotos": [
+      {
+        "url": "assets/img/turismo/package-brasil-destino.webp",
+        "alt": "Playa en Brasil",
+        "principal": true
+      },
+      {
+        "url": "assets/img/turismo/package-brasil-fernando.webp",
+        "alt": "Destino de playa en Brasil",
+        "principal": false
+      },
+      {
+        "url": "assets/img/turismo/package-brasil-joaquina.webp",
+        "alt": "Costa de Brasil",
+        "principal": false
+      }
+    ],
+    "estado": "activo",
+    "destacado": false,
+    "orden": 2
+  },
+  {
+    "id": "demo-mendoza",
+    "slug": "mendoza-escapada-bodegas",
+    "destino": "Mendoza",
+    "titulo": "Mendoza escapada y bodegas",
+    "duracion": "4 dias / 3 noches",
+    "temporada": "Otono 2026",
+    "precioDesde": "$520.000",
+    "precioValor": 520000,
+    "moneda": "ARS",
+    "categorias": ["escapada", "pareja", "nacional"],
+    "descripcionCorta": "Una escapada de montana y bodegas para revisar antes de publicar.",
+    "descripcionLarga": "Viaje demo en borrador. Debe quedar fuera del catalogo publico hasta que se cambie su estado a activo.",
+    "incluye": ["Traslado", "Alojamiento", "Asesoramiento"],
+    "noIncluye": ["Gastos personales", "Excursiones opcionales"],
+    "fotos": [
+      {
+        "url": "assets/img/turismo/package-mendoza-destino.webp",
+        "alt": "Paisaje de Mendoza",
+        "principal": true
+      }
+    ],
+    "estado": "borrador",
+    "destacado": false,
+    "orden": 3
+  },
+  {
+    "id": "demo-cataratas",
+    "slug": "cataratas-naturaleza-total",
+    "destino": "Cataratas",
+    "titulo": "Cataratas naturaleza total",
+    "duracion": "5 dias / 4 noches",
+    "temporada": "Temporada 2026",
+    "precioDesde": "Consultar",
+    "precioValor": null,
+    "moneda": "Consultar",
+    "categorias": ["familiar", "grupo", "nacional"],
+    "descripcionCorta": "Un paquete inactivo que se conserva como historico de prueba.",
+    "descripcionLarga": "Viaje demo inactivo. No debe mostrarse en catalogo, filtros, detalle ni WhatsApp publico.",
+    "incluye": ["Traslado", "Alojamiento"],
+    "noIncluye": ["Gastos personales"],
+    "fotos": [
+      {
+        "url": "assets/img/turismo/package-cataratas-destino.webp",
+        "alt": "Cataratas del Iguazu",
+        "principal": true
+      }
+    ],
+    "estado": "inactivo",
+    "destacado": false,
+    "orden": 4
+  }
+]

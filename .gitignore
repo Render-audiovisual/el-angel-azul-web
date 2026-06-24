@@ -1,0 +1,17 @@
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+.env
+.env.*
+!.env.example
+
+google-sheets-service-account.json
+*service-account*.json
+credentials/
+
+tmp/
+*.tar.gz
+.DS_Store

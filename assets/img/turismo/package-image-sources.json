@@ -1,0 +1,38 @@
+{
+  "bariloche": {
+    "file": "package-bariloche-destino.webp",
+    "description": "Nahuel Huapi, lago y montaña en Bariloche.",
+    "source": "Wikimedia Commons - File:Parque Nacional Nahuel Huapi 1994 12.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Parque_Nacional_Nahuel_Huapi_1994_12.jpg"
+  },
+  "mendoza": {
+    "file": "package-mendoza-destino.webp",
+    "description": "Viñedos mendocinos con Cordillera de fondo.",
+    "source": "Wikimedia Commons - File:Vineyard in Mendoza, Argentina.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Vineyard_in_Mendoza,_Argentina.jpg"
+  },
+  "cataratas": {
+    "file": "package-cataratas-destino.webp",
+    "description": "Cataratas del Iguazú vistas desde Argentina.",
+    "source": "Wikimedia Commons - File:Rainbows at Iguazu Falls frrom Argentina.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Rainbows_at_Iguazu_Falls_frrom_Argentina.jpg"
+  },
+  "brasil": {
+    "file": "package-brasil-destino.webp",
+    "description": "Lençóis Maranhenses, paisaje costero reconocible de Brasil.",
+    "source": "Wikimedia Commons - File:Lençóis Maranhenses 2019.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Len%C3%A7%C3%B3is_Maranhenses_2019.jpg"
+  },
+  "rio-de-janeiro": {
+    "file": "package-rio-destino.webp",
+    "description": "Vista de Copacabana con Pan de Azúcar.",
+    "source": "Wikimedia Commons - File:Copacabana vista pao acucar.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Copacabana_vista_pao_acucar.jpg"
+  },
+  "caribe": {
+    "file": "package-caribe-destino.webp",
+    "description": "Playa caribeña en Punta Cana.",
+    "source": "Wikimedia Commons - File:Punta Cana Beach 01.jpg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Punta_Cana_Beach_01.jpg"
+  }
+}
