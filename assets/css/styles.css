@@ -652,11 +652,16 @@
       .home-path-card {
         background: #fff;
         border: 1px solid #d9e7ef;
+        border-left: 6px solid #0d69a1;
         border-radius: 8px;
         color: #10202b;
         display: grid;
         gap: 10px;
         padding: 18px;
+      }
+
+      .home-path-card:nth-child(2) {
+        border-left-color: #d85f8b;
       }
 
       .home-path-card h2 {
@@ -701,6 +706,23 @@
       .home-trust h2,
       .home-cta h2 {
         margin-top: 0;
+      }
+
+      .home-trust-card {
+        background: linear-gradient(180deg, #f6fbfe 0%, #ffffff 100%);
+        border: 1px solid #d9e7ef;
+      }
+
+      .home-trust-icon {
+        align-items: center;
+        background: #eaf4fa;
+        border-radius: 8px;
+        display: inline-flex;
+        font-size: 2rem;
+        height: 58px;
+        justify-content: center;
+        margin-bottom: 4px;
+        width: 58px;
       }
 
       .home-cta {
@@ -1858,6 +1880,43 @@
         width: 100%;
       }
 
+      .student-path-visual {
+        aspect-ratio: 4 / 3;
+        display: block;
+        min-height: 180px;
+        position: relative;
+      }
+
+      .student-path-visual::after {
+        background: rgba(255, 255, 255, 0.28);
+        border: 1px solid rgba(255, 255, 255, 0.38);
+        border-radius: 999px;
+        bottom: 18px;
+        content: "";
+        height: 74px;
+        position: absolute;
+        right: 18px;
+        width: 74px;
+      }
+
+      .student-path-visual.is-primary-carlos-paz {
+        background:
+          radial-gradient(circle at 82% 24%, rgba(255, 255, 255, 0.52), transparent 24%),
+          linear-gradient(135deg, #28b979 0%, #34d5bd 58%, #dff8ee 100%);
+      }
+
+      .student-path-visual.is-secondary-bariloche {
+        background:
+          radial-gradient(circle at 26% 22%, rgba(255, 255, 255, 0.62), transparent 22%),
+          linear-gradient(135deg, #23384f 0%, #617188 54%, #e7eef4 100%);
+      }
+
+      .student-path-visual.is-secondary-carlos-paz {
+        background:
+          radial-gradient(circle at 76% 24%, rgba(255, 255, 255, 0.52), transparent 24%),
+          linear-gradient(135deg, #f07c2e 0%, #e9b33f 56%, #fff0c8 100%);
+      }
+
       .student-path-body {
         display: grid;
         gap: 10px;
@@ -1872,6 +1931,12 @@
       .student-path-kicker {
         color: #4f6472;
         font-size: 0.95rem;
+      }
+
+      .student-path-meta {
+        color: #0d4f79;
+        font-size: 0.92rem;
+        font-weight: 800;
       }
 
       .estudiantil-trust {
@@ -6971,6 +7036,12 @@
         }
       }
 
+      @media (max-width: 720px) {
+        .public-inscripcion-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
       body[data-app-entry="admin"] {
         background: var(--color-background-soft);
       }
@@ -7058,6 +7129,14 @@
         box-shadow: var(--shadow-card);
       }
 
+      .home-path-card {
+        border-left-color: #0d69a1;
+      }
+
+      .home-path-card:nth-child(2) {
+        border-left-color: #d85f8b;
+      }
+
       h1,
       h2,
       h3,
@@ -7136,6 +7215,14 @@
 
       .package-image-wrap {
         background: var(--color-surface-soft);
+      }
+
+      .home-path-card {
+        border-left: 6px solid #0d69a1;
+      }
+
+      .home-path-card:nth-child(2) {
+        border-left-color: #d85f8b;
       }
 
       .mi-consulta-bar {

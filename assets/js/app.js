@@ -156,6 +156,7 @@
       }
 
       function renderHome() {
+        const trustIcons = ["✈️", "🤝", "💳", "👤"];
         document.getElementById("app").innerHTML = `
           <div class="layout home-layout">
             <section class="home-hero">
@@ -195,8 +196,9 @@
             <section class="home-section home-trust">
               <h2>${trustSectionData.title}</h2>
               <div class="items">
-                ${trustSectionData.cards.map(card => `
-                  <article class="item">
+                ${trustSectionData.cards.map((card, index) => `
+                  <article class="item home-trust-card">
+                    <span class="home-trust-icon" aria-hidden="true">${trustIcons[index] || "✈️"}</span>
                     <h3>${card.title}</h3>
                     <p>${card.text}</p>
                   </article>
@@ -5785,25 +5787,32 @@
                 ${[
                   {
                     title: "Primaria Carlos Paz",
+                    meta: "📍 Carlos Paz · 5 días / 4 noches",
+                    variant: "primary-carlos-paz",
                     text: "Una experiencia cuidada para el primer gran viaje de egresados, con actividades, coordinación y acompañamiento.",
                     href: "#/estudiantil/primaria-carlos-paz"
                   },
                   {
                     title: "Secundaria Bariloche",
+                    meta: "📍 Bariloche · 7 días / 6 noches",
+                    variant: "secondary-bariloche",
                     text: "El viaje clásico de egresados a Bariloche, con experiencias, salidas, coordinación y asesoramiento.",
                     href: "#/estudiantil/secundaria-bariloche"
                   },
                   {
                     title: "Secundaria Carlos Paz",
+                    meta: "📍 Carlos Paz · 5 días / 4 noches",
+                    variant: "secondary-carlos-paz",
                     text: "Una alternativa cercana y completa para grupos de secundaria que buscan viaje de egresados con organización clara.",
                     href: "#/estudiantil/secundaria-carlos-paz"
                   }
                 ].map(path => `
                   <article class="student-path-card">
-                    <img src="${companyData.brandingImages.estudiantil}" alt="${path.title}">
+                    <div class="student-path-visual is-${path.variant}" aria-hidden="true"></div>
                     <div class="student-path-body">
                       <p class="student-path-kicker">Viaje estudiantil</p>
                       <h3>${path.title}</h3>
+                      <p class="student-path-meta">${path.meta}</p>
                       <p>${path.text}</p>
                       <a href="${path.href}">Ver viaje</a>
                     </div>
