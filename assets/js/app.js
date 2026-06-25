@@ -2163,7 +2163,7 @@
         });
       }
 
-      const ADMIN_PASAJEROS_STORAGE_KEY = "angelAzulAdminPasajerosDemoV2";
+      const ADMIN_PASAJEROS_STORAGE_KEY = "angelAzulAdminPasajerosDemoV3";
       const CONTRATOS_STORAGE_KEY = "angelAzulContratos";
       const FICHA_ADHESION_STORAGE_KEY = "angelAzulFichaAdhesionDemoV1";
       const adminPasajerosSeedPassengers = [
@@ -2253,42 +2253,89 @@
         return window.ElAngelAzulGroups.normalizeGroup(group);
       }
 
+      function createAdminPasajerosSeedPassenger({ nivel, year, schoolIndex, divisionIndex, passengerIndex, groupId }) {
+        const firstNames = [
+          "Martina", "Benjamín", "Sofía", "Tomás", "Valentina", "Mateo", "Camila", "Nicolás",
+          "Abril", "Joaquín", "Olivia", "Felipe", "Renata", "Thiago", "Alma", "Bruno"
+        ];
+        const lastNames = [
+          "Gómez", "Pérez", "Ramírez", "Torres", "Núñez", "Fernández", "Acosta", "Medina",
+          "Silva", "López", "Molina", "Benítez", "Vera", "Castro", "Arias", "Romero"
+        ];
+        const base = nivel === "Primaria" ? 46000000 : 43000000;
+        const dni = String(base + ((year - 2024) * 10000) + (schoolIndex * 1000) + (divisionIndex * 100) + passengerIndex + 1);
+        const responsableDni = String(28000000 + ((year - 2024) * 8000) + (schoolIndex * 700) + (divisionIndex * 80) + passengerIndex + 11);
+        const nameIndex = ((year - 2024) + schoolIndex + divisionIndex + passengerIndex) % firstNames.length;
+        const lastNameIndex = ((year - 2024) * 2 + schoolIndex + divisionIndex + passengerIndex) % lastNames.length;
+        const paymentStates = ["Al día", "Pendiente", "Vencido", "Al día"];
+        const docStates = ["Completa", "Pendiente", "Completa", "Observada"];
+        const fichaStates = ["Cargada", "Pendiente", "Cargada", "Observada"];
+        const month = String(((schoolIndex + divisionIndex + passengerIndex) % 9) + 1).padStart(2, "0");
+        const day = String(((year + schoolIndex + divisionIndex + passengerIndex) % 26) + 1).padStart(2, "0");
+        return {
+          nombre: `${firstNames[nameIndex]} ${lastNames[lastNameIndex]}`,
+          dni,
+          contratoId: `contrato-${groupId}`,
+          codigoContrato: `CON-${year}-${nivel.slice(0, 3).toUpperCase()}-${String(schoolIndex + 1).padStart(2, "0")}-${divisionIndex === 0 ? "A" : "B"}`,
+          nacimiento: nivel === "Primaria" ? `${year - 12}-${month}-${day}` : `${year - 18}-${month}-${day}`,
+          telefono: `3794${dni.slice(-6)}`,
+          responsable: `${lastNames[(lastNameIndex + 3) % lastNames.length]} ${firstNames[(nameIndex + 4) % firstNames.length]}`,
+          responsableDni,
+          responsableTelefono: `3795${responsableDni.slice(-6)}`,
+          vinculo: passengerIndex % 2 === 0 ? "Madre" : "Padre",
+          responsableCuilCuit: passengerIndex % 2 === 0 ? `20-${responsableDni}-3` : "Pendiente",
+          fichaMedica: fichaStates[(schoolIndex + divisionIndex + passengerIndex) % fichaStates.length],
+          pago: paymentStates[(schoolIndex + divisionIndex + passengerIndex) % paymentStates.length],
+          documentacion: docStates[(schoolIndex + divisionIndex + passengerIndex) % docStates.length],
+          estado: "Activo",
+          observaciones: "Pasajero ficticio para prueba de organización."
+        };
+      }
+
       function createAdminPasajerosSeed() {
-        const levels = ["Primaria", "Secundaria"];
-        const trips = ["Carlos Paz 2026", "Bariloche 2026", "Camboriú 2026", "Mendoza 2026"];
-        const schools = ["Colegio San Martín", "Colegio San José", "Colegio Belgrano", "Instituto Santa Ana", "Escuela Normal"];
-        const courses = ["5to", "6to"];
-        const divisions = ["A", "B", "C"];
-        const demo = [...adminPasajerosDemoSeed.map(normalizeAdminPasajerosGroup)];
-        levels.forEach((nivel) => {
-          trips.forEach((viaje, tripIndex) => {
+        const years = [2024, 2025, 2026, 2027, 2028];
+        const divisions = ["A", "B"];
+        const schoolsByLevel = {
+          Primaria: [
+            "Colegio Río Paraná",
+            "Escuela Normal Primaria",
+            "Instituto Santa Clara",
+            "Colegio San José Primario",
+            "Escuela Belgrano Primaria"
+          ],
+          Secundaria: [
+            "Colegio San Martín",
+            "Colegio Belgrano",
+            "Instituto Santa Ana",
+            "Colegio Nacional",
+            "Instituto San Gabriel"
+          ]
+        };
+        const demo = [];
+        Object.entries(schoolsByLevel).forEach(([nivel, schools]) => {
+          years.forEach((year) => {
+            const viaje = nivel === "Primaria" ? `Carlos Paz ${year}` : `Bariloche ${year}`;
+            const curso = nivel === "Primaria" ? "6to grado" : "5to año";
             schools.forEach((colegio, schoolIndex) => {
-              courses.forEach((curso) => {
-                divisions.forEach((division) => {
-                  const exists = demo.some((group) => (
-                    group.nivel === nivel &&
-                    group.viaje === viaje &&
-                    group.colegio === colegio &&
-                    group.curso === curso &&
-                    group.division === division
-                  ));
-                  if (exists) return;
-                  demo.push(normalizeAdminPasajerosGroup({
+              divisions.forEach((division, divisionIndex) => {
+                const groupId = adminPasajerosGroupId(nivel, viaje, colegio, curso, division);
+                demo.push(normalizeAdminPasajerosGroup({
+                  id: groupId,
+                  nivel,
+                  viaje,
+                  colegio,
+                  curso,
+                  division,
+                  pasajerosEsperados: nivel === "Primaria" ? 24 + schoolIndex : 28 + schoolIndex,
+                  pasajeros: [0, 1].map((passengerIndex) => createAdminPasajerosSeedPassenger({
                     nivel,
-                    viaje,
-                    colegio,
-                    curso,
-                    division,
-                    pasajerosEsperados: nivel === "Primaria" ? 22 + schoolIndex : 24 + schoolIndex,
-                    pasajeros: tripIndex === 0 && schoolIndex === 0 && curso === "5to" && division === "A"
-                      ? adminPasajerosSeedPassengers.slice(0, 2).map((passenger, index) => ({
-                        ...passenger,
-                        nombre: nivel === "Primaria" ? ["Bruno Acosta", "Mía Duarte"][index] : passenger.nombre,
-                        dni: nivel === "Primaria" ? ["46888111", "46999222"][index] : passenger.dni
-                      }))
-                      : []
-                  }));
-                });
+                    year,
+                    schoolIndex,
+                    divisionIndex,
+                    passengerIndex,
+                    groupId
+                  }))
+                }));
               });
             });
           });
@@ -2391,7 +2438,7 @@
       let adminPasajerosNivel = "Secundaria";
       let adminPasajerosViaje = "Bariloche 2026";
       let adminPasajerosColegio = "Colegio San Martín";
-      let adminPasajerosGrupoId = "san-martin-5a-bariloche-2026";
+      let adminPasajerosGrupoId = adminPasajerosGroupId("Secundaria", "Bariloche 2026", "Colegio San Martín", "5to año", "A");
       let adminPasajerosShowForm = false;
       let adminPasajerosFormError = "";
       let adminPasajerosSearch = "";
@@ -2523,6 +2570,18 @@
             window.ElAngelAzulPersistence.fetchGoogleSheetRows("PASAJEROS"),
             window.ElAngelAzulPersistence.fetchGoogleSheetRows("FICHAS_ADHESION")
           ]);
+          if (!pasajeros.length) {
+            googleSheetsHydrating = true;
+            adminPasajerosDemo = createAdminPasajerosSeed();
+            adminPasajerosCollection.save(adminPasajerosDemo);
+            googleSheetsHydrating = false;
+            googleSheetsHydrated = true;
+            googleSheetsSyncState = {
+              status: "local",
+              message: `Google Sheets no tiene pasajeros cargados. Mostrando base ficticia: ${adminPasajerosRows().length} pasajeros de ejemplo.`
+            };
+            return true;
+          }
           applyGoogleSheetsRows({ grupos, contratos, pasajeros, fichas });
           googleSheetsHydrated = true;
           googleSheetsSyncState = {
