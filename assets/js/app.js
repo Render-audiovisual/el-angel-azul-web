@@ -1601,68 +1601,46 @@
           return estado.includes("activo") && !estado.includes("inactivo");
         }).length;
         document.getElementById("app").innerHTML = renderAdminShell("home", `
-          <div class="admin-module-workspace">
-            <aside class="admin-module-touchbar" aria-label="Acciones rápidas del tablero">
-              <div class="admin-module-touchbar-head">
-                <span>Home</span>
-                <strong>Tablero</strong>
+          <section class="admin-turismo-panel admin-overview admin-dashboard-home">
+            <div class="admin-dashboard-head">
+              <div>
+                <p>Vista general</p>
+                <h1>Tablero operativo</h1>
+                <span>Entrada rápida para revisar inscripciones, pasajeros, pagos y grupos activos.</span>
               </div>
-              <div class="admin-module-touchbar-actions">
-                <a class="is-primary" href="${adminRouteHref("/admin/fichas")}">Inscripciones</a>
-                <a href="${adminRouteHref("/admin/pasajeros")}">Pasajeros</a>
-                <a href="${adminRouteHref("/admin/pagos")}">Pagos</a>
-                <a href="${adminRouteHref("/admin/grupos")}">Grupos</a>
-              </div>
-              <div class="admin-module-touchbar-metrics">
-                <article><strong>${fichasNuevas}</strong><span>fichas nuevas</span></article>
-                <article><strong>${pagosPendientes}</strong><span>pagos pend.</span></article>
-                <article><strong>${gruposActivos}</strong><span>grupos activos</span></article>
-              </div>
-            </aside>
-
-            <div class="admin-module-content">
-              <section class="admin-turismo-panel admin-overview admin-dashboard-home">
-                <div class="admin-dashboard-head">
-                  <div>
-                    <p>Vista general</p>
-                    <h1>Tablero operativo</h1>
-                    <span>Entrada rápida para revisar inscripciones, pasajeros, pagos y grupos activos.</span>
-                  </div>
-                  <a class="admin-secondary-action" href="${adminRouteHref("/admin/fichas")}">Ver inscripciones</a>
-                </div>
-                <div class="admin-dashboard-grid">
-                  <a class="admin-dashboard-card is-attention" href="${adminRouteHref("/admin/fichas")}">
-                    <span>Fichas nuevas pendientes</span>
-                    <strong>${fichasNuevas}</strong>
-                    <small>Inscripciones por revisar</small>
-                  </a>
-                  <a class="admin-dashboard-card" href="${adminRouteHref("/admin/pasajeros")}">
-                    <span>Pasajeros activos</span>
-                    <strong>${pasajerosActivos}</strong>
-                    <small>Personas cargadas como activas</small>
-                  </a>
-                  <a class="admin-dashboard-card is-warning" href="${adminRouteHref("/admin/pagos")}">
-                    <span>Pagos pendientes</span>
-                    <strong>${pagosPendientes}</strong>
-                    <small>Pasajeros no marcados al día</small>
-                  </a>
-                  <a class="admin-dashboard-card" href="${adminRouteHref("/admin/grupos")}">
-                    <span>Grupos activos</span>
-                    <strong>${gruposActivos}</strong>
-                    <small>Colegios/cursos operativos</small>
-                  </a>
-                </div>
-                <div class="admin-next-actions">
-                  <h2>Próximos pasos</h2>
-                  <div>
-                    <a href="${adminRouteHref("/admin/fichas")}">Revisar nuevas fichas</a>
-                    <a href="${adminRouteHref("/admin/pasajeros")}">Buscar o cargar pasajero</a>
-                    <a href="${adminRouteHref("/admin/grupos")}">Validar grupos y contratos</a>
-                  </div>
-                </div>
-              </section>
+              <a class="admin-secondary-action" href="${adminRouteHref("/admin/fichas")}">Ver inscripciones</a>
             </div>
-          </div>
+            <div class="admin-dashboard-grid">
+              <a class="admin-dashboard-card is-attention" href="${adminRouteHref("/admin/fichas")}">
+                <span>Fichas nuevas pendientes</span>
+                <strong>${fichasNuevas}</strong>
+                <small>Inscripciones por revisar</small>
+              </a>
+              <a class="admin-dashboard-card" href="${adminRouteHref("/admin/pasajeros")}">
+                <span>Pasajeros activos</span>
+                <strong>${pasajerosActivos}</strong>
+                <small>Personas cargadas como activas</small>
+              </a>
+              <a class="admin-dashboard-card is-warning" href="${adminRouteHref("/admin/pagos")}">
+                <span>Pagos pendientes</span>
+                <strong>${pagosPendientes}</strong>
+                <small>Pasajeros no marcados al día</small>
+              </a>
+              <a class="admin-dashboard-card" href="${adminRouteHref("/admin/grupos")}">
+                <span>Grupos activos</span>
+                <strong>${gruposActivos}</strong>
+                <small>Colegios/cursos operativos</small>
+              </a>
+            </div>
+            <div class="admin-next-actions">
+              <h2>Próximos pasos</h2>
+              <div>
+                <a href="${adminRouteHref("/admin/fichas")}">Revisar nuevas fichas</a>
+                <a href="${adminRouteHref("/admin/pasajeros")}">Buscar o cargar pasajero</a>
+                <a href="${adminRouteHref("/admin/grupos")}">Validar grupos y contratos</a>
+              </div>
+            </div>
+          </section>
         `);
         bindAdminShell();
       }
@@ -2082,118 +2060,96 @@
         `).join("");
 
         document.getElementById("app").innerHTML = renderAdminShell("configuracion", `
-          <div class="admin-module-workspace">
-            <aside class="admin-module-touchbar" aria-label="Acciones rápidas de configuración">
-              <div class="admin-module-touchbar-head">
-                <span>Configuración</span>
-                <strong>Datos</strong>
-              </div>
-              <div class="admin-module-touchbar-actions">
-                <a class="is-primary" href="${escapeHtml(persistence.sheet.url)}" target="_blank" rel="noopener">Abrir Sheets</a>
-                <button type="button" data-admin-download-sheet-schema>Encabezados CSV</button>
-                <button type="button" data-admin-download-sheet-data>Datos CSV</button>
-                <button type="button" data-admin-download-apps-script>Apps Script</button>
-              </div>
-              <div class="admin-module-touchbar-metrics">
-                <article><strong>${escapeHtml(persistence.active)}</strong><span>provider</span></article>
-                <article><strong>${adminPasajerosRows().length}</strong><span>pasajeros</span></article>
-                <article><strong>${loadFichasAdhesionDemo().length}</strong><span>fichas</span></article>
-              </div>
-            </aside>
-
-            <div class="admin-module-content">
-              <section class="admin-turismo-panel admin-overview">
-                <p>Arquitectura de datos</p>
-                <h2>Persistencia preparada</h2>
-                <div class="admin-pasajeros-breadcrumb">
-                  <span>Provider activo: ${escapeHtml(persistence.active)}</span>
-                  <span>Base destino: ${escapeHtml(persistence.sheet.title)}</span>
-                  <span>Conexión: ${escapeHtml(sheetsStatus.label)}</span>
-                  <span>Sync: ${escapeHtml(googleSheetsSyncState.message)}</span>
-                  <span>Pasajeros: ${adminPasajerosRows().length}</span>
-                  <span>Fichas: ${loadFichasAdhesionDemo().length}</span>
-                </div>
-                <p>${escapeHtml(persistence.note)}</p>
-                <div class="admin-actions-row">
-                  <a class="admin-secondary-action" href="${escapeHtml(persistence.sheet.url)}" target="_blank" rel="noopener">Abrir Google Sheets</a>
-                  <button type="button" class="admin-secondary-action" data-admin-download-sheet-schema>Descargar encabezados CSV</button>
-                  <button type="button" class="admin-secondary-action" data-admin-download-sheet-data>Descargar datos actuales CSV</button>
-                  <button type="button" class="admin-secondary-action" data-admin-download-apps-script>Descargar Apps Script</button>
-                </div>
-              </section>
-
-              <section class="admin-turismo-panel">
-                <div class="admin-pasajeros-table-head">
-                  <div>
-                    <h2>Conexión Google Sheets</h2>
-                    <p>${escapeHtml(sheetsStatus.detail)}</p>
-                  </div>
-                  <strong>${escapeHtml(sheetsStatus.label)}</strong>
-                </div>
-                <form class="admin-pasajeros-form" data-google-sheets-config-form>
-                  <fieldset>
-                    <legend>Endpoint de datos</legend>
-                    <label>URL del Web App
-                      <input name="endpoint" value="${escapeHtml(sheetsConfig.endpoint || "/api/google-sheets")}" placeholder="/api/google-sheets">
-                    </label>
-                    <label>Token opcional
-                      <input name="token" value="${escapeHtml(sheetsConfig.token || "")}" placeholder="EAA_CHANGE_ME">
-                    </label>
-                  </fieldset>
-                  <p class="admin-pasajeros-modal-note">El endpoint local usa la cuenta de servicio del servidor. Esto no activa pagos, permisos ni documentación avanzada.</p>
-                  <div class="admin-pasajeros-form-actions">
-                    <button type="submit" class="admin-pasajeros-primary-button">Guardar conexión</button>
-                  </div>
-                </form>
-              </section>
-
-              <section class="admin-turismo-panel">
-                <div class="admin-pasajeros-table-head">
-                  <div>
-                    <h2>Providers disponibles</h2>
-                    <p>El panel ya consume una capa intermedia. El próximo cambio será reemplazar el provider, no reescribir pantallas.</p>
-                  </div>
-                </div>
-                <div class="admin-demo-grid">${providers}</div>
-              </section>
-
-              <section class="admin-turismo-panel">
-                <div class="admin-pasajeros-table-head">
-                  <div>
-                    <h2>Google Sheets base</h2>
-                    <p>Documento definido para migrar datos reales. Hoy el archivo tiene ${escapeHtml(persistence.sheet.currentTabs.join(", "))}; estas son las pestañas prolijas que debe tener antes de activar lectura/escritura real.</p>
-                  </div>
-                </div>
-                <div class="admin-demo-grid">${sheetTabs}</div>
-              </section>
-
-              <section class="admin-turismo-panel">
-                <div class="admin-pasajeros-table-head">
-                  <div>
-                    <h2>Mapa de migración</h2>
-                    <p>Relación entre las colecciones actuales del panel y las pestañas definitivas del Sheet.</p>
-                  </div>
-                </div>
-                <div class="admin-pasajeros-table-wrap">
-                  <table class="admin-pasajeros-table admin-pasajeros-table--compact">
-                    <thead>
-                      <tr>
-                        <th>Colección actual</th>
-                        <th>Pestaña destino</th>
-                        <th>Uso</th>
-                      </tr>
-                    </thead>
-                    <tbody>${collectionRows}</tbody>
-                  </table>
-                </div>
-              </section>
+          <section class="admin-turismo-panel admin-overview">
+            <p>Arquitectura de datos</p>
+            <h2>Persistencia preparada</h2>
+            <div class="admin-pasajeros-breadcrumb">
+              <span>Provider activo: ${escapeHtml(persistence.active)}</span>
+              <span>Base destino: ${escapeHtml(persistence.sheet.title)}</span>
+              <span>Conexión: ${escapeHtml(sheetsStatus.label)}</span>
+              <span>Sync: ${escapeHtml(googleSheetsSyncState.message)}</span>
+              <span>Pasajeros: ${adminPasajerosRows().length}</span>
+              <span>Fichas: ${loadFichasAdhesionDemo().length}</span>
             </div>
-          </div>
+            <p>${escapeHtml(persistence.note)}</p>
+            <div class="admin-actions-row">
+              <a class="admin-secondary-action" href="${escapeHtml(persistence.sheet.url)}" target="_blank" rel="noopener">Abrir Google Sheets</a>
+              <button type="button" class="admin-secondary-action" data-admin-download-sheet-schema>Descargar encabezados CSV</button>
+              <button type="button" class="admin-secondary-action" data-admin-download-sheet-data>Descargar datos actuales CSV</button>
+              <button type="button" class="admin-secondary-action" data-admin-download-apps-script>Descargar Apps Script</button>
+            </div>
+          </section>
+
+          <section class="admin-turismo-panel">
+            <div class="admin-pasajeros-table-head">
+              <div>
+                <h2>Conexión Google Sheets</h2>
+                <p>${escapeHtml(sheetsStatus.detail)}</p>
+              </div>
+              <strong>${escapeHtml(sheetsStatus.label)}</strong>
+            </div>
+            <form class="admin-pasajeros-form" data-google-sheets-config-form>
+              <fieldset>
+                <legend>Endpoint de datos</legend>
+                <label>URL del Web App
+                  <input name="endpoint" value="${escapeHtml(sheetsConfig.endpoint || "/api/google-sheets")}" placeholder="/api/google-sheets">
+                </label>
+                <label>Token opcional
+                  <input name="token" value="${escapeHtml(sheetsConfig.token || "")}" placeholder="EAA_CHANGE_ME">
+                </label>
+              </fieldset>
+              <p class="admin-pasajeros-modal-note">El endpoint local usa la cuenta de servicio del servidor. Esto no activa pagos, permisos ni documentación avanzada.</p>
+              <div class="admin-pasajeros-form-actions">
+                <button type="submit" class="admin-pasajeros-primary-button">Guardar conexión</button>
+              </div>
+            </form>
+          </section>
+
+          <section class="admin-turismo-panel">
+            <div class="admin-pasajeros-table-head">
+              <div>
+                <h2>Providers disponibles</h2>
+                <p>El panel ya consume una capa intermedia. El próximo cambio será reemplazar el provider, no reescribir pantallas.</p>
+              </div>
+            </div>
+            <div class="admin-demo-grid">${providers}</div>
+          </section>
+
+          <section class="admin-turismo-panel">
+            <div class="admin-pasajeros-table-head">
+              <div>
+                <h2>Google Sheets base</h2>
+                <p>Documento definido para migrar datos reales. Hoy el archivo tiene ${escapeHtml(persistence.sheet.currentTabs.join(", "))}; estas son las pestañas prolijas que debe tener antes de activar lectura/escritura real.</p>
+              </div>
+            </div>
+            <div class="admin-demo-grid">${sheetTabs}</div>
+          </section>
+
+          <section class="admin-turismo-panel">
+            <div class="admin-pasajeros-table-head">
+              <div>
+                <h2>Mapa de migración</h2>
+                <p>Relación entre las colecciones actuales del panel y las pestañas definitivas del Sheet.</p>
+              </div>
+            </div>
+            <div class="admin-pasajeros-table-wrap">
+              <table class="admin-pasajeros-table admin-pasajeros-table--compact">
+                <thead>
+                  <tr>
+                    <th>Colección actual</th>
+                    <th>Pestaña destino</th>
+                    <th>Uso</th>
+                  </tr>
+                </thead>
+                <tbody>${collectionRows}</tbody>
+              </table>
+            </div>
+          </section>
         `);
         bindAdminShell();
-        document.querySelectorAll("[data-admin-download-sheet-schema]").forEach((button) => button.addEventListener("click", downloadGoogleSheetSchemaCsv));
-        document.querySelectorAll("[data-admin-download-sheet-data]").forEach((button) => button.addEventListener("click", downloadGoogleSheetDataCsv));
-        document.querySelectorAll("[data-admin-download-apps-script]").forEach((button) => button.addEventListener("click", downloadGoogleSheetAppsScript));
+        document.querySelector("[data-admin-download-sheet-schema]")?.addEventListener("click", downloadGoogleSheetSchemaCsv);
+        document.querySelector("[data-admin-download-sheet-data]")?.addEventListener("click", downloadGoogleSheetDataCsv);
+        document.querySelector("[data-admin-download-apps-script]")?.addEventListener("click", downloadGoogleSheetAppsScript);
         document.querySelector("[data-google-sheets-config-form]")?.addEventListener("submit", (event) => {
           event.preventDefault();
           const formData = new FormData(event.currentTarget);
@@ -3658,85 +3614,58 @@
         const activeFilter = filterMap[adminFichasFilter] ? adminFichasFilter : "nuevas";
         const visibleFichas = fichas.filter((ficha) => filterMap[activeFilter].states.includes(ficha.estadoRevision || "pendiente"));
         document.getElementById("app").innerHTML = renderAdminShell("fichas", `
-          <div class="admin-module-workspace">
-            <aside class="admin-module-touchbar" aria-label="Acciones rápidas de inscripciones">
-              <div class="admin-module-touchbar-head">
-                <span>Inscripciones</span>
-                <strong>Bandeja</strong>
-              </div>
-              <div class="admin-module-touchbar-actions">
-                ${Object.entries(filterMap).map(([key, filter]) => {
-                  const count = fichas.filter((ficha) => filter.states.includes(ficha.estadoRevision || "pendiente")).length;
-                  return `
-                    <button type="button" class="${key === activeFilter ? "is-active" : ""}" data-admin-fichas-filter="${escapeHtml(key)}">
-                      ${escapeHtml(filter.label)} (${count})
-                    </button>
-                  `;
-                }).join("")}
-                <a href="${adminRouteHref("/admin/pasajeros")}">Ver pasajeros</a>
-              </div>
-              <div class="admin-module-touchbar-metrics">
-                <article><strong>${visibleFichas.length}</strong><span>visibles</span></article>
-                <article><strong>${fichas.length}</strong><span>total fichas</span></article>
-                <article><strong>${fichasConPasajeroExistente}</strong><span>DNI cargado</span></article>
-              </div>
-            </aside>
-
-            <div class="admin-module-content">
-              <section class="admin-turismo-panel">
-                <h1>Inscripciones</h1>
-                <p>Bandeja operativa para revisar fichas, asignar grupo y aprobar la creación del pasajero.</p>
-                <div class="admin-fichas-flow-summary">
-                  <span>${fichaSummary.pendiente || 0} nuevas</span>
-                  <span>${fichaSummary.revisada || 0} en revisión/asignación</span>
-                  <span>${fichaSummary.aprobada || 0} aprobadas</span>
-                  <span>${fichaSummary.rechazada || 0} rechazadas</span>
-                  <span>${fichasConPasajeroExistente} con DNI ya cargado</span>
-                </div>
-                <div class="admin-sync-status is-${escapeHtml(googleSheetsSyncState.status)}">
-                  <span>${escapeHtml(googleSheetsSyncState.message)}</span>
-                  <a href="${escapeHtml(window.ElAngelAzulPersistence.googleSheet.url)}" target="_blank" rel="noreferrer">Abrir Sheet</a>
-                </div>
-                ${adminFichasMessage ? `<div class="admin-fichas-message">${escapeHtml(adminFichasMessage)}</div>` : ""}
-              </section>
-
-              <section class="admin-turismo-panel admin-pasajeros-table-panel">
-                <div class="admin-pasajeros-table-head">
-                  <div>
-                    <h2>Bandeja de fichas</h2>
-                    <p>Filtrá por estado y ejecutá la acción siguiente sin salir de la tabla.</p>
-                  </div>
-                  <strong>${visibleFichas.length} / ${fichas.length} fichas</strong>
-                </div>
-                <div class="admin-fichas-tabs" role="tablist" aria-label="Estado de fichas">
-                  ${Object.entries(filterMap).map(([key, filter]) => {
-                    const count = fichas.filter((ficha) => filter.states.includes(ficha.estadoRevision || "pendiente")).length;
-                    return `
-                      <button type="button" class="${key === activeFilter ? "is-active" : ""}" data-admin-fichas-filter="${escapeHtml(key)}">
-                        ${escapeHtml(filter.label)}
-                        <span>${count}</span>
-                      </button>
-                    `;
-                  }).join("")}
-                </div>
-                <div class="admin-pasajeros-table-wrap">
-                  <table class="admin-pasajeros-table admin-fichas-table">
-                    <thead>
-                      <tr>
-                        <th>Pasajero</th>
-                        <th>Responsable</th>
-                        <th>Flujo</th>
-                        <th>Asignación</th>
-                        <th>Estado</th>
-                        <th>Acciones</th>
-                      </tr>
-                    </thead>
-                    <tbody>${fichaAdhesionDemoRows(visibleFichas)}</tbody>
-                  </table>
-                </div>
-              </section>
+          <section class="admin-turismo-panel">
+            <h1>Inscripciones</h1>
+            <p>Bandeja operativa para revisar fichas, asignar grupo y aprobar la creación del pasajero.</p>
+            <div class="admin-fichas-flow-summary">
+              <span>${fichaSummary.pendiente || 0} nuevas</span>
+              <span>${fichaSummary.revisada || 0} en revisión/asignación</span>
+              <span>${fichaSummary.aprobada || 0} aprobadas</span>
+              <span>${fichaSummary.rechazada || 0} rechazadas</span>
+              <span>${fichasConPasajeroExistente} con DNI ya cargado</span>
             </div>
-          </div>
+            <div class="admin-sync-status is-${escapeHtml(googleSheetsSyncState.status)}">
+              <span>${escapeHtml(googleSheetsSyncState.message)}</span>
+              <a href="${escapeHtml(window.ElAngelAzulPersistence.googleSheet.url)}" target="_blank" rel="noreferrer">Abrir Sheet</a>
+            </div>
+            ${adminFichasMessage ? `<div class="admin-fichas-message">${escapeHtml(adminFichasMessage)}</div>` : ""}
+          </section>
+
+          <section class="admin-turismo-panel admin-pasajeros-table-panel">
+            <div class="admin-pasajeros-table-head">
+              <div>
+                <h2>Bandeja de fichas</h2>
+                <p>Filtrá por estado y ejecutá la acción siguiente sin salir de la tabla.</p>
+              </div>
+              <strong>${visibleFichas.length} / ${fichas.length} fichas</strong>
+            </div>
+            <div class="admin-fichas-tabs" role="tablist" aria-label="Estado de fichas">
+              ${Object.entries(filterMap).map(([key, filter]) => {
+                const count = fichas.filter((ficha) => filter.states.includes(ficha.estadoRevision || "pendiente")).length;
+                return `
+                  <button type="button" class="${key === activeFilter ? "is-active" : ""}" data-admin-fichas-filter="${escapeHtml(key)}">
+                    ${escapeHtml(filter.label)}
+                    <span>${count}</span>
+                  </button>
+                `;
+              }).join("")}
+            </div>
+            <div class="admin-pasajeros-table-wrap">
+              <table class="admin-pasajeros-table admin-fichas-table">
+                <thead>
+                  <tr>
+                    <th>Pasajero</th>
+                    <th>Responsable</th>
+                    <th>Flujo</th>
+                    <th>Asignación</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>${fichaAdhesionDemoRows(visibleFichas)}</tbody>
+              </table>
+            </div>
+          </section>
         `);
         adminFichasMessage = "";
         bindAdminShell();
@@ -4215,108 +4144,86 @@
         const estados = uniqueValues(contracts, "estado");
 
         document.getElementById("app").innerHTML = renderAdminShell("contratos", `
-          <div class="admin-module-workspace">
-            <aside class="admin-module-touchbar" aria-label="Acciones rápidas de contratos">
-              <div class="admin-module-touchbar-head">
-                <span>Contratos</span>
-                <strong>Validación</strong>
-              </div>
-              <div class="admin-module-touchbar-actions">
-                <a class="is-primary" href="${adminRouteHref("/admin/grupos")}">Ver grupos</a>
-                <a href="${adminRouteHref("/admin/pasajeros")}">Pasajeros</a>
-                <a href="${adminRouteHref("/admin/pagos")}">Pagos</a>
-                <a href="${escapeHtml(window.ElAngelAzulPersistence.googleSheet.url)}" target="_blank" rel="noopener">Abrir Sheet</a>
-              </div>
-              <div class="admin-module-touchbar-metrics">
-                <article><strong>${contracts.length}</strong><span>contratos</span></article>
-                <article><strong>${activeContracts}</strong><span>activos</span></article>
-                <article><strong>${duplicatedCodes}</strong><span>duplicados</span></article>
-              </div>
-            </aside>
-
-            <div class="admin-module-content">
-              <section class="admin-turismo-panel admin-overview">
-                <p>Base operativa</p>
-                <h2>Contratos</h2>
-                <div class="admin-pasajeros-breadcrumb">
-                  <span>Total: ${contracts.length}</span>
-                  <span>Activos: ${activeContracts}</span>
-                  <span>Grupos vinculados: ${linkedGroups}</span>
-                  <span>Códigos duplicados: ${duplicatedCodes}</span>
-                  <span>${escapeHtml(googleSheetsSyncState.message)}</span>
-                </div>
-                <p>Esta vista permite validar el número real que carga Hugo. Solo los contratos en estado Activo habilitan inscripción pública automática.</p>
-                <div class="admin-fichas-message">
-                  Los datos de colegio, viaje, curso y división vienen desde Grupos. En esta pantalla solo se valida el contrato real y su estado.
-                </div>
-              </section>
-
-              <section class="admin-turismo-panel admin-pasajeros-filter-panel">
-                <div class="admin-pasajeros-table-head">
-                  <div>
-                    <h2>Filtros</h2>
-                    <p>Revisá rápidamente contratos por colegio, viaje, nivel o código.</p>
-                  </div>
-                  <a class="admin-secondary-action" href="${escapeHtml(window.ElAngelAzulPersistence.googleSheet.url)}" target="_blank" rel="noopener">Abrir Sheet</a>
-                </div>
-                <div class="admin-pasajeros-filters" data-admin-contratos-filters>
-                  <label>Buscar
-                    <input name="search" value="${escapeHtml(adminContratosSearch)}" placeholder="Código, colegio, grupo">
-                  </label>
-                  <label>Nivel
-                    <select name="nivel">
-                      <option value="">Todos</option>
-                      ${niveles.map((nivel) => `<option value="${escapeHtml(nivel)}" ${nivel === adminContratosFilterNivel ? "selected" : ""}>${escapeHtml(nivel)}</option>`).join("")}
-                    </select>
-                  </label>
-                  <label>Viaje
-                    <select name="viaje">
-                      <option value="">Todos</option>
-                      ${viajes.map((viaje) => `<option value="${escapeHtml(viaje)}" ${viaje === adminContratosFilterViaje ? "selected" : ""}>${escapeHtml(viaje)}</option>`).join("")}
-                    </select>
-                  </label>
-                  <label>Colegio
-                    <select name="colegio">
-                      <option value="">Todos</option>
-                      ${colegios.map((colegio) => `<option value="${escapeHtml(colegio)}" ${colegio === adminContratosFilterColegio ? "selected" : ""}>${escapeHtml(colegio)}</option>`).join("")}
-                    </select>
-                  </label>
-                  <label>Estado
-                    <select name="estado">
-                      <option value="">Todos</option>
-                      ${estados.map((estado) => `<option value="${escapeHtml(estado)}" ${estado === adminContratosFilterEstado ? "selected" : ""}>${escapeHtml(estado)}</option>`).join("")}
-                    </select>
-                  </label>
-                </div>
-              </section>
-
-              <section class="admin-turismo-panel admin-pasajeros-table-panel">
-                <div class="admin-pasajeros-table-head">
-                  <div>
-                    <h2>Contratos cargados</h2>
-                    <p>${filteredRows.length} contratos visibles de ${contracts.length} cargados. Colegio, viaje, curso y división se muestran como referencia de Grupos.</p>
-                  </div>
-                  <strong>${duplicatedCodes === 0 ? "Base sin duplicados" : "Revisar duplicados"}</strong>
-                </div>
-                <div class="admin-pasajeros-table-wrap">
-                  <table class="admin-pasajeros-table admin-pasajeros-table--compact">
-                    <thead>
-                      <tr>
-                        <th>Contrato editable</th>
-                        <th>Colegio de referencia</th>
-                        <th>Grupo / viaje de referencia</th>
-                        <th>Estado</th>
-                        <th>Pasajeros</th>
-                        <th>Observaciones editables</th>
-                        <th>Editar contrato</th>
-                      </tr>
-                    </thead>
-                    <tbody>${renderAdminContratosRows(filteredRows)}</tbody>
-                  </table>
-                </div>
-              </section>
+          <section class="admin-turismo-panel admin-overview">
+            <p>Base operativa</p>
+            <h2>Contratos</h2>
+            <div class="admin-pasajeros-breadcrumb">
+              <span>Total: ${contracts.length}</span>
+              <span>Activos: ${activeContracts}</span>
+              <span>Grupos vinculados: ${linkedGroups}</span>
+              <span>Códigos duplicados: ${duplicatedCodes}</span>
+              <span>${escapeHtml(googleSheetsSyncState.message)}</span>
             </div>
-          </div>
+            <p>Esta vista permite validar el número real que carga Hugo. Solo los contratos en estado Activo habilitan inscripción pública automática.</p>
+            <div class="admin-fichas-message">
+              Los datos de colegio, viaje, curso y división vienen desde Grupos. En esta pantalla solo se valida el contrato real y su estado.
+            </div>
+          </section>
+
+          <section class="admin-turismo-panel admin-pasajeros-filter-panel">
+            <div class="admin-pasajeros-table-head">
+              <div>
+                <h2>Filtros</h2>
+                <p>Revisá rápidamente contratos por colegio, viaje, nivel o código.</p>
+              </div>
+              <a class="admin-secondary-action" href="${escapeHtml(window.ElAngelAzulPersistence.googleSheet.url)}" target="_blank" rel="noopener">Abrir Sheet</a>
+            </div>
+            <div class="admin-pasajeros-filters" data-admin-contratos-filters>
+              <label>Buscar
+                <input name="search" value="${escapeHtml(adminContratosSearch)}" placeholder="Código, colegio, grupo">
+              </label>
+              <label>Nivel
+                <select name="nivel">
+                  <option value="">Todos</option>
+                  ${niveles.map((nivel) => `<option value="${escapeHtml(nivel)}" ${nivel === adminContratosFilterNivel ? "selected" : ""}>${escapeHtml(nivel)}</option>`).join("")}
+                </select>
+              </label>
+              <label>Viaje
+                <select name="viaje">
+                  <option value="">Todos</option>
+                  ${viajes.map((viaje) => `<option value="${escapeHtml(viaje)}" ${viaje === adminContratosFilterViaje ? "selected" : ""}>${escapeHtml(viaje)}</option>`).join("")}
+                </select>
+              </label>
+              <label>Colegio
+                <select name="colegio">
+                  <option value="">Todos</option>
+                  ${colegios.map((colegio) => `<option value="${escapeHtml(colegio)}" ${colegio === adminContratosFilterColegio ? "selected" : ""}>${escapeHtml(colegio)}</option>`).join("")}
+                </select>
+              </label>
+              <label>Estado
+                <select name="estado">
+                  <option value="">Todos</option>
+                  ${estados.map((estado) => `<option value="${escapeHtml(estado)}" ${estado === adminContratosFilterEstado ? "selected" : ""}>${escapeHtml(estado)}</option>`).join("")}
+                </select>
+              </label>
+            </div>
+          </section>
+
+          <section class="admin-turismo-panel admin-pasajeros-table-panel">
+            <div class="admin-pasajeros-table-head">
+              <div>
+                <h2>Contratos cargados</h2>
+                <p>${filteredRows.length} contratos visibles de ${contracts.length} cargados. Colegio, viaje, curso y división se muestran como referencia de Grupos.</p>
+              </div>
+              <strong>${duplicatedCodes === 0 ? "Base sin duplicados" : "Revisar duplicados"}</strong>
+            </div>
+            <div class="admin-pasajeros-table-wrap">
+              <table class="admin-pasajeros-table admin-pasajeros-table--compact">
+                <thead>
+                  <tr>
+                    <th>Contrato editable</th>
+                    <th>Colegio de referencia</th>
+                    <th>Grupo / viaje de referencia</th>
+                    <th>Estado</th>
+                    <th>Pasajeros</th>
+                    <th>Observaciones editables</th>
+                    <th>Editar contrato</th>
+                  </tr>
+                </thead>
+                <tbody>${renderAdminContratosRows(filteredRows)}</tbody>
+              </table>
+            </div>
+          </section>
 
           ${renderAdminContratoEditModal()}
         `);
@@ -4475,105 +4382,81 @@
         const uniqueSchools = colegios.length;
 
         document.getElementById("app").innerHTML = renderAdminShell("grupos", `
-          <div class="admin-module-workspace">
-            <aside class="admin-module-touchbar" aria-label="Acciones rápidas de grupos">
-              <div class="admin-module-touchbar-head">
-                <span>Grupos</span>
-                <strong>Colegios y contratos</strong>
-              </div>
-              <div class="admin-module-touchbar-actions">
-                ${adminGruposShowCreateForm
-                  ? `<button type="button" class="is-active" data-admin-grupos-cancel-create>Ocultar carga</button>`
-                  : `<button type="button" class="is-primary" data-admin-grupos-open-create>Crear grupo</button>`}
-                <a href="${adminRouteHref("/admin/contratos")}">Contratos</a>
-                <a href="${adminRouteHref("/admin/pasajeros")}">Pasajeros</a>
-                <a href="${escapeHtml(window.ElAngelAzulPersistence.googleSheet.url)}" target="_blank" rel="noopener">Abrir Sheet</a>
-              </div>
-              <div class="admin-module-touchbar-metrics">
-                <article><strong>${groups.length}</strong><span>grupos</span></article>
-                <article><strong>${uniqueSchools}</strong><span>colegios</span></article>
-                <article><strong>${groupsWithoutContract}</strong><span>sin contrato</span></article>
-              </div>
-            </aside>
-
-            <div class="admin-module-content">
-              <section class="admin-turismo-panel admin-overview">
-                <p>Base operativa</p>
-                <h2>Grupos / colegios</h2>
-                <div class="admin-pasajeros-breadcrumb">
-                  <span>Grupos: ${groups.length}</span>
-                  <span>Colegios únicos: ${uniqueSchools}</span>
-                  <span>Pasajeros: ${totalPassengers}</span>
-                  <span>Sin contrato: ${groupsWithoutContract}</span>
-                  <span>${escapeHtml(googleSheetsSyncState.message)}</span>
-                </div>
-                <p>Esta vista valida la estructura colegio, viaje, curso y división que alimenta contratos y pasajeros.</p>
-                <div class="admin-actions-row">
-                  <button type="button" class="admin-secondary-action" data-admin-grupos-open-create>Crear grupo nuevo</button>
-                  <a class="admin-secondary-action" href="${escapeHtml(window.ElAngelAzulPersistence.googleSheet.url)}" target="_blank" rel="noopener">Abrir Sheet</a>
-                </div>
-              </section>
-
-              ${renderAdminGruposCreateForm()}
-
-              <section class="admin-turismo-panel admin-pasajeros-filter-panel">
-                <div class="admin-pasajeros-table-head">
-                  <div>
-                    <h2>Filtros</h2>
-                    <p>Usá esta vista para detectar grupos faltantes, cursos mal cargados o colegios duplicados.</p>
-                  </div>
-                </div>
-                <div class="admin-pasajeros-filters" data-admin-grupos-filters>
-                  <label>Buscar
-                    <input name="search" value="${escapeHtml(adminGruposSearch)}" placeholder="Colegio, curso, viaje">
-                  </label>
-                  <label>Nivel
-                    <select name="nivel">
-                      <option value="">Todos</option>
-                      ${niveles.map((nivel) => `<option value="${escapeHtml(nivel)}" ${nivel === adminGruposFilterNivel ? "selected" : ""}>${escapeHtml(nivel)}</option>`).join("")}
-                    </select>
-                  </label>
-                  <label>Viaje
-                    <select name="viaje">
-                      <option value="">Todos</option>
-                      ${viajes.map((viaje) => `<option value="${escapeHtml(viaje)}" ${viaje === adminGruposFilterViaje ? "selected" : ""}>${escapeHtml(viaje)}</option>`).join("")}
-                    </select>
-                  </label>
-                  <label>Colegio
-                    <select name="colegio">
-                      <option value="">Todos</option>
-                      ${filteredColegios.map((colegio) => `<option value="${escapeHtml(colegio)}" ${colegio === adminGruposFilterColegio ? "selected" : ""}>${escapeHtml(colegio)}</option>`).join("")}
-                    </select>
-                  </label>
-                </div>
-              </section>
-
-              <section class="admin-turismo-panel admin-pasajeros-table-panel">
-                <div class="admin-pasajeros-table-head">
-                  <div>
-                    <h2>Grupos cargados</h2>
-                    <p>${filteredRows.length} grupos visibles de ${groups.length} cargados en Google Sheets.</p>
-                  </div>
-                  <strong>${groupsWithoutContract === 0 ? "Todos vinculados" : "Revisar contratos"}</strong>
-                </div>
-                <div class="admin-pasajeros-table-wrap">
-                  <table class="admin-pasajeros-table admin-pasajeros-table--compact">
-                    <thead>
-                      <tr>
-                        <th>Colegio</th>
-                        <th>Nivel / viaje</th>
-                        <th>Curso</th>
-                        <th>Contratos</th>
-                        <th>Pasajeros</th>
-                        <th>Contrato base</th>
-                      </tr>
-                    </thead>
-                    <tbody>${renderAdminGruposRows(filteredRows)}</tbody>
-                  </table>
-                </div>
-              </section>
+          <section class="admin-turismo-panel admin-overview">
+            <p>Base operativa</p>
+            <h2>Grupos / colegios</h2>
+            <div class="admin-pasajeros-breadcrumb">
+              <span>Grupos: ${groups.length}</span>
+              <span>Colegios únicos: ${uniqueSchools}</span>
+              <span>Pasajeros: ${totalPassengers}</span>
+              <span>Sin contrato: ${groupsWithoutContract}</span>
+              <span>${escapeHtml(googleSheetsSyncState.message)}</span>
             </div>
-          </div>
+            <p>Esta vista valida la estructura colegio, viaje, curso y división que alimenta contratos y pasajeros.</p>
+            <div class="admin-actions-row">
+              <button type="button" class="admin-secondary-action" data-admin-grupos-open-create>Crear grupo nuevo</button>
+              <a class="admin-secondary-action" href="${escapeHtml(window.ElAngelAzulPersistence.googleSheet.url)}" target="_blank" rel="noopener">Abrir Sheet</a>
+            </div>
+          </section>
+
+          ${renderAdminGruposCreateForm()}
+
+          <section class="admin-turismo-panel admin-pasajeros-filter-panel">
+            <div class="admin-pasajeros-table-head">
+              <div>
+                <h2>Filtros</h2>
+                <p>Usá esta vista para detectar grupos faltantes, cursos mal cargados o colegios duplicados.</p>
+              </div>
+            </div>
+            <div class="admin-pasajeros-filters" data-admin-grupos-filters>
+              <label>Buscar
+                <input name="search" value="${escapeHtml(adminGruposSearch)}" placeholder="Colegio, curso, viaje">
+              </label>
+              <label>Nivel
+                <select name="nivel">
+                  <option value="">Todos</option>
+                  ${niveles.map((nivel) => `<option value="${escapeHtml(nivel)}" ${nivel === adminGruposFilterNivel ? "selected" : ""}>${escapeHtml(nivel)}</option>`).join("")}
+                </select>
+              </label>
+              <label>Viaje
+                <select name="viaje">
+                  <option value="">Todos</option>
+                  ${viajes.map((viaje) => `<option value="${escapeHtml(viaje)}" ${viaje === adminGruposFilterViaje ? "selected" : ""}>${escapeHtml(viaje)}</option>`).join("")}
+                </select>
+              </label>
+              <label>Colegio
+                <select name="colegio">
+                  <option value="">Todos</option>
+                  ${filteredColegios.map((colegio) => `<option value="${escapeHtml(colegio)}" ${colegio === adminGruposFilterColegio ? "selected" : ""}>${escapeHtml(colegio)}</option>`).join("")}
+                </select>
+              </label>
+            </div>
+          </section>
+
+          <section class="admin-turismo-panel admin-pasajeros-table-panel">
+            <div class="admin-pasajeros-table-head">
+              <div>
+                <h2>Grupos cargados</h2>
+                <p>${filteredRows.length} grupos visibles de ${groups.length} cargados en Google Sheets.</p>
+              </div>
+              <strong>${groupsWithoutContract === 0 ? "Todos vinculados" : "Revisar contratos"}</strong>
+            </div>
+            <div class="admin-pasajeros-table-wrap">
+              <table class="admin-pasajeros-table admin-pasajeros-table--compact">
+                <thead>
+                  <tr>
+                    <th>Colegio</th>
+                    <th>Nivel / viaje</th>
+                    <th>Curso</th>
+                    <th>Contratos</th>
+                    <th>Pasajeros</th>
+                    <th>Contrato base</th>
+                  </tr>
+                </thead>
+                <tbody>${renderAdminGruposRows(filteredRows)}</tbody>
+              </table>
+            </div>
+          </section>
         `);
         bindAdminShell();
         bindAdminGrupos();
@@ -4581,16 +4464,16 @@
 
       function bindAdminGrupos() {
         const filters = document.querySelector("[data-admin-grupos-filters]");
-        document.querySelectorAll("[data-admin-grupos-open-create]").forEach((button) => button.addEventListener("click", () => {
+        document.querySelector("[data-admin-grupos-open-create]")?.addEventListener("click", () => {
           adminGruposShowCreateForm = true;
           adminGruposCreateError = "";
           renderAdminGrupos();
-        }));
-        document.querySelectorAll("[data-admin-grupos-cancel-create]").forEach((button) => button.addEventListener("click", () => {
+        });
+        document.querySelector("[data-admin-grupos-cancel-create]")?.addEventListener("click", () => {
           adminGruposShowCreateForm = false;
           adminGruposCreateError = "";
           renderAdminGrupos();
-        }));
+        });
         document.querySelector("[data-admin-grupos-create-form]")?.addEventListener("submit", (event) => {
           event.preventDefault();
           const formData = new FormData(event.currentTarget);
@@ -4947,115 +4830,93 @@
         `).join("");
 
         document.getElementById("app").innerHTML = renderAdminShell("pagos", `
-          <div class="admin-module-workspace">
-            <aside class="admin-module-touchbar" aria-label="Acciones rápidas de pagos">
-              <div class="admin-module-touchbar-head">
-                <span>Pagos</span>
-                <strong>Cobranza</strong>
-              </div>
-              <div class="admin-module-touchbar-actions">
-                <a class="is-primary" href="${adminRouteHref("/admin/pasajeros")}">Pasajeros</a>
-                <a href="${adminRouteHref("/admin/contratos")}">Contratos</a>
-                <a href="${adminRouteHref("/admin/grupos")}">Grupos</a>
-              </div>
-              <div class="admin-module-touchbar-metrics">
-                <article><strong>${pending}</strong><span>pendientes</span></article>
-                <article><strong>${overdue}</strong><span>vencidos</span></article>
-                <article><strong>${collectionRate}%</strong><span>cobrado</span></article>
-              </div>
-              <p class="admin-module-touchbar-note">Cada pasajero demo paga $1.500.000 en 18 cuotas.</p>
-            </aside>
-
-            <div class="admin-module-content">
-              <section class="admin-turismo-panel">
-                <h1>Pagos y cuotas</h1>
-                <p>Control de cobranza conectado a Pasajeros. Mantiene resumen, cuotas e historial preparado para registrar pagos reales más adelante.</p>
-                <div class="admin-payment-dashboard">
-                  <article>
-                    <strong>${paymentRows.length}</strong>
-                    <span>Pasajeros con control</span>
-                  </article>
-                  <article>
-                    <strong>${escapeHtml(formatAdminMoney(totalViajes))}</strong>
-                    <span>Total viajes</span>
-                  </article>
-                  <article>
-                    <strong>${escapeHtml(formatAdminMoney(totalPagado))}</strong>
-                    <span>Total pagado</span>
-                  </article>
-                  <article>
-                    <strong>${escapeHtml(formatAdminMoney(totalSaldo))}</strong>
-                    <span>Saldo pendiente</span>
-                  </article>
-                  <article>
-                    <strong>${collectionRate}%</strong>
-                    <span>Avance de cobro</span>
-                  </article>
-                  <article>
-                    <strong>${specialPlans}</strong>
-                    <span>Planes especiales</span>
-                  </article>
-                  <article>
-                    <strong>${pending}</strong>
-                    <span>Con pago pendiente</span>
-                  </article>
-                  <article>
-                    <strong>${overdue}</strong>
-                    <span>Pagos vencidos</span>
-                  </article>
-                </div>
-              </section>
-
-              <section class="admin-turismo-panel admin-payment-architecture">
-                <div>
-                  <h2>Estructura preparada para pagos reales</h2>
-                  <p>La pantalla ya separa los datos necesarios para pasar de control manual a registro real.</p>
-                </div>
-                <div class="admin-payment-architecture-grid">
-                  <article>
-                    <span>Resumen</span>
-                    <strong>Valor, pagado, saldo y avance</strong>
-                  </article>
-                  <article>
-                    <span>Historial</span>
-                    <strong>Fecha, concepto, medio, monto y estado</strong>
-                  </article>
-                  <article>
-                    <span>Cuotas</span>
-                    <strong>Pagada, parcial, pendiente o vencida</strong>
-                  </article>
-                  <article>
-                    <span>Integración futura</span>
-                    <strong>Comprobante, Mercado Pago, transferencia o caja</strong>
-                  </article>
-                </div>
-              </section>
-
-              <section class="admin-turismo-panel admin-pasajeros-table-panel">
-                <div class="admin-pasajeros-table-head">
-                  <div>
-                    <h2>Control por pasajero</h2>
-                    <p>Vista compacta con resumen, estado de cuotas e historial preparado por pasajero.</p>
-                  </div>
-                  <strong>${paymentRows.length} registros</strong>
-                </div>
-                <div class="admin-pasajeros-table-wrap">
-                  <table class="admin-pasajeros-table admin-payment-table">
-                    <thead>
-                      <tr>
-                        <th>Pasajero</th>
-                        <th>Resumen</th>
-                        <th>Estado</th>
-                        <th>Cuotas</th>
-                        <th>Historial</th>
-                      </tr>
-                    </thead>
-                    <tbody>${rowsHtml}</tbody>
-                  </table>
-                </div>
-              </section>
+          <section class="admin-turismo-panel">
+            <h1>Pagos y cuotas</h1>
+            <p>Control de cobranza conectado a Pasajeros. Mantiene resumen, cuotas e historial preparado para registrar pagos reales más adelante.</p>
+            <div class="admin-payment-dashboard">
+              <article>
+                <strong>${paymentRows.length}</strong>
+                <span>Pasajeros con control</span>
+              </article>
+              <article>
+                <strong>${escapeHtml(formatAdminMoney(totalViajes))}</strong>
+                <span>Total viajes</span>
+              </article>
+              <article>
+                <strong>${escapeHtml(formatAdminMoney(totalPagado))}</strong>
+                <span>Total pagado</span>
+              </article>
+              <article>
+                <strong>${escapeHtml(formatAdminMoney(totalSaldo))}</strong>
+                <span>Saldo pendiente</span>
+              </article>
+              <article>
+                <strong>${collectionRate}%</strong>
+                <span>Avance de cobro</span>
+              </article>
+              <article>
+                <strong>${specialPlans}</strong>
+                <span>Planes especiales</span>
+              </article>
+              <article>
+                <strong>${pending}</strong>
+                <span>Con pago pendiente</span>
+              </article>
+              <article>
+                <strong>${overdue}</strong>
+                <span>Pagos vencidos</span>
+              </article>
             </div>
-          </div>
+          </section>
+
+          <section class="admin-turismo-panel admin-payment-architecture">
+            <div>
+              <h2>Estructura preparada para pagos reales</h2>
+              <p>La pantalla ya separa los datos necesarios para pasar de control manual a registro real.</p>
+            </div>
+            <div class="admin-payment-architecture-grid">
+              <article>
+                <span>Resumen</span>
+                <strong>Valor, pagado, saldo y avance</strong>
+              </article>
+              <article>
+                <span>Historial</span>
+                <strong>Fecha, concepto, medio, monto y estado</strong>
+              </article>
+              <article>
+                <span>Cuotas</span>
+                <strong>Pagada, parcial, pendiente o vencida</strong>
+              </article>
+              <article>
+                <span>Integración futura</span>
+                <strong>Comprobante, Mercado Pago, transferencia o caja</strong>
+              </article>
+            </div>
+          </section>
+
+          <section class="admin-turismo-panel admin-pasajeros-table-panel">
+            <div class="admin-pasajeros-table-head">
+              <div>
+                <h2>Control por pasajero</h2>
+                <p>Vista compacta con resumen, estado de cuotas e historial preparado por pasajero.</p>
+              </div>
+              <strong>${paymentRows.length} registros</strong>
+            </div>
+            <div class="admin-pasajeros-table-wrap">
+              <table class="admin-pasajeros-table admin-payment-table">
+                <thead>
+                  <tr>
+                    <th>Pasajero</th>
+                    <th>Resumen</th>
+                    <th>Estado</th>
+                    <th>Cuotas</th>
+                    <th>Historial</th>
+                  </tr>
+                </thead>
+                <tbody>${rowsHtml}</tbody>
+              </table>
+            </div>
+          </section>
         `);
         bindAdminShell();
       }
@@ -5116,64 +4977,39 @@
             </section>
         `;
         return `
-          <div class="admin-module-workspace">
-            <aside class="admin-module-touchbar" aria-label="Acciones rápidas de turismo">
-              <div class="admin-module-touchbar-head">
-                <span>Turismo web</span>
-                <strong>Viajes</strong>
+          <div class="admin-turismo-layout">
+            <section class="admin-turismo-hero">
+              <div>
+                <h1>Admin Turismo</h1>
               </div>
-              <div class="admin-module-touchbar-actions">
-                <button type="button" class="is-primary" data-admin-new>Nuevo viaje</button>
-                ${adminTurismoEditorOpen ? `
-                  <button type="button" data-admin-open-card-preview>Ver card</button>
-                  <button type="button" data-admin-open-detail-preview>Ver detalle</button>
-                  <button type="button" data-admin-open-whatsapp-preview>WhatsApp</button>
-                ` : ""}
+              <div class="admin-turismo-hero-stats">
+                <article><strong>${summary.total}</strong><span>Viajes cargados</span></article>
+                <article><strong>${summary.activos}</strong><span>Activos</span></article>
+                <article><strong>${summary.listo || 0}</strong><span>Listos para publicar</span></article>
+                <article><strong>${summary.publicado || 0}</strong><span>Publicados</span></article>
               </div>
-              <div class="admin-module-touchbar-metrics">
-                <article><strong>${summary.total}</strong><span>viajes</span></article>
-                <article><strong>${summary.activos}</strong><span>activos</span></article>
-                <article><strong>${summary.incompleto || 0}</strong><span>incompletos</span></article>
-              </div>
-              ${adminTurismoEditorOpen ? "" : `<p class="admin-module-touchbar-note">Elegí un viaje para activar previsualizaciones y checklist.</p>`}
-            </aside>
+              <button type="button" data-admin-new>Crear nuevo viaje</button>
+            </section>
 
-            <div class="admin-module-content">
-              <div class="admin-turismo-layout">
-                <section class="admin-turismo-hero">
-                  <div>
-                    <h1>Admin Turismo</h1>
-                  </div>
-                  <div class="admin-turismo-hero-stats">
-                    <article><strong>${summary.total}</strong><span>Viajes cargados</span></article>
-                    <article><strong>${summary.activos}</strong><span>Activos</span></article>
-                    <article><strong>${summary.listo || 0}</strong><span>Listos para publicar</span></article>
-                    <article><strong>${summary.publicado || 0}</strong><span>Publicados</span></article>
-                  </div>
-                  <button type="button" data-admin-new>Crear nuevo viaje</button>
-                </section>
-
-                <section class="admin-turismo-panel admin-turismo-list-panel">
-                  <div class="admin-turismo-section-head">
-                    <div>
-                      <p>Lista de viajes</p>
-                      <h2>Viajes cargados</h2>
-                    </div>
-                    <button type="button" data-admin-new>Crear nuevo</button>
-                  </div>
-                  <div class="admin-turismo-list">
-                    <div class="admin-turismo-list-head">
-                      <span>Viaje</span>
-                      <span>Estado</span>
-                      <span>Acciones</span>
-                    </div>
-                    ${renderAdminTurismoTripRows()}
-                  </div>
-                </section>
-
-                ${editorHtml}
+            <section class="admin-turismo-panel admin-turismo-list-panel">
+              <div class="admin-turismo-section-head">
+                <div>
+                  <p>Lista de viajes</p>
+                  <h2>Viajes cargados</h2>
+                </div>
+                <button type="button" data-admin-new>Crear nuevo</button>
               </div>
-            </div>
+              <div class="admin-turismo-list">
+                <div class="admin-turismo-list-head">
+                  <span>Viaje</span>
+                  <span>Estado</span>
+                  <span>Acciones</span>
+                </div>
+                ${renderAdminTurismoTripRows()}
+              </div>
+            </section>
+
+            ${editorHtml}
           </div>
         `;
       }
@@ -5337,13 +5173,13 @@
           document.querySelector("[data-admin-checklist-section]")?.scrollIntoView({ behavior: "smooth", block: "center" });
         });
 
-        document.querySelectorAll("[data-admin-open-card-preview]").forEach((button) => button.addEventListener("click", () => {
+        document.querySelector("[data-admin-open-card-preview]")?.addEventListener("click", () => {
           const modal = document.querySelector("[data-admin-card-modal]");
           if (!modal) return;
           modal.classList.add("is-open");
           modal.setAttribute("aria-hidden", "false");
           document.body.classList.add("admin-modal-open");
-        }));
+        });
 
         document.querySelectorAll("[data-admin-close-card-preview]").forEach((button) => {
           button.addEventListener("click", () => {
@@ -5355,13 +5191,13 @@
           });
         });
 
-        document.querySelectorAll("[data-admin-open-detail-preview]").forEach((button) => button.addEventListener("click", () => {
+        document.querySelector("[data-admin-open-detail-preview]")?.addEventListener("click", () => {
           const modal = document.querySelector("[data-admin-detail-modal]");
           if (!modal) return;
           modal.classList.add("is-open");
           modal.setAttribute("aria-hidden", "false");
           document.body.classList.add("admin-modal-open");
-        }));
+        });
 
         document.querySelectorAll("[data-admin-close-detail-preview]").forEach((button) => {
           button.addEventListener("click", () => {
@@ -5373,13 +5209,13 @@
           });
         });
 
-        document.querySelectorAll("[data-admin-open-whatsapp-preview]").forEach((button) => button.addEventListener("click", () => {
+        document.querySelector("[data-admin-open-whatsapp-preview]")?.addEventListener("click", () => {
           const modal = document.querySelector("[data-admin-whatsapp-modal]");
           if (!modal) return;
           modal.classList.add("is-open");
           modal.setAttribute("aria-hidden", "false");
           document.body.classList.add("admin-modal-open");
-        }));
+        });
 
         document.querySelectorAll("[data-admin-close-whatsapp-preview]").forEach((button) => {
           button.addEventListener("click", () => {
