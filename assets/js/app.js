@@ -7408,6 +7408,25 @@
         }
       }
 
+      function setupPublicInternalAccess() {
+        document.querySelectorAll('.site-nav a[href="/admin/"]').forEach(link => {
+          if (link.textContent.trim() === "Iniciar sesión") {
+            link.remove();
+          }
+        });
+
+        const footerBottom = document.querySelector(".footer-bottom");
+        if (!footerBottom || footerBottom.querySelector(".footer-internal-access")) return;
+
+        const internalAccess = document.createElement("a");
+        internalAccess.className = "footer-internal-access";
+        internalAccess.href = "/admin/";
+        internalAccess.textContent = "Acceso interno";
+        footerBottom.appendChild(internalAccess);
+      }
+
+      setupPublicInternalAccess();
+
       const navToggle = document.querySelector(".nav-toggle");
       if (navToggle) {
         navToggle.addEventListener("click", () => {

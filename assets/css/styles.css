@@ -224,6 +224,19 @@
         font-size: 0.88rem;
       }
 
+      .footer-internal-access {
+        color: rgba(255, 255, 255, 0.15);
+        font-size: 11px;
+        line-height: 1.4;
+        text-decoration: none;
+        transition: color 160ms ease;
+      }
+
+      .footer-internal-access:hover {
+        color: rgba(255, 255, 255, 0.4);
+        text-decoration: none;
+      }
+
       .brand-logo {
         display: block;
         height: auto;
