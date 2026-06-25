@@ -1752,30 +1752,40 @@
       }
 
       function renderAdminLogin(errorMessage = "") {
+        document.body?.setAttribute("data-app-entry", "admin");
         document.getElementById("app").innerHTML = `
           <div class="admin-login-screen">
             <section class="admin-login-card" aria-label="Acceso interno El Ángel Azul">
               <div class="admin-login-panel">
-                <a class="admin-login-logo-link" href="#/" aria-label="El Ángel Azul - Inicio">
-                  <img src="assets/img/logo-completo-azul.svg" alt="El Ángel Azul">
-                </a>
+                <span class="admin-login-orb admin-login-orb-one" aria-hidden="true"></span>
+                <span class="admin-login-orb admin-login-orb-two" aria-hidden="true"></span>
+                <div class="admin-login-panel-top">
+                  <a class="admin-login-logo-link" href="#/" aria-label="El Ángel Azul - Inicio">
+                    <img src="assets/img/favicon-esfera-blanca.svg" alt="">
+                    <span>
+                      <strong>El Ángel Azul</strong>
+                      <small>Panel interno</small>
+                    </span>
+                  </a>
+                </div>
                 <div class="admin-login-brand">
-                  <span>Panel interno</span>
-                  <h1>Gestión El Ángel Azul</h1>
-                  <p>Acceso para revisar turismo, pasajeros y fichas desde un mismo lugar.</p>
+                  <h1>Gestión completa de tus viajes</h1>
+                  <p>Operá inscripciones, pasajeros, pagos y turismo desde un panel privado.</p>
                 </div>
                 <div class="admin-login-highlights" aria-label="Módulos disponibles">
-                  <span>Turismo</span>
-                  <span>Pasajeros</span>
-                  <span>Fichas</span>
+                  <span><strong>✎</strong> Inscripciones</span>
+                  <span><strong>P</strong> Pasajeros</span>
+                  <span><strong>$</strong> Pagos</span>
+                  <span><strong>✈</strong> Turismo</span>
                 </div>
+                <p class="admin-login-footer">© El Ángel Azul · Acceso restringido</p>
               </div>
 
               <div class="admin-login-access">
                 <div class="admin-login-access-head">
-                  <span>Ingreso seguro</span>
-                  <h2>Acceso interno</h2>
-                  <p>Ingresá con tu usuario y contraseña para continuar al panel.</p>
+                  <span><i aria-hidden="true"></i>Ingreso seguro</span>
+                  <h2>Bienvenido de nuevo</h2>
+                  <p>Ingresá con tus credenciales para acceder al panel.</p>
                 </div>
                 <form class="admin-login-form" data-admin-login-form>
                   <label>
@@ -1784,19 +1794,32 @@
                   </label>
                   <label>
                     Contraseña
-                    <input name="password" type="password" autocomplete="current-password" placeholder="Contraseña" required>
+                    <span class="admin-login-password">
+                      <input name="password" type="password" autocomplete="current-password" placeholder="Contraseña" required>
+                      <button type="button" data-admin-password-toggle aria-label="Mostrar contraseña" aria-pressed="false">Ver</button>
+                    </span>
                   </label>
                   ${errorMessage ? `<p class="admin-login-error">${escapeHtml(errorMessage)}</p>` : ""}
-                  <button type="submit">Ingresar a la administración</button>
+                  <button type="submit">Ingresar al panel</button>
                 </form>
                 <div class="admin-login-note">
-                  <strong>Acceso protegido</strong>
-                  <span>La sesión dura 8 horas. Después se solicita iniciar sesión nuevamente.</span>
+                  <span>Sesión protegida de 8 horas. Se cierra automáticamente por seguridad.</span>
                 </div>
               </div>
             </section>
           </div>
         `;
+
+        document.querySelector("[data-admin-password-toggle]")?.addEventListener("click", (event) => {
+          const toggle = event.currentTarget;
+          const input = toggle.closest(".admin-login-password")?.querySelector("input");
+          if (!input) return;
+          const shouldShow = input.type === "password";
+          input.type = shouldShow ? "text" : "password";
+          toggle.setAttribute("aria-pressed", shouldShow ? "true" : "false");
+          toggle.setAttribute("aria-label", shouldShow ? "Ocultar contraseña" : "Mostrar contraseña");
+          toggle.textContent = shouldShow ? "Ocultar" : "Ver";
+        });
 
         document.querySelector("[data-admin-login-form]")?.addEventListener("submit", async (event) => {
           event.preventDefault();
