@@ -4373,117 +4373,6 @@
         z-index: 3;
       }
 
-      .admin-pasajeros-workspace {
-        align-items: start;
-        display: grid;
-        gap: 18px;
-        grid-template-columns: 168px minmax(0, 1fr);
-      }
-
-      .admin-pasajeros-content {
-        display: grid;
-        gap: 22px;
-        min-width: 0;
-      }
-
-      .admin-pasajeros-touchbar {
-        background:
-          linear-gradient(180deg, rgba(13, 105, 161, 0.08), rgba(235, 62, 143, 0.06)),
-          #ffffff;
-        border: 1px solid #d9e7ef;
-        border-radius: 14px;
-        box-shadow: 0 10px 26px rgba(10, 72, 110, 0.08);
-        display: grid;
-        gap: 12px;
-        padding: 12px;
-        position: sticky;
-        top: 18px;
-      }
-
-      .admin-pasajeros-touchbar-head,
-      .admin-pasajeros-touchbar-context {
-        display: grid;
-        gap: 4px;
-        min-width: 0;
-      }
-
-      .admin-pasajeros-touchbar-head span,
-      .admin-pasajeros-touchbar-context span,
-      .admin-pasajeros-touchbar-metrics span {
-        color: #5b6d78;
-        font-size: 0.7rem;
-        font-weight: 900;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-      }
-
-      .admin-pasajeros-touchbar-head strong,
-      .admin-pasajeros-touchbar-context strong {
-        color: #10202b;
-        font-size: 0.95rem;
-        line-height: 1.15;
-      }
-
-      .admin-pasajeros-touchbar-context small {
-        color: #5a6a73;
-        font-weight: 750;
-        line-height: 1.25;
-      }
-
-      .admin-pasajeros-touchbar-actions {
-        display: grid;
-        gap: 8px;
-      }
-
-      .admin-pasajeros-touchbar-actions button,
-      .admin-pasajeros-touchbar-actions a {
-        align-items: center;
-        background: #f7fbfe;
-        border: 1px solid #cfdde4;
-        border-radius: 11px;
-        color: #10202b;
-        display: flex;
-        font-size: 0.9rem;
-        font-weight: 850;
-        justify-content: center;
-        line-height: 1.15;
-        min-height: 42px;
-        padding: 9px 10px;
-        text-align: center;
-      }
-
-      .admin-pasajeros-touchbar-actions .is-primary {
-        background: #0d69a1;
-        border-color: #0d69a1;
-        color: #fff;
-      }
-
-      .admin-pasajeros-touchbar-actions .is-active {
-        background: #fff7fb;
-        border-color: rgba(235, 62, 143, 0.58);
-        color: #a61f64;
-      }
-
-      .admin-pasajeros-touchbar-metrics {
-        display: grid;
-        gap: 8px;
-      }
-
-      .admin-pasajeros-touchbar-metrics article {
-        background: #f7fbfe;
-        border: 1px solid #e1e9ee;
-        border-radius: 11px;
-        display: grid;
-        gap: 2px;
-        padding: 9px 10px;
-      }
-
-      .admin-pasajeros-touchbar-metrics strong {
-        color: #0d4f79;
-        font-size: 1.25rem;
-        line-height: 1;
-      }
-
       .admin-pasajeros-filters {
         grid-template-columns: minmax(280px, 2fr) repeat(4, minmax(120px, 1fr)) auto;
       }
@@ -4539,27 +4428,12 @@
         .admin-pasajeros-filters {
           grid-template-columns: repeat(2, minmax(0, 1fr));
         }
-
-        .admin-pasajeros-workspace {
-          grid-template-columns: minmax(0, 1fr);
-        }
-
-        .admin-pasajeros-touchbar {
-          position: static;
-        }
-
-        .admin-pasajeros-touchbar-actions,
-        .admin-pasajeros-touchbar-metrics {
-          grid-template-columns: repeat(3, minmax(0, 1fr));
-        }
       }
 
       @media (max-width: 620px) {
         .admin-sidebar nav,
         .admin-dashboard-grid,
         .admin-pasajeros-filters,
-        .admin-pasajeros-touchbar-actions,
-        .admin-pasajeros-touchbar-metrics,
         .admin-turismo-empty-editor {
           grid-template-columns: minmax(0, 1fr);
         }

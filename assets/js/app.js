@@ -3884,93 +3884,57 @@
             </div>
           </section>
 
-          <div class="admin-pasajeros-workspace">
-            <aside class="admin-pasajeros-touchbar" aria-label="Acciones rápidas de pasajeros">
-              <div class="admin-pasajeros-touchbar-head">
-                <span>Pasajeros</span>
-                <strong>Control rápido</strong>
+          <section class="admin-turismo-panel admin-pasajeros-filter-panel">
+            <div class="admin-pasajeros-section-head">
+              <div>
+                <h2>Buscar y filtrar</h2>
+                <p>La tabla muestra todos los pasajeros del sistema, no solo el curso seleccionado.</p>
               </div>
-              <div class="admin-pasajeros-touchbar-actions">
-                ${adminPasajerosShowForm
-                  ? `<button type="button" class="is-active" data-admin-pasajeros-cancel>Ocultar carga</button>`
-                  : `<button type="button" class="is-primary" data-admin-pasajeros-open-form>Cargar pasajero</button>`}
-                <button type="button" data-admin-pasajeros-clear-filters>Limpiar filtros</button>
-                <a href="${adminRouteHref("/admin/pagos")}">Ver pagos</a>
-                <a href="${adminRouteHref("/admin/contratos")}">Ver contratos</a>
-              </div>
-              <div class="admin-pasajeros-touchbar-context">
-                <span>Contexto de carga</span>
-                <strong>${escapeHtml(selectedGroup?.colegio || "Sin colegio")}</strong>
-                <small>${escapeHtml(selectedGroup ? `${selectedGroup.viaje} · ${selectedGroup.curso} ${selectedGroup.division}` : "Sin grupo seleccionado")}</small>
-              </div>
-              <div class="admin-pasajeros-touchbar-metrics">
-                <article>
-                  <strong>${contextPassengers.length}</strong>
-                  <span>en curso</span>
-                </article>
-                <article>
-                  <strong>${contextPaymentSummary.pagoPendiente}</strong>
-                  <span>pago pend.</span>
-                </article>
-                <article>
-                  <strong>${filteredRows.length}</strong>
-                  <span>filtrados</span>
-                </article>
-              </div>
-            </aside>
-
-            <div class="admin-pasajeros-content">
-              <section class="admin-turismo-panel admin-pasajeros-filter-panel">
-                <div class="admin-pasajeros-section-head">
-                  <div>
-                    <h2>Buscar y filtrar</h2>
-                    <p>La tabla muestra todos los pasajeros del sistema, no solo el curso seleccionado.</p>
-                  </div>
-                </div>
-
-                <div class="admin-pasajeros-filters">
-                  <label>Buscar pasajero
-                    <input type="search" value="${escapeHtml(adminPasajerosSearch)}" placeholder="Nombre, DNI o teléfono" data-admin-pasajeros-search>
-                  </label>
-                  ${renderAdminPasajerosSelect("viaje", adminPasajerosFilterViaje, allViajes, "Viaje")}
-                  ${renderAdminPasajerosSelect("colegio", adminPasajerosFilterColegio, allColegios, "Colegio")}
-                  ${renderAdminPasajerosSelect("curso", adminPasajerosFilterCurso, allCursos, "Curso")}
-                  ${renderAdminPasajerosSelect("estado", adminPasajerosFilterEstado, allEstados, "Estado")}
-                </div>
-              </section>
-
-              <section class="admin-turismo-panel admin-pasajeros-table-panel">
-                <div class="admin-pasajeros-table-head">
-                  <div>
-                    <h2>Pasajeros encontrados</h2>
-                    <p>Tabla simplificada con contacto, responsable, grupo, pago, documentación y estado.</p>
-                  </div>
-                  <strong data-admin-pasajeros-results-count>${filteredRows.length} / ${allRows.length}</strong>
-                </div>
-                <div class="admin-pasajeros-table-wrap">
-                  <table class="admin-pasajeros-table admin-pasajeros-table--compact">
-                    <thead>
-                      <tr>
-                        <th>Pasajero</th>
-                        <th>Contacto</th>
-                        <th>Responsable</th>
-                        <th>Viaje / grupo</th>
-                        <th>Pago</th>
-                        <th>Documentación</th>
-                        <th>Estado</th>
-                        <th>Ficha</th>
-                      </tr>
-                    </thead>
-                    <tbody data-admin-pasajeros-results>${passengerRows}</tbody>
-                  </table>
-                </div>
-              </section>
-
-              ${renderAdminPasajerosProfile()}
-
-              ${formHtml}
+              ${adminPasajerosShowForm ? "" : `<button type="button" class="admin-pasajeros-primary-button" data-admin-pasajeros-open-form>Cargar pasajero</button>`}
             </div>
-          </div>
+
+            <div class="admin-pasajeros-filters">
+              <label>Buscar pasajero
+                <input type="search" value="${escapeHtml(adminPasajerosSearch)}" placeholder="Nombre, DNI o teléfono" data-admin-pasajeros-search>
+              </label>
+              ${renderAdminPasajerosSelect("viaje", adminPasajerosFilterViaje, allViajes, "Viaje")}
+              ${renderAdminPasajerosSelect("colegio", adminPasajerosFilterColegio, allColegios, "Colegio")}
+              ${renderAdminPasajerosSelect("curso", adminPasajerosFilterCurso, allCursos, "Curso")}
+              ${renderAdminPasajerosSelect("estado", adminPasajerosFilterEstado, allEstados, "Estado")}
+              <button type="button" class="admin-pasajeros-secondary-button" data-admin-pasajeros-clear-filters>Limpiar</button>
+            </div>
+          </section>
+
+          <section class="admin-turismo-panel admin-pasajeros-table-panel">
+            <div class="admin-pasajeros-table-head">
+              <div>
+                <h2>Pasajeros encontrados</h2>
+                <p>Tabla simplificada con contacto, responsable, grupo, pago, documentación y estado.</p>
+              </div>
+              <strong data-admin-pasajeros-results-count>${filteredRows.length} / ${allRows.length}</strong>
+            </div>
+            <div class="admin-pasajeros-table-wrap">
+              <table class="admin-pasajeros-table admin-pasajeros-table--compact">
+                <thead>
+                  <tr>
+                    <th>Pasajero</th>
+                    <th>Contacto</th>
+                    <th>Responsable</th>
+                    <th>Viaje / grupo</th>
+                    <th>Pago</th>
+                    <th>Documentación</th>
+                    <th>Estado</th>
+                    <th>Ficha</th>
+                  </tr>
+                </thead>
+                <tbody data-admin-pasajeros-results>${passengerRows}</tbody>
+              </table>
+            </div>
+          </section>
+
+          ${renderAdminPasajerosProfile()}
+
+          ${formHtml}
           ${renderAdminPasajerosGroupModal()}
         `);
         bindAdminShell();
@@ -4540,16 +4504,16 @@
       }
 
       function bindAdminPasajeros() {
-        document.querySelectorAll("[data-admin-pasajeros-open-form]").forEach((button) => button.addEventListener("click", () => {
+        document.querySelector("[data-admin-pasajeros-open-form]")?.addEventListener("click", () => {
           adminPasajerosShowForm = true;
           adminPasajerosFormError = "";
           renderAdminPasajeros();
-        }));
-        document.querySelectorAll("[data-admin-pasajeros-cancel]").forEach((button) => button.addEventListener("click", () => {
+        });
+        document.querySelector("[data-admin-pasajeros-cancel]")?.addEventListener("click", () => {
           adminPasajerosShowForm = false;
           adminPasajerosFormError = "";
           renderAdminPasajeros();
-        }));
+        });
         document.querySelector("[data-admin-pasajeros-form]")?.addEventListener("submit", (event) => {
           event.preventDefault();
           const selectedGroup = adminPasajerosDemo.find((group) => group.id === adminPasajerosGrupoId);
@@ -4685,14 +4649,14 @@
             renderAdminPasajeros();
           });
         });
-        document.querySelectorAll("[data-admin-pasajeros-clear-filters]").forEach((button) => button.addEventListener("click", () => {
+        document.querySelector("[data-admin-pasajeros-clear-filters]")?.addEventListener("click", () => {
           adminPasajerosSearch = "";
           adminPasajerosFilterViaje = "";
           adminPasajerosFilterColegio = "";
           adminPasajerosFilterCurso = "";
           adminPasajerosFilterEstado = "";
           renderAdminPasajeros();
-        }));
+        });
         bindAdminPasajerosProfileButtons();
         document.querySelector("[data-admin-pasajeros-close-profile]")?.addEventListener("click", () => {
           adminPasajerosSelectedDni = "";
