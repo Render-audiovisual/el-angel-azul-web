@@ -3189,12 +3189,32 @@
       function renderFichaActionButtons(ficha) {
         const estadoRevision = ficha.estadoRevision || "pendiente";
         const approvalEnabled = canApproveFicha(ficha);
+        if (estadoRevision === "aprobada") {
+          return `
+            <div class="admin-fichas-actions">
+              <span class="admin-fichas-state-badge is-approved">Aprobada</span>
+            </div>
+          `;
+        }
+        if (estadoRevision === "rechazada") {
+          return `
+            <div class="admin-fichas-actions">
+              <button type="button" data-ficha-revisar="${escapeHtml(ficha.id)}">Revisar</button>
+            </div>
+          `;
+        }
+        if (estadoRevision === "revisada") {
+          return `
+            <div class="admin-fichas-actions">
+              <button type="button" data-ficha-save-assignment="${escapeHtml(ficha.id)}">Asignar grupo y contrato</button>
+              <button type="button" data-ficha-aprobar="${escapeHtml(ficha.id)}" ${approvalEnabled ? "" : "disabled"}>Aprobar y crear pasajero</button>
+              <button type="button" data-ficha-rechazar="${escapeHtml(ficha.id)}">Rechazar</button>
+            </div>
+          `;
+        }
         return `
           <div class="admin-fichas-actions">
             <button type="button" data-ficha-revisar="${escapeHtml(ficha.id)}">Revisar</button>
-            ${estadoRevision === "aprobada" ? "" : `<button type="button" data-ficha-save-assignment="${escapeHtml(ficha.id)}">Asignar grupo y contrato</button>`}
-            ${estadoRevision === "aprobada" ? "" : `<button type="button" data-ficha-aprobar="${escapeHtml(ficha.id)}" ${approvalEnabled ? "" : "disabled"}>Aprobar y crear pasajero</button>`}
-            ${estadoRevision === "rechazada" ? "" : `<button type="button" data-ficha-rechazar="${escapeHtml(ficha.id)}">Rechazar</button>`}
           </div>
         `;
       }
@@ -3222,7 +3242,7 @@
             </div>
 
             <div class="admin-fichas-detail-layout">
-              <article class="admin-fichas-detail-card">
+              <article class="admin-fichas-detail-card admin-fichas-student-card">
                 <h3>Datos del alumno</h3>
                 <dl>
                   ${renderFichaValue("Nombre", fichaStudentFirstName(pasajeroNombre))}
@@ -3257,7 +3277,7 @@
                 <div class="admin-fichas-assigned-note">
                   <span>Asignado</span>
                   <strong>${escapeHtml(context.selectedGroup ? `${context.selectedGroup.colegio} · ${context.selectedGroup.curso} ${context.selectedGroup.division}` : "Pendiente")}</strong>
-                  <strong>${escapeHtml(context.codigoContrato || "Contrato pendiente")}</strong>
+                  <strong class="admin-fichas-contract-code">${escapeHtml(context.codigoContrato || "Contrato pendiente")}</strong>
                 </div>
                 ${renderFichaApprovalChecklist(ficha)}
                 ${renderFichaActionButtons(ficha)}

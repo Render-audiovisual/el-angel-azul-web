@@ -4121,12 +4121,22 @@
       }
 
       .admin-fichas-detail-card {
+        align-content: start;
         background: #f8fbfd;
         border: 1px solid #d9e7ef;
         border-radius: 8px;
         display: grid;
         gap: 10px;
         padding: 12px;
+      }
+
+      .admin-fichas-student-card {
+        gap: 4px;
+        padding-top: 8px;
+      }
+
+      .admin-fichas-student-card dl {
+        align-content: start;
       }
 
       .admin-fichas-detail-card h3 {
@@ -4211,6 +4221,12 @@
         font-size: 0.88rem;
       }
 
+      .admin-fichas-assigned-note .admin-fichas-contract-code {
+        font-size: 0.78rem;
+        line-height: 1.25;
+        word-break: break-all;
+      }
+
       .admin-fichas-approval-checklist {
         background: #fff;
         border: 1px solid #d9e7ef;
@@ -4269,6 +4285,21 @@
         display: flex;
         flex-wrap: wrap;
         gap: 8px;
+      }
+
+      .admin-fichas-state-badge {
+        align-items: center;
+        border-radius: 999px;
+        display: inline-flex;
+        font-size: 0.8rem;
+        font-weight: 900;
+        min-height: 36px;
+        padding: 8px 12px;
+      }
+
+      .admin-fichas-state-badge.is-approved {
+        background: #d1fae5;
+        color: #065f46;
       }
 
       .admin-fichas-actions button,
