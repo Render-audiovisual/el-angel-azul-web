@@ -1026,18 +1026,17 @@
 
       function renderAdminTurismoPrimaryActions(trip) {
         const readiness = adminTurismoReadiness(trip);
+        const esActivo = trip.estado === "activo";
         return `
           <section class="admin-turismo-panel admin-turismo-flow-actions">
-            <div class="admin-turismo-section-head">
+            <div class="admin-turismo-guardar-banner">
               <div>
-                <p>Acciones</p>
-                <h2>Guardar y probar</h2>
+                <strong>${esActivo ? "Estado: Activo" : "Estado: " + (trip.estado || "Borrador")}</strong>
+                <span>El estado se toma del acordeón Configuración. Guardá para aplicar cambios.</span>
               </div>
-              <span class="admin-turismo-status ${escapeHtml(readiness.key)}">${escapeHtml(readiness.label)}</span>
-            </div>
-            <div class="admin-turismo-action-buttons admin-turismo-action-buttons--final">
-              <button type="button" class="admin-action-primary" data-admin-save-draft>Guardar borrador</button>
-              <button type="button" class="admin-action-publish" data-admin-preview-public ${readiness.canPublish ? "" : "disabled"}>Publicar en web de prueba</button>
+              <button type="button" class="admin-turismo-btn-guardar" data-admin-guardar-viaje>
+                💾 Guardar viaje
+              </button>
             </div>
           </section>
         `;
@@ -5526,12 +5525,16 @@
           button.addEventListener("click", exportAdminTurismoJson);
         });
 
+        // Botón guardar viaje — respeta el estado elegido en Configuración
+        document.querySelector("[data-admin-guardar-viaje]")?.addEventListener("click", () => {
+          const form = document.querySelector("[data-admin-turismo-form]");
+          if (form) form.requestSubmit();
+        });
+
+        // Mantener compatibilidad con data-admin-save-draft si existe en otro lado
         document.querySelector("[data-admin-save-draft]")?.addEventListener("click", () => {
           const form = document.querySelector("[data-admin-turismo-form]");
-          if (!form) return;
-          const statusField = form.querySelector('[name="estado"]');
-          if (statusField) statusField.value = "borrador";
-          form.requestSubmit();
+          if (form) form.requestSubmit();
         });
 
         document.querySelector("[data-admin-publish]")?.addEventListener("click", () => {

@@ -6159,6 +6159,50 @@
         border-color: #b8d4e4;
       }
 
+      .admin-turismo-guardar-banner {
+        align-items: center;
+        background: #f0f7fc;
+        border: 2px solid #0d69a1;
+        border-radius: 12px;
+        display: flex;
+        gap: 16px;
+        justify-content: space-between;
+        padding: 16px 20px;
+      }
+
+      .admin-turismo-guardar-banner div {
+        display: grid;
+        gap: 3px;
+      }
+
+      .admin-turismo-guardar-banner strong {
+        color: #10202b;
+        font-size: 0.92rem;
+        font-weight: 900;
+      }
+
+      .admin-turismo-guardar-banner span {
+        color: #4e6a7a;
+        font-size: 0.8rem;
+      }
+
+      .admin-turismo-btn-guardar {
+        background: #0d69a1;
+        border: none;
+        border-radius: 10px;
+        color: #fff;
+        cursor: pointer;
+        font: inherit;
+        font-size: 0.95rem;
+        font-weight: 900;
+        padding: 12px 22px;
+        white-space: nowrap;
+      }
+
+      .admin-turismo-btn-guardar:hover {
+        background: #0a5482;
+      }
+
       .admin-turismo-action-group--estado {
         background: linear-gradient(180deg, #fffbea, #ffffff);
         border-color: #f0d060;
