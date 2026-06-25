@@ -890,15 +890,12 @@
           { label: "Destino cargado", ok: Boolean(trip.destino) },
           { label: "Título comercial", ok: Boolean(trip.titulo) },
           { label: "Slug válido", ok: validSlug },
-          { label: "Categorías asignadas", ok: trip.categorias.length > 0 },
           { label: "Descripción corta", ok: Boolean(trip.descripcionCorta) },
-          { label: "Descripción larga", ok: Boolean(trip.descripcionLarga) },
-          { label: "Mínimo 3 fotos", ok: trip.fotos.length >= 3 },
+          { label: "Al menos 1 foto", ok: trip.fotos.length >= 1 },
           { label: "Foto principal", ok: hasPrincipalPhoto },
+          { label: "Precio cargado", ok: Boolean(trip.precioDesde) },
           { label: "Qué incluye", ok: trip.incluye.length > 0 },
-          { label: "Qué no incluye", ok: trip.noIncluye.length > 0 },
-          { label: "Estado activo", ok: trip.estado === "activo" },
-          { label: "WhatsApp contextual correcto", ok: Boolean(trip.titulo && trip.duracion && trip.precioDesde) }
+          { label: "Estado activo", ok: trip.estado === "activo" }
         ];
       }
 
