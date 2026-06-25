@@ -4040,10 +4040,18 @@
         ` : "";
 
         document.getElementById("app").innerHTML = renderAdminShell("pasajeros", `
-          <section class="admin-turismo-panel">
-            <h1>Pasajeros</h1>
-            <p>Vista general para ubicar rápido pasajeros por nombre, DNI, teléfono, viaje, colegio, curso o estado.</p>
 
+          <!-- 1. DASHBOARD -->
+          <section class="admin-turismo-panel">
+            <div class="admin-pasajeros-section-head">
+              <div>
+                <h1>Pasajeros</h1>
+                <p>Vista general de la base de pasajeros.</p>
+              </div>
+              <button type="button" class="admin-pasajeros-primary-button" data-admin-pasajeros-open-form>
+                ${adminPasajerosShowForm ? "Formulario abierto ↓" : "+ Cargar pasajero"}
+              </button>
+            </div>
             <div class="admin-pasajeros-dashboard">
               <article>
                 <strong>${dashboardSummary.total}</strong>
@@ -4064,15 +4072,17 @@
             </div>
           </section>
 
+          <!-- 2. FORMULARIO DE CARGA -->
+          ${formHtml}
+
+          <!-- 3. BUSCAR Y FILTRAR -->
           <section class="admin-turismo-panel admin-pasajeros-filter-panel">
             <div class="admin-pasajeros-section-head">
               <div>
                 <h2>Buscar y filtrar</h2>
                 <p>La tabla muestra todos los pasajeros del sistema, no solo el curso seleccionado.</p>
               </div>
-              ${adminPasajerosShowForm ? "" : `<button type="button" class="admin-pasajeros-primary-button" data-admin-pasajeros-open-form>Cargar pasajero</button>`}
             </div>
-
             <div class="admin-pasajeros-filters">
               <label>Buscar pasajero
                 <input type="search" value="${escapeHtml(adminPasajerosSearch)}" placeholder="Nombre, DNI o teléfono" data-admin-pasajeros-search>
@@ -4085,11 +4095,12 @@
             </div>
           </section>
 
+          <!-- 4. TABLA DE PASAJEROS ENCONTRADOS -->
           <section class="admin-turismo-panel admin-pasajeros-table-panel">
             <div class="admin-pasajeros-table-head">
               <div>
                 <h2>Pasajeros encontrados</h2>
-                <p>Tabla simplificada con contacto, responsable, grupo, pago, documentación y estado.</p>
+                <p>Tabla con contacto, responsable, grupo, pago, documentación y estado.</p>
               </div>
               <strong data-admin-pasajeros-results-count>${filteredRows.length} / ${allRows.length}</strong>
             </div>
@@ -4112,9 +4123,9 @@
             </div>
           </section>
 
+          <!-- FICHA INDIVIDUAL (aparece al hacer clic en Ver ficha) -->
           ${renderAdminPasajerosProfile()}
 
-          ${formHtml}
           ${renderAdminPasajerosGroupModal()}
         `);
         bindAdminShell();
@@ -4685,7 +4696,7 @@
 
       function bindAdminPasajeros() {
         document.querySelector("[data-admin-pasajeros-open-form]")?.addEventListener("click", () => {
-          adminPasajerosShowForm = true;
+          adminPasajerosShowForm = !adminPasajerosShowForm;
           adminPasajerosFormError = "";
           renderAdminPasajeros();
         });
