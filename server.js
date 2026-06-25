@@ -34,10 +34,11 @@ const SCHEMA = {
   FICHAS_ADHESION: ["id", "pasajero_dni", "pasajero_nombre", "responsable_nombre", "responsable_telefono", "nivel", "viaje", "colegio", "curso_division", "grupo_solicitado", "grupo_asignado_id", "contrato_id", "codigo_contrato", "estado_revision", "documentacion_estado", "ficha_medica_estado", "autorizacion_estado", "observaciones", "created_at", "updated_at"],
   PAGOS: ["id", "pasajero_id", "pasajero_dni", "contrato_codigo", "fecha", "monto", "medio", "estado", "cuota_id", "comprobante_url", "observaciones", "created_at"],
   CUOTAS: ["id", "pasajero_id", "pasajero_dni", "contrato_codigo", "numero", "nombre", "monto", "vencimiento", "estado", "created_at", "updated_at"],
-  CONFIG: ["clave", "valor", "descripcion", "updated_at"]
+  CONFIG: ["clave", "valor", "descripcion", "updated_at"],
+  TURISMO: ["id", "slug", "destino", "titulo", "duracion", "temporada", "fecha_salida", "fecha_regreso", "salida_garantizada", "precio_desde", "precio_valor", "moneda", "precio_base_doble", "suplemento_single", "precio_menor", "condicion_venta", "categorias", "descripcion_corta", "descripcion_larga", "incluye", "no_incluye", "formas_pago", "itinerario", "fotos", "estado", "destacado", "orden", "created_at", "updated_at"]
 };
 
-const WRITE_ALLOWED = new Set(["GRUPOS", "CONTRATOS", "PASAJEROS", "FICHAS_ADHESION"]);
+const WRITE_ALLOWED = new Set(["GRUPOS", "CONTRATOS", "PASAJEROS", "FICHAS_ADHESION", "TURISMO"]);
 let cachedToken = null;
 
 function parseCookies(req) {

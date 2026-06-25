@@ -311,6 +311,29 @@
             .sort((a, b) => Number(b.destacado) - Number(a.destacado) || a.orden - b.orden);
           return turismoPublicPackagesCache;
         }
+
+        // 1. Intentar leer desde Google Sheets (fuente de verdad en vivo)
+        try {
+          const response = await fetch("/api/google-sheets?sheet=TURISMO", { cache: "no-store" });
+          if (response.ok) {
+            const payload = await response.json();
+            if (payload.ok && Array.isArray(payload.rows) && payload.rows.length) {
+              const publicPackages = payload.rows
+                .map(turismoRowToTrip)
+                .map(adminTripToPublicPackage)
+                .filter(Boolean)
+                .sort((a, b) => Number(b.destacado) - Number(a.destacado) || a.orden - b.orden);
+              if (publicPackages.length) {
+                turismoPublicPackagesCache = publicPackages;
+                return turismoPublicPackagesCache;
+              }
+            }
+          }
+        } catch (error) {
+          // Google Sheets no disponible, seguir al fallback JSON
+        }
+
+        // 2. Fallback: JSON estático
         try {
           const response = await fetch(TURISMO_PUBLIC_JSON_URL, { cache: "no-store" });
           if (!response.ok) throw new Error("No se pudo cargar turismo-paquetes.json");
@@ -323,6 +346,7 @@
           if (!publicPackages.length) throw new Error("El JSON no tiene viajes activos");
           turismoPublicPackagesCache = publicPackages;
         } catch (error) {
+          // 3. Último fallback: paquetes de demostración
           turismoPublicPackagesCache = turismoFallbackPackages();
         }
         return turismoPublicPackagesCache;
@@ -722,6 +746,77 @@
 
       function saveAdminTurismoTrips() {
         localStorage.setItem(ADMIN_TURISMO_STORAGE_KEY, JSON.stringify(adminTurismoTrips.map(normalizeAdminTurismoTrip), null, 2));
+        if (!googleSheetsHydrating) queueGoogleSheetsWrite(["TURISMO"]);
+      }
+
+      function googleSheetsTurismoRows(now = new Date().toISOString()) {
+        return adminTurismoTrips.map(normalizeAdminTurismoTrip).map((trip) => ({
+          id: trip.id || "",
+          slug: trip.slug || "",
+          destino: trip.destino || "",
+          titulo: trip.titulo || "",
+          duracion: trip.duracion || "",
+          temporada: trip.temporada || "",
+          fecha_salida: trip.fechaSalida || "",
+          fecha_regreso: trip.fechaRegreso || "",
+          salida_garantizada: trip.salidaGarantizada ? "TRUE" : "FALSE",
+          precio_desde: trip.precioDesde || "",
+          precio_valor: trip.precioValor != null ? String(trip.precioValor) : "",
+          moneda: trip.moneda || "USD",
+          precio_base_doble: trip.precioBaseDoble || "",
+          suplemento_single: trip.suplementoSingle || "",
+          precio_menor: trip.precioMenor || "",
+          condicion_venta: trip.condicionVenta || "",
+          categorias: (trip.categorias || []).join("|"),
+          descripcion_corta: trip.descripcionCorta || "",
+          descripcion_larga: trip.descripcionLarga || "",
+          incluye: (trip.incluye || []).join("|"),
+          no_incluye: (trip.noIncluye || []).join("|"),
+          formas_pago: (trip.formasPago || []).join("|"),
+          itinerario: JSON.stringify(trip.itinerario || []),
+          fotos: JSON.stringify(trip.fotos || []),
+          estado: trip.estado || "borrador",
+          destacado: trip.destacado ? "TRUE" : "FALSE",
+          orden: String(trip.orden || 999),
+          created_at: trip.created_at || now,
+          updated_at: now
+        }));
+      }
+
+      function turismoRowToTrip(row = {}) {
+        const splitPipe = (val) => String(val || "").split("|").map((s) => s.trim()).filter(Boolean);
+        const safeJson = (val, fallback) => {
+          try { return JSON.parse(val); } catch (e) { return fallback; }
+        };
+        return normalizeAdminTurismoTrip({
+          id: row.id,
+          slug: row.slug,
+          destino: row.destino,
+          titulo: row.titulo,
+          duracion: row.duracion,
+          temporada: row.temporada,
+          fechaSalida: row.fecha_salida,
+          fechaRegreso: row.fecha_regreso,
+          salidaGarantizada: String(row.salida_garantizada).toUpperCase() === "TRUE",
+          precioDesde: row.precio_desde,
+          precioValor: row.precio_valor,
+          moneda: row.moneda,
+          precioBaseDoble: row.precio_base_doble,
+          suplementoSingle: row.suplemento_single,
+          precioMenor: row.precio_menor,
+          condicionVenta: row.condicion_venta,
+          categorias: splitPipe(row.categorias),
+          descripcionCorta: row.descripcion_corta,
+          descripcionLarga: row.descripcion_larga,
+          incluye: splitPipe(row.incluye),
+          noIncluye: splitPipe(row.no_incluye),
+          formasPago: splitPipe(row.formas_pago),
+          itinerario: safeJson(row.itinerario, []),
+          fotos: safeJson(row.fotos, []),
+          estado: row.estado,
+          destacado: String(row.destacado).toUpperCase() === "TRUE",
+          orden: row.orden
+        });
       }
 
       function loadAdminTurismoPublishedMap() {
@@ -2777,12 +2872,20 @@
         if (!config.enabled || !config.endpoint) return false;
         if (googleSheetsHydrated && !force) return true;
         try {
-          const [grupos, contratos, pasajeros, fichas] = await Promise.all([
+          const [grupos, contratos, pasajeros, fichas, turismo] = await Promise.all([
             window.ElAngelAzulPersistence.fetchGoogleSheetRows("GRUPOS"),
             window.ElAngelAzulPersistence.fetchGoogleSheetRows("CONTRATOS"),
             window.ElAngelAzulPersistence.fetchGoogleSheetRows("PASAJEROS"),
-            window.ElAngelAzulPersistence.fetchGoogleSheetRows("FICHAS_ADHESION")
+            window.ElAngelAzulPersistence.fetchGoogleSheetRows("FICHAS_ADHESION"),
+            window.ElAngelAzulPersistence.fetchGoogleSheetRows("TURISMO").catch(() => [])
           ]);
+          // Hidratar viajes de turismo desde Sheets si hay datos
+          if (Array.isArray(turismo) && turismo.length) {
+            googleSheetsHydrating = true;
+            adminTurismoTrips = turismo.map(turismoRowToTrip);
+            localStorage.setItem(ADMIN_TURISMO_STORAGE_KEY, JSON.stringify(adminTurismoTrips, null, 2));
+            googleSheetsHydrating = false;
+          }
           if (!pasajeros.length) {
             googleSheetsHydrating = true;
             adminPasajerosDemo = createAdminPasajerosSeed();
@@ -2824,8 +2927,9 @@
           if (uniqueSheets.includes("CONTRATOS")) rowsByTab.CONTRATOS = googleSheetsContratoRows(now);
           if (uniqueSheets.includes("PASAJEROS")) rowsByTab.PASAJEROS = googleSheetsPassengerRows(now);
           if (uniqueSheets.includes("FICHAS_ADHESION")) rowsByTab.FICHAS_ADHESION = googleSheetsFichaRows(now);
+          if (uniqueSheets.includes("TURISMO")) rowsByTab.TURISMO = googleSheetsTurismoRows(now);
           for (const sheet of uniqueSheets) {
-            if (!["GRUPOS", "CONTRATOS", "PASAJEROS", "FICHAS_ADHESION"].includes(sheet)) continue;
+            if (!["GRUPOS", "CONTRATOS", "PASAJEROS", "FICHAS_ADHESION", "TURISMO"].includes(sheet)) continue;
             await window.ElAngelAzulPersistence.writeGoogleSheetRows(sheet, rowsByTab[sheet] || []);
           }
           googleSheetsSyncState = {
