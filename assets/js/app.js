@@ -723,6 +723,7 @@
       let adminTurismoTrips = loadAdminTurismoTrips();
       let adminTurismoEditingId = adminTurismoTrips[0]?.id || null;
       let adminTurismoEditorOpen = false;
+      let adminTurismoSaveFeedback = null;
 
       function escapeHtml(value = "") {
         return String(value)
@@ -747,6 +748,24 @@
       function saveAdminTurismoTrips() {
         localStorage.setItem(ADMIN_TURISMO_STORAGE_KEY, JSON.stringify(adminTurismoTrips.map(normalizeAdminTurismoTrip), null, 2));
         if (!googleSheetsHydrating) queueGoogleSheetsWrite(["TURISMO"]);
+      }
+
+      // Guardado explícito con feedback directo para el operador
+      async function saveAdminTurismoTripsWithFeedback() {
+        localStorage.setItem(ADMIN_TURISMO_STORAGE_KEY, JSON.stringify(adminTurismoTrips.map(normalizeAdminTurismoTrip), null, 2));
+        const config = window.ElAngelAzulPersistence.readGoogleSheetsConfig();
+        if (!config.enabled || !config.endpoint) {
+          adminTurismoSaveFeedback = { ok: false, message: "Guardado solo en este navegador. Google Sheets no está conectado." };
+          return;
+        }
+        try {
+          const rows = googleSheetsTurismoRows(new Date().toISOString());
+          await window.ElAngelAzulPersistence.writeGoogleSheetRows("TURISMO", rows);
+          adminTurismoSaveFeedback = { ok: true, message: `Guardado en Google Sheets: ${rows.length} ${rows.length === 1 ? "viaje" : "viajes"}.` };
+          turismoPublicPackagesCache = null;
+        } catch (error) {
+          adminTurismoSaveFeedback = { ok: false, message: `No se pudo guardar en Google Sheets: ${error.message || "error desconocido"}.` };
+        }
       }
 
       function googleSheetsTurismoRows(now = new Date().toISOString()) {
@@ -1122,17 +1141,19 @@
       function renderAdminTurismoPrimaryActions(trip) {
         const readiness = adminTurismoReadiness(trip);
         const esActivo = trip.estado === "activo";
+        const fb = adminTurismoSaveFeedback;
         return `
           <section class="admin-turismo-panel admin-turismo-flow-actions">
             <div class="admin-turismo-guardar-banner">
               <div>
-                <strong>${esActivo ? "Estado: Activo" : "Estado: " + (trip.estado || "Borrador")}</strong>
+                <strong>${esActivo ? "Estado: Activo — visible en la web" : "Estado: " + (trip.estado || "Borrador")}</strong>
                 <span>El estado se toma del acordeón Configuración. Guardá para aplicar cambios.</span>
               </div>
               <button type="button" class="admin-turismo-btn-guardar" data-admin-guardar-viaje>
                 💾 Guardar viaje
               </button>
             </div>
+            ${fb ? `<div class="admin-turismo-save-feedback ${fb.ok ? "is-ok" : "is-error"}">${fb.ok ? "✓" : "⚠️"} ${escapeHtml(fb.message)}</div>` : ""}
           </section>
         `;
       }
@@ -5692,7 +5713,7 @@
           duplicated.slug = uniqueAdminTurismoSlug(duplicated.slug, id);
           adminTurismoTrips = [duplicated, ...adminTurismoTrips];
           adminTurismoEditingId = id;
-          saveAdminTurismoTrips();
+          saveAdminTurismoTripsWithFeedback().finally(() => renderAdminTurismo());
           renderAdminTurismo();
         });
 

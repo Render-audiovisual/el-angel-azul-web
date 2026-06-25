@@ -6203,6 +6203,26 @@
         background: #0a5482;
       }
 
+      .admin-turismo-save-feedback {
+        border-radius: 10px;
+        font-size: 0.88rem;
+        font-weight: 700;
+        margin-top: 10px;
+        padding: 10px 14px;
+      }
+
+      .admin-turismo-save-feedback.is-ok {
+        background: #e6f6ec;
+        border: 1px solid #9bd4ad;
+        color: #146538;
+      }
+
+      .admin-turismo-save-feedback.is-error {
+        background: #fff5f5;
+        border: 1px solid #f0b0b0;
+        color: #8f1f1f;
+      }
+
       .admin-turismo-action-group--estado {
         background: linear-gradient(180deg, #fffbea, #ffffff);
         border-color: #f0d060;
