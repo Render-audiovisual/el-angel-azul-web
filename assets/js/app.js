@@ -2816,6 +2816,7 @@
       let adminFichasMessage = "";
       let adminFichasFilter = "nuevas";
       let adminFichasSelectedId = "";
+      let adminFichasManuallyClosed = false;
       let adminFichasSearch = "";
       let adminFichasFilterColegio = "";
       let adminFichasFilterViaje = "";
@@ -3219,6 +3220,31 @@
         `;
       }
 
+      function formatFichaApprovalDate(ficha) {
+        const rawDate = ficha.updatedAt || ficha.updated_at || "";
+        if (!rawDate) return "";
+        const date = new Date(rawDate);
+        if (Number.isNaN(date.getTime())) return String(rawDate);
+        return date.toLocaleDateString("es-AR", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric"
+        });
+      }
+
+      function renderFichaApprovedColumn(ficha) {
+        const approvalDate = formatFichaApprovalDate(ficha);
+        return `
+          <article class="admin-fichas-detail-card admin-fichas-detail-card--wide">
+            <h3>Estado final</h3>
+            <div class="admin-fichas-assigned-note">
+              <strong>✅ Ficha aprobada — pasajero creado correctamente</strong>
+              ${approvalDate ? `<strong>Fecha de aprobación: ${escapeHtml(approvalDate)}</strong>` : ""}
+            </div>
+          </article>
+        `;
+      }
+
       function renderAdminFichaDetail(ficha) {
         if (!ficha) return "";
         const context = fichaAssignmentContext(ficha);
@@ -3229,6 +3255,19 @@
         const fichaAdhesion = normalizeYesNoStatus(ficha.autorizacionEstado || ficha.firma || ficha.documentacionEstado || "Sí");
         const estadoRevision = ficha.estadoRevision || "pendiente";
         const estadoClass = estadoRevision === "aprobada" ? "is-ok" : estadoRevision === "rechazada" ? "is-alert" : "is-pending";
+        const assignmentColumn = estadoRevision === "aprobada" ? renderFichaApprovedColumn(ficha) : `
+              <article class="admin-fichas-detail-card admin-fichas-detail-card--wide">
+                <h3>Asignar grupo y contrato</h3>
+                ${renderFichaAssignmentControls(ficha)}
+                <div class="admin-fichas-assigned-note">
+                  <span>Asignado</span>
+                  <strong>${escapeHtml(context.selectedGroup ? `${context.selectedGroup.colegio} · ${context.selectedGroup.curso} ${context.selectedGroup.division}` : "Pendiente")}</strong>
+                  <strong class="admin-fichas-contract-code">${escapeHtml(context.codigoContrato || "Contrato pendiente")}</strong>
+                </div>
+                ${renderFichaApprovalChecklist(ficha)}
+                ${renderFichaActionButtons(ficha)}
+              </article>
+        `;
 
         return `
           <section class="admin-turismo-panel admin-fichas-detail" data-admin-fichas-detail>
@@ -3271,17 +3310,7 @@
                 ${ficha.motivoRechazo ? `<p class="admin-fichas-reject-note"><strong>Motivo rechazo:</strong> ${escapeHtml(ficha.motivoRechazo)}</p>` : ""}
               </article>
 
-              <article class="admin-fichas-detail-card admin-fichas-detail-card--wide">
-                <h3>Asignar grupo y contrato</h3>
-                ${renderFichaAssignmentControls(ficha)}
-                <div class="admin-fichas-assigned-note">
-                  <span>Asignado</span>
-                  <strong>${escapeHtml(context.selectedGroup ? `${context.selectedGroup.colegio} · ${context.selectedGroup.curso} ${context.selectedGroup.division}` : "Pendiente")}</strong>
-                  <strong class="admin-fichas-contract-code">${escapeHtml(context.codigoContrato || "Contrato pendiente")}</strong>
-                </div>
-                ${renderFichaApprovalChecklist(ficha)}
-                ${renderFichaActionButtons(ficha)}
-              </article>
+              ${assignmentColumn}
             </div>
           </section>
         `;
@@ -3756,6 +3785,7 @@
       async function viewFichaAdhesionDetail(id) {
         const ficha = loadFichasAdhesionDemo().find((item) => item.id === id);
         if (!ficha) return;
+        adminFichasManuallyClosed = false;
         adminFichasSelectedId = id;
         if ((ficha.estadoRevision || "pendiente") === "pendiente") {
           adminFichasFilter = "revision";
@@ -4308,7 +4338,7 @@
           (!adminFichasFilterViaje || fichaFilterValue(ficha, "viaje") === adminFichasFilterViaje)
         ));
         const selectedFichaCandidate = visibleFichas.find((ficha) => ficha.id === adminFichasSelectedId);
-        const selectedFicha = selectedFichaCandidate || visibleFichas[0] || null;
+        const selectedFicha = adminFichasManuallyClosed ? null : selectedFichaCandidate || visibleFichas[0] || null;
         adminFichasSelectedId = selectedFicha?.id || "";
         document.getElementById("app").innerHTML = renderAdminShell("fichas", `
           <section class="admin-turismo-panel">
@@ -5490,12 +5520,14 @@
         });
         document.querySelectorAll("[data-ficha-select]").forEach((button) => {
           button.addEventListener("click", () => {
+            adminFichasManuallyClosed = false;
             adminFichasSelectedId = button.dataset.fichaSelect;
             renderAdminFichasRecibidas();
           });
         });
         document.querySelectorAll("[data-ficha-cerrar]").forEach((button) => {
           button.addEventListener("click", () => {
+            adminFichasManuallyClosed = true;
             adminFichasSelectedId = "";
             renderAdminFichasRecibidas();
           });
