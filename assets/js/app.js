@@ -2163,8 +2163,8 @@
         });
       }
 
-      const ADMIN_PASAJEROS_STORAGE_KEY = "angelAzulAdminPasajerosDemoV3";
-      const CONTRATOS_STORAGE_KEY = "angelAzulContratos";
+      const ADMIN_PASAJEROS_STORAGE_KEY = "angelAzulAdminPasajerosDemoV4";
+      const CONTRATOS_STORAGE_KEY = "angelAzulContratosV2";
       const FICHA_ADHESION_STORAGE_KEY = "angelAzulFichaAdhesionDemoV1";
       const adminPasajerosSeedPassengers = [
         { nombre: "Juan Pérez", dni: "43555111", nacimiento: "2008-04-12", telefono: "3794111111", responsable: "María Gómez", responsableDni: "29555111", responsableTelefono: "3794222222", vinculo: "Madre", responsableCuilCuit: "20-29555111-3", fichaMedica: "Cargada", pago: "Al día", documentacion: "Completa", estado: "Activo", observaciones: "" },
@@ -2270,6 +2270,12 @@
         const paymentStates = ["Al día", "Pendiente", "Vencido", "Al día"];
         const docStates = ["Completa", "Pendiente", "Completa", "Observada"];
         const fichaStates = ["Cargada", "Pendiente", "Cargada", "Observada"];
+        const paymentStatus = paymentStates[(schoolIndex + divisionIndex + passengerIndex) % paymentStates.length];
+        const paidByStatus = {
+          "Al día": "500000",
+          Pendiente: "166666",
+          Vencido: "83333"
+        };
         const month = String(((schoolIndex + divisionIndex + passengerIndex) % 9) + 1).padStart(2, "0");
         const day = String(((year + schoolIndex + divisionIndex + passengerIndex) % 26) + 1).padStart(2, "0");
         return {
@@ -2285,9 +2291,16 @@
           vinculo: passengerIndex % 2 === 0 ? "Madre" : "Padre",
           responsableCuilCuit: passengerIndex % 2 === 0 ? `20-${responsableDni}-3` : "Pendiente",
           fichaMedica: fichaStates[(schoolIndex + divisionIndex + passengerIndex) % fichaStates.length],
-          pago: paymentStates[(schoolIndex + divisionIndex + passengerIndex) % paymentStates.length],
+          pago: paymentStatus,
           documentacion: docStates[(schoolIndex + divisionIndex + passengerIndex) % docStates.length],
           estado: "Activo",
+          valorViaje: "1500000",
+          sena: "0",
+          cuotas: "18",
+          pagado: paidByStatus[paymentStatus] || "0",
+          saldo: String(1500000 - Number(paidByStatus[paymentStatus] || 0)),
+          planPago: "Regular",
+          proximaCuota: paymentStatus === "Vencido" ? `${year}-06-10` : `${year}-07-10`,
           observaciones: "Pasajero ficticio para prueba de organización."
         };
       }
@@ -2343,6 +2356,13 @@
         return demo;
       }
 
+      function createAdminContratosSeed(groups = createAdminPasajerosSeed()) {
+        return groups.map((group) => ({
+          ...adminContratoFromGroup(group, new Date().toISOString()),
+          observaciones: "Contrato ficticio generado para pruebas del panel."
+        }));
+      }
+
       const adminPasajerosCollection = window.ElAngelAzulPersistence.collection({
         key: ADMIN_PASAJEROS_STORAGE_KEY,
         seed: createAdminPasajerosSeed,
@@ -2351,7 +2371,7 @@
 
       const contratosCollection = window.ElAngelAzulPersistence.collection({
         key: CONTRATOS_STORAGE_KEY,
-        seed: () => [],
+        seed: () => createAdminContratosSeed(adminPasajerosCollection.load()),
         normalize: (contract) => ({
           ...contract,
           id: String(contract.id || "").trim(),
@@ -2573,7 +2593,9 @@
           if (!pasajeros.length) {
             googleSheetsHydrating = true;
             adminPasajerosDemo = createAdminPasajerosSeed();
+            adminContratosDemo = createAdminContratosSeed(adminPasajerosDemo);
             adminPasajerosCollection.save(adminPasajerosDemo);
+            contratosCollection.save(adminContratosDemo);
             googleSheetsHydrating = false;
             googleSheetsHydrated = true;
             googleSheetsSyncState = {
