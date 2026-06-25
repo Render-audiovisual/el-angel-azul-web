@@ -18,6 +18,7 @@
       function currentPath() {
         const hashPath = location.hash.replace("#", "");
         if (hashPath) return hashPath.split("?")[0];
+        if (location.pathname.replace(/\/+$/, "").includes("/admin")) return adminPathFromLocation();
         if (isAdminEntry()) return adminPathFromLocation();
         return "/";
       }
@@ -2815,6 +2816,11 @@
       let adminFichasMessage = "";
       let adminFichasFilter = "nuevas";
       let adminFichasSelectedId = "";
+      let adminFichasSearch = "";
+      let adminFichasFilterColegio = "";
+      let adminFichasFilterViaje = "";
+      let adminFichasRejectId = "";
+      let adminFichasRejectError = "";
 
       function loadFichasAdhesionDemo() {
         return fichaAdhesionCollection.load();
@@ -2822,7 +2828,8 @@
 
       function saveFichasAdhesionDemo(fichas) {
         fichaAdhesionCollection.save(fichas);
-        if (!googleSheetsHydrating) queueGoogleSheetsWrite(["FICHAS_ADHESION"]);
+        if (!googleSheetsHydrating) return queueGoogleSheetsWrite(["FICHAS_ADHESION"]);
+        return Promise.resolve();
       }
 
       function sheetGroupFromRow(row = {}) {
@@ -2962,7 +2969,13 @@
 
       function queueGoogleSheetsWrite(sheets = []) {
         const config = window.ElAngelAzulPersistence.readGoogleSheetsConfig();
-        if (!config.enabled || !config.endpoint) return;
+        if (!config.enabled || !config.endpoint) {
+          googleSheetsSyncState = {
+            status: "local",
+            message: "Guardado local. Google Sheets no está conectado."
+          };
+          return Promise.resolve(false);
+        }
         const uniqueSheets = [...new Set(sheets)];
         googleSheetsWriteQueue = googleSheetsWriteQueue.then(async () => {
           const now = new Date().toISOString();
@@ -2980,38 +2993,48 @@
             status: "ok",
             message: "Cambios guardados en Google Sheets."
           };
+          return true;
         }).catch((error) => {
           googleSheetsSyncState = {
             status: "error",
             message: `No se pudo guardar en Google Sheets: ${error.message || "error desconocido"}.`
           };
+          return false;
         });
+        return googleSheetsWriteQueue;
       }
 
-      function updateFichaAdhesionStatus(id, estado, patch = {}) {
+      function adminFichasSaveMessage(ok, successText = "Guardado en Google Sheets.") {
+        adminFichasMessage = ok
+          ? successText
+          : googleSheetsSyncState.status === "local"
+            ? googleSheetsSyncState.message
+            : "Error al guardar en Google Sheets.";
+      }
+
+      async function updateFichaAdhesionStatus(id, estado, patch = {}, successText = "") {
         const now = new Date().toISOString();
         const fichas = loadFichasAdhesionDemo().map((ficha) => (
           ficha.id === id ? { ...ficha, ...patch, estadoRevision: estado, updatedAt: now } : ficha
         ));
-        adminFichasMessage = estado === "revisada"
-          ? "Ficha marcada como revisada. Ahora podés confirmar asignación y aprobarla."
-          : estado === "rechazada"
-            ? "Ficha rechazada con motivo interno. Podés volver a revisarla si necesitás corregir el flujo."
-            : "";
-        saveFichasAdhesionDemo(fichas);
+        const saved = await saveFichasAdhesionDemo(fichas);
+        adminFichasSaveMessage(saved, successText || "Guardado en Google Sheets.");
         renderAdminFichasRecibidas();
       }
 
-      function rejectFichaAdhesion(id) {
-        const motivo = window.prompt("Motivo corto del rechazo");
-        if (motivo === null) return;
+      async function rejectFichaAdhesion(id, motivo) {
         const motivoRechazo = String(motivo || "").trim();
         if (!motivoRechazo) {
-          adminFichasMessage = "Para rechazar una ficha, cargá un motivo corto.";
+          adminFichasRejectError = "Escribí el motivo del rechazo para confirmar.";
+          adminFichasRejectId = id;
           renderAdminFichasRecibidas();
           return;
         }
-        updateFichaAdhesionStatus(id, "rechazada", { motivoRechazo });
+        adminFichasRejectId = "";
+        adminFichasRejectError = "";
+        adminFichasFilter = "rechazadas";
+        adminFichasSelectedId = id;
+        await updateFichaAdhesionStatus(id, "rechazada", { motivoRechazo }, "Guardado en Google Sheets. Ficha rechazada.");
       }
 
       function fichaAssignmentContext(ficha = {}) {
@@ -3042,7 +3065,7 @@
         return { nivel, viaje, colegio, grupoId, selectedGroup, contratoId, codigoContrato, selectedContract, contractOptions, viajeOptions, colegioOptions, groupOptions };
       }
 
-      function saveFichaAssignment(id, patch = {}) {
+      async function saveFichaAssignment(id, patch = {}) {
         const now = new Date().toISOString();
         const fichas = loadFichasAdhesionDemo().map((ficha) => {
           if (ficha.id !== id) return ficha;
@@ -3063,8 +3086,8 @@
             updatedAt: now
           };
         });
-        adminFichasMessage = "Asignación actualizada. La ficha queda lista para revisar o aprobar.";
-        saveFichasAdhesionDemo(fichas);
+        const saved = await saveFichasAdhesionDemo(fichas);
+        adminFichasSaveMessage(saved, "Guardado en Google Sheets. Asignación actualizada.");
         renderAdminFichasRecibidas();
       }
 
@@ -3129,13 +3152,48 @@
         `;
       }
 
+      function fichaApprovalChecklist(ficha) {
+        const context = fichaAssignmentContext(ficha);
+        const dni = String(ficha.pasajeroNumeroDocumento || ficha.pasajeroDni || "").trim();
+        const fichaMedica = normalizeYesNoStatus(ficha.fichaMedicaEstado || ficha.fichaMedica || ficha.documentacionEstado);
+        const fichaAdhesion = normalizeYesNoStatus(ficha.autorizacionEstado || ficha.firma || ficha.documentacionEstado || "Sí");
+        return [
+          { key: "dni", label: "DNI cargado", ok: Boolean(dni) },
+          { key: "grupo", label: "Grupo asignado", ok: Boolean(ficha.asignacionGrupo?.grupoId && context.selectedGroup) },
+          { key: "contrato", label: "Contrato asignado", ok: Boolean(context.contratoId) },
+          { key: "medica", label: "Ficha médica", ok: fichaMedica === "Sí" },
+          { key: "adhesion", label: "Ficha de adhesión", ok: fichaAdhesion === "Sí" }
+        ];
+      }
+
+      function canApproveFicha(ficha) {
+        return fichaApprovalChecklist(ficha).every((item) => item.ok);
+      }
+
+      function renderFichaApprovalChecklist(ficha) {
+        return `
+          <div class="admin-fichas-approval-checklist" aria-label="Validaciones para aprobar">
+            <strong>Validaciones para aprobar</strong>
+            <ul>
+              ${fichaApprovalChecklist(ficha).map((item) => `
+                <li class="${item.ok ? "is-ok" : "is-missing"}">
+                  <span aria-hidden="true">${item.ok ? "✓" : "!"}</span>
+                  ${escapeHtml(item.label)}
+                </li>
+              `).join("")}
+            </ul>
+          </div>
+        `;
+      }
+
       function renderFichaActionButtons(ficha) {
         const estadoRevision = ficha.estadoRevision || "pendiente";
+        const approvalEnabled = canApproveFicha(ficha);
         return `
           <div class="admin-fichas-actions">
             <button type="button" data-ficha-revisar="${escapeHtml(ficha.id)}">Revisar</button>
             ${estadoRevision === "aprobada" ? "" : `<button type="button" data-ficha-save-assignment="${escapeHtml(ficha.id)}">Asignar grupo y contrato</button>`}
-            ${estadoRevision === "aprobada" ? "" : `<button type="button" data-ficha-aprobar="${escapeHtml(ficha.id)}">Aprobar</button>`}
+            ${estadoRevision === "aprobada" ? "" : `<button type="button" data-ficha-aprobar="${escapeHtml(ficha.id)}" ${approvalEnabled ? "" : "disabled"}>Aprobar y crear pasajero</button>`}
             ${estadoRevision === "rechazada" ? "" : `<button type="button" data-ficha-rechazar="${escapeHtml(ficha.id)}">Rechazar</button>`}
           </div>
         `;
@@ -3201,6 +3259,7 @@
                   <strong>${escapeHtml(context.selectedGroup ? `${context.selectedGroup.colegio} · ${context.selectedGroup.curso} ${context.selectedGroup.division}` : "Pendiente")}</strong>
                   <strong>${escapeHtml(context.codigoContrato || "Contrato pendiente")}</strong>
                 </div>
+                ${renderFichaApprovalChecklist(ficha)}
                 ${renderFichaActionButtons(ficha)}
               </article>
             </div>
@@ -3208,13 +3267,18 @@
         `;
       }
 
-      function approveFichaAdhesionAndCreatePassenger(id) {
+      async function approveFichaAdhesionAndCreatePassenger(id) {
         const now = new Date().toISOString();
         const fichas = loadFichasAdhesionDemo();
         const ficha = fichas.find((item) => item.id === id);
         if (!ficha) return;
         if ((ficha.estadoRevision || "pendiente") === "aprobada") {
           adminFichasMessage = "Esta ficha ya estaba aprobada. No se creó otro pasajero.";
+          renderAdminFichasRecibidas();
+          return;
+        }
+        if (!canApproveFicha(ficha)) {
+          adminFichasMessage = "Faltan validaciones para aprobar. Revisá el checklist visible.";
           renderAdminFichasRecibidas();
           return;
         }
@@ -3275,7 +3339,7 @@
           observaciones: "Creado desde ficha de adhesión aprobada."
         });
         saveAdminPasajerosDemo();
-        saveFichasAdhesionDemo(fichas.map((item) => (
+        const saved = await saveFichasAdhesionDemo(fichas.map((item) => (
           item.id === id
             ? {
               ...item,
@@ -3304,7 +3368,9 @@
         adminPasajerosViaje = group.viaje;
         adminPasajerosColegio = group.colegio;
         adminPasajerosGrupoId = group.id;
-        adminFichasMessage = "Ficha aprobada. El pasajero fue creado automáticamente en el grupo asignado.";
+        adminFichasFilter = "aprobadas";
+        adminFichasSelectedId = id;
+        adminFichasSaveMessage(saved, "Guardado en Google Sheets. Ficha aprobada y pasajero creado.");
         renderAdminFichasRecibidas();
       }
 
@@ -3320,6 +3386,74 @@
 
       function fichaFieldValue(value) {
         return String(value || "").trim();
+      }
+
+      function fichaMatchesText(ficha, search) {
+        const needle = normalizeText(search);
+        if (!needle) return true;
+        return [
+          ficha.pasajeroNombre,
+          ficha.pasajeroNumeroDocumento,
+          ficha.pasajeroDni,
+          ficha.responsableNombre,
+          ficha.responsableTelefono,
+          ficha.responsableCelular
+        ].some((value) => normalizeText(value).includes(needle));
+      }
+
+      function fichaFilterValue(ficha, field) {
+        const context = fichaAssignmentContext(ficha);
+        if (field === "colegio") return context.selectedGroup?.colegio || context.colegio || ficha.colegio || "";
+        if (field === "viaje") return context.selectedGroup?.viaje || context.viaje || ficha.viaje || "";
+        return "";
+      }
+
+      function renderAdminFichasFilters(colegios = [], viajes = []) {
+        return `
+          <div class="admin-fichas-filters" aria-label="Filtros de fichas">
+            <label>Buscar por nombre o DNI
+              <input type="search" value="${escapeHtml(adminFichasSearch)}" placeholder="Ej: Lucia, 50999111" data-admin-fichas-search>
+            </label>
+            <label>Colegio
+              <select data-admin-fichas-filter-colegio>
+                <option value="">Todos los colegios</option>
+                ${colegios.map((colegio) => `<option value="${escapeHtml(colegio)}" ${colegio === adminFichasFilterColegio ? "selected" : ""}>${escapeHtml(colegio)}</option>`).join("")}
+              </select>
+            </label>
+            <label>Viaje
+              <select data-admin-fichas-filter-viaje>
+                <option value="">Todos los viajes</option>
+                ${viajes.map((viaje) => `<option value="${escapeHtml(viaje)}" ${viaje === adminFichasFilterViaje ? "selected" : ""}>${escapeHtml(viaje)}</option>`).join("")}
+              </select>
+            </label>
+          </div>
+        `;
+      }
+
+      function renderAdminFichasRejectModal() {
+        if (!adminFichasRejectId) return "";
+        const ficha = loadFichasAdhesionDemo().find((item) => item.id === adminFichasRejectId);
+        return `
+          <div class="admin-modal-backdrop" role="presentation">
+            <section class="admin-modal-card admin-fichas-reject-modal" role="dialog" aria-modal="true" aria-labelledby="admin-fichas-reject-title">
+              <div class="admin-modal-head">
+              <div>
+                <span class="admin-pasajeros-status is-alert">Rechazo</span>
+                <h2 id="admin-fichas-reject-title">Rechazar ficha</h2>
+                <p>${escapeHtml(ficha?.pasajeroNombre || "Ficha seleccionada")}</p>
+              </div>
+              </div>
+              <label>Motivo del rechazo
+                <textarea data-ficha-reject-reason rows="4" placeholder="Ej: falta documentación obligatoria"></textarea>
+              </label>
+              ${adminFichasRejectError ? `<p class="admin-fichas-modal-error">${escapeHtml(adminFichasRejectError)}</p>` : ""}
+              <div class="admin-fichas-modal-actions">
+                <button type="button" data-ficha-reject-confirm="${escapeHtml(adminFichasRejectId)}">Confirmar rechazo</button>
+                <button type="button" data-ficha-reject-cancel>Cancelar</button>
+              </div>
+            </section>
+          </div>
+        `;
       }
 
       function fichaMoneyValue(value) {
@@ -3599,12 +3733,13 @@
         window.setTimeout(() => URL.revokeObjectURL(url), 1000);
       }
 
-      function viewFichaAdhesionDetail(id) {
+      async function viewFichaAdhesionDetail(id) {
         const ficha = loadFichasAdhesionDemo().find((item) => item.id === id);
         if (!ficha) return;
         adminFichasSelectedId = id;
         if ((ficha.estadoRevision || "pendiente") === "pendiente") {
-          updateFichaAdhesionStatus(id, "revisada");
+          adminFichasFilter = "revision";
+          await updateFichaAdhesionStatus(id, "revisada", {}, "Guardado en Google Sheets. Ficha marcada en revisión.");
           return;
         }
         renderAdminFichasRecibidas();
@@ -4142,8 +4277,18 @@
           rechazadas: { label: "Rechazadas", states: ["rechazada"] }
         };
         const activeFilter = filterMap[adminFichasFilter] ? adminFichasFilter : "nuevas";
-        const visibleFichas = fichas.filter((ficha) => filterMap[activeFilter].states.includes(ficha.estadoRevision || "pendiente"));
-        const selectedFicha = fichas.find((ficha) => ficha.id === adminFichasSelectedId) || visibleFichas[0] || null;
+        const stateFichas = fichas.filter((ficha) => filterMap[activeFilter].states.includes(ficha.estadoRevision || "pendiente"));
+        const colegios = uniqueValues(fichas.map((ficha) => ({ value: fichaFilterValue(ficha, "colegio") })), "value");
+        const viajes = uniqueValues(fichas.map((ficha) => ({ value: fichaFilterValue(ficha, "viaje") })), "value");
+        if (adminFichasFilterColegio && !colegios.includes(adminFichasFilterColegio)) adminFichasFilterColegio = "";
+        if (adminFichasFilterViaje && !viajes.includes(adminFichasFilterViaje)) adminFichasFilterViaje = "";
+        const visibleFichas = stateFichas.filter((ficha) => (
+          fichaMatchesText(ficha, adminFichasSearch) &&
+          (!adminFichasFilterColegio || fichaFilterValue(ficha, "colegio") === adminFichasFilterColegio) &&
+          (!adminFichasFilterViaje || fichaFilterValue(ficha, "viaje") === adminFichasFilterViaje)
+        ));
+        const selectedFichaCandidate = visibleFichas.find((ficha) => ficha.id === adminFichasSelectedId);
+        const selectedFicha = selectedFichaCandidate || visibleFichas[0] || null;
         adminFichasSelectedId = selectedFicha?.id || "";
         document.getElementById("app").innerHTML = renderAdminShell("fichas", `
           <section class="admin-turismo-panel">
@@ -4182,6 +4327,7 @@
                 `;
               }).join("")}
             </div>
+            ${renderAdminFichasFilters(colegios, viajes)}
             ${renderAdminFichaDetail(selectedFicha)}
             <div class="admin-pasajeros-table-wrap">
               <table class="admin-pasajeros-table admin-fichas-table">
@@ -4198,6 +4344,7 @@
               </table>
             </div>
           </section>
+          ${renderAdminFichasRejectModal()}
         `);
         adminFichasMessage = "";
         bindAdminShell();
@@ -5299,8 +5446,24 @@
         document.querySelectorAll("[data-admin-fichas-filter]").forEach((button) => {
           button.addEventListener("click", () => {
             adminFichasFilter = button.dataset.adminFichasFilter || "nuevas";
+            adminFichasSelectedId = "";
             renderAdminFichasRecibidas();
           });
+        });
+        document.querySelector("[data-admin-fichas-search]")?.addEventListener("input", (event) => {
+          adminFichasSearch = event.currentTarget.value;
+          adminFichasSelectedId = "";
+          renderAdminFichasRecibidas();
+        });
+        document.querySelector("[data-admin-fichas-filter-colegio]")?.addEventListener("change", (event) => {
+          adminFichasFilterColegio = event.currentTarget.value;
+          adminFichasSelectedId = "";
+          renderAdminFichasRecibidas();
+        });
+        document.querySelector("[data-admin-fichas-filter-viaje]")?.addEventListener("change", (event) => {
+          adminFichasFilterViaje = event.currentTarget.value;
+          adminFichasSelectedId = "";
+          renderAdminFichasRecibidas();
         });
         document.querySelectorAll("[data-ficha-ver]").forEach((button) => {
           button.addEventListener("click", () => viewFichaAdhesionDetail(button.dataset.fichaVer));
@@ -5321,7 +5484,11 @@
           button.addEventListener("click", () => approveFichaAdhesionAndCreatePassenger(button.dataset.fichaAprobar));
         });
         document.querySelectorAll("[data-ficha-rechazar]").forEach((button) => {
-          button.addEventListener("click", () => rejectFichaAdhesion(button.dataset.fichaRechazar));
+          button.addEventListener("click", () => {
+            adminFichasRejectId = button.dataset.fichaRechazar;
+            adminFichasRejectError = "";
+            renderAdminFichasRecibidas();
+          });
         });
         document.querySelectorAll("[data-ficha-revisar]").forEach((button) => {
           button.addEventListener("click", () => viewFichaAdhesionDetail(button.dataset.fichaRevisar));
@@ -5361,6 +5528,17 @@
         });
         document.querySelectorAll("[data-ficha-save-assignment]").forEach((button) => {
           button.addEventListener("click", () => saveFichaAssignment(button.dataset.fichaSaveAssignment, {}));
+        });
+        document.querySelectorAll("[data-ficha-reject-cancel]").forEach((button) => {
+          button.addEventListener("click", () => {
+            adminFichasRejectId = "";
+            adminFichasRejectError = "";
+            renderAdminFichasRecibidas();
+          });
+        });
+        document.querySelector("[data-ficha-reject-confirm]")?.addEventListener("click", (event) => {
+          const reason = document.querySelector("[data-ficha-reject-reason]")?.value || "";
+          rejectFichaAdhesion(event.currentTarget.dataset.fichaRejectConfirm, reason);
         });
       }
 

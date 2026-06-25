@@ -3939,6 +3939,35 @@
         color: #0d4f79;
       }
 
+      .admin-fichas-filters {
+        align-items: end;
+        display: grid;
+        gap: 10px;
+        grid-template-columns: minmax(220px, 1.2fr) repeat(2, minmax(170px, 0.8fr));
+        margin-top: 12px;
+      }
+
+      .admin-fichas-filters label {
+        color: #516575;
+        display: grid;
+        font-size: 0.72rem;
+        font-weight: 900;
+        gap: 5px;
+        text-transform: uppercase;
+      }
+
+      .admin-fichas-filters input,
+      .admin-fichas-filters select {
+        background: #fff;
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        color: #10202b;
+        font: inherit;
+        min-height: 38px;
+        padding: 8px 10px;
+        text-transform: none;
+      }
+
       .admin-fichas-table {
         min-width: 980px;
       }
@@ -4150,6 +4179,60 @@
         font-size: 0.88rem;
       }
 
+      .admin-fichas-approval-checklist {
+        background: #fff;
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        display: grid;
+        gap: 8px;
+        padding: 10px;
+      }
+
+      .admin-fichas-approval-checklist > strong {
+        color: #10202b;
+        font-size: 0.78rem;
+        text-transform: uppercase;
+      }
+
+      .admin-fichas-approval-checklist ul {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .admin-fichas-approval-checklist li {
+        align-items: center;
+        border-radius: 999px;
+        display: inline-flex;
+        font-size: 0.78rem;
+        font-weight: 850;
+        gap: 6px;
+        padding: 6px 9px;
+      }
+
+      .admin-fichas-approval-checklist li.is-ok {
+        background: #eaf7ef;
+        color: #146538;
+      }
+
+      .admin-fichas-approval-checklist li.is-missing {
+        background: #fff5e5;
+        color: #8a5a00;
+      }
+
+      .admin-fichas-approval-checklist span {
+        align-items: center;
+        background: rgba(255, 255, 255, 0.72);
+        border-radius: 999px;
+        display: inline-flex;
+        height: 18px;
+        justify-content: center;
+        width: 18px;
+      }
+
       .admin-fichas-actions {
         display: flex;
         flex-wrap: wrap;
@@ -4168,6 +4251,13 @@
         color: #fff;
       }
 
+      .admin-fichas-actions button:disabled {
+        background: #e8eef2;
+        border-color: #d0dce3;
+        color: #7f919b;
+        cursor: not-allowed;
+      }
+
       .admin-fichas-actions button[data-ficha-rechazar] {
         border-color: #e1b8b8;
         color: #8f1f1f;
@@ -4182,9 +4272,103 @@
         padding: 8px 10px;
       }
 
+      .admin-modal-backdrop {
+        align-items: center;
+        background: rgba(4, 18, 30, 0.48);
+        display: flex;
+        inset: 0;
+        justify-content: center;
+        padding: 18px;
+        position: fixed;
+        z-index: 120;
+      }
+
+      .admin-modal-card {
+        background: #fff;
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        box-shadow: 0 24px 70px rgba(12, 32, 43, 0.24);
+        display: grid;
+        gap: 14px;
+        max-width: 520px;
+        padding: 18px;
+        width: min(100%, 520px);
+      }
+
+      .admin-modal-head {
+        align-items: flex-start;
+        display: flex;
+        gap: 12px;
+        justify-content: space-between;
+      }
+
+      .admin-modal-head h2,
+      .admin-modal-head p {
+        margin: 0;
+      }
+
+      .admin-modal-head h2 {
+        color: #10202b;
+        font-size: 1.18rem;
+        margin-top: 8px;
+      }
+
+      .admin-modal-head p {
+        color: #516575;
+        font-size: 0.9rem;
+        margin-top: 3px;
+      }
+
+      .admin-fichas-reject-modal label {
+        color: #516575;
+        display: grid;
+        font-size: 0.76rem;
+        font-weight: 900;
+        gap: 6px;
+        text-transform: uppercase;
+      }
+
+      .admin-fichas-reject-modal textarea {
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        color: #10202b;
+        font: inherit;
+        min-height: 110px;
+        padding: 10px;
+        resize: vertical;
+        text-transform: none;
+      }
+
+      .admin-fichas-modal-error {
+        background: #fff5f5;
+        border: 1px solid #eccaca;
+        border-radius: 8px;
+        color: #8f1f1f;
+        font-size: 0.86rem;
+        margin: 0;
+        padding: 8px 10px;
+      }
+
+      .admin-fichas-modal-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: flex-end;
+      }
+
+      .admin-fichas-modal-actions button:first-child {
+        background: #8f1f1f;
+        border-color: #8f1f1f;
+        color: #fff;
+      }
+
       @media (max-width: 980px) {
         .admin-fichas-detail-layout {
           grid-template-columns: 1fr;
+        }
+
+        .admin-fichas-filters {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
         }
 
         .admin-fichas-detail-card dl,
@@ -4196,6 +4380,10 @@
       @media (max-width: 620px) {
         .admin-fichas-detail-head {
           display: grid;
+        }
+
+        .admin-fichas-filters {
+          grid-template-columns: 1fr;
         }
 
         .admin-fichas-detail-card dl,
