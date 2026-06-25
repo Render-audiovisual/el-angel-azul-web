@@ -3216,10 +3216,10 @@
 
       .admin-login-brand h1 {
         color: #fff;
-        font-size: clamp(2.25rem, 4.8vw, 4.25rem);
+        font-size: 22px;
         letter-spacing: 0;
-        line-height: 0.98;
-        max-width: 10ch;
+        line-height: 1.12;
+        max-width: 18ch;
       }
 
       .admin-login-brand p {
@@ -3235,27 +3235,28 @@
 
       .admin-login-highlights span {
         align-items: center;
-        background: rgba(255, 255, 255, 0.12);
-        border: 1px solid rgba(255, 255, 255, 0.18);
-        border-radius: 16px;
-        color: #fff;
+        background: transparent;
+        border: 0;
+        border-radius: 0;
+        color: rgba(255, 255, 255, 0.6);
         display: flex;
         font-size: 0.96rem;
         font-weight: 850;
         gap: 10px;
-        padding: 12px 14px;
+        padding: 0;
       }
 
       .admin-login-highlights strong {
         align-items: center;
-        background: rgba(255, 255, 255, 0.12);
-        border-radius: 12px;
+        background: transparent;
+        border-radius: 0;
+        color: rgba(255, 255, 255, 0.6);
         display: inline-flex;
         font-size: 1.2rem;
-        height: 36px;
+        height: 24px;
         justify-content: center;
         line-height: 1;
-        width: 36px;
+        width: 24px;
       }
 
       .admin-login-footer {
