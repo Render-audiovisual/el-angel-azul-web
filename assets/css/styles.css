@@ -3821,6 +3821,17 @@
         padding: 10px 16px;
       }
 
+      .admin-grupos-primary-actions {
+        align-items: center;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .admin-grupos-primary-actions .admin-pasajeros-primary-button {
+        box-shadow: 0 10px 24px rgba(13, 105, 161, 0.18);
+        font-size: 0.95rem;
+      }
+
       .admin-pasajeros-secondary-button {
         background: transparent;
         border-color: #a9bdc7;
@@ -3976,6 +3987,15 @@
       .admin-pasajeros-row-actions button {
         border-color: #a9bdc7;
         color: #10202b;
+        padding: 7px 10px;
+      }
+
+      .admin-pasajeros-table button[data-admin-grupo-view-contracts] {
+        background: #fff;
+        border-color: #0d69a1;
+        color: #0d4f79;
+        font-weight: 800;
+        min-height: 34px;
         padding: 7px 10px;
       }
 

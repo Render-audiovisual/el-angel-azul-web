@@ -4233,7 +4233,7 @@
                 </label>
                 <div class="admin-pasajeros-modal-actions">
                   <button type="button" class="admin-secondary-action" data-admin-contrato-edit-cancel>Cancelar</button>
-                  <button type="submit">Guardar contrato</button>
+                  <button type="submit">Guardar</button>
                 </div>
               </form>
             </section>
@@ -4438,7 +4438,7 @@
         if (!rows.length) {
           return `
             <tr>
-              <td colspan="6">
+              <td colspan="7">
                 <span>No hay grupos con ese criterio. Revisá la hoja GRUPOS o limpiá filtros.</span>
               </td>
             </tr>
@@ -4447,30 +4447,32 @@
         return rows.map((group) => {
           const contracts = adminContratoOptionsForGroup(group.id);
           const activeContracts = contracts.filter((contract) => contract.estado === "Activo").length;
-          const passengers = group.pasajeros?.length || 0;
+          const cupo = Number(group.pasajerosEsperados || group.cupo || 0);
           return `
             <tr>
+              <td>
+                <strong>${escapeHtml(group.nivel || "Sin nivel")}</strong>
+              </td>
+              <td>
+                <strong>${escapeHtml(group.viaje || "Sin viaje")}</strong>
+              </td>
               <td>
                 <strong>${escapeHtml(group.colegio || "Sin colegio")}</strong>
                 <span>${escapeHtml(group.id || "Sin ID")}</span>
               </td>
               <td>
-                <strong>${escapeHtml(group.nivel || "Sin nivel")}</strong>
-                <span>${escapeHtml(group.viaje || "Sin viaje")}</span>
+                <strong>${escapeHtml(group.curso || "Curso pendiente")}</strong>
               </td>
               <td>
-                <strong>${escapeHtml(`${group.curso || ""} ${group.division || ""}`.trim() || "Curso pendiente")}</strong>
-                <span>Esperados: ${escapeHtml(group.pasajerosEsperados || "0")}</span>
+                <strong>${escapeHtml(group.division || "División pendiente")}</strong>
               </td>
               <td>
-                <strong>${contracts.length}</strong>
-                <span>Activos: ${activeContracts}</span>
+                <strong>${escapeHtml(String(cupo || 0))}</strong>
+                <span>${contracts.length} contratos · ${activeContracts} activos</span>
               </td>
               <td>
-                <strong>${passengers}</strong>
-                <span>${passengers ? "Carga iniciada" : "Sin pasajeros"}</span>
+                <button type="button" data-admin-grupo-view-contracts="${escapeHtml(group.id)}">Ver contratos</button>
               </td>
-              <td>${contracts.length ? escapeHtml(contracts[0].codigo_contrato || "Contrato sin código") : "Sin contrato vinculado"}</td>
             </tr>
           `;
         }).join("");
@@ -4548,8 +4550,8 @@
               <span>${escapeHtml(googleSheetsSyncState.message)}</span>
             </div>
             <p>Esta vista valida la estructura colegio, viaje, curso y división que alimenta contratos y pasajeros.</p>
-            <div class="admin-actions-row">
-              <button type="button" class="admin-secondary-action" data-admin-grupos-open-create>Crear grupo nuevo</button>
+            <div class="admin-actions-row admin-grupos-primary-actions">
+              <button type="button" class="admin-pasajeros-primary-button" data-admin-grupos-open-create>Crear grupo nuevo</button>
               <a class="admin-secondary-action" href="${escapeHtml(window.ElAngelAzulPersistence.googleSheet.url)}" target="_blank" rel="noopener">Abrir Sheet</a>
             </div>
           </section>
@@ -4600,12 +4602,13 @@
               <table class="admin-pasajeros-table admin-pasajeros-table--compact">
                 <thead>
                   <tr>
+                    <th>Nivel</th>
+                    <th>Viaje</th>
                     <th>Colegio</th>
-                    <th>Nivel / viaje</th>
                     <th>Curso</th>
+                    <th>División</th>
+                    <th>Cupo</th>
                     <th>Contratos</th>
-                    <th>Pasajeros</th>
-                    <th>Contrato base</th>
                   </tr>
                 </thead>
                 <tbody>${renderAdminGruposRows(filteredRows)}</tbody>
@@ -4679,6 +4682,19 @@
           };
           saveAdminGruposDemo();
           renderAdminGrupos();
+        });
+        document.querySelectorAll("[data-admin-grupo-view-contracts]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const groupId = button.dataset.adminGrupoViewContracts || "";
+            const group = adminPasajerosDemo.find((item) => item.id === groupId);
+            adminContratosFilterNivel = group?.nivel || "";
+            adminContratosFilterViaje = group?.viaje || "";
+            adminContratosFilterColegio = group?.colegio || "";
+            adminContratosFilterEstado = "";
+            adminContratosSearch = groupId;
+            window.history.pushState({}, "", adminRouteHref("/admin/contratos"));
+            renderAdminContratos();
+          });
         });
         if (!filters) return;
         const handleFilter = () => {
