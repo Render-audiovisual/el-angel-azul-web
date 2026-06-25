@@ -1542,7 +1542,232 @@
         color: #fff;
       }
 
-      .estudiantil-layout {
+      /* --- Página de detalle: secciones nuevas --- */
+
+      .package-detail-fechas {
+        font-size: 1.05rem;
+        font-weight: 800;
+        letter-spacing: 0.01em;
+        margin: 0;
+        opacity: 0.92;
+      }
+
+      .package-detail-badge {
+        background: rgba(255, 255, 255, 0.18);
+        border: 1px solid rgba(255, 255, 255, 0.55);
+        border-radius: 999px;
+        color: #fff;
+        display: inline-block;
+        font-size: 0.82rem;
+        font-weight: 900;
+        letter-spacing: 0.04em;
+        padding: 5px 14px;
+        text-transform: uppercase;
+        width: fit-content;
+      }
+
+      .package-detail-precio-section {
+        background: #fff;
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        display: grid;
+        gap: 20px;
+        grid-template-columns: auto 1fr;
+        padding: 20px;
+      }
+
+      .package-detail-precio-card {
+        background: #f0f7fc;
+        border: 1px solid #c4dcea;
+        border-radius: 12px;
+        display: grid;
+        gap: 14px;
+        min-width: 220px;
+        padding: 20px;
+      }
+
+      .package-detail-precio-main {
+        display: grid;
+        gap: 2px;
+      }
+
+      .package-detail-precio-main span {
+        color: #516575;
+        font-size: 0.82rem;
+        font-weight: 800;
+        text-transform: uppercase;
+      }
+
+      .package-detail-precio-main strong {
+        color: #0d69a1;
+        font-size: 2rem;
+        line-height: 1;
+      }
+
+      .package-detail-precio-main small {
+        color: #516575;
+        font-size: 0.8rem;
+      }
+
+      .package-detail-precio-desglose {
+        border-top: 1px solid #c4dcea;
+        display: grid;
+        gap: 8px;
+        padding-top: 12px;
+      }
+
+      .package-detail-precio-desglose div {
+        display: flex;
+        gap: 8px;
+        justify-content: space-between;
+      }
+
+      .package-detail-precio-desglose span {
+        color: #516575;
+        font-size: 0.85rem;
+      }
+
+      .package-detail-precio-desglose strong {
+        color: #10202b;
+        font-size: 0.9rem;
+        font-weight: 800;
+      }
+
+      .package-detail-precio-cta {
+        background: #eb3e8f;
+        border-radius: 8px;
+        color: #fff;
+        display: block;
+        font-size: 0.9rem;
+        font-weight: 800;
+        padding: 10px 14px;
+        text-align: center;
+        text-decoration: none;
+      }
+
+      .package-detail-facts {
+        display: grid;
+        align-content: start;
+        gap: 10px;
+      }
+
+      .package-detail-facts div {
+        border-bottom: 1px solid #edf2f5;
+        display: flex;
+        gap: 12px;
+        justify-content: space-between;
+        padding-bottom: 10px;
+      }
+
+      .package-detail-facts span {
+        color: #6a7b84;
+        font-size: 0.85rem;
+        font-weight: 700;
+      }
+
+      .package-detail-facts strong {
+        color: #10202b;
+        font-size: 0.9rem;
+        font-weight: 800;
+        text-align: right;
+      }
+
+      .package-detail-garantizada {
+        color: #146538 !important;
+      }
+
+      /* --- Itinerario público --- */
+      .package-detail-itinerario {
+        background: #fff;
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        display: grid;
+        gap: 16px;
+        padding: 18px;
+      }
+
+      .package-detail-itinerario h2 {
+        margin: 0;
+      }
+
+      .package-itinerario-list {
+        display: grid;
+        gap: 0;
+      }
+
+      .package-itinerario-item {
+        border-left: 2px solid #0d69a1;
+        display: grid;
+        gap: 6px;
+        grid-template-columns: 80px 1fr;
+        padding: 14px 0 14px 16px;
+      }
+
+      .package-itinerario-item:last-child {
+        padding-bottom: 0;
+      }
+
+      .package-itinerario-num {
+        color: #0d69a1;
+        font-size: 0.78rem;
+        font-weight: 900;
+        padding-top: 3px;
+        text-transform: uppercase;
+      }
+
+      .package-itinerario-body strong {
+        color: #10202b;
+        display: block;
+        font-size: 0.95rem;
+        font-weight: 800;
+      }
+
+      .package-itinerario-body p {
+        color: #4f6472;
+        font-size: 0.9rem;
+        line-height: 1.5;
+        margin: 6px 0 0;
+      }
+
+      /* --- Condición de venta --- */
+      .package-detail-condicion {
+        background: #f7fbfe;
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        padding: 14px 18px;
+      }
+
+      .package-detail-condicion p {
+        color: #516575;
+        font-size: 0.82rem;
+        line-height: 1.55;
+        margin: 0;
+      }
+
+      /* --- Secciones compartidas del detalle --- */
+      .package-detail-summary,
+      .package-detail-content,
+      .package-detail-gallery,
+      .package-detail-payment,
+      .package-detail-itinerario,
+      .package-detail-condicion {
+        background: #fff;
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        padding: 18px;
+      }
+
+      @media (max-width: 780px) {
+        .package-detail-precio-section {
+          grid-template-columns: 1fr;
+        }
+
+        .package-detail-precio-card {
+          min-width: 0;
+        }
+      }
+
+            .estudiantil-layout {
         gap: 28px;
       }
 

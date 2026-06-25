@@ -274,14 +274,22 @@
           intenciones: categories,
           duracion: adminTrip.duracion || "A confirmar",
           temporada: adminTrip.temporada || "Consultar disponibilidad",
+          fechaSalida: adminTrip.fechaSalida || "",
+          fechaRegreso: adminTrip.fechaRegreso || "",
+          salidaGarantizada: Boolean(adminTrip.salidaGarantizada),
           resumen: adminTrip.descripcionCorta || "Consultanos por disponibilidad y detalles de este viaje.",
           descripcion: adminTrip.descripcionLarga || adminTrip.descripcionCorta || "Viaje con asesoramiento de El Angel Azul.",
           incluye: Array.isArray(adminTrip.incluye) ? adminTrip.incluye : [],
           noIncluye: Array.isArray(adminTrip.noIncluye) ? adminTrip.noIncluye : [],
-          formasPago: ["Efectivo / transferencia", "Financiacion a consultar", "Reserva sujeta a disponibilidad"],
+          formasPago: Array.isArray(adminTrip.formasPago) && adminTrip.formasPago.length ? adminTrip.formasPago : ["Efectivo / transferencia", "Financiacion a consultar", "Reserva sujeta a disponibilidad"],
+          itinerario: Array.isArray(adminTrip.itinerario) ? adminTrip.itinerario : [],
           precio: adminTrip.precioDesde || "Consultar disponibilidad",
           precioDesde: adminTrip.precioDesde || "Consultar",
           precioValor: adminTrip.precioValor,
+          precioBaseDoble: adminTrip.precioBaseDoble || "",
+          suplementoSingle: adminTrip.suplementoSingle || "",
+          precioMenor: adminTrip.precioMenor || "",
+          condicionVenta: adminTrip.condicionVenta || "",
           moneda: adminTrip.moneda,
           image,
           gallery: gallery.length ? gallery : [image],
@@ -504,77 +512,138 @@
       function renderPackageDetail(packageItem) {
         const gallery = packageItem.gallery?.length ? packageItem.gallery : [packageItem.image];
         const whatsappHref = turismoWhatsappForPackage(packageItem);
+        const itinerario = Array.isArray(packageItem.itinerario) ? packageItem.itinerario : [];
+        const formasPago = Array.isArray(packageItem.formasPago) ? packageItem.formasPago : [];
+        const fechasSalida = [packageItem.fechaSalida, packageItem.fechaRegreso].filter(Boolean).join(" al ");
+
         document.getElementById("app").innerHTML = `
           <div class="layout turismo-layout">
+
+            <!-- HERO con imagen de portada -->
             <section class="package-detail-hero" style="--package-hero-image: url('${packageItem.image}')">
               <div class="package-detail-hero-content">
-                <a class="package-back-link" href="#/turismo">Volver a Turismo</a>
-                <p class="turismo-kicker">${packageItem.categoria} · ${packageItem.tipo} · ${packageItem.temporada}</p>
-                <h1>${packageItem.destino}</h1>
-                <p>${packageItem.resumen}</p>
+                <a class="package-back-link" href="#/turismo">← Volver a Turismo</a>
+                <p class="turismo-kicker">${escapeHtml(packageItem.tipo)} · ${escapeHtml(packageItem.temporada)}</p>
+                <h1>${escapeHtml(packageItem.titulo || packageItem.destino)}</h1>
+                ${fechasSalida ? `<p class="package-detail-fechas">${escapeHtml(fechasSalida)}</p>` : ""}
+                ${packageItem.salidaGarantizada ? `<span class="package-detail-badge">Salida garantizada</span>` : ""}
                 <div class="turismo-hero-actions">
-                  <a href="${whatsappHref}" target="_blank" rel="noopener">Consultar</a>
+                  <a href="${whatsappHref}" target="_blank" rel="noopener">Consultar por WhatsApp</a>
                 </div>
               </div>
             </section>
 
-            <section class="package-detail-gallery" aria-label="Galería de ${packageItem.destino}">
-              <img class="package-gallery-main" src="${gallery[0]}" alt="${packageItem.destino}">
-              <div class="package-gallery-strip">
-                ${gallery.slice(1).map((image, index) => `
-                  <img src="${image}" alt="${packageItem.destino} ${index + 2}">
-                `).join("")}
+            <!-- PRECIO DESTACADO -->
+            <section class="package-detail-precio-section">
+              <div class="package-detail-precio-card">
+                <div class="package-detail-precio-main">
+                  <span>Desde</span>
+                  <strong>${escapeHtml(packageItem.precioDesde || "Consultar")}</strong>
+                  <small>por persona</small>
+                </div>
+                ${packageItem.precioBaseDoble || packageItem.suplementoSingle || packageItem.precioMenor ? `
+                  <div class="package-detail-precio-desglose">
+                    ${packageItem.precioBaseDoble ? `<div><span>Base doble</span><strong>${escapeHtml(packageItem.moneda || "")} ${escapeHtml(packageItem.precioBaseDoble)}</strong></div>` : ""}
+                    ${packageItem.suplementoSingle ? `<div><span>Suplemento single</span><strong>+ ${escapeHtml(packageItem.moneda || "")} ${escapeHtml(packageItem.suplementoSingle)}</strong></div>` : ""}
+                    ${packageItem.precioMenor ? `<div><span>Precio menor</span><strong>${escapeHtml(packageItem.moneda || "")} ${escapeHtml(packageItem.precioMenor)}</strong></div>` : ""}
+                  </div>
+                ` : ""}
+                <a class="package-detail-precio-cta" href="${whatsappHref}" target="_blank" rel="noopener">Consultar disponibilidad</a>
               </div>
-            </section>
 
-            <section class="package-detail-summary">
-              <p class="section-kicker">Resumen</p>
-              <h2>${packageItem.destino}: ${packageItem.categoria.toLowerCase()} y viaje acompañado</h2>
-              <p>${packageItem.descripcion}</p>
-            </section>
-
-            <section class="package-detail-facts-section">
-              <h2>Datos rápidos</h2>
               <div class="package-detail-facts">
-                <span>Duración: ${packageItem.duracion}</span>
-                <span>Temporada: ${packageItem.temporada}</span>
-                <span>Destino: ${packageItem.destino}</span>
-                <span>Tipo: ${packageItem.intenciones.join(" · ")}</span>
-                <span>Salida: a confirmar</span>
-                <span>Precio: ${packageItem.precio}</span>
+                ${fechasSalida ? `<div><span>Fechas</span><strong>${escapeHtml(fechasSalida)}</strong></div>` : ""}
+                <div><span>Duración</span><strong>${escapeHtml(packageItem.duracion || "A confirmar")}</strong></div>
+                <div><span>Destino</span><strong>${escapeHtml(packageItem.destino)}</strong></div>
+                <div><span>Temporada</span><strong>${escapeHtml(packageItem.temporada)}</strong></div>
+                <div><span>Tipo</span><strong>${escapeHtml(packageItem.tipo)}</strong></div>
+                ${packageItem.salidaGarantizada ? `<div><span>Estado</span><strong class="package-detail-garantizada">Salida garantizada</strong></div>` : ""}
               </div>
             </section>
 
+            <!-- GALERÍA -->
+            ${gallery.length > 1 ? `
+              <section class="package-detail-gallery" aria-label="Galería de ${escapeHtml(packageItem.destino)}">
+                <img class="package-gallery-main" src="${gallery[0]}" alt="${escapeHtml(packageItem.destino)}">
+                <div class="package-gallery-strip">
+                  ${gallery.slice(1).map((image, index) => `
+                    <img src="${image}" alt="${escapeHtml(packageItem.destino)} ${index + 2}">
+                  `).join("")}
+                </div>
+              </section>
+            ` : ""}
+
+            <!-- DESCRIPCIÓN -->
+            <section class="package-detail-summary">
+              <p class="section-kicker">Sobre el viaje</p>
+              <h2>${escapeHtml(packageItem.titulo || packageItem.destino)}</h2>
+              <p>${escapeHtml(packageItem.descripcion)}</p>
+            </section>
+
+            <!-- INCLUYE / NO INCLUYE -->
             <section class="package-detail-content">
               <div>
                 <h2>Qué incluye</h2>
                 <ul>
-                  ${packageItem.incluye.map(item => `<li>${item}</li>`).join("")}
+                  ${packageItem.incluye.map(item => `<li>${escapeHtml(item)}</li>`).join("")}
                 </ul>
               </div>
-              <div>
-                <h2>Qué no incluye</h2>
+              ${packageItem.noIncluye?.length ? `
+                <div>
+                  <h2>Qué no incluye</h2>
+                  <ul>
+                    ${packageItem.noIncluye.map(item => `<li>${escapeHtml(item)}</li>`).join("")}
+                  </ul>
+                </div>
+              ` : ""}
+            </section>
+
+            <!-- ITINERARIO -->
+            ${itinerario.length ? `
+              <section class="package-detail-itinerario">
+                <p class="section-kicker">Programa</p>
+                <h2>Itinerario día por día</h2>
+                <div class="package-itinerario-list">
+                  ${itinerario.map((dia, index) => `
+                    <div class="package-itinerario-item">
+                      <div class="package-itinerario-num">Día ${escapeHtml(String(dia.dia || index + 1))}</div>
+                      <div class="package-itinerario-body">
+                        <strong>${escapeHtml(dia.titulo)}</strong>
+                        ${dia.descripcion ? `<p>${escapeHtml(dia.descripcion)}</p>` : ""}
+                      </div>
+                    </div>
+                  `).join("")}
+                </div>
+              </section>
+            ` : ""}
+
+            <!-- FORMAS DE PAGO -->
+            ${formasPago.length ? `
+              <section class="package-detail-payment">
+                <h2>Formas de pago</h2>
                 <ul>
-                  ${packageItem.noIncluye.map(item => `<li>${item}</li>`).join("")}
+                  ${formasPago.map(item => `<li>${escapeHtml(item)}</li>`).join("")}
                 </ul>
-              </div>
-            </section>
+              </section>
+            ` : ""}
 
-            <section class="package-detail-payment">
-              <h2>Formas de pago</h2>
-              <ul>
-                ${packageItem.formasPago.map(item => `<li>${item}</li>`).join("")}
-              </ul>
-            </section>
+            <!-- CONDICIÓN DE VENTA -->
+            ${packageItem.condicionVenta ? `
+              <section class="package-detail-condicion">
+                <p>${escapeHtml(packageItem.condicionVenta)}</p>
+              </section>
+            ` : ""}
 
+            <!-- CTA FINAL -->
             <section class="turismo-cta package-detail-cta">
-              <h2>¿Querés consultar por este viaje?</h2>
-              <p>Te pasamos disponibilidad, precio actualizado y formas de pago.</p>
+              <h2>¿Querés reservar este viaje?</h2>
+              <p>Consultanos por WhatsApp y te pasamos disponibilidad, precio actualizado y próximas salidas.</p>
               <div class="turismo-hero-actions">
-                <a href="${whatsappHref}" target="_blank" rel="noopener">Consultar</a>
-                <a href="#/turismo">Volver a Turismo</a>
+                <a href="${whatsappHref}" target="_blank" rel="noopener">Consultar por WhatsApp</a>
+                <a href="#/turismo">Ver más viajes</a>
               </div>
             </section>
+
           </div>
         `;
       }
