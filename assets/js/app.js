@@ -2461,6 +2461,8 @@
       let adminPasajerosGrupoId = adminPasajerosGroupId("Secundaria", "Bariloche 2026", "Colegio San Martín", "5to año", "A");
       let adminPasajerosShowForm = false;
       let adminPasajerosFormError = "";
+      let adminPasajerosEditMode = false;
+      let adminPasajerosEditError = "";
       let adminPasajerosSearch = "";
       let adminPasajerosFilterViaje = "";
       let adminPasajerosFilterColegio = "";
@@ -3392,6 +3394,8 @@
             adminPasajerosSelectedDni = button.dataset.adminPasajerosOpenProfile || "";
             adminPasajerosShowForm = false;
             adminPasajerosFormError = "";
+            adminPasajerosEditMode = false;
+            adminPasajerosEditError = "";
             renderAdminPasajeros();
           });
         });
@@ -3428,6 +3432,111 @@
         const installments = passengerInstallments(passenger);
         const paidInstallments = installments.filter((installment) => installment.status === "Pagada").length;
         const pendingInstallments = installments.length - paidInstallments;
+        const isEditing = adminPasajerosEditMode;
+        const editError = adminPasajerosEditError;
+
+        if (isEditing) {
+          const contractOptions = adminContratoOptionsForGroup(group.id);
+          return `
+            <section class="admin-turismo-panel admin-pasajeros-profile" data-admin-pasajeros-profile>
+              <div class="admin-pasajeros-section-head">
+                <div>
+                  <h2>Editando ficha</h2>
+                  <p>${escapeHtml(passenger.nombre)} · DNI ${escapeHtml(passenger.dni || "Pendiente")}</p>
+                </div>
+                <button type="button" class="admin-pasajeros-secondary-button" data-admin-pasajeros-cancel-edit>Cancelar edición</button>
+              </div>
+
+              ${editError ? `<div class="admin-pasajeros-form-error"><strong>Revisar:</strong> ${escapeHtml(editError)}</div>` : ""}
+
+              <form class="admin-pasajeros-form admin-pasajeros-edit-form" data-admin-pasajeros-edit-form novalidate>
+
+                <fieldset>
+                  <legend>Datos del pasajero</legend>
+                  <label>Nombre y apellido <span class="admin-pasajeros-required">*</span>
+                    <input name="nombre" value="${escapeHtml(passenger.nombre)}" required>
+                  </label>
+                  <label>DNI <span class="admin-pasajeros-required">*</span>
+                    <input name="dni" value="${escapeHtml(passenger.dni)}" required>
+                  </label>
+                  <label>Fecha de nacimiento
+                    <input name="nacimiento" type="date" value="${escapeHtml(passenger.nacimiento || "")}">
+                  </label>
+                  <label>Teléfono del pasajero
+                    <input name="telefono" value="${escapeHtml(passenger.telefono || "")}">
+                  </label>
+                </fieldset>
+
+                <fieldset>
+                  <legend>Responsable</legend>
+                  <label>Nombre y apellido <span class="admin-pasajeros-required">*</span>
+                    <input name="responsable" value="${escapeHtml(passenger.responsable || "")}" required>
+                  </label>
+                  <label>DNI del responsable
+                    <input name="responsableDni" value="${escapeHtml(passenger.responsableDni || "")}">
+                  </label>
+                  <label>Teléfono del responsable <span class="admin-pasajeros-required">*</span>
+                    <input name="responsableTelefono" value="${escapeHtml(passenger.responsableTelefono || "")}" required>
+                  </label>
+                  <label>Vínculo
+                    <input name="vinculo" value="${escapeHtml(passenger.vinculo || "")}" placeholder="Madre, padre, tutor">
+                  </label>
+                  <label>CUIL / CUIT del responsable
+                    <input name="responsableCuilCuit" value="${escapeHtml(passenger.responsableCuilCuit || "")}" placeholder="20-12345678-9">
+                  </label>
+                </fieldset>
+
+                <fieldset>
+                  <legend>Contrato</legend>
+                  <label>Contrato asociado <span class="admin-pasajeros-required">*</span>
+                    <select name="contratoId" required>
+                      <option value="">Seleccionar contrato</option>
+                      ${contractOptions.map((c) => `<option value="${escapeHtml(c.id)}" ${c.id === passenger.contratoId ? "selected" : ""}>${escapeHtml(c.codigo_contrato)}</option>`).join("")}
+                    </select>
+                  </label>
+                  ${contractOptions.length === 0 ? `<p class="admin-pasajeros-modal-note">No hay contratos disponibles para este grupo. Creá uno primero en la sección Contratos.</p>` : ""}
+                </fieldset>
+
+                <fieldset>
+                  <legend>Estados</legend>
+                  <label>Estado del pasajero
+                    <select name="estado">
+                      ${["Activo", "Pendiente", "Baja"].map((opt) => `<option ${passenger.estado === opt ? "selected" : ""}>${opt}</option>`).join("")}
+                    </select>
+                  </label>
+                  <label>Documentación
+                    <select name="documentacion">
+                      ${["Pendiente", "Completa", "Rechazada"].map((opt) => `<option ${passenger.documentacion === opt ? "selected" : ""}>${opt}</option>`).join("")}
+                    </select>
+                  </label>
+                  <label>Ficha médica
+                    <select name="fichaMedica">
+                      ${["Pendiente", "Cargada", "Observada"].map((opt) => `<option ${passenger.fichaMedica === opt ? "selected" : ""}>${opt}</option>`).join("")}
+                    </select>
+                  </label>
+                  <label>Estado de pago
+                    <select name="pago">
+                      ${["Pendiente", "Al día", "Vencido"].map((opt) => `<option ${passenger.pago === opt ? "selected" : ""}>${opt}</option>`).join("")}
+                    </select>
+                  </label>
+                </fieldset>
+
+                <fieldset>
+                  <legend>Observaciones internas</legend>
+                  <label style="grid-column: 1 / -1">Observaciones
+                    <textarea name="observaciones" rows="3">${escapeHtml(passenger.observaciones || "")}</textarea>
+                  </label>
+                </fieldset>
+
+                <div class="admin-pasajeros-form-actions">
+                  <button type="submit" class="admin-pasajeros-primary-button">Guardar cambios</button>
+                  <button type="button" class="admin-pasajeros-secondary-button" data-admin-pasajeros-cancel-edit>Cancelar</button>
+                </div>
+              </form>
+            </section>
+          `;
+        }
+
         return `
           <section class="admin-turismo-panel admin-pasajeros-profile" data-admin-pasajeros-profile>
             <div class="admin-pasajeros-section-head">
@@ -3435,7 +3544,10 @@
                 <h2>Ficha individual</h2>
                 <p>${escapeHtml(passenger.nombre)} · DNI ${escapeHtml(passenger.dni || "Pendiente")}</p>
               </div>
-              <button type="button" class="admin-pasajeros-secondary-button" data-admin-pasajeros-close-profile>Cerrar ficha</button>
+              <div class="admin-pasajeros-profile-actions">
+                <button type="button" class="admin-pasajeros-primary-button" data-admin-pasajeros-open-edit>Editar ficha</button>
+                <button type="button" class="admin-pasajeros-secondary-button" data-admin-pasajeros-close-profile>Cerrar ficha</button>
+              </div>
             </div>
 
             <div class="admin-pasajeros-profile-hero">
@@ -3448,6 +3560,7 @@
                 <span class="admin-pasajeros-status ${adminStatusClass(passenger.estado)}">${escapeHtml(passenger.estado || "Pendiente")}</span>
                 <span class="admin-pasajeros-status ${adminStatusClass(payment.estadoPago)}">${escapeHtml(payment.estadoPago || "Pendiente")}</span>
                 <span class="admin-pasajeros-status ${adminStatusClass(passenger.documentacion)}">${escapeHtml(passenger.documentacion || "Pendiente")}</span>
+                <span class="admin-pasajeros-status ${adminStatusClass(passenger.fichaMedica)}">${escapeHtml(passenger.fichaMedica || "Pendiente")} (médica)</span>
               </div>
             </div>
 
@@ -3465,8 +3578,9 @@
                 <span>Responsable</span>
                 <strong>${escapeHtml(passenger.responsable || "Pendiente")}</strong>
                 <dl>
-                  <div><dt>Vínculo</dt><dd>${escapeHtml(passenger.vinculo || "Responsable")}</dd></div>
-                  <div><dt>DNI / CUIL</dt><dd>${escapeHtml(passenger.responsableDni || passenger.responsableCuilCuit || "Pendiente")}</dd></div>
+                  <div><dt>Vínculo</dt><dd>${escapeHtml(passenger.vinculo || "Pendiente")}</dd></div>
+                  <div><dt>DNI</dt><dd>${escapeHtml(passenger.responsableDni || "Pendiente")}</dd></div>
+                  <div><dt>CUIL / CUIT</dt><dd>${escapeHtml(passenger.responsableCuilCuit || "Pendiente")}</dd></div>
                   <div><dt>Teléfono</dt><dd>${escapeHtml(passenger.responsableTelefono || "Pendiente")}</dd></div>
                 </dl>
               </article>
@@ -3715,144 +3829,130 @@
         const manualContractOptions = selectedGroup ? adminContratoOptionsForGroup(selectedGroup.id) : [];
         const formHtml = adminPasajerosShowForm ? `
           <section class="admin-turismo-panel admin-pasajeros-form-panel">
-            <div>
-              <h2>Cargar pasajero</h2>
-              <p>Contexto: <strong>${escapeHtml(contextLabel)}</strong></p>
+            <div class="admin-pasajeros-section-head">
+              <div>
+                <h2>Cargar pasajero</h2>
+                <p>Completá todos los campos obligatorios <span class="admin-pasajeros-required">*</span> para guardar el pasajero.</p>
+              </div>
+              <button type="button" class="admin-pasajeros-secondary-button" data-admin-pasajeros-cancel>Cancelar</button>
             </div>
-            ${adminPasajerosFormError ? `<div class="admin-pasajeros-form-error"><strong>Revisar carga:</strong> ${escapeHtml(adminPasajerosFormError)}</div>` : ""}
+
+            <div class="admin-pasajeros-form-context-banner">
+              <div>
+                <span>Nivel</span>
+                <strong>${escapeHtml(adminPasajerosNivel || "Sin seleccionar")}</strong>
+              </div>
+              <div>
+                <span>Viaje</span>
+                <strong>${escapeHtml(adminPasajerosViaje || "Sin seleccionar")}</strong>
+              </div>
+              <div>
+                <span>Colegio</span>
+                <strong>${escapeHtml(adminPasajerosColegio || "Sin seleccionar")}</strong>
+              </div>
+              <div>
+                <span>Curso / División</span>
+                <strong>${escapeHtml(selectedGroup ? `${selectedGroup.curso} ${selectedGroup.division}` : "Sin seleccionar")}</strong>
+              </div>
+              <div>
+                <span>Contrato disponible</span>
+                <strong>${escapeHtml(manualContractOptions.length ? manualContractOptions[0].codigo_contrato : "Sin contrato")}</strong>
+              </div>
+            </div>
+
+            ${!selectedGroup ? `<div class="admin-pasajeros-form-error">Seleccioná un grupo (nivel, viaje, colegio y curso/división) antes de cargar un pasajero.</div>` : ""}
+            ${manualContractOptions.length === 0 && selectedGroup ? `<div class="admin-pasajeros-form-warning">Este grupo no tiene contratos asignados. El pasajero quedará sin contrato hasta que se cree uno en la sección Contratos.</div>` : ""}
+            ${adminPasajerosFormError ? `<div class="admin-pasajeros-form-error"><strong>Revisar:</strong> ${escapeHtml(adminPasajerosFormError)}</div>` : ""}
+
             <form class="admin-pasajeros-form" data-admin-pasajeros-form novalidate>
-              <fieldset class="admin-pasajeros-context-fieldset">
-                <legend>Contexto de carga</legend>
-                <div class="admin-pasajeros-context admin-pasajeros-context--compact">
-                  <div class="admin-pasajeros-context-block">
-                    <h3>Nivel</h3>
-                    <div class="admin-pasajeros-selector-list">
-                      <button type="button" class="${adminPasajerosNivel === "Primaria" ? "is-active" : ""}" data-admin-pasajeros-nivel="Primaria">Primaria</button>
-                      <button type="button" class="${adminPasajerosNivel === "Secundaria" ? "is-active" : ""}" data-admin-pasajeros-nivel="Secundaria">Secundaria</button>
-                    </div>
-                  </div>
-
-                  <div class="admin-pasajeros-context-block">
-                    <h3>Viaje</h3>
-                    <ul class="admin-pasajeros-selector-list">
-                      ${viajes.map((viaje) => `
-                        <li><button type="button" class="${viaje === adminPasajerosViaje ? "is-active" : ""}" data-admin-pasajeros-viaje="${escapeHtml(viaje)}">${escapeHtml(viaje)}</button></li>
-                      `).join("")}
-                    </ul>
-                  </div>
-
-                  <div class="admin-pasajeros-context-block">
-                    <div class="admin-pasajeros-section-head">
-                      <h3>Colegio</h3>
-                      <button type="button" class="admin-pasajeros-secondary-button" data-admin-pasajeros-new-colegio>Nuevo colegio</button>
-                    </div>
-                    <ul class="admin-pasajeros-selector-list">
-                      ${colegios.map((colegio) => `
-                        <li><button type="button" class="${colegio === adminPasajerosColegio ? "is-active" : ""}" data-admin-pasajeros-colegio="${escapeHtml(colegio)}">${escapeHtml(colegio)}</button></li>
-                      `).join("")}
-                    </ul>
-                  </div>
-
-                  <div class="admin-pasajeros-context-block">
-                    <div class="admin-pasajeros-section-head">
-                      <h3>Curso / División</h3>
-                      <div class="admin-pasajeros-inline-actions">
-                        <button type="button" class="admin-pasajeros-secondary-button" data-admin-pasajeros-new-curso>Nuevo curso</button>
-                        <button type="button" class="admin-pasajeros-secondary-button" data-admin-pasajeros-new-division>Nueva división</button>
-                      </div>
-                    </div>
-                    <ul class="admin-pasajeros-selector-list">
-                      ${colegioGroups.map((group) => `
-                        <li><button type="button" class="${group.id === adminPasajerosGrupoId ? "is-active" : ""}" data-admin-pasajeros-grupo="${escapeHtml(group.id)}">${escapeHtml(group.curso)} ${escapeHtml(group.division)}</button></li>
-                      `).join("")}
-                    </ul>
-                  </div>
-                </div>
-                <div class="admin-pasajeros-breadcrumb">
-                  <span>Total pasajeros: ${contextPassengers.length}</span>
-                  <span>Al día: ${contextPaymentSummary.alDia}</span>
-                  <span>Pago pendiente: ${contextPaymentSummary.pagoPendiente}</span>
-                  <span>Documentación pendiente: ${contextPaymentSummary.documentacionPendiente}</span>
-                </div>
-              </fieldset>
 
               <fieldset>
                 <legend>Datos del pasajero</legend>
-                <label>Nombre y apellido
-                  <input name="nombre" required>
+                <label>Nombre y apellido <span class="admin-pasajeros-required">*</span>
+                  <input name="nombre" placeholder="Ej: Juan Pérez" autocomplete="off" required>
                 </label>
-                <label>DNI
-                  <input name="dni" required>
+                <label>DNI <span class="admin-pasajeros-required">*</span>
+                  <input name="dni" placeholder="Ej: 44123456" autocomplete="off" required>
                 </label>
                 <label>Fecha de nacimiento
                   <input name="nacimiento" type="date">
                 </label>
-                <label>Teléfono
-                  <input name="telefono">
+                <label>Teléfono del pasajero
+                  <input name="telefono" placeholder="Ej: 3794123456">
                 </label>
               </fieldset>
 
               <fieldset>
-                <legend>Contrato</legend>
-                <label>Contrato asociado
-                  <select name="contratoId" required>
-                    <option value="">Seleccionar contrato</option>
-                    ${manualContractOptions.map((contract) => `<option value="${escapeHtml(contract.id)}">${escapeHtml(contract.codigo_contrato)}</option>`).join("")}
-                  </select>
-                </label>
-                <p class="admin-pasajeros-modal-note">No se puede crear un pasajero operativo sin contrato validado.</p>
-              </fieldset>
-
-              <fieldset>
-                <legend>Responsable</legend>
-                <label>Nombre y apellido
-                  <input name="responsable" required>
-                </label>
-                <label>DNI
-                  <input name="responsableDni">
-                </label>
-                <label>Teléfono
-                  <input name="responsableTelefono" required>
+                <legend>Responsable / Tutor</legend>
+                <label>Nombre y apellido <span class="admin-pasajeros-required">*</span>
+                  <input name="responsable" placeholder="Ej: María Gómez" autocomplete="off" required>
                 </label>
                 <label>Vínculo
                   <input name="vinculo" placeholder="Madre, padre, tutor">
                 </label>
+                <label>DNI del responsable
+                  <input name="responsableDni" placeholder="Ej: 29123456">
+                </label>
+                <label>CUIL / CUIT del responsable
+                  <input name="responsableCuilCuit" placeholder="20-29123456-3">
+                </label>
+                <label>Teléfono del responsable <span class="admin-pasajeros-required">*</span>
+                  <input name="responsableTelefono" placeholder="Ej: 3794654321" required>
+                </label>
               </fieldset>
 
               <fieldset>
-                <legend>Estados</legend>
+                <legend>Contrato asociado</legend>
+                <label>Contrato <span class="admin-pasajeros-required">*</span>
+                  <select name="contratoId" required>
+                    <option value="">Seleccionar contrato</option>
+                    ${manualContractOptions.map((c) => `<option value="${escapeHtml(c.id)}">${escapeHtml(c.codigo_contrato)}</option>`).join("")}
+                  </select>
+                </label>
+                <p class="admin-pasajeros-modal-note">Un pasajero sin contrato no puede generar pagos ni documentación. Si no aparece el contrato, crealo primero en la sección Contratos.</p>
+              </fieldset>
+
+              <fieldset>
+                <legend>Estados iniciales</legend>
                 <label>Estado del pasajero
                   <select name="estado">
-                    <option>Activo</option>
-                    <option>Pendiente</option>
-                    <option>Baja</option>
+                    <option value="Activo">Activo</option>
+                    <option value="Pendiente">Pendiente</option>
+                    <option value="Baja">Baja</option>
+                  </select>
+                </label>
+                <label>Documentación
+                  <select name="documentacion">
+                    <option value="Pendiente">Pendiente</option>
+                    <option value="Completa">Completa</option>
+                    <option value="Rechazada">Rechazada</option>
+                  </select>
+                </label>
+                <label>Ficha médica
+                  <select name="fichaMedica">
+                    <option value="Pendiente">Pendiente</option>
+                    <option value="Cargada">Cargada</option>
+                    <option value="Observada">Observada</option>
                   </select>
                 </label>
                 <label>Estado de pago
                   <select name="pago">
-                    <option>Pendiente</option>
-                    <option>Al día</option>
-                    <option>Vencido</option>
-                  </select>
-                </label>
-                <label>Estado de documentación
-                  <select name="documentacion">
-                    <option>Pendiente</option>
-                    <option>Completa</option>
-                    <option>Rechazada</option>
+                    <option value="Pendiente">Pendiente</option>
+                    <option value="Al día">Al día</option>
+                    <option value="Vencido">Vencido</option>
                   </select>
                 </label>
               </fieldset>
 
               <fieldset>
-                <legend>Observaciones</legend>
-                <label>Observaciones internas
-                  <textarea name="observaciones" rows="3"></textarea>
+                <legend>Observaciones internas</legend>
+                <label style="grid-column: 1 / -1">Observaciones
+                  <textarea name="observaciones" rows="3" placeholder="Notas internas sobre este pasajero..."></textarea>
                 </label>
               </fieldset>
 
               <div class="admin-pasajeros-form-actions">
-                <button type="submit" class="admin-pasajeros-primary-button">Guardar pasajero</button>
+                <button type="submit" class="admin-pasajeros-primary-button" ${!selectedGroup ? "disabled" : ""}>Guardar pasajero</button>
                 <button type="button" class="admin-pasajeros-secondary-button" data-admin-pasajeros-cancel>Cancelar</button>
               </div>
             </form>
@@ -4660,6 +4760,64 @@
         bindAdminPasajerosProfileButtons();
         document.querySelector("[data-admin-pasajeros-close-profile]")?.addEventListener("click", () => {
           adminPasajerosSelectedDni = "";
+          adminPasajerosEditMode = false;
+          adminPasajerosEditError = "";
+          renderAdminPasajeros();
+        });
+        document.querySelector("[data-admin-pasajeros-open-edit]")?.addEventListener("click", () => {
+          adminPasajerosEditMode = true;
+          adminPasajerosEditError = "";
+          renderAdminPasajeros();
+        });
+        document.querySelector("[data-admin-pasajeros-cancel-edit]")?.addEventListener("click", () => {
+          adminPasajerosEditMode = false;
+          adminPasajerosEditError = "";
+          renderAdminPasajeros();
+        });
+        document.querySelector("[data-admin-pasajeros-edit-form]")?.addEventListener("submit", (event) => {
+          event.preventDefault();
+          const record = adminPasajerosSelectedRecord();
+          if (!record) return;
+          const { group, passenger } = record;
+          const formData = new FormData(event.currentTarget);
+          const nombre = String(formData.get("nombre") || "").trim();
+          const dni = String(formData.get("dni") || "").trim();
+          const responsable = String(formData.get("responsable") || "").trim();
+          const responsableTelefono = String(formData.get("responsableTelefono") || "").trim();
+          const contratoId = String(formData.get("contratoId") || "").trim();
+          if (!nombre) { adminPasajerosEditError = "El nombre del pasajero es obligatorio."; renderAdminPasajeros(); return; }
+          if (!dni) { adminPasajerosEditError = "El DNI es obligatorio."; renderAdminPasajeros(); return; }
+          if (!responsable) { adminPasajerosEditError = "El nombre del responsable es obligatorio."; renderAdminPasajeros(); return; }
+          if (!responsableTelefono) { adminPasajerosEditError = "El teléfono del responsable es obligatorio."; renderAdminPasajeros(); return; }
+          if (!contratoId) { adminPasajerosEditError = "Seleccioná un contrato antes de guardar."; renderAdminPasajeros(); return; }
+          const selectedContract = contractById(contratoId, group.id);
+          const targetGroup = adminPasajerosDemo.find((g) => g.id === group.id);
+          if (!targetGroup) return;
+          const passengerIndex = targetGroup.pasajeros.findIndex((p) => String(p.dni) === String(passenger.dni));
+          if (passengerIndex === -1) return;
+          targetGroup.pasajeros[passengerIndex] = {
+            ...targetGroup.pasajeros[passengerIndex],
+            nombre,
+            dni,
+            nacimiento: String(formData.get("nacimiento") || "").trim(),
+            telefono: String(formData.get("telefono") || "").trim(),
+            responsable,
+            responsableDni: String(formData.get("responsableDni") || "").trim(),
+            responsableTelefono,
+            responsableCuilCuit: String(formData.get("responsableCuilCuit") || "").trim(),
+            vinculo: String(formData.get("vinculo") || "").trim(),
+            contratoId: selectedContract?.id || contratoId,
+            codigoContrato: selectedContract?.codigo_contrato || passenger.codigoContrato || "",
+            estado: String(formData.get("estado") || "Activo").trim(),
+            documentacion: String(formData.get("documentacion") || "Pendiente").trim(),
+            fichaMedica: String(formData.get("fichaMedica") || "Pendiente").trim(),
+            pago: String(formData.get("pago") || "Pendiente").trim(),
+            observaciones: String(formData.get("observaciones") || "").trim()
+          };
+          saveAdminPasajerosDemo();
+          adminPasajerosSelectedDni = dni;
+          adminPasajerosEditMode = false;
+          adminPasajerosEditError = "";
           renderAdminPasajeros();
         });
         document.querySelectorAll("[data-admin-pasajeros-nivel]").forEach((button) => {

@@ -3948,8 +3948,84 @@
         justify-content: flex-end;
       }
 
-      .admin-pasajeros-profile-grid {
+      .admin-pasajeros-required {
+        color: #c0392b;
+        font-weight: 900;
+      }
+
+      .admin-pasajeros-form-context-banner {
+        background: #f0f7fc;
+        border: 1px solid #c4dcea;
+        border-radius: 12px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0;
+        overflow: hidden;
+      }
+
+      .admin-pasajeros-form-context-banner > div {
+        border-right: 1px solid #c4dcea;
         display: grid;
+        flex: 1 1 140px;
+        gap: 3px;
+        min-width: 0;
+        padding: 12px 16px;
+      }
+
+      .admin-pasajeros-form-context-banner > div:last-child {
+        border-right: none;
+      }
+
+      .admin-pasajeros-form-context-banner span {
+        color: #4e6a7a;
+        font-size: 0.72rem;
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+
+      .admin-pasajeros-form-context-banner strong {
+        color: #10202b;
+        font-size: 0.92rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .admin-pasajeros-form-warning {
+        background: #fffbea;
+        border: 1px solid #f0d060;
+        border-radius: 12px;
+        color: #6b4c00;
+        font-size: 0.9rem;
+        padding: 12px 14px;
+      }
+
+      .admin-pasajeros-profile-actions {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+      }
+
+      .admin-pasajeros-edit-form {
+        padding-top: 4px;
+      }
+
+      @media (max-width: 700px) {
+        .admin-pasajeros-form-context-banner {
+          flex-direction: column;
+        }
+
+        .admin-pasajeros-form-context-banner > div {
+          border-right: none;
+          border-bottom: 1px solid #c4dcea;
+        }
+
+        .admin-pasajeros-form-context-banner > div:last-child {
+          border-bottom: none;
+        }
+      }
+
+
         gap: 12px;
         grid-template-columns: repeat(3, minmax(0, 1fr));
       }
