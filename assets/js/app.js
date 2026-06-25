@@ -2485,6 +2485,7 @@
       let adminContratosEditError = "";
       let adminFichasMessage = "";
       let adminFichasFilter = "nuevas";
+      let adminFichasSelectedId = "";
 
       function loadFichasAdhesionDemo() {
         return fichaAdhesionCollection.load();
@@ -2649,18 +2650,30 @@
         });
       }
 
-      function updateFichaAdhesionStatus(id, estado) {
+      function updateFichaAdhesionStatus(id, estado, patch = {}) {
         const now = new Date().toISOString();
         const fichas = loadFichasAdhesionDemo().map((ficha) => (
-          ficha.id === id ? { ...ficha, estadoRevision: estado, updatedAt: now } : ficha
+          ficha.id === id ? { ...ficha, ...patch, estadoRevision: estado, updatedAt: now } : ficha
         ));
         adminFichasMessage = estado === "revisada"
           ? "Ficha marcada como revisada. Ahora podés confirmar asignación y aprobarla."
           : estado === "rechazada"
-            ? "Ficha rechazada. Podés volver a revisarla si necesitás corregir el flujo."
+            ? "Ficha rechazada con motivo interno. Podés volver a revisarla si necesitás corregir el flujo."
             : "";
         saveFichasAdhesionDemo(fichas);
         renderAdminFichasRecibidas();
+      }
+
+      function rejectFichaAdhesion(id) {
+        const motivo = window.prompt("Motivo corto del rechazo");
+        if (motivo === null) return;
+        const motivoRechazo = String(motivo || "").trim();
+        if (!motivoRechazo) {
+          adminFichasMessage = "Para rechazar una ficha, cargá un motivo corto.";
+          renderAdminFichasRecibidas();
+          return;
+        }
+        updateFichaAdhesionStatus(id, "rechazada", { motivoRechazo });
       }
 
       function fichaAssignmentContext(ficha = {}) {
@@ -2715,6 +2728,146 @@
         adminFichasMessage = "Asignación actualizada. La ficha queda lista para revisar o aprobar.";
         saveFichasAdhesionDemo(fichas);
         renderAdminFichasRecibidas();
+      }
+
+      function normalizeYesNoStatus(value) {
+        const text = String(value || "").trim().toLowerCase();
+        if (["si", "sí", "cargada", "completa", "aprobada", "ok"].some((token) => text.includes(token))) return "Sí";
+        if (["no", "pendiente", "observada", "rechazada"].some((token) => text.includes(token))) return "No";
+        return "No";
+      }
+
+      function fichaStudentLastName(fullName) {
+        const parts = String(fullName || "").trim().split(/\s+/).filter(Boolean);
+        return parts.length > 1 ? parts.slice(1).join(" ") : "";
+      }
+
+      function fichaStudentFirstName(fullName) {
+        const parts = String(fullName || "").trim().split(/\s+/).filter(Boolean);
+        return parts[0] || "";
+      }
+
+      function renderFichaValue(label, value) {
+        return `
+          <div>
+            <dt>${escapeHtml(label)}</dt>
+            <dd>${escapeHtml(String(value || "").trim() || "Pendiente")}</dd>
+          </div>
+        `;
+      }
+
+      function renderFichaAssignmentControls(ficha) {
+        const context = fichaAssignmentContext(ficha);
+        const levelOptions = uniqueValues(adminPasajerosDemo, "nivel");
+        return `
+          <div class="admin-fichas-assignment-grid">
+            <label>Nivel
+              <select data-ficha-assign="${escapeHtml(ficha.id)}" data-ficha-assign-field="nivel">
+                ${levelOptions.map((nivel) => `<option value="${escapeHtml(nivel)}" ${nivel === context.nivel ? "selected" : ""}>${escapeHtml(nivel)}</option>`).join("")}
+              </select>
+            </label>
+            <label>Viaje
+              <select data-ficha-assign="${escapeHtml(ficha.id)}" data-ficha-assign-field="viaje">
+                ${context.viajeOptions.map((viaje) => `<option value="${escapeHtml(viaje)}" ${viaje === context.viaje ? "selected" : ""}>${escapeHtml(viaje)}</option>`).join("")}
+              </select>
+            </label>
+            <label>Colegio
+              <select data-ficha-assign="${escapeHtml(ficha.id)}" data-ficha-assign-field="colegio">
+                ${context.colegioOptions.map((colegio) => `<option value="${escapeHtml(colegio)}" ${colegio === context.colegio ? "selected" : ""}>${escapeHtml(colegio)}</option>`).join("")}
+              </select>
+            </label>
+            <label>Curso / División
+              <select data-ficha-assign="${escapeHtml(ficha.id)}" data-ficha-assign-field="grupoId">
+                ${context.groupOptions.map((group) => `<option value="${escapeHtml(group.id)}" ${group.id === context.grupoId ? "selected" : ""}>${escapeHtml(group.curso)} ${escapeHtml(group.division)}</option>`).join("")}
+              </select>
+            </label>
+            <label>Contrato
+              <select data-ficha-assign="${escapeHtml(ficha.id)}" data-ficha-assign-field="contratoId">
+                <option value="">Contrato pendiente</option>
+                ${context.contractOptions.map((contract) => `<option value="${escapeHtml(contract.id)}" ${contract.id === context.contratoId ? "selected" : ""}>${escapeHtml(contract.codigo_contrato)}</option>`).join("")}
+              </select>
+            </label>
+          </div>
+        `;
+      }
+
+      function renderFichaActionButtons(ficha) {
+        const estadoRevision = ficha.estadoRevision || "pendiente";
+        return `
+          <div class="admin-fichas-actions">
+            <button type="button" data-ficha-revisar="${escapeHtml(ficha.id)}">Revisar</button>
+            ${estadoRevision === "aprobada" ? "" : `<button type="button" data-ficha-save-assignment="${escapeHtml(ficha.id)}">Asignar grupo y contrato</button>`}
+            ${estadoRevision === "aprobada" ? "" : `<button type="button" data-ficha-aprobar="${escapeHtml(ficha.id)}">Aprobar</button>`}
+            ${estadoRevision === "rechazada" ? "" : `<button type="button" data-ficha-rechazar="${escapeHtml(ficha.id)}">Rechazar</button>`}
+          </div>
+        `;
+      }
+
+      function renderAdminFichaDetail(ficha) {
+        if (!ficha) return "";
+        const context = fichaAssignmentContext(ficha);
+        const group = context.selectedGroup || {};
+        const pasajeroNombre = ficha.pasajeroNombre || "";
+        const responsableNombre = ficha.responsableNombre || "";
+        const fichaMedica = normalizeYesNoStatus(ficha.fichaMedicaEstado || ficha.fichaMedica || ficha.documentacionEstado);
+        const fichaAdhesion = normalizeYesNoStatus(ficha.autorizacionEstado || ficha.firma || ficha.documentacionEstado || "Sí");
+        const estadoRevision = ficha.estadoRevision || "pendiente";
+        const estadoClass = estadoRevision === "aprobada" ? "is-ok" : estadoRevision === "rechazada" ? "is-alert" : "is-pending";
+
+        return `
+          <section class="admin-turismo-panel admin-fichas-detail" data-admin-fichas-detail>
+            <div class="admin-fichas-detail-head">
+              <div>
+                <span class="admin-pasajeros-status ${estadoClass}">${escapeHtml(estadoRevision)}</span>
+                <h2>${escapeHtml(pasajeroNombre || "Ficha sin nombre")}</h2>
+                <p>Preinscripción virtual lista para revisar, asignar y dar de alta oficialmente.</p>
+              </div>
+              <button type="button" class="admin-pasajeros-secondary-button" data-ficha-cerrar>Cerrar ficha</button>
+            </div>
+
+            <div class="admin-fichas-detail-layout">
+              <article class="admin-fichas-detail-card">
+                <h3>Datos del alumno</h3>
+                <dl>
+                  ${renderFichaValue("Nombre", fichaStudentFirstName(pasajeroNombre))}
+                  ${renderFichaValue("Apellido", fichaStudentLastName(pasajeroNombre))}
+                  ${renderFichaValue("DNI", ficha.pasajeroNumeroDocumento || ficha.pasajeroDni)}
+                  ${renderFichaValue("Nacimiento", ficha.pasajeroNacimiento)}
+                  ${renderFichaValue("Colegio", group.colegio || ficha.colegio)}
+                  ${renderFichaValue("Curso", group.curso || ficha.curso)}
+                  ${renderFichaValue("División", group.division || ficha.division)}
+                  ${renderFichaValue("Viaje elegido", group.viaje || ficha.viaje)}
+                </dl>
+              </article>
+
+              <article class="admin-fichas-detail-card">
+                <h3>Datos del responsable</h3>
+                <dl>
+                  ${renderFichaValue("Nombre", fichaStudentFirstName(responsableNombre))}
+                  ${renderFichaValue("Apellido", fichaStudentLastName(responsableNombre))}
+                  ${renderFichaValue("Teléfono", ficha.responsableCelular || ficha.domicilioCelular || ficha.responsableTelefono || ficha.domicilioTelefono)}
+                </dl>
+                <h3>Documentación</h3>
+                <dl class="admin-fichas-doc-grid">
+                  ${renderFichaValue("Ficha médica", fichaMedica)}
+                  ${renderFichaValue("Ficha de adhesión", fichaAdhesion)}
+                </dl>
+                ${ficha.motivoRechazo ? `<p class="admin-fichas-reject-note"><strong>Motivo rechazo:</strong> ${escapeHtml(ficha.motivoRechazo)}</p>` : ""}
+              </article>
+
+              <article class="admin-fichas-detail-card admin-fichas-detail-card--wide">
+                <h3>Asignar grupo y contrato</h3>
+                ${renderFichaAssignmentControls(ficha)}
+                <div class="admin-fichas-assigned-note">
+                  <span>Asignado</span>
+                  <strong>${escapeHtml(context.selectedGroup ? `${context.selectedGroup.colegio} · ${context.selectedGroup.curso} ${context.selectedGroup.division}` : "Pendiente")}</strong>
+                  <strong>${escapeHtml(context.codigoContrato || "Contrato pendiente")}</strong>
+                </div>
+                ${renderFichaActionButtons(ficha)}
+              </article>
+            </div>
+          </section>
+        `;
       }
 
       function approveFichaAdhesionAndCreatePassenger(id) {
@@ -3111,80 +3264,25 @@
       function viewFichaAdhesionDetail(id) {
         const ficha = loadFichasAdhesionDemo().find((item) => item.id === id);
         if (!ficha) return;
-        const pasajeroDocumento = ficha.pasajeroNumeroDocumento || ficha.pasajeroDni || "";
-        const responsableTelefono = ficha.responsableCelular || ficha.domicilioCelular || ficha.responsableTelefono || ficha.domicilioTelefono || "";
-        const numeroContrato = ficha.numeroContrato || ficha.administracion?.contrato || "";
-        window.alert([
-          "Ficha recibida",
-          "",
-          `Pasajero: ${ficha.pasajeroNombre || ""}`,
-          `DNI: ${pasajeroDocumento}`,
-          `Responsable: ${ficha.responsableNombre || ""}`,
-          `Teléfono: ${responsableTelefono}`,
-          `Viaje solicitado: ${ficha.nivel || ""} · ${ficha.viaje || ""}`,
-          `Colegio escrito: ${ficha.colegio || ""}`,
-          `Número de contrato: ${numeroContrato}`,
-          `Curso / división escrito: ${ficha.cursoDivision || ""}`,
-          `Estado: ${ficha.estadoRevision || "pendiente"}`
-        ].join("\n"));
+        adminFichasSelectedId = id;
+        if ((ficha.estadoRevision || "pendiente") === "pendiente") {
+          updateFichaAdhesionStatus(id, "revisada");
+          return;
+        }
+        renderAdminFichasRecibidas();
       }
 
       function fichaAdhesionDemoRows(fichas = loadFichasAdhesionDemo()) {
         if (!fichas.length) {
           return `
             <tr>
-              <td colspan="6">No hay fichas en esta bandeja.</td>
+              <td colspan="5">No hay fichas en esta bandeja.</td>
             </tr>
           `;
         }
-        const renderAssignment = (ficha) => {
-          const context = fichaAssignmentContext(ficha);
-          const levelOptions = uniqueValues(adminPasajerosDemo, "nivel");
-          return `
-            <div class="admin-pasajeros-assignment">
-              <label>Nivel
-                <select data-ficha-assign="${escapeHtml(ficha.id)}" data-ficha-assign-field="nivel">
-                  ${levelOptions.map((nivel) => `<option value="${escapeHtml(nivel)}" ${nivel === context.nivel ? "selected" : ""}>${escapeHtml(nivel)}</option>`).join("")}
-                </select>
-              </label>
-              <label>Viaje
-                <select data-ficha-assign="${escapeHtml(ficha.id)}" data-ficha-assign-field="viaje">
-                  ${context.viajeOptions.map((viaje) => `<option value="${escapeHtml(viaje)}" ${viaje === context.viaje ? "selected" : ""}>${escapeHtml(viaje)}</option>`).join("")}
-                </select>
-              </label>
-              <label>Colegio
-                <select data-ficha-assign="${escapeHtml(ficha.id)}" data-ficha-assign-field="colegio">
-                  ${context.colegioOptions.map((colegio) => `<option value="${escapeHtml(colegio)}" ${colegio === context.colegio ? "selected" : ""}>${escapeHtml(colegio)}</option>`).join("")}
-                </select>
-              </label>
-              <label>Curso / División
-                <select data-ficha-assign="${escapeHtml(ficha.id)}" data-ficha-assign-field="grupoId">
-                  ${context.groupOptions.map((group) => `<option value="${escapeHtml(group.id)}" ${group.id === context.grupoId ? "selected" : ""}>${escapeHtml(group.curso)} ${escapeHtml(group.division)}</option>`).join("")}
-                </select>
-              </label>
-              <label>Contrato
-                <select data-ficha-assign="${escapeHtml(ficha.id)}" data-ficha-assign-field="contratoId">
-                  <option value="">Contrato pendiente</option>
-                  ${context.contractOptions.map((contract) => `<option value="${escapeHtml(contract.id)}" ${contract.id === context.contratoId ? "selected" : ""}>${escapeHtml(contract.codigo_contrato)}</option>`).join("")}
-                </select>
-              </label>
-              <div class="admin-pasajeros-inline-actions">
-                <button type="button" data-ficha-save-assignment="${escapeHtml(ficha.id)}">Guardar asignación</button>
-              </div>
-            </div>
-          `;
-        };
         return fichas.map((ficha) => {
           const estadoRevision = ficha.estadoRevision || "pendiente";
           const estadoClass = estadoRevision === "aprobada" ? "is-ok" : estadoRevision === "rechazada" ? "is-alert" : "is-pending";
-          const stepClass = estadoRevision === "aprobada" ? "is-complete" : estadoRevision === "rechazada" ? "is-alert" : estadoRevision === "revisada" ? "is-current" : "is-pending";
-          const stepLabel = estadoRevision === "aprobada"
-            ? "Creación automática"
-            : estadoRevision === "revisada"
-              ? "Asignación y aprobación"
-              : estadoRevision === "rechazada"
-                ? "Revisión detenida"
-                : "Ficha recibida";
           const pasajeroDocumento = ficha.pasajeroNumeroDocumento || ficha.pasajeroDni || "";
           const responsableTelefono = ficha.responsableCelular || ficha.domicilioCelular || ficha.responsableTelefono || ficha.domicilioTelefono || "";
           const numeroContrato = ficha.numeroContrato || ficha.administracion?.contrato || "";
@@ -3195,17 +3293,8 @@
           const assignedContractLabel = context.contratoId
             ? context.codigoContrato
             : "Contrato pendiente";
-          const actions = [
-            `<button type="button" data-ficha-ver="${escapeHtml(ficha.id)}">Ver ficha</button>`,
-            estadoRevision !== "aprobada" ? `<button type="button" data-ficha-save-assignment="${escapeHtml(ficha.id)}">Asignar grupo</button>` : "",
-            estadoRevision === "pendiente" ? `<button type="button" data-ficha-revisar="${escapeHtml(ficha.id)}">Revisar</button>` : "",
-            estadoRevision === "pendiente" ? `<button type="button" data-ficha-rechazar="${escapeHtml(ficha.id)}">Rechazar</button>` : "",
-            estadoRevision === "revisada" ? `<button type="button" data-ficha-aprobar="${escapeHtml(ficha.id)}">Aprobar</button>` : "",
-            estadoRevision === "revisada" ? `<button type="button" data-ficha-rechazar="${escapeHtml(ficha.id)}">Rechazar</button>` : "",
-            estadoRevision === "rechazada" ? `<button type="button" data-ficha-revisar="${escapeHtml(ficha.id)}">Revisar</button>` : ""
-          ].filter(Boolean).join("");
           return `
-          <tr>
+          <tr class="${ficha.id === adminFichasSelectedId ? "is-selected" : ""}">
             <td class="admin-fichas-main-cell">
               <strong>${escapeHtml(ficha.pasajeroNombre)}</strong>
               <span>DNI ${escapeHtml(pasajeroDocumento || "Pendiente")}</span>
@@ -3216,29 +3305,18 @@
               <span>${escapeHtml(responsableTelefono || "Teléfono pendiente")}</span>
             </td>
             <td>
-              <div class="admin-fichas-flow ${stepClass}">
-                <span>${escapeHtml(stepLabel)}</span>
-                <ol>
-                  <li class="${["pendiente", "revisada", "aprobada"].includes(estadoRevision) ? "is-done" : ""}">Recibida</li>
-                  <li class="${["revisada", "aprobada"].includes(estadoRevision) ? "is-done" : estadoRevision === "pendiente" ? "is-current" : ""}">Revisión</li>
-                  <li class="${estadoRevision === "revisada" || estadoRevision === "aprobada" ? "is-done" : ""}">Asignación</li>
-                  <li class="${estadoRevision === "aprobada" ? "is-done" : estadoRevision === "revisada" ? "is-current" : ""}">Aprobación</li>
-                </ol>
-              </div>
-            </td>
-            <td>
               <div class="admin-fichas-request">
                 <span>Solicitado: ${escapeHtml(ficha.nivel || "Pendiente")} · ${escapeHtml(ficha.viaje || "Pendiente")}</span>
                 <span>${escapeHtml(ficha.colegio || "Colegio pendiente")} · ${escapeHtml(ficha.cursoDivision || "Curso pendiente")}</span>
                 <strong>Asignado: ${escapeHtml(assignedLabel)}</strong>
                 <strong>Contrato: ${escapeHtml(assignedContractLabel)}</strong>
               </div>
-              ${estadoRevision === "aprobada" ? "" : renderAssignment(ficha)}
             </td>
             <td><span class="admin-pasajeros-status ${estadoClass}">${escapeHtml(estadoRevision)}</span></td>
             <td>
-              <div class="admin-pasajeros-row-actions">
-                ${actions}
+              <div class="admin-pasajeros-row-actions admin-fichas-row-actions">
+                <button type="button" data-ficha-ver="${escapeHtml(ficha.id)}">Revisar</button>
+                <button type="button" data-ficha-select="${escapeHtml(ficha.id)}">Abrir</button>
               </div>
             </td>
           </tr>
@@ -3727,6 +3805,8 @@
         };
         const activeFilter = filterMap[adminFichasFilter] ? adminFichasFilter : "nuevas";
         const visibleFichas = fichas.filter((ficha) => filterMap[activeFilter].states.includes(ficha.estadoRevision || "pendiente"));
+        const selectedFicha = fichas.find((ficha) => ficha.id === adminFichasSelectedId) || visibleFichas[0] || null;
+        adminFichasSelectedId = selectedFicha?.id || "";
         document.getElementById("app").innerHTML = renderAdminShell("fichas", `
           <section class="admin-turismo-panel">
             <h1>Inscripciones</h1>
@@ -3764,13 +3844,13 @@
                 `;
               }).join("")}
             </div>
+            ${renderAdminFichaDetail(selectedFicha)}
             <div class="admin-pasajeros-table-wrap">
               <table class="admin-pasajeros-table admin-fichas-table">
                 <thead>
                   <tr>
                     <th>Pasajero</th>
                     <th>Responsable</th>
-                    <th>Flujo</th>
                     <th>Asignación</th>
                     <th>Estado</th>
                     <th>Acciones</th>
@@ -4860,14 +4940,26 @@
         document.querySelectorAll("[data-ficha-ver]").forEach((button) => {
           button.addEventListener("click", () => viewFichaAdhesionDetail(button.dataset.fichaVer));
         });
+        document.querySelectorAll("[data-ficha-select]").forEach((button) => {
+          button.addEventListener("click", () => {
+            adminFichasSelectedId = button.dataset.fichaSelect;
+            renderAdminFichasRecibidas();
+          });
+        });
+        document.querySelectorAll("[data-ficha-cerrar]").forEach((button) => {
+          button.addEventListener("click", () => {
+            adminFichasSelectedId = "";
+            renderAdminFichasRecibidas();
+          });
+        });
         document.querySelectorAll("[data-ficha-aprobar]").forEach((button) => {
           button.addEventListener("click", () => approveFichaAdhesionAndCreatePassenger(button.dataset.fichaAprobar));
         });
         document.querySelectorAll("[data-ficha-rechazar]").forEach((button) => {
-          button.addEventListener("click", () => updateFichaAdhesionStatus(button.dataset.fichaRechazar, "rechazada"));
+          button.addEventListener("click", () => rejectFichaAdhesion(button.dataset.fichaRechazar));
         });
         document.querySelectorAll("[data-ficha-revisar]").forEach((button) => {
-          button.addEventListener("click", () => updateFichaAdhesionStatus(button.dataset.fichaRevisar, "revisada"));
+          button.addEventListener("click", () => viewFichaAdhesionDetail(button.dataset.fichaRevisar));
         });
         document.querySelectorAll("[data-ficha-assign]").forEach((field) => {
           field.addEventListener("change", () => {
