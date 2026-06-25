@@ -5862,62 +5862,96 @@
         resize: vertical;
       }
 
-      .admin-turismo-check {
-        align-items: center;
-        background: #fbfdfe;
-        border: 1px solid #dfe9ee;
-        border-radius: 12px;
-        display: flex;
-        flex-direction: row;
-        gap: 12px;
-        min-width: 0;
-        padding: 14px;
-      }
-
-      .admin-turismo-check--featured {
-        align-items: start;
-        min-height: 100%;
-      }
-
-      .admin-turismo-check span {
-        display: grid;
-        gap: 5px;
-        line-height: 1.35;
-        min-width: 0;
-        overflow-wrap: anywhere;
-      }
-
-      .admin-turismo-check input {
-        flex: 0 0 auto;
-        margin-top: 2px;
-        width: auto;
-      }
-
+      /* --- Categorías: estilo minimalista --- */
       .admin-turismo-category-field {
         border: 0;
         display: grid;
-        gap: 16px;
+        gap: 10px;
         margin: 0;
         padding: 0;
       }
 
       .admin-turismo-category-field legend {
         color: #10202b;
-        font-size: 0.92rem;
+        font-size: 0.88rem;
         font-weight: 900;
-        line-height: 1.3;
-        overflow-wrap: anywhere;
         padding: 0 0 2px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
       }
 
       .admin-turismo-category-grid {
-        display: grid;
-        gap: 12px;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
       }
 
-      .admin-turismo-category-grid .admin-turismo-check {
-        padding: 12px;
+      .admin-turismo-check {
+        align-items: center;
+        background: #f4f8fb;
+        border: 1px solid #d0dde5;
+        border-radius: 8px;
+        cursor: pointer;
+        display: flex;
+        flex-direction: row;
+        gap: 7px;
+        min-width: 0;
+        padding: 7px 12px;
+        transition: background 0.12s, border-color 0.12s;
+      }
+
+      .admin-turismo-check:has(input:checked) {
+        background: #e5f1f9;
+        border-color: #0d69a1;
+      }
+
+      .admin-turismo-check span {
+        color: #10202b;
+        font-size: 0.85rem;
+        font-weight: 700;
+        line-height: 1.3;
+        min-width: 0;
+      }
+
+      .admin-turismo-check input[type="checkbox"] {
+        accent-color: #0d69a1;
+        flex: 0 0 auto;
+        height: 15px;
+        margin: 0;
+        width: 15px;
+      }
+
+      /* --- Destacado: estilo separado más claro --- */
+      .admin-turismo-check--featured {
+        align-items: center;
+        background: #fffbea;
+        border: 1px solid #f0d060;
+        border-radius: 10px;
+        display: flex;
+        flex-direction: row;
+        gap: 10px;
+        padding: 12px 14px;
+        width: fit-content;
+      }
+
+      .admin-turismo-check--featured:has(input:checked) {
+        background: #fff8d6;
+        border-color: #c9a800;
+      }
+
+      .admin-turismo-check--featured span {
+        display: grid;
+        gap: 2px;
+      }
+
+      .admin-turismo-check--featured strong {
+        color: #10202b;
+        font-size: 0.9rem;
+      }
+
+      .admin-turismo-check--featured small {
+        color: #6b5500;
+        font-size: 0.78rem;
       }
 
       .admin-turismo-validation {
