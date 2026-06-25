@@ -1386,7 +1386,7 @@
         },
         {
           id: "grupos",
-          label: "Grupos y contratos",
+          label: "Contratos",
           path: "/admin/grupos",
           status: "Contratos"
         },
@@ -4541,7 +4541,7 @@
         document.getElementById("app").innerHTML = renderAdminShell("grupos", `
           <section class="admin-turismo-panel admin-overview">
             <p>Base operativa</p>
-            <h2>Grupos / colegios</h2>
+            <h2>Contratos</h2>
             <div class="admin-pasajeros-breadcrumb">
               <span>Grupos: ${groups.length}</span>
               <span>Colegios únicos: ${uniqueSchools}</span>
