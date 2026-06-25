@@ -618,6 +618,7 @@
 
       let adminTurismoTrips = loadAdminTurismoTrips();
       let adminTurismoEditingId = adminTurismoTrips[0]?.id || null;
+      let adminTurismoEditorOpen = false;
 
       function escapeHtml(value = "") {
         return String(value)
@@ -1378,22 +1379,16 @@
 
       const adminModules = [
         {
-          id: "turismo",
-          label: "Turismo",
-          path: "/admin/turismo",
-          status: "Funcional"
-        },
-        {
           id: "fichas",
-          label: "Fichas recibidas",
+          label: "Inscripciones",
           path: "/admin/fichas",
           status: "Bandeja"
         },
         {
           id: "grupos",
-          label: "Grupos / colegios",
+          label: "Grupos y contratos",
           path: "/admin/grupos",
-          status: "Validación"
+          status: "Contratos"
         },
         {
           id: "pasajeros",
@@ -1402,27 +1397,33 @@
           status: "Operativo"
         },
         {
-          id: "contratos",
-          label: "Contratos",
-          path: "/admin/contratos",
-          status: "Validación"
+          id: "pagos",
+          label: "Pagos",
+          path: "/admin/pagos",
+          status: "Cuotas"
         },
         {
-          id: "pagos",
-          label: "Pagos y cuotas",
-          path: "/admin/pagos",
-          status: "En preparación"
+          id: "turismo",
+          label: "Turismo web",
+          path: "/admin/turismo",
+          status: "Publicación"
         },
         {
           id: "configuracion",
           label: "Configuración",
           path: "/admin/configuracion",
-          status: "En preparación"
+          status: "Admin",
+          adminOnly: true
         }
       ];
 
       function adminModuleLabel(moduleId) {
         return adminModules.find((module) => module.id === moduleId)?.label || "Panel interno";
+      }
+
+      function adminVisibleModules() {
+        const role = String(adminSession?.role || "admin").toLowerCase();
+        return adminModules.filter((module) => !module.adminOnly || role === "admin");
       }
 
       let adminSession = null;
@@ -1546,7 +1547,7 @@
             <div class="admin-shell">
               <aside class="admin-sidebar" aria-label="Navegación interna">
                 <nav>
-                  ${adminModules.map((module) => `
+                  ${adminVisibleModules().map((module) => `
                     <a class="${module.id === moduleId ? "active" : ""}" href="${adminRouteHref(module.path)}">
                       <span>${module.label}</span>
                       <small>${module.status}</small>
@@ -1589,17 +1590,56 @@
       }
 
       function renderAdminHome() {
-        const cards = adminModules.map((module) => `
-          <a class="admin-module-card${module.id === "turismo" ? " active" : ""}" href="${adminRouteHref(module.path)}">
-            <strong>${module.label}</strong>
-            <span>${module.status}</span>
-          </a>
-        `).join("");
+        const fichas = loadFichasAdhesionDemo();
+        const passengerRows = adminPasajerosRows();
+        const paymentRows = passengerRows.map(({ passenger }) => passengerPaymentData(passenger));
+        const fichasNuevas = fichas.filter((ficha) => (ficha.estadoRevision || "pendiente") === "pendiente").length;
+        const pasajerosActivos = passengerRows.filter(({ passenger }) => String(passenger.estado || "").toLowerCase().includes("activo")).length;
+        const pagosPendientes = paymentRows.filter((payment) => payment.estadoPago !== "Al día").length;
+        const gruposActivos = adminPasajerosDemo.filter((group) => {
+          const estado = String(group.estado || "Activo").toLowerCase();
+          return estado.includes("activo") && !estado.includes("inactivo");
+        }).length;
         document.getElementById("app").innerHTML = renderAdminShell("home", `
-          <section class="admin-turismo-panel admin-overview">
-            <p>Vista general</p>
-            <h2>Módulos internos</h2>
-            <div class="admin-module-grid">${cards}</div>
+          <section class="admin-turismo-panel admin-overview admin-dashboard-home">
+            <div class="admin-dashboard-head">
+              <div>
+                <p>Vista general</p>
+                <h1>Tablero operativo</h1>
+                <span>Entrada rápida para revisar inscripciones, pasajeros, pagos y grupos activos.</span>
+              </div>
+              <a class="admin-secondary-action" href="${adminRouteHref("/admin/fichas")}">Ver inscripciones</a>
+            </div>
+            <div class="admin-dashboard-grid">
+              <a class="admin-dashboard-card is-attention" href="${adminRouteHref("/admin/fichas")}">
+                <span>Fichas nuevas pendientes</span>
+                <strong>${fichasNuevas}</strong>
+                <small>Inscripciones por revisar</small>
+              </a>
+              <a class="admin-dashboard-card" href="${adminRouteHref("/admin/pasajeros")}">
+                <span>Pasajeros activos</span>
+                <strong>${pasajerosActivos}</strong>
+                <small>Personas cargadas como activas</small>
+              </a>
+              <a class="admin-dashboard-card is-warning" href="${adminRouteHref("/admin/pagos")}">
+                <span>Pagos pendientes</span>
+                <strong>${pagosPendientes}</strong>
+                <small>Pasajeros no marcados al día</small>
+              </a>
+              <a class="admin-dashboard-card" href="${adminRouteHref("/admin/grupos")}">
+                <span>Grupos activos</span>
+                <strong>${gruposActivos}</strong>
+                <small>Colegios/cursos operativos</small>
+              </a>
+            </div>
+            <div class="admin-next-actions">
+              <h2>Próximos pasos</h2>
+              <div>
+                <a href="${adminRouteHref("/admin/fichas")}">Revisar nuevas fichas</a>
+                <a href="${adminRouteHref("/admin/pasajeros")}">Buscar o cargar pasajero</a>
+                <a href="${adminRouteHref("/admin/grupos")}">Validar grupos y contratos</a>
+              </div>
+            </div>
           </section>
         `);
         bindAdminShell();
@@ -2375,6 +2415,7 @@
       let adminContratosEditId = "";
       let adminContratosEditError = "";
       let adminFichasMessage = "";
+      let adminFichasFilter = "nuevas";
 
       function loadFichasAdhesionDemo() {
         return fichaAdhesionCollection.load();
@@ -3005,12 +3046,11 @@
         ].join("\n"));
       }
 
-      function fichaAdhesionDemoRows() {
-        const fichas = loadFichasAdhesionDemo();
+      function fichaAdhesionDemoRows(fichas = loadFichasAdhesionDemo()) {
         if (!fichas.length) {
           return `
             <tr>
-              <td colspan="5">Todavía no hay fichas enviadas desde la web pública.</td>
+              <td colspan="6">No hay fichas en esta bandeja.</td>
             </tr>
           `;
         }
@@ -3074,9 +3114,10 @@
             : "Contrato pendiente";
           const actions = [
             `<button type="button" data-ficha-ver="${escapeHtml(ficha.id)}">Ver ficha</button>`,
+            estadoRevision !== "aprobada" ? `<button type="button" data-ficha-save-assignment="${escapeHtml(ficha.id)}">Asignar grupo</button>` : "",
             estadoRevision === "pendiente" ? `<button type="button" data-ficha-revisar="${escapeHtml(ficha.id)}">Revisar</button>` : "",
             estadoRevision === "pendiente" ? `<button type="button" data-ficha-rechazar="${escapeHtml(ficha.id)}">Rechazar</button>` : "",
-            estadoRevision === "revisada" ? `<button type="button" data-ficha-aprobar="${escapeHtml(ficha.id)}">Aprobar y crear pasajero</button>` : "",
+            estadoRevision === "revisada" ? `<button type="button" data-ficha-aprobar="${escapeHtml(ficha.id)}">Aprobar</button>` : "",
             estadoRevision === "revisada" ? `<button type="button" data-ficha-rechazar="${escapeHtml(ficha.id)}">Rechazar</button>` : "",
             estadoRevision === "rechazada" ? `<button type="button" data-ficha-revisar="${escapeHtml(ficha.id)}">Revisar</button>` : ""
           ].filter(Boolean).join("");
@@ -3483,12 +3524,20 @@
           summary[estado] = (summary[estado] || 0) + 1;
           return summary;
         }, { pendiente: 0, revisada: 0, aprobada: 0, rechazada: 0 });
+        const filterMap = {
+          nuevas: { label: "Nuevas", states: ["pendiente"] },
+          revision: { label: "En revisión", states: ["revisada"] },
+          aprobadas: { label: "Aprobadas", states: ["aprobada"] },
+          rechazadas: { label: "Rechazadas", states: ["rechazada"] }
+        };
+        const activeFilter = filterMap[adminFichasFilter] ? adminFichasFilter : "nuevas";
+        const visibleFichas = fichas.filter((ficha) => filterMap[activeFilter].states.includes(ficha.estadoRevision || "pendiente"));
         document.getElementById("app").innerHTML = renderAdminShell("fichas", `
           <section class="admin-turismo-panel">
-            <h1>Fichas recibidas</h1>
-            <p>Flujo operativo: ficha recibida, revisión, asignación, aprobación y creación automática del pasajero.</p>
+            <h1>Inscripciones</h1>
+            <p>Bandeja operativa para revisar fichas, asignar grupo y aprobar la creación del pasajero.</p>
             <div class="admin-fichas-flow-summary">
-              <span>${fichaSummary.pendiente || 0} recibidas</span>
+              <span>${fichaSummary.pendiente || 0} nuevas</span>
               <span>${fichaSummary.revisada || 0} en revisión/asignación</span>
               <span>${fichaSummary.aprobada || 0} aprobadas</span>
               <span>${fichaSummary.rechazada || 0} rechazadas</span>
@@ -3504,10 +3553,21 @@
           <section class="admin-turismo-panel admin-pasajeros-table-panel">
             <div class="admin-pasajeros-table-head">
               <div>
-                <h2>Inscripciones recibidas</h2>
-                <p>Usá la asignación para vincular cada ficha con el grupo interno antes de aprobarla.</p>
+                <h2>Bandeja de fichas</h2>
+                <p>Filtrá por estado y ejecutá la acción siguiente sin salir de la tabla.</p>
               </div>
-              <strong>${fichas.length} fichas</strong>
+              <strong>${visibleFichas.length} / ${fichas.length} fichas</strong>
+            </div>
+            <div class="admin-fichas-tabs" role="tablist" aria-label="Estado de fichas">
+              ${Object.entries(filterMap).map(([key, filter]) => {
+                const count = fichas.filter((ficha) => filter.states.includes(ficha.estadoRevision || "pendiente")).length;
+                return `
+                  <button type="button" class="${key === activeFilter ? "is-active" : ""}" data-admin-fichas-filter="${escapeHtml(key)}">
+                    ${escapeHtml(filter.label)}
+                    <span>${count}</span>
+                  </button>
+                `;
+              }).join("")}
             </div>
             <div class="admin-pasajeros-table-wrap">
               <table class="admin-pasajeros-table admin-fichas-table">
@@ -3521,7 +3581,7 @@
                     <th>Acciones</th>
                   </tr>
                 </thead>
-                <tbody>${fichaAdhesionDemoRows()}</tbody>
+                <tbody>${fichaAdhesionDemoRows(visibleFichas)}</tbody>
               </table>
             </div>
           </section>
@@ -3580,6 +3640,61 @@
             </div>
             ${adminPasajerosFormError ? `<div class="admin-pasajeros-form-error"><strong>Revisar carga:</strong> ${escapeHtml(adminPasajerosFormError)}</div>` : ""}
             <form class="admin-pasajeros-form" data-admin-pasajeros-form novalidate>
+              <fieldset class="admin-pasajeros-context-fieldset">
+                <legend>Contexto de carga</legend>
+                <div class="admin-pasajeros-context admin-pasajeros-context--compact">
+                  <div class="admin-pasajeros-context-block">
+                    <h3>Nivel</h3>
+                    <div class="admin-pasajeros-selector-list">
+                      <button type="button" class="${adminPasajerosNivel === "Primaria" ? "is-active" : ""}" data-admin-pasajeros-nivel="Primaria">Primaria</button>
+                      <button type="button" class="${adminPasajerosNivel === "Secundaria" ? "is-active" : ""}" data-admin-pasajeros-nivel="Secundaria">Secundaria</button>
+                    </div>
+                  </div>
+
+                  <div class="admin-pasajeros-context-block">
+                    <h3>Viaje</h3>
+                    <ul class="admin-pasajeros-selector-list">
+                      ${viajes.map((viaje) => `
+                        <li><button type="button" class="${viaje === adminPasajerosViaje ? "is-active" : ""}" data-admin-pasajeros-viaje="${escapeHtml(viaje)}">${escapeHtml(viaje)}</button></li>
+                      `).join("")}
+                    </ul>
+                  </div>
+
+                  <div class="admin-pasajeros-context-block">
+                    <div class="admin-pasajeros-section-head">
+                      <h3>Colegio</h3>
+                      <button type="button" class="admin-pasajeros-secondary-button" data-admin-pasajeros-new-colegio>Nuevo colegio</button>
+                    </div>
+                    <ul class="admin-pasajeros-selector-list">
+                      ${colegios.map((colegio) => `
+                        <li><button type="button" class="${colegio === adminPasajerosColegio ? "is-active" : ""}" data-admin-pasajeros-colegio="${escapeHtml(colegio)}">${escapeHtml(colegio)}</button></li>
+                      `).join("")}
+                    </ul>
+                  </div>
+
+                  <div class="admin-pasajeros-context-block">
+                    <div class="admin-pasajeros-section-head">
+                      <h3>Curso / División</h3>
+                      <div class="admin-pasajeros-inline-actions">
+                        <button type="button" class="admin-pasajeros-secondary-button" data-admin-pasajeros-new-curso>Nuevo curso</button>
+                        <button type="button" class="admin-pasajeros-secondary-button" data-admin-pasajeros-new-division>Nueva división</button>
+                      </div>
+                    </div>
+                    <ul class="admin-pasajeros-selector-list">
+                      ${colegioGroups.map((group) => `
+                        <li><button type="button" class="${group.id === adminPasajerosGrupoId ? "is-active" : ""}" data-admin-pasajeros-grupo="${escapeHtml(group.id)}">${escapeHtml(group.curso)} ${escapeHtml(group.division)}</button></li>
+                      `).join("")}
+                    </ul>
+                  </div>
+                </div>
+                <div class="admin-pasajeros-breadcrumb">
+                  <span>Total pasajeros: ${contextPassengers.length}</span>
+                  <span>Al día: ${contextPaymentSummary.alDia}</span>
+                  <span>Pago pendiente: ${contextPaymentSummary.pagoPendiente}</span>
+                  <span>Documentación pendiente: ${contextPaymentSummary.documentacionPendiente}</span>
+                </div>
+              </fieldset>
+
               <fieldset>
                 <legend>Datos del pasajero</legend>
                 <label>Nombre y apellido
@@ -3737,72 +3852,6 @@
           </section>
 
           ${renderAdminPasajerosProfile()}
-
-          <section class="admin-turismo-panel">
-            <div class="admin-pasajeros-section-head">
-              <div>
-                <h2>Contexto para carga manual</h2>
-                <p><strong>Seleccionado:</strong> ${escapeHtml(contextLabel)}</p>
-              </div>
-            </div>
-
-            <div class="admin-pasajeros-context admin-pasajeros-context--compact">
-
-              <div class="admin-pasajeros-context-block">
-                <h3>Nivel</h3>
-                <div class="admin-pasajeros-selector-list">
-                  <button type="button" class="${adminPasajerosNivel === "Primaria" ? "is-active" : ""}" data-admin-pasajeros-nivel="Primaria">Primaria</button>
-                  <button type="button" class="${adminPasajerosNivel === "Secundaria" ? "is-active" : ""}" data-admin-pasajeros-nivel="Secundaria">Secundaria</button>
-                </div>
-              </div>
-
-              <div class="admin-pasajeros-context-block">
-                <h3>Viaje</h3>
-                <ul class="admin-pasajeros-selector-list">
-                  ${viajes.map((viaje) => `
-                    <li><button type="button" class="${viaje === adminPasajerosViaje ? "is-active" : ""}" data-admin-pasajeros-viaje="${escapeHtml(viaje)}">${escapeHtml(viaje)}</button></li>
-                  `).join("")}
-                </ul>
-              </div>
-
-              <div class="admin-pasajeros-context-block">
-                <div class="admin-pasajeros-section-head">
-                  <h3>Colegio</h3>
-                  <button type="button" class="admin-pasajeros-secondary-button" data-admin-pasajeros-new-colegio>Nuevo colegio</button>
-                </div>
-                <ul class="admin-pasajeros-selector-list">
-                  ${colegios.map((colegio) => `
-                    <li><button type="button" class="${colegio === adminPasajerosColegio ? "is-active" : ""}" data-admin-pasajeros-colegio="${escapeHtml(colegio)}">${escapeHtml(colegio)}</button></li>
-                  `).join("")}
-                </ul>
-              </div>
-
-              <div class="admin-pasajeros-context-block">
-                <div class="admin-pasajeros-section-head">
-                  <h3>Curso / División</h3>
-                  <div class="admin-pasajeros-inline-actions">
-                    <button type="button" class="admin-pasajeros-secondary-button" data-admin-pasajeros-new-curso>Nuevo curso</button>
-                    <button type="button" class="admin-pasajeros-secondary-button" data-admin-pasajeros-new-division>Nueva división</button>
-                  </div>
-                </div>
-                <ul class="admin-pasajeros-selector-list">
-                  ${colegioGroups.map((group) => `
-                    <li><button type="button" class="${group.id === adminPasajerosGrupoId ? "is-active" : ""}" data-admin-pasajeros-grupo="${escapeHtml(group.id)}">${escapeHtml(group.curso)} ${escapeHtml(group.division)}</button></li>
-                  `).join("")}
-                </ul>
-              </div>
-            </div>
-          </section>
-
-          <section class="admin-turismo-panel admin-pasajeros-context-summary">
-            <h2>Resumen del contexto</h2>
-            <div class="admin-pasajeros-breadcrumb">
-              <span>Total pasajeros: ${contextPassengers.length}</span>
-              <span>Al día: ${contextPaymentSummary.alDia}</span>
-              <span>Pago pendiente: ${contextPaymentSummary.pagoPendiente}</span>
-              <span>Documentación pendiente: ${contextPaymentSummary.documentacionPendiente}</span>
-            </div>
-          </section>
 
           ${formHtml}
           ${renderAdminPasajerosGroupModal()}
@@ -4535,7 +4584,6 @@
         document.querySelectorAll("[data-admin-pasajeros-nivel]").forEach((button) => {
           button.addEventListener("click", () => {
             adminPasajerosNivel = button.dataset.adminPasajerosNivel;
-            adminPasajerosShowForm = false;
             adminPasajerosFormError = "";
             renderAdminPasajeros();
           });
@@ -4543,7 +4591,6 @@
         document.querySelectorAll("[data-admin-pasajeros-viaje]").forEach((button) => {
           button.addEventListener("click", () => {
             adminPasajerosViaje = button.dataset.adminPasajerosViaje;
-            adminPasajerosShowForm = false;
             adminPasajerosFormError = "";
             renderAdminPasajeros();
           });
@@ -4551,7 +4598,6 @@
         document.querySelectorAll("[data-admin-pasajeros-colegio]").forEach((button) => {
           button.addEventListener("click", () => {
             adminPasajerosColegio = button.dataset.adminPasajerosColegio;
-            adminPasajerosShowForm = false;
             adminPasajerosFormError = "";
             renderAdminPasajeros();
           });
@@ -4559,7 +4605,6 @@
         document.querySelectorAll("[data-admin-pasajeros-grupo]").forEach((button) => {
           button.addEventListener("click", () => {
             adminPasajerosGrupoId = button.dataset.adminPasajerosGrupo;
-            adminPasajerosShowForm = false;
             adminPasajerosFormError = "";
             renderAdminPasajeros();
           });
@@ -4567,6 +4612,12 @@
       }
 
       function bindAdminFichasRecibidas() {
+        document.querySelectorAll("[data-admin-fichas-filter]").forEach((button) => {
+          button.addEventListener("click", () => {
+            adminFichasFilter = button.dataset.adminFichasFilter || "nuevas";
+            renderAdminFichasRecibidas();
+          });
+        });
         document.querySelectorAll("[data-ficha-ver]").forEach((button) => {
           button.addEventListener("click", () => viewFichaAdhesionDetail(button.dataset.fichaVer));
         });
@@ -4763,40 +4814,8 @@
           if (item.estado === "activo") acc.activos += 1;
           return acc;
         }, { total: 0, activos: 0, listo: 0, publicado: 0, borrador: 0, incompleto: 0, inactivo: 0 });
-        return `
-          <div class="admin-turismo-layout">
-            <section class="admin-turismo-hero">
-              <div>
-                <h1>Admin Turismo</h1>
-              </div>
-              <div class="admin-turismo-hero-stats">
-                <article><strong>${summary.total}</strong><span>Viajes cargados</span></article>
-                <article><strong>${summary.activos}</strong><span>Activos</span></article>
-                <article><strong>${summary.listo || 0}</strong><span>Listos para publicar</span></article>
-                <article><strong>${summary.publicado || 0}</strong><span>Publicados</span></article>
-              </div>
-              <button type="button" data-admin-new>Crear nuevo viaje</button>
-            </section>
-
-            <section class="admin-turismo-panel admin-turismo-list-panel">
-              <div class="admin-turismo-section-head">
-                <div>
-                  <p>Lista de viajes</p>
-                  <h2>Viajes cargados</h2>
-                </div>
-                <button type="button" data-admin-new>Crear nuevo</button>
-              </div>
-              <div class="admin-turismo-list">
-                <div class="admin-turismo-list-head">
-                  <span>Viaje</span>
-                  <span>Estado</span>
-                  <span>Acciones</span>
-                </div>
-                ${renderAdminTurismoTripRows()}
-              </div>
-            </section>
-
-            <section class="admin-turismo-panel admin-turismo-editor-panel">
+        const editorHtml = adminTurismoEditorOpen ? `
+            <section class="admin-turismo-panel admin-turismo-editor-panel" data-admin-turismo-editor>
               <div class="admin-turismo-section-head">
                 <div>
                   <p>Formulario de carga</p>
@@ -4830,6 +4849,50 @@
 
             ${renderAdminTurismoPrimaryActions(trip)}
             ${renderAdminTurismoSidePanel(trip)}
+        ` : `
+            <section class="admin-turismo-panel admin-turismo-empty-editor">
+              <div>
+                <p>Editor</p>
+                <h2>Seleccioná un viaje o creá uno nuevo</h2>
+                <span>La lista queda primero para operar rápido. El formulario aparece solo en modo edición.</span>
+              </div>
+              <button type="button" data-admin-new>Crear nuevo viaje</button>
+            </section>
+        `;
+        return `
+          <div class="admin-turismo-layout">
+            <section class="admin-turismo-hero">
+              <div>
+                <h1>Admin Turismo</h1>
+              </div>
+              <div class="admin-turismo-hero-stats">
+                <article><strong>${summary.total}</strong><span>Viajes cargados</span></article>
+                <article><strong>${summary.activos}</strong><span>Activos</span></article>
+                <article><strong>${summary.listo || 0}</strong><span>Listos para publicar</span></article>
+                <article><strong>${summary.publicado || 0}</strong><span>Publicados</span></article>
+              </div>
+              <button type="button" data-admin-new>Crear nuevo viaje</button>
+            </section>
+
+            <section class="admin-turismo-panel admin-turismo-list-panel">
+              <div class="admin-turismo-section-head">
+                <div>
+                  <p>Lista de viajes</p>
+                  <h2>Viajes cargados</h2>
+                </div>
+                <button type="button" data-admin-new>Crear nuevo</button>
+              </div>
+              <div class="admin-turismo-list">
+                <div class="admin-turismo-list-head">
+                  <span>Viaje</span>
+                  <span>Estado</span>
+                  <span>Acciones</span>
+                </div>
+                ${renderAdminTurismoTripRows()}
+              </div>
+            </section>
+
+            ${editorHtml}
           </div>
         `;
       }
@@ -4856,6 +4919,7 @@
         document.querySelectorAll("[data-admin-edit], [data-admin-preview]").forEach((button) => {
           button.addEventListener("click", () => {
             adminTurismoEditingId = button.dataset.adminEdit || button.dataset.adminPreview;
+            adminTurismoEditorOpen = true;
             renderAdminTurismo();
           });
         });
@@ -4869,6 +4933,7 @@
             adminTurismoTrips = adminTurismoTrips.filter((item) => item.id !== tripId);
             if (adminTurismoEditingId === tripId) {
               adminTurismoEditingId = adminTurismoTrips[0]?.id || null;
+              adminTurismoEditorOpen = false;
             }
             saveAdminTurismoTrips();
             renderAdminTurismo();
@@ -4902,6 +4967,7 @@
               ...adminTurismoTrips
             ];
             adminTurismoEditingId = id;
+            adminTurismoEditorOpen = true;
             saveAdminTurismoTrips();
             renderAdminTurismo();
           });

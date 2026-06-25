@@ -4221,6 +4221,234 @@
         color: #8f1f1f;
       }
 
+      .admin-shell {
+        align-items: start;
+        grid-template-columns: 220px minmax(0, 1fr);
+        max-width: 1180px;
+      }
+
+      .admin-sidebar {
+        position: sticky;
+        top: 18px;
+      }
+
+      .admin-sidebar nav {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .admin-main {
+        min-width: 0;
+      }
+
+      .admin-dashboard-home {
+        gap: 24px;
+      }
+
+      .admin-dashboard-head,
+      .admin-next-actions {
+        align-items: end;
+        display: flex;
+        gap: 16px;
+        justify-content: space-between;
+      }
+
+      .admin-dashboard-head h1,
+      .admin-dashboard-head p,
+      .admin-dashboard-head span,
+      .admin-next-actions h2 {
+        margin: 0;
+      }
+
+      .admin-dashboard-head span {
+        color: #5a6a73;
+        display: block;
+        margin-top: 6px;
+      }
+
+      .admin-dashboard-grid {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .admin-dashboard-card {
+        background: #f7fbfe;
+        border: 1px solid #d9e7ef;
+        border-radius: 14px;
+        color: #10202b;
+        display: grid;
+        gap: 8px;
+        min-height: 132px;
+        padding: 18px;
+      }
+
+      .admin-dashboard-card span {
+        color: #516575;
+        font-size: 0.78rem;
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+
+      .admin-dashboard-card strong {
+        color: #10202b;
+        font-size: 2.05rem;
+        line-height: 1;
+      }
+
+      .admin-dashboard-card small {
+        color: #5a6a73;
+        font-weight: 750;
+      }
+
+      .admin-dashboard-card.is-attention {
+        background: #fff7fb;
+        border-color: rgba(235, 62, 143, 0.42);
+      }
+
+      .admin-dashboard-card.is-warning {
+        background: #fff9ea;
+        border-color: #efd58e;
+      }
+
+      .admin-next-actions {
+        align-items: center;
+        background: #f7fbfe;
+        border: 1px solid #d9e7ef;
+        border-radius: 14px;
+        padding: 14px;
+      }
+
+      .admin-next-actions div {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: flex-end;
+      }
+
+      .admin-next-actions a {
+        background: #fff;
+        border: 1px solid #cfdde4;
+        border-radius: 999px;
+        color: #0d69a1;
+        font-weight: 850;
+        padding: 8px 12px;
+      }
+
+      .admin-fichas-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .admin-fichas-tabs button {
+        align-items: center;
+        background: #f7fbfe;
+        border-color: #cfdde4;
+        color: #10202b;
+        display: inline-flex;
+        gap: 8px;
+        min-height: 40px;
+        padding: 8px 12px;
+      }
+
+      .admin-fichas-tabs button.is-active {
+        background: #0d69a1;
+        border-color: #0d69a1;
+        color: #fff;
+      }
+
+      .admin-fichas-tabs span {
+        background: rgba(255, 255, 255, 0.78);
+        border-radius: 999px;
+        color: #10202b;
+        font-size: 0.82rem;
+        min-width: 24px;
+        padding: 2px 7px;
+        text-align: center;
+      }
+
+      .admin-pasajeros-filter-panel {
+        position: sticky;
+        top: 10px;
+        z-index: 3;
+      }
+
+      .admin-pasajeros-filters {
+        grid-template-columns: minmax(280px, 2fr) repeat(4, minmax(120px, 1fr)) auto;
+      }
+
+      .admin-pasajeros-filters label:first-child input {
+        font-size: 1.05rem;
+        min-height: 50px;
+      }
+
+      .admin-pasajeros-context-fieldset {
+        grid-template-columns: minmax(0, 1fr) !important;
+      }
+
+      .admin-pasajeros-context-fieldset .admin-pasajeros-context {
+        border: 0;
+        padding: 0;
+      }
+
+      .admin-turismo-empty-editor {
+        align-items: center;
+        grid-template-columns: minmax(0, 1fr) auto;
+      }
+
+      .admin-turismo-empty-editor p,
+      .admin-turismo-empty-editor h2,
+      .admin-turismo-empty-editor span {
+        margin: 0;
+      }
+
+      .admin-turismo-empty-editor span {
+        color: #5a6a73;
+        display: block;
+        margin-top: 6px;
+      }
+
+      @media (max-width: 1040px) {
+        .admin-shell {
+          grid-template-columns: minmax(0, 1fr);
+        }
+
+        .admin-sidebar {
+          position: static;
+        }
+
+        .admin-sidebar nav {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .admin-dashboard-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .admin-pasajeros-filters {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 620px) {
+        .admin-sidebar nav,
+        .admin-dashboard-grid,
+        .admin-pasajeros-filters,
+        .admin-turismo-empty-editor {
+          grid-template-columns: minmax(0, 1fr);
+        }
+
+        .admin-dashboard-head,
+        .admin-next-actions {
+          align-items: stretch;
+          display: grid;
+        }
+
+        .admin-next-actions div {
+          justify-content: flex-start;
+        }
+      }
+
       .ficha-adhesion-layout {
         display: grid;
         gap: 24px;
