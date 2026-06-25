@@ -1432,15 +1432,19 @@
 
       function renderAdminTurismoActionPanel(trip) {
         const readiness = adminTurismoReadiness(trip);
-        const missingText = readiness.missing.map((item) => item.label).join(", ");
         const activePreview = isTurismoPublicPreviewMode();
+        const esBorrador = !trip.estado || trip.estado === "borrador";
+        const esActivo = trip.estado === "activo";
+
         return `
           <section class="admin-turismo-action-panel">
+
+            <!-- Guardar -->
             <div class="admin-turismo-action-group">
               <div>
-                <p>Acciones de edición</p>
+                <p>Edición</p>
                 <h3>Guardar trabajo</h3>
-                <span>Esto guarda el viaje en este navegador, aunque esté incompleto.</span>
+                <span>Guarda el viaje aunque esté incompleto.</span>
               </div>
               <div class="admin-turismo-action-buttons">
                 <button type="submit" class="admin-action-primary">Guardar viaje</button>
@@ -1449,34 +1453,66 @@
               </div>
             </div>
 
-            <div class="admin-turismo-action-group">
+            <!-- Estado: visible y destacado -->
+            <div class="admin-turismo-action-group admin-turismo-action-group--estado">
               <div>
-                <p>Acciones de revisión</p>
-                <h3>Revisar antes de publicar</h3>
-                <span>Usá la vista previa y el checklist para detectar faltantes.</span>
+                <p>Estado del viaje</p>
+                <h3>${esActivo ? "✅ Activo — listo para publicar" : esBorrador ? "⚠️ Borrador — no visible en la web" : "Estado: " + (trip.estado || "borrador")}</h3>
+                <span>${esActivo
+                  ? "Este viaje está activo. Podés publicarlo en la web."
+                  : "Cambiá el estado a <strong>Activo</strong> para habilitar la publicación."
+                }</span>
               </div>
               <div class="admin-turismo-action-buttons">
-                <button type="button" data-admin-scroll-preview>Ver vista previa</button>
-                <button type="button" data-admin-scroll-checklist>Revisar checklist</button>
+                <label class="admin-turismo-estado-selector">
+                  <span>Estado</span>
+                  <select data-admin-turismo-estado-quick name="estado_quick">
+                    ${[["borrador","Borrador"],["revision","En revisión"],["activo","Activo"],["inactivo","Inactivo"]]
+                      .map(([val, label]) => `<option value="${val}" ${(trip.estado || "borrador") === val ? "selected" : ""}>${label}</option>`)
+                      .join("")}
+                  </select>
+                </label>
+                <button type="button" class="admin-action-primary" data-admin-turismo-apply-estado>
+                  Aplicar estado
+                </button>
               </div>
             </div>
 
+            <!-- Checklist resumido -->
+            ${!readiness.canPublish ? `
+              <div class="admin-turismo-action-group admin-turismo-missing-alert">
+                <div>
+                  <p>Checklist</p>
+                  <h3>${readiness.missing.length} ${readiness.missing.length === 1 ? "campo faltante" : "campos faltantes"} para publicar</h3>
+                  <ul class="admin-turismo-missing-list">
+                    ${readiness.missing.map(item => `<li>${escapeHtml(item.label)}</li>`).join("")}
+                  </ul>
+                </div>
+                <div class="admin-turismo-action-buttons">
+                  <button type="button" data-admin-scroll-checklist>Ver checklist completo</button>
+                </div>
+              </div>
+            ` : ""}
+
+            <!-- Publicación -->
             <div class="admin-turismo-action-group admin-turismo-action-group--publish">
               <div>
-                <p>Publicación y prueba</p>
-                <h3>Probar o exportar</h3>
+                <p>Publicación</p>
+                <h3>${readiness.canPublish ? "Listo para publicar" : "Completá los campos faltantes"}</h3>
                 <span>${readiness.canPublish
-                  ? "Podés probar este contenido en tu navegador o exportar el JSON para publicación real."
-                  : `No se puede publicar todavía${missingText ? `. Falta: ${escapeHtml(missingText)}.` : "."}`}</span>
+                  ? "El viaje está completo y activo. Podés publicarlo en la web."
+                  : "Completá todos los campos requeridos y cambiá el estado a Activo."
+                }</span>
               </div>
               <div class="admin-turismo-action-buttons">
-                <button type="button" class="admin-action-publish" data-admin-preview-public ${readiness.canPublish ? "" : "disabled"}>${activePreview ? "Actualizar web de prueba" : "Ver en web de prueba"}</button>
-                <button type="button" data-admin-disable-preview ${activePreview ? "" : "disabled"}>Desactivar prueba</button>
+                <button type="button" data-admin-scroll-preview>Vista previa</button>
                 <button type="button" class="admin-action-publish" data-admin-publish ${readiness.canPublish ? "" : "disabled"}>Publicar en la web</button>
-                <button type="button" data-admin-export>Exportar turismo-paquetes.json</button>
+                <button type="button" data-admin-export>Exportar JSON</button>
+                <button type="button" class="admin-action-publish" data-admin-preview-public ${readiness.canPublish ? "" : "disabled"}>${activePreview ? "Actualizar prueba" : "Ver en prueba"}</button>
                 <button type="button" data-admin-deactivate ${trip.id && trip.estado !== "inactivo" ? "" : "disabled"}>Desactivar viaje</button>
               </div>
             </div>
+
           </section>
         `;
       }
@@ -5560,6 +5596,21 @@
           const trip = normalizeAdminTurismoTrip(adminTurismoCurrentTrip());
           if (!trip.id) return;
           adminTurismoTrips = adminTurismoTrips.map((item) => item.id === trip.id ? { ...item, estado: "inactivo" } : item);
+          saveAdminTurismoTrips();
+          renderAdminTurismo();
+        });
+
+        // --- Aplicar estado rápido desde el panel de publicación ---
+        document.querySelector("[data-admin-turismo-apply-estado]")?.addEventListener("click", () => {
+          const trip = normalizeAdminTurismoTrip(adminTurismoCurrentTrip());
+          if (!trip.id) {
+            window.alert("Guardá el viaje primero antes de cambiar el estado.");
+            return;
+          }
+          const select = document.querySelector("[data-admin-turismo-estado-quick]");
+          if (!select) return;
+          const nuevoEstado = select.value;
+          adminTurismoTrips = adminTurismoTrips.map((item) => item.id === trip.id ? { ...item, estado: nuevoEstado } : item);
           saveAdminTurismoTrips();
           renderAdminTurismo();
         });
