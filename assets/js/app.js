@@ -602,14 +602,23 @@
         titulo: "",
         duracion: "",
         temporada: "",
+        fechaSalida: "",
+        fechaRegreso: "",
+        salidaGarantizada: false,
         precioDesde: "",
         precioValor: null,
-        moneda: "ARS",
+        moneda: "USD",
+        precioBaseDoble: "",
+        suplementoSingle: "",
+        precioMenor: "",
+        condicionVenta: "Precios por persona en base doble. Sujeto a cambios y disponibilidad.",
         categorias: [],
         descripcionCorta: "",
         descripcionLarga: "",
         incluye: [],
         noIncluye: [],
+        formasPago: [],
+        itinerario: [],
         fotos: [],
         estado: "borrador",
         destacado: false,
@@ -754,7 +763,7 @@
         const destino = String(trip.destino || "").trim();
         const titulo = String(trip.titulo || "").trim();
         const slug = trip.slug || titulo || destino ? adminTurismoSlug(trip.slug || titulo || destino) : "";
-        const moneda = adminTurismoCurrencies.includes(trip.moneda) ? trip.moneda : "ARS";
+        const moneda = adminTurismoCurrencies.includes(trip.moneda) ? trip.moneda : "USD";
         const precioValor = trip.precioValor === "" || trip.precioValor === null || Number.isNaN(Number(trip.precioValor))
           ? null
           : Number(trip.precioValor);
@@ -765,14 +774,25 @@
           titulo,
           duracion: String(trip.duracion || "").trim(),
           temporada: String(trip.temporada || "").trim(),
+          fechaSalida: String(trip.fechaSalida || "").trim(),
+          fechaRegreso: String(trip.fechaRegreso || "").trim(),
+          salidaGarantizada: Boolean(trip.salidaGarantizada),
           precioDesde: String(trip.precioDesde || "").trim(),
           precioValor,
           moneda,
+          precioBaseDoble: String(trip.precioBaseDoble || "").trim(),
+          suplementoSingle: String(trip.suplementoSingle || "").trim(),
+          precioMenor: String(trip.precioMenor || "").trim(),
+          condicionVenta: String(trip.condicionVenta || "Precios por persona en base doble. Sujeto a cambios y disponibilidad.").trim(),
           categorias: normalizeAdminTurismoCategories(trip.categorias || trip.categoria),
           descripcionCorta: String(trip.descripcionCorta || "").trim(),
           descripcionLarga: String(trip.descripcionLarga || "").trim(),
           incluye: linesToArray(trip.incluye),
           noIncluye: linesToArray(trip.noIncluye),
+          formasPago: linesToArray(trip.formasPago),
+          itinerario: Array.isArray(trip.itinerario)
+            ? trip.itinerario.map((d) => ({ dia: String(d.dia || "").trim(), titulo: String(d.titulo || "").trim(), descripcion: String(d.descripcion || "").trim() })).filter((d) => d.titulo || d.descripcion)
+            : [],
           fotos: normalizeAdminTurismoPhotos(trip.fotos),
           estado: ["activo", "borrador", "revision", "inactivo"].includes(trip.estado) ? trip.estado : "borrador",
           destacado: Boolean(trip.destacado),
@@ -1171,14 +1191,16 @@
         const selectedCategories = normalizeAdminTurismoCategories(trip.categorias || trip.categoria);
         const photos = adminTurismoPhotos(trip);
         const normalizedTrip = normalizeAdminTurismoTrip(trip);
+        const itinerario = Array.isArray(normalizedTrip.itinerario) ? normalizedTrip.itinerario : [];
+
         const statusBadge = (isComplete, optional = false) => {
           if (isComplete) return `<span class="admin-turismo-accordion-badge is-complete">Completo</span>`;
           if (optional) return `<span class="admin-turismo-accordion-badge is-optional">Opcional</span>`;
           return `<span class="admin-turismo-accordion-badge is-pending">Falta</span>`;
         };
-        const field = (label, control, hint = "") => `
+        const field = (label, control, hint = "", required = false) => `
           <label>
-            <span class="admin-field-label">${label}</span>
+            <span class="admin-field-label">${label}${required ? ` <span class="admin-turismo-required">*</span>` : ""}</span>
             ${control}
             ${hint ? `<small class="admin-field-hint">${hint}</small>` : ""}
           </label>
@@ -1195,52 +1217,121 @@
             ${content}
           </details>
         `;
-        const mainComplete = Boolean(normalizedTrip.destino && normalizedTrip.titulo && normalizedTrip.duracion && normalizedTrip.temporada && normalizedTrip.descripcionCorta);
-        const priceComplete = Boolean(normalizedTrip.precioDesde);
-        const detailsComplete = Boolean(normalizedTrip.incluye.length);
-        const photosComplete = normalizedTrip.fotos.length >= 3 && Boolean(adminTurismoCoverPhoto(normalizedTrip));
-        const advancedComplete = Boolean(normalizedTrip.slug && normalizedTrip.moneda && normalizedTrip.orden && normalizedTrip.estado);
+
+        const basicComplete = Boolean(normalizedTrip.destino && normalizedTrip.titulo && normalizedTrip.descripcionCorta);
+        const fechasComplete = Boolean(normalizedTrip.fechaSalida);
+        const priceComplete = Boolean(normalizedTrip.precioDesde && normalizedTrip.moneda);
+        const photosComplete = normalizedTrip.fotos.length >= 1 && Boolean(adminTurismoCoverPhoto(normalizedTrip));
+        const includesComplete = Boolean(normalizedTrip.incluye.length);
+        const itinerarioComplete = itinerario.length > 0;
+
         return `
           <form class="admin-turismo-form" id="admin-turismo-form" data-admin-turismo-form>
-            ${block("Datos básicos", "Información mínima para identificar y vender el viaje.", `
+
+            ${block("Información básica", "Destino, título y descripción para el catálogo.", `
               <div class="admin-turismo-form-grid">
-                ${field("Destino", `<input name="destino" value="${escapeHtml(trip.destino || "")}" placeholder="Ej: Bariloche">`)}
-                ${field("Título comercial", `<input name="titulo" value="${escapeHtml(trip.titulo || "")}" placeholder="Ej: Bariloche nieve y lagos">`)}
-                ${field("Duración", `<input name="duracion" value="${escapeHtml(trip.duracion || "")}" placeholder="Ej: 7 días / 5 noches">`)}
-                ${field("Temporada", `<input name="temporada" value="${escapeHtml(trip.temporada || "")}" placeholder="Ej: Invierno 2026">`)}
-                ${field("Resumen corto", `<textarea name="descripcionCorta" rows="3" placeholder="Resumen breve que aparece en la card pública">${escapeHtml(trip.descripcionCorta || "")}</textarea>`)}
+                ${field("Destino", `<input name="destino" value="${escapeHtml(trip.destino || "")}" placeholder="Ej: Cancún">`, "", true)}
+                ${field("Título comercial", `<input name="titulo" value="${escapeHtml(trip.titulo || "")}" placeholder="Ej: Año Nuevo en Cancún">`, "", true)}
+                ${field("Temporada", `<input name="temporada" value="${escapeHtml(trip.temporada || "")}" placeholder="Ej: Verano 2026">`, "")}
+                ${field("Duración", `<input name="duracion" value="${escapeHtml(trip.duracion || "")}" placeholder="Ej: 7 noches / 8 días">`, "")}
+                ${field("Resumen corto", `<textarea name="descripcionCorta" rows="3" placeholder="Texto que aparece en la card del catálogo">${escapeHtml(trip.descripcionCorta || "")}</textarea>`, "Máximo 2 líneas. Es lo primero que lee el cliente.", true)}
+                ${field("Descripción larga", `<textarea name="descripcionLarga" rows="5" placeholder="Descripción completa para la página de detalle">${escapeHtml(trip.descripcionLarga || "")}</textarea>`, "Opcional si el resumen alcanza.")}
               </div>
-            `, statusBadge(mainComplete), true)}
-            ${block("Precio", "Valor que va a ver el pasajero.", `
+            `, statusBadge(basicComplete), true)}
+
+            ${block("Fechas de salida", "Cuándo sale y cuándo vuelve.", `
               <div class="admin-turismo-form-grid admin-turismo-form-grid--compact">
-                ${field("Precio visible", `<input name="precioDesde" value="${escapeHtml(trip.precioDesde || "")}" placeholder="$890.000 / Consultar">`)}
-                ${field("Precio numérico", `<input name="precioValor" type="number" min="0" step="1" value="${escapeHtml(trip.precioValor ?? "")}" placeholder="890000">`, "Opcional. Solo números.")}
+                ${field("Fecha de salida", `<input name="fechaSalida" value="${escapeHtml(trip.fechaSalida || "")}" placeholder="Ej: 28 de diciembre de 2026">`, "Texto libre: podés escribir '28 dic 2026' o 'Diciembre 2026'.", true)}
+                ${field("Fecha de regreso", `<input name="fechaRegreso" value="${escapeHtml(trip.fechaRegreso || "")}" placeholder="Ej: 4 de enero de 2027">`, "")}
               </div>
-            `, statusBadge(priceComplete))}
-            ${block("Fotos", "Rutas o URLs aprobadas.", `
-              ${field("Galería", `<textarea name="fotos" rows="5" placeholder="assets/img/turismo/foto-1.webp&#10;assets/img/turismo/foto-2.webp&#10;assets/img/turismo/foto-3.webp">${escapeHtml(adminTurismoPhotosToLines(trip.fotos))}</textarea>`, "Una por línea. Mínimo recomendado: 3.")}
-            `, statusBadge(photosComplete))}
-            ${block("Detalles", "Información útil para el pasajero.", `
-              <div class="admin-turismo-form-grid">
-                ${field("Incluye", `<textarea name="incluye" rows="6" placeholder="Alojamiento seleccionado&#10;Asesoramiento personalizado&#10;Coordinación del viaje">${escapeHtml(arrayToLines(trip.incluye))}</textarea>`)}
-                ${field("No incluye", `<textarea name="noIncluye" rows="5" placeholder="Comidas no detalladas&#10;Excursiones opcionales&#10;Gastos personales">${escapeHtml(arrayToLines(trip.noIncluye))}</textarea>`, "Opcional.")}
-              </div>
-              ${field("Texto de detalle", `<textarea name="descripcionLarga" rows="6" placeholder="Texto principal para la página de detalle">${escapeHtml(trip.descripcionLarga || "")}</textarea>`, "Opcional si el resumen ya alcanza para probar.")}
-            `, statusBadge(detailsComplete))}
-            ${block("Avanzado", "Configuración interna. No hace falta para una carga rápida.", `
+              <label class="admin-turismo-check admin-turismo-check--featured">
+                <input name="salidaGarantizada" type="checkbox" ${trip.salidaGarantizada ? "checked" : ""}>
+                <span>
+                  <strong>Salida garantizada</strong>
+                  <small>Muestra el badge "Salida garantizada" en el flyer y la card.</small>
+                </span>
+              </label>
+            `, statusBadge(fechasComplete))}
+
+            ${block("Precio", "Valor visible para el cliente y condición de venta.", `
               <div class="admin-turismo-form-grid admin-turismo-form-grid--compact">
-                ${field("URL interna", `<input name="slug" value="${escapeHtml(trip.slug || adminTurismoSlug(trip.titulo || trip.destino))}" placeholder="bariloche-nieve-y-lagos">`, "Sin espacios ni acentos.")}
-                ${field("Orden", `<input name="orden" type="number" min="1" step="1" value="${escapeHtml(trip.orden ?? 999)}" placeholder="1">`, "Menor número: aparece antes.")}
+                ${field("Precio visible", `<input name="precioDesde" value="${escapeHtml(trip.precioDesde || "")}" placeholder="Ej: USD 1.436">`, "Texto exacto que ve el cliente en la card.", true)}
                 ${field("Moneda", `
                   <select name="moneda">
-                    ${adminTurismoCurrencies.map((currency) => `<option value="${currency}" ${trip.moneda === currency ? "selected" : ""}>${currency}</option>`).join("")}
+                    ${adminTurismoCurrencies.map((c) => `<option value="${c}" ${(trip.moneda || "USD") === c ? "selected" : ""}>${c}</option>`).join("")}
                   </select>
                 `)}
-                ${field("Estado interno", `
+                ${field("Precio base doble (número)", `<input name="precioBaseDoble" value="${escapeHtml(trip.precioBaseDoble || "")}" placeholder="Ej: 1436">`, "Por persona en habitación doble.")}
+                ${field("Suplemento single", `<input name="suplementoSingle" value="${escapeHtml(trip.suplementoSingle || "")}" placeholder="Ej: 320">`, "Diferencia para habitación individual.")}
+                ${field("Precio menor", `<input name="precioMenor" value="${escapeHtml(trip.precioMenor || "")}" placeholder="Ej: 980">`, "Opcional.")}
+              </div>
+              ${field("Condición de venta", `<textarea name="condicionVenta" rows="2">${escapeHtml(trip.condicionVenta || "Precios por persona en base doble. Sujeto a cambios y disponibilidad.")}</textarea>`, "Aparece al pie del detalle del paquete.")}
+            `, statusBadge(priceComplete))}
+
+            ${block("Fotos", "URLs de las imágenes del paquete.", `
+              <div class="admin-turismo-fotos-list" data-admin-turismo-fotos-list>
+                ${photos.length ? photos.map((photo, index) => `
+                  <div class="admin-turismo-foto-row">
+                    <div class="admin-turismo-foto-preview">
+                      <img src="${escapeHtml(photo.url)}" alt="Foto ${index + 1}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                      <div class="admin-turismo-foto-error" style="display:none">URL inválida</div>
+                    </div>
+                    <div class="admin-turismo-foto-fields">
+                      <input class="admin-turismo-foto-url" name="foto_url_${index}" value="${escapeHtml(photo.url)}" placeholder="https://... URL de la imagen" data-foto-index="${index}">
+                      <input name="foto_alt_${index}" value="${escapeHtml(photo.alt || "")}" placeholder="Descripción de la foto (opcional)">
+                      <label class="admin-turismo-foto-principal">
+                        <input type="radio" name="fotoPrincipal" value="${index}" ${photo.principal ? "checked" : ""}> Principal
+                      </label>
+                    </div>
+                    <button type="button" class="admin-turismo-foto-remove" data-remove-foto="${index}" aria-label="Quitar foto">×</button>
+                  </div>
+                `).join("") : ""}
+                <div class="admin-turismo-foto-row admin-turismo-foto-row--new">
+                  <div class="admin-turismo-foto-preview admin-turismo-foto-preview--empty" id="new-foto-preview">
+                    <span>Preview</span>
+                  </div>
+                  <div class="admin-turismo-foto-fields">
+                    <input class="admin-turismo-foto-url" id="new-foto-url" placeholder="Pegá la URL de la imagen aquí" data-nueva-foto>
+                    <input id="new-foto-alt" placeholder="Descripción (opcional)">
+                  </div>
+                  <button type="button" class="admin-turismo-primary-button" data-add-foto>+ Agregar foto</button>
+                </div>
+              </div>
+              <p class="admin-field-hint">La foto marcada como "Principal" aparece de portada en la card y el detalle.</p>
+              <input type="hidden" name="fotos_count" value="${photos.length}">
+            `, statusBadge(photosComplete))}
+
+            ${block("Incluye / No incluye", "Qué cubre el paquete y qué no.", `
+              <div class="admin-turismo-form-grid">
+                ${field("Qué incluye", `<textarea name="incluye" rows="7" placeholder="Aéreos desde Asunción con LATAM&#10;Todo incluido&#10;7 noches de alojamiento&#10;Equipaje 12kg + 1 artículo personal&#10;Asistencia al viajero&#10;Traslados de llegada y salida">${escapeHtml(arrayToLines(trip.incluye))}</textarea>`, "Un ítem por línea.", true)}
+                ${field("Qué no incluye", `<textarea name="noIncluye" rows="5" placeholder="Gastos personales&#10;Excursiones opcionales&#10;Seguro de viaje">${escapeHtml(arrayToLines(trip.noIncluye))}</textarea>`, "Un ítem por línea.")}
+              </div>
+              ${field("Formas de pago", `<textarea name="formasPago" rows="4" placeholder="50% de señal al reservar&#10;50% restante 30 días antes de la salida&#10;Cuotas con tarjeta (consultar)">${escapeHtml(arrayToLines(trip.formasPago))}</textarea>`, "Un ítem por línea. Aparece en la página de detalle.")}
+            `, statusBadge(includesComplete))}
+
+            ${block("Itinerario", "Programa día por día del viaje.", `
+              <div class="admin-turismo-itinerario-list" data-admin-turismo-itinerario>
+                ${itinerario.map((dia, index) => `
+                  <div class="admin-turismo-itinerario-row" data-itinerario-row="${index}">
+                    <div class="admin-turismo-itinerario-num">${index + 1}</div>
+                    <div class="admin-turismo-itinerario-fields">
+                      <input name="itinerario_titulo_${index}" value="${escapeHtml(dia.titulo)}" placeholder="Ej: Llegada y check in">
+                      <textarea name="itinerario_desc_${index}" rows="2" placeholder="Descripción de actividades del día">${escapeHtml(dia.descripcion)}</textarea>
+                    </div>
+                    <button type="button" class="admin-turismo-foto-remove" data-remove-dia="${index}" aria-label="Quitar día">×</button>
+                  </div>
+                `).join("")}
+                <button type="button" class="admin-turismo-secondary-button" data-add-dia>+ Agregar día</button>
+              </div>
+            `, statusBadge(itinerarioComplete, true))}
+
+            ${block("Configuración", "Ajustes internos de publicación.", `
+              <div class="admin-turismo-form-grid admin-turismo-form-grid--compact">
+                ${field("URL interna", `<input name="slug" value="${escapeHtml(trip.slug || adminTurismoSlug(trip.titulo || trip.destino))}" placeholder="cancun-ano-nuevo-2026">`, "Sin espacios ni acentos. Se genera automático.")}
+                ${field("Orden en catálogo", `<input name="orden" type="number" min="1" step="1" value="${escapeHtml(String(trip.orden ?? 999))}">`, "Menor número = aparece antes.")}
+                ${field("Estado", `
                   <select name="estado">
-                    ${["borrador", "revision", "activo", "inactivo"].map((status) => `
-                      <option value="${status}" ${trip.estado === status ? "selected" : ""}>${adminTurismoStatusLabel(status)}</option>
-                    `).join("")}
+                    ${[["borrador", "Borrador"], ["revision", "En revisión"], ["activo", "Activo"], ["inactivo", "Inactivo"]].map(([val, label]) => `<option value="${val}" ${trip.estado === val ? "selected" : ""}>${label}</option>`).join("")}
                   </select>
                 `)}
               </div>
@@ -1255,19 +1346,15 @@
                   `).join("")}
                 </div>
               </fieldset>
-              ${field("Portada", `
-                <select name="fotoPrincipal">
-                  ${photos.length ? photos.map((photo, index) => `<option value="${index}" ${photo.principal ? "selected" : ""}>Foto ${index + 1}: ${escapeHtml(photo.url.slice(0, 48))}</option>`).join("") : `<option value="0">Primera foto cargada</option>`}
-                </select>
-              `)}
               <label class="admin-turismo-check admin-turismo-check--featured">
                 <input name="destacado" type="checkbox" ${trip.destacado ? "checked" : ""}>
                 <span>
                   <strong>Destacado</strong>
-                  <small>Marca el viaje como prioritario en el catálogo.</small>
+                  <small>Prioriza este viaje en el catálogo.</small>
                 </span>
               </label>
-            `, statusBadge(advancedComplete, true))}
+            `, statusBadge(Boolean(normalizedTrip.slug && normalizedTrip.estado)), true)}
+
           </form>
         `;
       }
@@ -5414,6 +5501,71 @@
           document.querySelector("[data-admin-checklist-section]")?.scrollIntoView({ behavior: "smooth", block: "center" });
         });
 
+        // --- Preview de foto al pegar URL ---
+        document.querySelector("[data-nueva-foto]")?.addEventListener("input", (event) => {
+          const url = event.target.value.trim();
+          const preview = document.getElementById("new-foto-preview");
+          if (!preview) return;
+          if (url) {
+            preview.innerHTML = `<img src="${url}" alt="Preview" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class='admin-turismo-foto-error' style='display:none'>URL inválida</div>`;
+          } else {
+            preview.innerHTML = `<span>Preview</span>`;
+          }
+        });
+
+        // --- Agregar foto ---
+        document.querySelector("[data-add-foto]")?.addEventListener("click", () => {
+          const urlInput = document.getElementById("new-foto-url");
+          const altInput = document.getElementById("new-foto-alt");
+          if (!urlInput) return;
+          const url = urlInput.value.trim();
+          if (!url) { urlInput.focus(); return; }
+          const trip = normalizeAdminTurismoTrip(adminTurismoCurrentTrip());
+          const newFoto = { url, alt: altInput?.value?.trim() || "", principal: trip.fotos.length === 0 };
+          trip.fotos.push(newFoto);
+          const index = adminTurismoTrips.findIndex((t) => t.id === adminTurismoEditingId);
+          if (index >= 0) adminTurismoTrips[index] = { ...adminTurismoTrips[index], fotos: trip.fotos };
+          saveAdminTurismoTrips();
+          renderAdminTurismo();
+        });
+
+        // --- Quitar foto ---
+        document.querySelectorAll("[data-remove-foto]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const fotoIndex = Number(btn.dataset.removeFoto);
+            const trip = normalizeAdminTurismoTrip(adminTurismoCurrentTrip());
+            trip.fotos.splice(fotoIndex, 1);
+            if (trip.fotos.length && !trip.fotos.some((f) => f.principal)) trip.fotos[0].principal = true;
+            const index = adminTurismoTrips.findIndex((t) => t.id === adminTurismoEditingId);
+            if (index >= 0) adminTurismoTrips[index] = { ...adminTurismoTrips[index], fotos: trip.fotos };
+            saveAdminTurismoTrips();
+            renderAdminTurismo();
+          });
+        });
+
+        // --- Agregar día de itinerario ---
+        document.querySelector("[data-add-dia]")?.addEventListener("click", () => {
+          const trip = normalizeAdminTurismoTrip(adminTurismoCurrentTrip());
+          const itinerario = [...(trip.itinerario || []), { dia: String(trip.itinerario.length + 1), titulo: "", descripcion: "" }];
+          const index = adminTurismoTrips.findIndex((t) => t.id === adminTurismoEditingId);
+          if (index >= 0) adminTurismoTrips[index] = { ...adminTurismoTrips[index], itinerario };
+          saveAdminTurismoTrips();
+          renderAdminTurismo();
+        });
+
+        // --- Quitar día de itinerario ---
+        document.querySelectorAll("[data-remove-dia]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const diaIndex = Number(btn.dataset.removeDia);
+            const trip = normalizeAdminTurismoTrip(adminTurismoCurrentTrip());
+            trip.itinerario.splice(diaIndex, 1);
+            const index = adminTurismoTrips.findIndex((t) => t.id === adminTurismoEditingId);
+            if (index >= 0) adminTurismoTrips[index] = { ...adminTurismoTrips[index], itinerario: trip.itinerario };
+            saveAdminTurismoTrips();
+            renderAdminTurismo();
+          });
+        });
+
         document.querySelector("[data-admin-open-card-preview]")?.addEventListener("click", () => {
           const modal = document.querySelector("[data-admin-card-modal]");
           if (!modal) return;
@@ -5471,7 +5623,29 @@
         document.querySelector("[data-admin-turismo-form]")?.addEventListener("submit", (event) => {
           event.preventDefault();
           const formData = new FormData(event.currentTarget);
-          const id = adminTurismoEditingId || `demo-${Date.now()}`;
+          const id = adminTurismoEditingId || `viaje-${Date.now()}`;
+
+          // Leer fotos desde los campos individuales
+          const fotosCount = Number(formData.get("fotos_count") || 0);
+          const fotosArray = [];
+          for (let i = 0; i < fotosCount; i++) {
+            const url = String(formData.get(`foto_url_${i}`) || "").trim();
+            if (url) fotosArray.push({ url, alt: String(formData.get(`foto_alt_${i}`) || "").trim(), principal: false });
+          }
+          const principalIndex = Number(formData.get("fotoPrincipal") || 0);
+          if (fotosArray[principalIndex]) fotosArray[principalIndex].principal = true;
+          else if (fotosArray.length) fotosArray[0].principal = true;
+
+          // Leer itinerario desde campos dinámicos
+          const itinerarioArray = [];
+          let diaIndex = 0;
+          while (formData.get(`itinerario_titulo_${diaIndex}`) !== null || formData.get(`itinerario_desc_${diaIndex}`) !== null) {
+            const titulo = String(formData.get(`itinerario_titulo_${diaIndex}`) || "").trim();
+            const descripcion = String(formData.get(`itinerario_desc_${diaIndex}`) || "").trim();
+            if (titulo || descripcion) itinerarioArray.push({ dia: String(diaIndex + 1), titulo, descripcion });
+            diaIndex++;
+          }
+
           const baseTrip = {
             id,
             slug: formData.get("slug") || "",
@@ -5479,22 +5653,31 @@
             titulo: formData.get("titulo") || "",
             duracion: formData.get("duracion") || "",
             temporada: formData.get("temporada") || "",
+            fechaSalida: formData.get("fechaSalida") || "",
+            fechaRegreso: formData.get("fechaRegreso") || "",
+            salidaGarantizada: formData.get("salidaGarantizada") === "on",
             precioDesde: formData.get("precioDesde") || "",
-            precioValor: formData.get("precioValor") || null,
-            moneda: formData.get("moneda") || "ARS",
+            precioValor: formData.get("precioBaseDoble") || null,
+            moneda: formData.get("moneda") || "USD",
+            precioBaseDoble: formData.get("precioBaseDoble") || "",
+            suplementoSingle: formData.get("suplementoSingle") || "",
+            precioMenor: formData.get("precioMenor") || "",
+            condicionVenta: formData.get("condicionVenta") || "",
             categorias: formData.getAll("categorias"),
             descripcionCorta: formData.get("descripcionCorta") || "",
             descripcionLarga: formData.get("descripcionLarga") || "",
             incluye: formData.get("incluye") || "",
             noIncluye: formData.get("noIncluye") || "",
-            fotos: formData.get("fotos") || "",
+            formasPago: formData.get("formasPago") || "",
+            itinerario: itinerarioArray,
+            fotos: fotosArray,
             estado: formData.get("estado") || "borrador",
             destacado: formData.get("destacado") === "on",
             orden: formData.get("orden") || 999
           };
           const nextTrip = normalizeAdminTurismoTrip(baseTrip);
           nextTrip.slug = uniqueAdminTurismoSlug(nextTrip.slug, id);
-          nextTrip.fotos = normalizeAdminTurismoPhotos(baseTrip.fotos, formData.get("fotoPrincipal") || 0);
+          nextTrip.fotos = fotosArray.length ? fotosArray : normalizeAdminTurismoPhotos(baseTrip.fotos);
           const existingIndex = adminTurismoTrips.findIndex((trip) => trip.id === id);
           if (existingIndex >= 0) {
             adminTurismoTrips[existingIndex] = nextTrip;

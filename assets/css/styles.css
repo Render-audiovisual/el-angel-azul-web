@@ -4915,6 +4915,165 @@
         align-self: start;
       }
 
+      .admin-turismo-required {
+        color: #c0392b;
+        font-weight: 900;
+      }
+
+      /* --- Fotos con preview --- */
+      .admin-turismo-fotos-list {
+        display: grid;
+        gap: 12px;
+      }
+
+      .admin-turismo-foto-row {
+        align-items: flex-start;
+        background: #f7fbfe;
+        border: 1px solid #d9e7ef;
+        border-radius: 12px;
+        display: grid;
+        gap: 12px;
+        grid-template-columns: 90px 1fr auto;
+        padding: 12px;
+      }
+
+      .admin-turismo-foto-row--new {
+        border-style: dashed;
+      }
+
+      .admin-turismo-foto-preview {
+        align-items: center;
+        background: #e8f0f5;
+        border-radius: 8px;
+        display: flex;
+        height: 70px;
+        justify-content: center;
+        overflow: hidden;
+        width: 90px;
+      }
+
+      .admin-turismo-foto-preview img {
+        height: 100%;
+        object-fit: cover;
+        width: 100%;
+      }
+
+      .admin-turismo-foto-preview--empty {
+        color: #8fa5b0;
+        font-size: 0.78rem;
+        font-weight: 700;
+      }
+
+      .admin-turismo-foto-error {
+        align-items: center;
+        color: #8f1f1f;
+        display: flex;
+        font-size: 0.72rem;
+        font-weight: 800;
+        height: 100%;
+        justify-content: center;
+        text-align: center;
+        width: 100%;
+      }
+
+      .admin-turismo-foto-fields {
+        display: grid;
+        gap: 8px;
+      }
+
+      .admin-turismo-foto-url {
+        font-size: 0.85rem;
+      }
+
+      .admin-turismo-foto-principal {
+        align-items: center;
+        color: #355366;
+        display: flex;
+        font-size: 0.82rem;
+        font-weight: 700;
+        gap: 6px;
+      }
+
+      .admin-turismo-foto-remove {
+        background: transparent;
+        border: none;
+        color: #8f1f1f;
+        cursor: pointer;
+        font-size: 1.4rem;
+        line-height: 1;
+        padding: 4px 8px;
+      }
+
+      .admin-turismo-primary-button {
+        background: #0d69a1;
+        border: none;
+        border-radius: 10px;
+        color: #fff;
+        cursor: pointer;
+        font: inherit;
+        font-weight: 800;
+        padding: 9px 14px;
+        white-space: nowrap;
+      }
+
+      .admin-turismo-secondary-button {
+        background: transparent;
+        border: 1px solid #a9bdc7;
+        border-radius: 10px;
+        color: #10202b;
+        cursor: pointer;
+        font: inherit;
+        font-weight: 700;
+        padding: 9px 14px;
+      }
+
+      /* --- Itinerario --- */
+      .admin-turismo-itinerario-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .admin-turismo-itinerario-row {
+        align-items: flex-start;
+        background: #f7fbfe;
+        border: 1px solid #d9e7ef;
+        border-radius: 12px;
+        display: grid;
+        gap: 10px;
+        grid-template-columns: 32px 1fr auto;
+        padding: 12px;
+      }
+
+      .admin-turismo-itinerario-num {
+        align-items: center;
+        background: #0d69a1;
+        border-radius: 50%;
+        color: #fff;
+        display: flex;
+        font-size: 0.78rem;
+        font-weight: 900;
+        height: 32px;
+        justify-content: center;
+        min-width: 32px;
+        width: 32px;
+      }
+
+      .admin-turismo-itinerario-fields {
+        display: grid;
+        gap: 8px;
+      }
+
+      @media (max-width: 620px) {
+        .admin-turismo-foto-row {
+          grid-template-columns: 70px 1fr auto;
+        }
+
+        .admin-turismo-foto-preview {
+          height: 56px;
+          width: 70px;
+        }
+      }
+
       .admin-turismo-side-panel {
         align-self: start;
         display: grid;
