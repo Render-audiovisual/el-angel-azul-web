@@ -10,7 +10,11 @@ const SPREADSHEET_ID = process.env.GOOGLE_SHEETS_SPREADSHEET_ID ||
   "17MlFV1VB32PUXm-J7wSocBRDxmepcsmbwRwJa2cGDnI";
 const CREDENTIALS_PATH = process.env.GOOGLE_APPLICATION_CREDENTIALS ||
   "/root/.openclaw/credentials/google-sheets-service-account.json";
-const GOOGLE_SHEETS_SERVICE_ACCOUNT_JSON = process.env.GOOGLE_SHEETS_SERVICE_ACCOUNT_JSON || "";
+const GOOGLE_SHEETS_CREDENTIALS_JSON =
+  process.env.GOOGLE_SHEETS_CREDENTIALS ||
+  process.env.GOOGLE_SHEETS_SERVICE_ACCOUNT_JSON ||
+  process.env.GOOGLE_SERVICE_ACCOUNT_JSON ||
+  "";
 const ADMIN_SESSION_COOKIE = "eaa_admin_session";
 const ADMIN_SESSION_TTL_MS = 8 * 60 * 60 * 1000;
 const ADMIN_USERS = {
@@ -113,8 +117,13 @@ function readBody(req) {
 }
 
 function credentials() {
-  if (GOOGLE_SHEETS_SERVICE_ACCOUNT_JSON) {
-    return JSON.parse(GOOGLE_SHEETS_SERVICE_ACCOUNT_JSON);
+  if (GOOGLE_SHEETS_CREDENTIALS_JSON) {
+    return JSON.parse(GOOGLE_SHEETS_CREDENTIALS_JSON);
+  }
+  if (!fs.existsSync(CREDENTIALS_PATH)) {
+    throw new Error(
+      "Credenciales de Google Sheets no configuradas. En Railway cargar GOOGLE_SHEETS_CREDENTIALS o GOOGLE_SHEETS_SERVICE_ACCOUNT_JSON con el JSON completo de la service account."
+    );
   }
   return JSON.parse(fs.readFileSync(CREDENTIALS_PATH, "utf8"));
 }

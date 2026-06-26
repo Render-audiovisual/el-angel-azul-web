@@ -3038,6 +3038,13 @@
         await updateFichaAdhesionStatus(id, "rechazada", { motivoRechazo }, "Guardado en Google Sheets. Ficha rechazada.");
       }
 
+      async function markFichaAdhesionStatus(id, estado, message) {
+        adminFichasSelectedId = id;
+        if (estado === "observada") adminFichasFilter = "observadas";
+        if (estado === "duplicada") adminFichasFilter = "duplicadas";
+        await updateFichaAdhesionStatus(id, estado, {}, message);
+      }
+
       function fichaAssignmentContext(ficha = {}) {
         const assignment = ficha.asignacionGrupo || {};
         const levelOptions = uniqueValues(adminPasajerosDemo, "nivel");
@@ -3054,8 +3061,11 @@
           group.viaje === viaje &&
           group.colegio === colegio
         ));
-        const grupoId = assignment.grupoId && groupOptions.some((group) => group.id === assignment.grupoId)
-          ? assignment.grupoId
+        const assignedGrupoId = String(assignment.grupoId || ficha.grupoAsignadoId || ficha.grupo_id || "").trim();
+        const assignedGroup = assignedGrupoId ? adminPasajerosDemo.find((group) => group.id === assignedGrupoId) || null : null;
+        const assignedGroupMatchesContext = Boolean(assignedGroup && groupOptions.some((group) => group.id === assignedGrupoId));
+        const grupoId = assignedGroupMatchesContext
+          ? assignedGrupoId
           : groupOptions[0]?.id || "";
         const selectedGroup = adminPasajerosDemo.find((group) => group.id === grupoId) || null;
         const contractOptions = adminContratoOptionsForGroup(grupoId);
@@ -3063,7 +3073,7 @@
         const selectedContract = contractOptions.find((contract) => contract.id === rawContratoId) || null;
         const contratoId = selectedContract?.id || "";
         const codigoContrato = selectedContract?.codigo_contrato || assignment.codigoContrato || ficha.codigoContrato || ficha.codigo_contrato || ficha.numeroContrato || ficha.administracion?.contrato || "";
-        return { nivel, viaje, colegio, grupoId, selectedGroup, contratoId, codigoContrato, selectedContract, contractOptions, viajeOptions, colegioOptions, groupOptions };
+        return { nivel, viaje, colegio, grupoId, selectedGroup, assignedGrupoId, assignedGroup, assignedGroupMatchesContext, contratoId, codigoContrato, selectedContract, contractOptions, viajeOptions, colegioOptions, groupOptions };
       }
 
       async function saveFichaAssignment(id, patch = {}) {
@@ -3153,22 +3163,141 @@
         `;
       }
 
-      function fichaApprovalChecklist(ficha) {
+      function normalizeFichaDni(value = "") {
+        return String(value || "").replace(/\D+/g, "");
+      }
+
+      function fichaResponsablePhone(ficha = {}) {
+        return String(ficha.responsableCelular || ficha.domicilioCelular || ficha.responsableTelefono || ficha.domicilioTelefono || "").trim();
+      }
+
+      function fichaRequiredMissingFields(ficha = {}) {
         const context = fichaAssignmentContext(ficha);
-        const dni = String(ficha.pasajeroNumeroDocumento || ficha.pasajeroDni || "").trim();
-        const fichaMedica = normalizeYesNoStatus(ficha.fichaMedicaEstado || ficha.fichaMedica || ficha.documentacionEstado);
-        const fichaAdhesion = normalizeYesNoStatus(ficha.autorizacionEstado || ficha.firma || ficha.documentacionEstado || "Sí");
+        const missing = [];
+        if (!String(ficha.pasajeroNombre || "").trim()) missing.push("nombre pasajero");
+        if (!normalizeFichaDni(ficha.pasajeroNumeroDocumento || ficha.pasajeroDni)) missing.push("DNI pasajero");
+        if (!String(ficha.responsableNombre || "").trim()) missing.push("nombre responsable");
+        if (!normalizeFichaDni(ficha.responsableNumeroDocumento || ficha.responsableDni)) missing.push("DNI responsable");
+        if (!fichaResponsablePhone(ficha)) missing.push("teléfono o celular responsable");
+        if (!String(ficha.responsableParentesco || ficha.vinculo || "").trim()) missing.push("vínculo");
+        if (!context.contratoId) missing.push("contrato");
+        if (!context.assignedGrupoId || !context.assignedGroup || !context.assignedGroupMatchesContext) missing.push("grupo");
+        return missing;
+      }
+
+      function fichaDuplicateMatches(ficha = {}) {
+        const dni = normalizeFichaDni(ficha.pasajeroNumeroDocumento || ficha.pasajeroDni);
+        if (!dni) return { passenger: [], ficha: [] };
+        const passenger = adminPasajerosRows()
+          .filter(({ passenger: item }) => normalizeFichaDni(item.dni) === dni)
+          .map(({ passenger: item, group }) => ({
+            name: item.nombre || "Pasajero existente",
+            detail: `${group?.colegio || "Grupo"} · ${item.codigoContrato || item.codigo_contrato || "Contrato pendiente"}`
+          }));
+        const fichaMatches = loadFichasAdhesionDemo()
+          .filter((item) => item.id !== ficha.id)
+          .filter((item) => ["pendiente", "revisada", "observada", "duplicada", "aprobada"].includes(item.estadoRevision || "pendiente"))
+          .filter((item) => normalizeFichaDni(item.pasajeroNumeroDocumento || item.pasajeroDni) === dni)
+          .map((item) => ({
+            name: item.pasajeroNombre || "Otra ficha",
+            detail: `${item.estadoRevision || "pendiente"} · ${item.codigoContrato || item.numeroContrato || "Contrato pendiente"}`
+          }));
+        return { passenger, ficha: fichaMatches };
+      }
+
+      function fichaValidationResult(ficha = {}) {
+        const context = fichaAssignmentContext(ficha);
+        const contract = context.selectedContract || (context.contratoId ? contractById(context.contratoId, context.grupoId) : null);
+        const contractState = String(contract?.estado || "").trim() || "Sin estado";
+        const contractFound = Boolean(context.contratoId && contract);
+        const contractActive = contractFound && contractState === "Activo";
+        const groupFound = Boolean(context.assignedGrupoId && context.assignedGroup && context.assignedGroupMatchesContext);
+        const duplicates = fichaDuplicateMatches(ficha);
+        const dniDuplicate = duplicates.passenger.length > 0 || duplicates.ficha.length > 0;
+        const missingFields = fichaRequiredMissingFields(ficha);
+        const dataComplete = missingFields.length === 0;
+        let suggested = "Lista para aprobar";
+        if ((ficha.estadoRevision || "") === "duplicada") {
+          suggested = "Duplicada";
+        } else if (!contractFound || !groupFound || !contractActive) {
+          suggested = "Bloqueada";
+        } else if (dniDuplicate) {
+          suggested = "Duplicada";
+        } else if (!dataComplete) {
+          suggested = "Observada";
+        }
+        return {
+          context,
+          contract,
+          contractFound,
+          contractActive,
+          contractState,
+          groupFound,
+          dniDuplicate,
+          duplicates,
+          dataComplete,
+          missingFields,
+          suggested,
+          canApprove: suggested === "Lista para aprobar"
+        };
+      }
+
+      function validationYesNo(ok) {
+        return ok ? "Sí" : "No";
+      }
+
+      function renderFichaValidationResult(ficha) {
+        const result = fichaValidationResult(ficha);
+        const group = result.groupFound ? result.context.assignedGroup : null;
+        const duplicateItems = [
+          ...result.duplicates.passenger.map((item) => `pasajero existente: ${item.name} (${item.detail})`),
+          ...result.duplicates.ficha.map((item) => `otra ficha pendiente/aprobada: ${item.name} (${item.detail})`)
+        ];
+        return `
+          <div class="admin-fichas-approval-checklist" aria-label="Resultado de validación">
+            <strong>Resultado de validación</strong>
+            <ul>
+              <li class="${result.contractFound ? "is-ok" : "is-missing"}">
+                <span aria-hidden="true">${result.contractFound ? "✓" : "!"}</span>
+                Contrato encontrado: ${validationYesNo(result.contractFound)}
+                <small>Código: ${escapeHtml(result.context.codigoContrato || "Pendiente")} · Estado: ${escapeHtml(result.contractState)}</small>
+              </li>
+              <li class="${result.groupFound ? "is-ok" : "is-missing"}">
+                <span aria-hidden="true">${result.groupFound ? "✓" : "!"}</span>
+                Grupo encontrado: ${validationYesNo(result.groupFound)}
+                <small>${escapeHtml(group ? `${group.colegio} · ${group.viaje} · ${group.curso} ${group.division}` : "Grupo pendiente")}</small>
+              </li>
+              <li class="${!result.dniDuplicate ? "is-ok" : "is-missing"}">
+                <span aria-hidden="true">${!result.dniDuplicate ? "✓" : "!"}</span>
+                DNI no duplicado: ${validationYesNo(!result.dniDuplicate)}
+                ${duplicateItems.length ? `<small>${escapeHtml(duplicateItems.join(" | "))}</small>` : ""}
+              </li>
+              <li class="${result.dataComplete ? "is-ok" : "is-missing"}">
+                <span aria-hidden="true">${result.dataComplete ? "✓" : "!"}</span>
+                Datos completos: ${validationYesNo(result.dataComplete)}
+                ${result.missingFields.length ? `<small>Falta: ${escapeHtml(result.missingFields.join(", "))}</small>` : ""}
+              </li>
+            </ul>
+            <div class="admin-fichas-assigned-note">
+              <span>Estado sugerido</span>
+              <strong>${escapeHtml(result.suggested)}</strong>
+            </div>
+          </div>
+        `;
+      }
+
+      function fichaApprovalChecklist(ficha) {
+        const result = fichaValidationResult(ficha);
         return [
-          { key: "dni", label: "DNI cargado", ok: Boolean(dni) },
-          { key: "grupo", label: "Grupo asignado", ok: Boolean(ficha.asignacionGrupo?.grupoId && context.selectedGroup) },
-          { key: "contrato", label: "Contrato asignado", ok: Boolean(context.contratoId) },
-          { key: "medica", label: "Ficha médica", ok: fichaMedica === "Sí" },
-          { key: "adhesion", label: "Ficha de adhesión", ok: fichaAdhesion === "Sí" }
+          { key: "contrato", label: "Contrato activo", ok: result.contractFound && result.contractActive },
+          { key: "grupo", label: "Grupo válido", ok: result.groupFound },
+          { key: "dni", label: "DNI no duplicado", ok: !result.dniDuplicate && Boolean(normalizeFichaDni(ficha.pasajeroNumeroDocumento || ficha.pasajeroDni)) },
+          { key: "data", label: "Datos mínimos completos", ok: result.dataComplete }
         ];
       }
 
       function canApproveFicha(ficha) {
-        return fichaApprovalChecklist(ficha).every((item) => item.ok);
+        return fichaValidationResult(ficha).canApprove && fichaApprovalChecklist(ficha).every((item) => item.ok);
       }
 
       function renderFichaApprovalChecklist(ficha) {
@@ -3204,12 +3333,14 @@
             </div>
           `;
         }
-        if (estadoRevision === "revisada") {
+        if (["revisada", "observada", "duplicada"].includes(estadoRevision)) {
           return `
             <div class="admin-fichas-actions">
-              <button type="button" data-ficha-save-assignment="${escapeHtml(ficha.id)}">Asignar grupo y contrato</button>
+              <button type="button" data-ficha-save-assignment="${escapeHtml(ficha.id)}">Guardar asignación validada</button>
+              <button type="button" data-ficha-observar="${escapeHtml(ficha.id)}">Marcar observada</button>
+              <button type="button" data-ficha-duplicada="${escapeHtml(ficha.id)}">Marcar duplicada</button>
+              <button type="button" data-ficha-rechazar="${escapeHtml(ficha.id)}">Rechazar con motivo</button>
               <button type="button" data-ficha-aprobar="${escapeHtml(ficha.id)}" ${approvalEnabled ? "" : "disabled"}>Aprobar y crear pasajero</button>
-              <button type="button" data-ficha-rechazar="${escapeHtml(ficha.id)}">Rechazar</button>
             </div>
           `;
         }
@@ -3254,7 +3385,7 @@
         const fichaMedica = normalizeYesNoStatus(ficha.fichaMedicaEstado || ficha.fichaMedica || ficha.documentacionEstado);
         const fichaAdhesion = normalizeYesNoStatus(ficha.autorizacionEstado || ficha.firma || ficha.documentacionEstado || "Sí");
         const estadoRevision = ficha.estadoRevision || "pendiente";
-        const estadoClass = estadoRevision === "aprobada" ? "is-ok" : estadoRevision === "rechazada" ? "is-alert" : "is-pending";
+        const estadoClass = estadoRevision === "aprobada" ? "is-ok" : ["rechazada", "duplicada"].includes(estadoRevision) ? "is-alert" : "is-pending";
         const assignmentColumn = estadoRevision === "aprobada" ? renderFichaApprovedColumn(ficha) : `
               <article class="admin-fichas-detail-card admin-fichas-detail-card--wide">
                 <h3>Asignar grupo y contrato</h3>
@@ -3264,6 +3395,7 @@
                   <strong>${escapeHtml(context.selectedGroup ? `${context.selectedGroup.colegio} · ${context.selectedGroup.curso} ${context.selectedGroup.division}` : "Pendiente")}</strong>
                   <strong class="admin-fichas-contract-code">${escapeHtml(context.codigoContrato || "Contrato pendiente")}</strong>
                 </div>
+                ${renderFichaValidationResult(ficha)}
                 ${renderFichaApprovalChecklist(ficha)}
                 ${renderFichaActionButtons(ficha)}
               </article>
@@ -3326,6 +3458,12 @@
           renderAdminFichasRecibidas();
           return;
         }
+        const validation = fichaValidationResult(ficha);
+        if (!validation.canApprove) {
+          adminFichasMessage = `No se puede aprobar: estado sugerido ${validation.suggested}. Revisá el Resultado de validación.`;
+          renderAdminFichasRecibidas();
+          return;
+        }
         if (!canApproveFicha(ficha)) {
           adminFichasMessage = "Faltan validaciones para aprobar. Revisá el checklist visible.";
           renderAdminFichasRecibidas();
@@ -3348,14 +3486,14 @@
           renderAdminFichasRecibidas();
           return;
         }
-        const dni = String(ficha.pasajeroNumeroDocumento || ficha.pasajeroDni || "").trim();
+        const dni = normalizeFichaDni(ficha.pasajeroNumeroDocumento || ficha.pasajeroDni);
         if (!dni) {
           adminFichasMessage = "La ficha no tiene DNI de pasajero. Revisala antes de aprobar.";
           renderAdminFichasRecibidas();
           return;
         }
         const duplicatedDni = adminPasajerosDemo.some((adminGroup) => (
-          adminGroup.pasajeros.some((passenger) => String(passenger.dni || "").trim() === dni)
+          adminGroup.pasajeros.some((passenger) => normalizeFichaDni(passenger.dni) === dni)
         ));
         if (duplicatedDni) {
           adminFichasMessage = "Ese DNI ya existe en pasajeros. No se creó un pasajero duplicado.";
@@ -3805,7 +3943,7 @@
         }
         return fichas.map((ficha) => {
           const estadoRevision = ficha.estadoRevision || "pendiente";
-          const estadoClass = estadoRevision === "aprobada" ? "is-ok" : estadoRevision === "rechazada" ? "is-alert" : "is-pending";
+          const estadoClass = estadoRevision === "aprobada" ? "is-ok" : ["rechazada", "duplicada"].includes(estadoRevision) ? "is-alert" : "is-pending";
           const pasajeroDocumento = ficha.pasajeroNumeroDocumento || ficha.pasajeroDni || "";
           const responsableTelefono = ficha.responsableCelular || ficha.domicilioCelular || ficha.responsableTelefono || ficha.domicilioTelefono || "";
           const numeroContrato = ficha.numeroContrato || ficha.administracion?.contrato || "";
@@ -4319,10 +4457,12 @@
           const estado = ficha.estadoRevision || "pendiente";
           summary[estado] = (summary[estado] || 0) + 1;
           return summary;
-        }, { pendiente: 0, revisada: 0, aprobada: 0, rechazada: 0 });
+        }, { pendiente: 0, revisada: 0, observada: 0, duplicada: 0, aprobada: 0, rechazada: 0 });
         const filterMap = {
           nuevas: { label: "Nuevas", states: ["pendiente"] },
           revision: { label: "En revisión", states: ["revisada"] },
+          observadas: { label: "Observadas", states: ["observada"] },
+          duplicadas: { label: "Duplicadas", states: ["duplicada"] },
           aprobadas: { label: "Aprobadas", states: ["aprobada"] },
           rechazadas: { label: "Rechazadas", states: ["rechazada"] }
         };
@@ -4347,6 +4487,8 @@
             <div class="admin-fichas-flow-summary">
               <span>${fichaSummary.pendiente || 0} nuevas</span>
               <span>${fichaSummary.revisada || 0} en revisión/asignación</span>
+              <span>${fichaSummary.observada || 0} observadas</span>
+              <span>${fichaSummary.duplicada || 0} duplicadas</span>
               <span>${fichaSummary.aprobada || 0} aprobadas</span>
               <span>${fichaSummary.rechazada || 0} rechazadas</span>
               <span>${fichasConPasajeroExistente} con DNI ya cargado</span>
@@ -5542,6 +5684,16 @@
             renderAdminFichasRecibidas();
           });
         });
+        document.querySelectorAll("[data-ficha-observar]").forEach((button) => {
+          button.addEventListener("click", () => {
+            markFichaAdhesionStatus(button.dataset.fichaObservar, "observada", "Guardado en Google Sheets. Ficha marcada como observada.");
+          });
+        });
+        document.querySelectorAll("[data-ficha-duplicada]").forEach((button) => {
+          button.addEventListener("click", () => {
+            markFichaAdhesionStatus(button.dataset.fichaDuplicada, "duplicada", "Guardado en Google Sheets. Ficha marcada como duplicada.");
+          });
+        });
         document.querySelectorAll("[data-ficha-revisar]").forEach((button) => {
           button.addEventListener("click", () => viewFichaAdhesionDetail(button.dataset.fichaRevisar));
         });
@@ -6697,95 +6849,90 @@
                 <div class="inscripcion-hero-copy">
                   <span>Inscripción</span>
                   <h1>Iniciá tu inscripción</h1>
-                  <p>Completá los datos principales y el equipo de El Ángel Azul continúa el alta del pasajero.</p>
+                  <p>Buscá tu contrato activo y completá la ficha digital para que administración la revise.</p>
                 </div>
               </div>
               <div class="inscripcion-hero-steps">
-                <h2>Simple y directo</h2>
+                <h2>Pasos</h2>
                 <ul>
-                  <li>Elegís el viaje</li>
-                  <li>Cargás colegio y curso</li>
-                  <li>Dejás un contacto</li>
-                  <li>El equipo confirma los próximos pasos</li>
+                  <li>Elegís nivel, destino y año</li>
+                  <li>Buscás colegio y curso</li>
+                  <li>Confirmás el contrato activo</li>
+                  <li>Completás y firmás la ficha</li>
                 </ul>
               </div>
             </section>
 
             <section class="portal-empty public-inscripcion-card">
               <div class="inscripcion-section-heading">
-                <span>Datos para iniciar</span>
-                <h2>Formulario de inscripción</h2>
-                <p>Este formulario es corto para evitar confusiones. Después el equipo confirma datos, ficha y documentación necesaria.</p>
+                <span>Inscripción oficial</span>
+                <h2>Buscar contrato activo</h2>
+                <p>Para continuar necesitás encontrar el contrato activo de tu colegio y curso. Si no aparece, podés pedir ayuda por WhatsApp.</p>
               </div>
-              <form data-public-inscripcion-form>
-                <div class="public-inscripcion-grid">
-                  <label>Viaje
-                    <select name="viaje" required>
-                      <option value="">Seleccionar viaje</option>
-                      <option>Primaria Carlos Paz</option>
-                      <option>Secundaria Bariloche</option>
-                      <option>Secundaria Carlos Paz</option>
-                    </select>
-                  </label>
-                  <label>Año estimado
-                    <select name="anio" required>
-                      <option>2026</option>
-                      <option>2027</option>
-                      <option>2028</option>
-                    </select>
-                  </label>
-                  <label>Nombre del pasajero
-                    <input name="pasajero" placeholder="Nombre y apellido" required>
-                  </label>
-                  <label>Colegio
-                    <input name="colegio" placeholder="Ej: Colegio San Martín" required>
-                  </label>
-                  <label>Curso / División
-                    <input name="curso" placeholder="Ej: 5to B" required>
-                  </label>
-                  <label>Nombre del adulto responsable
-                    <input name="responsable" placeholder="Nombre y apellido" required>
-                  </label>
-                  <label>Teléfono / WhatsApp
-                    <input name="telefono" placeholder="Ej: 3794 00-0000" required>
-                  </label>
-                  <label>Email
-                    <input type="email" name="email" placeholder="nombre@email.com">
-                  </label>
+
+              <form data-inscripcion-form>
+                <div hidden>
+                  <select data-inscripcion-nivel>
+                    <option>Primaria</option>
+                    <option selected>Secundaria</option>
+                  </select>
+                  <select data-inscripcion-destino></select>
+                  <select data-inscripcion-anio>
+                    ${inscripcionAnios.map((anio) => `<option>${escapeHtml(anio)}</option>`).join("")}
+                  </select>
                 </div>
-                <label>Comentario
-                  <textarea name="comentario" rows="4" placeholder="Aclaraciones, dudas o cantidad de pasajeros del grupo"></textarea>
-                </label>
+
+                <div class="inscripcion-progress">
+                  <span data-inscripcion-progress="1">Nivel</span>
+                  <span data-inscripcion-progress="2">Destino</span>
+                  <span data-inscripcion-progress="3">Año</span>
+                  <span data-inscripcion-progress="4">Colegio</span>
+                  <span data-inscripcion-progress="5">Confirmación</span>
+                </div>
+
+                <div data-inscripcion-step="1">
+                  <h3>Elegí el nivel</h3>
+                  <div class="inscripcion-option-group" data-inscripcion-options="nivel"></div>
+                </div>
+
+                <div data-inscripcion-step="2" hidden>
+                  <h3>Elegí el destino</h3>
+                  <div class="inscripcion-option-group" data-inscripcion-options="destino"></div>
+                </div>
+
+                <div data-inscripcion-step="3" hidden>
+                  <h3>Elegí el año del viaje</h3>
+                  <div class="inscripcion-option-group" data-inscripcion-options="anio"></div>
+                </div>
+
+                <div data-inscripcion-step="4" hidden>
+                  <h3>Buscá tu colegio y curso</h3>
+                  <div class="public-inscripcion-grid">
+                    <label>Colegio
+                      <input data-inscripcion-colegio placeholder="Ej: San José">
+                    </label>
+                    <label>Curso / División
+                      <input data-inscripcion-curso placeholder="Ej: 5to B">
+                    </label>
+                  </div>
+                  <div data-inscripcion-contract-result class="inscripcion-contract-result"></div>
+                </div>
+
+                <div data-inscripcion-step="5" hidden>
+                  <div data-inscripcion-summary></div>
+                </div>
+
+                <aside data-inscripcion-context-summary class="inscripcion-context-summary"></aside>
+                <div class="ficha-adhesion-error" data-inscripcion-error hidden></div>
                 <div class="inscripcion-step-actions">
-                  <button type="submit">Enviar consulta de inscripción</button>
+                  <button type="button" data-inscripcion-back>Volver</button>
+                  <button type="button" data-inscripcion-next>Siguiente</button>
                 </div>
               </form>
             </section>
           </div>
         `;
-        bindPublicInscripcion();
-      }
-
-      function bindPublicInscripcion() {
-        const form = document.querySelector("[data-public-inscripcion-form]");
-        if (!form) return;
-        form.addEventListener("submit", (event) => {
-          event.preventDefault();
-          const data = new FormData(form);
-          const message = [
-            "Hola, quiero iniciar una inscripción en El Ángel Azul.",
-            `Viaje: ${data.get("viaje") || "Pendiente"}`,
-            `Año: ${data.get("anio") || "Pendiente"}`,
-            `Pasajero: ${data.get("pasajero") || "Pendiente"}`,
-            `Colegio: ${data.get("colegio") || "Pendiente"}`,
-            `Curso/división: ${data.get("curso") || "Pendiente"}`,
-            `Adulto responsable: ${data.get("responsable") || "Pendiente"}`,
-            `Teléfono: ${data.get("telefono") || "Pendiente"}`,
-            `Email: ${data.get("email") || "Pendiente"}`,
-            `Comentario: ${data.get("comentario") || "Sin comentario"}`
-          ].join("\n");
-          window.open(whatsappLink(message), "_blank", "noopener");
-        });
+        bindInscripcion();
       }
 
       function bindInscripcion() {
@@ -6869,7 +7016,7 @@
             contractResult.className = "inscripcion-contract-result is-ok";
             contractResult.innerHTML = `
               ${renderConfirmedContract(matchState.selected)}
-              <button type="button" data-inscripcion-confirm-contract="${escapeHtml(matchState.selected.contratoId)}">Confirmar y continuar</button>
+              <button type="button" data-inscripcion-confirm-contract="${escapeHtml(matchState.selected.contratoId)}">Completar ficha de adhesión</button>
             `;
             return;
           }
@@ -6882,7 +7029,7 @@
                   <button type="button" data-inscripcion-confirm-contract="${escapeHtml(candidate.contratoId)}">
                     <strong>${escapeHtml(candidate.colegioNombre)}</strong>
                     <span>${escapeHtml(candidate.viaje || candidate.contract.viaje || viaje)} · ${escapeHtml(candidate.cursoDivision || cursoDivision)}</span>
-                    <small>${escapeHtml(candidate.codigoContrato)}</small>
+                    <small>${escapeHtml(candidate.codigoContrato)} · Completar ficha de adhesión</small>
                   </button>
                 `).join("")}
               </div>
@@ -6991,6 +7138,7 @@
             confirmedContrato = selected;
             errorMessage.hidden = true;
             update();
+            form.requestSubmit();
             return;
           }
           if (clearButton) {
@@ -7041,6 +7189,43 @@
         });
         update();
         renderStep();
+      }
+
+      function fichaAdhesionContextFromParams(params = currentHashParams()) {
+        return {
+          nivel: params.get("nivel") || "",
+          destino: params.get("destino") || "",
+          anio: params.get("anio") || "",
+          viaje: params.get("viaje") || "",
+          colegio: params.get("colegio") || "",
+          colegioOriginal: params.get("colegioOriginal") || params.get("colegio_escrito") || params.get("colegio") || "",
+          grupoId: params.get("grupoId") || params.get("grupo_id") || "",
+          contratoId: params.get("contratoId") || params.get("contrato_id") || "",
+          codigoContrato: params.get("codigoContrato") || params.get("codigo_contrato") || params.get("numeroContrato") || "",
+          cursoDivision: params.get("cursoDivision") || params.get("curso_division") || ""
+        };
+      }
+
+      function hasValidFichaAdhesionContext(params = currentHashParams()) {
+        const context = fichaAdhesionContextFromParams(params);
+        const required = [
+          context.nivel,
+          context.destino,
+          context.anio,
+          context.colegio,
+          context.colegioOriginal,
+          context.cursoDivision,
+          context.grupoId,
+          context.contratoId,
+          context.codigoContrato
+        ];
+        if (required.some((value) => !String(value || "").trim())) return false;
+        const group = adminPasajerosDemo.find((item) => item.id === context.grupoId);
+        if (!group) return false;
+        const contract = contractById(context.contratoId, context.grupoId);
+        if (!contract || !isInscripcionContractActive(contract)) return false;
+        if (String(contract.codigo_contrato || contract.codigoContrato || "") !== context.codigoContrato) return false;
+        return true;
       }
 
       async function renderAdminPortal() {
@@ -7179,25 +7364,21 @@
 
       function renderFichaAdhesion(successMessage = "") {
         const contextParams = currentHashParams();
+        const contextData = fichaAdhesionContextFromParams(contextParams);
         const fichaContext = {
-          nivel: contextParams.get("nivel") || "Pendiente de asignar por administración",
-          destino: contextParams.get("destino") || "",
-          anio: contextParams.get("anio") || "",
-          viaje: contextParams.get("viaje") || "Pendiente de asignar por administración",
-          colegio: contextParams.get("colegio") || "Pendiente de asignar por administración",
-          colegioOriginal: contextParams.get("colegioOriginal") || contextParams.get("colegio") || "",
-          grupoId: contextParams.get("grupoId") || "",
-          contratoId: contextParams.get("contratoId") || "",
-          codigoContrato: contextParams.get("codigoContrato") || contextParams.get("numeroContrato") || "",
-          numeroContrato: contextParams.get("numeroContrato") || contextParams.get("codigoContrato") || "",
-          cursoDivision: contextParams.get("cursoDivision") || "Pendiente de asignar por administración"
+          ...contextData,
+          nivel: contextData.nivel || "Pendiente de asignar por administración",
+          viaje: contextData.viaje || "Pendiente de asignar por administración",
+          colegio: contextData.colegio || "Pendiente de asignar por administración",
+          numeroContrato: contextData.codigoContrato,
+          cursoDivision: contextData.cursoDivision || "Pendiente de asignar por administración"
         };
         if (successMessage) {
           document.getElementById("app").innerHTML = `
             <div class="layout ficha-adhesion-layout">
               <section class="ficha-adhesion-panel ficha-adhesion-success-screen">
-                <div class="ficha-adhesion-success ficha-adhesion-success-large">✅ Felicidades, ya te inscribiste.</div>
-                <p>Nos estaremos contactando con vos a la brevedad para continuar el proceso.</p>
+                <div class="ficha-adhesion-success ficha-adhesion-success-large">Recibimos tu ficha correctamente.</div>
+                <p>Queda pendiente de revisión por administración. Te contactaremos si necesitamos validar algún dato.</p>
                 <a class="ficha-adhesion-home-link" href="#/inscripcion">Volver al inicio</a>
               </section>
             </div>
@@ -7398,8 +7579,11 @@
           hasSignature = false;
         });
 
-        form.addEventListener("submit", (event) => {
+        form.addEventListener("submit", async (event) => {
           event.preventDefault();
+          const submitButton = form.querySelector(".ficha-adhesion-submit");
+          if (submitButton?.disabled) return;
+          if (submitButton) submitButton.disabled = true;
           const formData = new FormData(form);
           const responsableTelefono = String(formData.get("responsableTelefono") || "").trim();
           const responsableCelular = String(formData.get("responsableCelular") || "").trim();
@@ -7472,6 +7656,7 @@
             firma: hasSignature ? canvas.toDataURL("image/png") : ""
           };
           const showError = (message) => {
+            if (submitButton) submitButton.disabled = false;
             errorBox.hidden = false;
             errorBox.textContent = message;
           };
@@ -7486,7 +7671,11 @@
 
           const fichas = loadFichasAdhesionDemo();
           fichas.unshift(ficha);
-          saveFichasAdhesionDemo(fichas);
+          const saved = await saveFichasAdhesionDemo(fichas);
+          if (!saved && googleSheetsSyncState.status === "error") {
+            showError("No pudimos guardar la ficha. Intentá nuevamente o consultanos por WhatsApp.");
+            return;
+          }
           renderFichaAdhesion("Ficha enviada correctamente. Queda pendiente de revisión por administración.");
         });
       }
@@ -7550,7 +7739,12 @@
           return;
         }
         if (path === "/inscripcion/ficha-adhesion") {
-          location.replace("#/inscripcion");
+          await hydrateGoogleSheetsData();
+          if (!hasValidFichaAdhesionContext()) {
+            location.replace("#/inscripcion");
+            return;
+          }
+          renderFichaAdhesion();
           return;
         }
         if (path === "/pasajeros/ficha-adhesion") {
