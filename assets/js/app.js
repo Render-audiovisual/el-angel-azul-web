@@ -5967,7 +5967,6 @@
           adminTurismoTrips = [duplicated, ...adminTurismoTrips];
           adminTurismoEditingId = id;
           saveAdminTurismoTripsWithFeedback().finally(() => renderAdminTurismo());
-          renderAdminTurismo();
         });
 
         document.querySelector("[data-admin-deactivate]")?.addEventListener("click", () => {
@@ -6185,8 +6184,9 @@
             adminTurismoTrips.unshift(nextTrip);
           }
           adminTurismoEditingId = id;
-          saveAdminTurismoTrips();
+          // Render inmediato para mostrar el estado guardado, feedback llega async
           renderAdminTurismo();
+          saveAdminTurismoTripsWithFeedback().then(() => renderAdminTurismo()).catch(() => renderAdminTurismo());
         });
       }
 
