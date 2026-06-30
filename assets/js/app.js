@@ -157,7 +157,7 @@
       }
 
       function renderHome() {
-        const trustIcons = ["✈️", "🤝", "💳", "👤"];
+        const trustIcons = ["✈️", "🤝", "💳"];
         document.getElementById("app").innerHTML = `
           <div class="layout home-layout">
             <section class="home-hero">
@@ -166,38 +166,34 @@
                 <h1>El Ángel Azul</h1>
                 <p>Organizamos viajes para estudiantes, familias y grupos con acompañamiento cercano, propuestas claras y atención personalizada desde la consulta hasta el regreso.</p>
 
-                <div class="home-actions">
-                  <a class="primary-action" href="#/turismo">Ver paquetes de Turismo</a>
-                  <a class="secondary-action" href="#/estudiantil">Ver viajes Estudiantiles</a>
+                <div class="home-decision-panel" aria-label="Elegir tipo de viaje">
+                  <div class="home-decision-copy">
+                    <span>Elegí cómo querés viajar</span>
+                    <strong>Dos caminos, una decisión simple.</strong>
+                  </div>
+                  <div class="home-path-selector" aria-label="Servicios principales">
+                    <article class="home-path-card">
+                      <h2>Turismo</h2>
+                      <p>Paquetes nacionales e internacionales para viajar en familia, pareja o grupo.</p>
+                      <a href="#/turismo">Ver paquetes</a>
+                    </article>
+                    <article class="home-path-card">
+                      <h2>Estudiantil</h2>
+                      <p>Viajes para primaria y secundaria con información clara por destino.</p>
+                      <a href="#/estudiantil">Ver estudiantil</a>
+                    </article>
+                  </div>
                 </div>
               </div>
             </section>
 
-            <section class="home-section home-intro">
-              <div>
-                <p class="section-kicker">Quiénes somos</p>
-                <h2>Una empresa de viajes con foco en organización, confianza y acompañamiento.</h2>
+            <section class="home-section home-trust" aria-label="Por qué elegir El Ángel Azul">
+              <div class="home-section-heading">
+                <p class="section-kicker">Por qué elegirnos</p>
+                <h2>${trustSectionData.title}</h2>
               </div>
-              <p>El Ángel Azul acompaña a colegios, familias y viajeros particulares con propuestas turísticas y estudiantiles. La web queda organizada para que cada persona elija rápido qué necesita: mirar paquetes turísticos, conocer viajes estudiantiles o iniciar una inscripción.</p>
-            </section>
-
-            <section class="home-section home-path-selector" aria-label="Servicios principales">
-              <article class="home-path-card">
-                <h2>Turismo</h2>
-                <p>Paquetes nacionales e internacionales con foto, resumen, datos principales y consulta directa.</p>
-                <a href="#/turismo">Ver paquetes de Turismo</a>
-              </article>
-              <article class="home-path-card">
-                <h2>Estudiantil</h2>
-                <p>Viajes para primaria y secundaria con información clara por destino y acceso a inscripción.</p>
-                <a href="#/estudiantil">Ver viajes Estudiantiles</a>
-              </article>
-            </section>
-
-            <section class="home-section home-trust">
-              <h2>${trustSectionData.title}</h2>
-              <div class="items">
-                ${trustSectionData.cards.map((card, index) => `
+              <div class="home-trust-grid">
+                ${trustSectionData.cards.slice(0, 3).map((card, index) => `
                   <article class="item home-trust-card">
                     <span class="home-trust-icon" aria-hidden="true">${trustIcons[index] || "✈️"}</span>
                     <h3>${card.title}</h3>
@@ -490,18 +486,22 @@
                 <span></span>
               </div>
               <div class="turismo-hero-content">
-                <h1>Encontrá tu próximo viaje</h1>
-                <p>Paquetes nacionales e internacionales con asesoramiento personalizado.</p>
+                <p class="turismo-kicker">Turismo nacional e internacional</p>
+                <h1>Encontrá un viaje que cierre con tus fechas, tu grupo y tu presupuesto</h1>
+                <p>Explorá paquetes cargados por El Ángel Azul y consultá por disponibilidad, formas de pago y detalles antes de decidir.</p>
+                <span class="turismo-proof">Asesoramiento personalizado para familias, parejas y grupos.</span>
                 <div class="turismo-hero-actions">
                   <a href="#turismo-catalogo">Ver viajes</a>
+                  <a href="${whatsappLink("Hola, quiero que me asesoren para elegir un viaje turístico con El Ángel Azul.")}" target="_blank" rel="noopener">Pedir asesoramiento</a>
                 </div>
               </div>
             </section>
 
             <section class="turismo-intention-section">
               <div class="catalog-heading">
-                <h2>¿Qué tipo de viaje estás buscando?</h2>
-                <p>Elegí una opción para ver viajes recomendados.</p>
+                <p class="section-kicker">Filtrar opciones</p>
+                <h2>Primero elegí la intención del viaje</h2>
+                <p>Usá estos filtros para ordenar el catálogo según la experiencia que tenés en mente.</p>
               </div>
               <div class="intention-chip-row" aria-label="Selector de intención visual">
                 ${turismoIntentionFilters.map(([value, label], index) => `
@@ -510,11 +510,11 @@
               </div>
             </section>
 
-            <section class="catalog-section">
+            <section class="catalog-section" id="turismo-catalogo">
               <div class="catalog-heading">
                 <p class="section-kicker">Viajes destacados</p>
-                <h2>Opciones para empezar a mirar</h2>
-                <p>Explorá destinos, revisá qué incluye cada viaje y consultá por la opción que te interese.</p>
+                <h2>Opciones disponibles para consultar</h2>
+                <p>Cada ficha muestra destino, duración, precio de referencia e incluye. El cierre final se confirma por WhatsApp.</p>
               </div>
               <div class="package-grid" data-turismo-package-grid>
                 ${packages.map(renderTurismoPackageCard).join("")}
@@ -542,12 +542,15 @@
         const itinerario = Array.isArray(packageItem.itinerario) ? packageItem.itinerario : [];
         const formasPago = Array.isArray(packageItem.formasPago) ? packageItem.formasPago : [];
         const fechasSalida = [packageItem.fechaSalida, packageItem.fechaRegreso].filter(Boolean).join(" al ");
+        const heroImage = packageItem.image?.startsWith("http") || packageItem.image?.startsWith("/")
+          ? packageItem.image
+          : `/${packageItem.image}`;
 
         document.getElementById("app").innerHTML = `
           <div class="layout turismo-layout">
 
             <!-- HERO con imagen de portada -->
-            <section class="package-detail-hero" style="--package-hero-image: url('${packageItem.image}')">
+            <section class="package-detail-hero" style="--package-hero-image: url('${heroImage}')">
               <div class="package-detail-hero-content">
                 <a class="package-back-link" href="#/turismo">← Volver a Turismo</a>
                 <p class="turismo-kicker">${escapeHtml(packageItem.tipo)} · ${escapeHtml(packageItem.temporada)}</p>
@@ -6348,21 +6351,26 @@
             <section class="estudiantil-hero">
               <div class="estudiantil-hero-content">
                 <p class="hero-kicker">Viajes estudiantiles</p>
-                <h1>Elegí el viaje del grupo</h1>
-                <p>Propuestas para primaria y secundaria con información simple, acompañamiento y acceso directo a inscripción.</p>
-                <a href="#/inscripcion">Inscribirse</a>
+                <h1>Información clara para elegir el viaje del curso</h1>
+                <p>Propuestas para primaria y secundaria con destinos separados, datos simples y acceso directo a inscripción cuando el grupo ya está decidido.</p>
+                <div class="estudiantil-hero-actions">
+                  <a href="#viajes-estudiantiles">Ver viajes</a>
+                  <a href="#/inscripcion">Inscribirse</a>
+                </div>
               </div>
             </section>
 
             <section class="student-experience">
-              <h2>Tres opciones principales</h2>
-              <p>Seleccioná la opción que corresponda al curso para ver la información del viaje y avanzar con la inscripción.</p>
+              <p class="section-kicker">Cómo avanzar</p>
+              <h2>Primero encontrá el destino correcto. Después revisá la información y completá la inscripción.</h2>
+              <p>La página separa cada viaje para evitar confusiones entre primaria, secundaria, Bariloche y Carlos Paz.</p>
             </section>
 
-            <section class="student-path-section">
+            <section class="student-path-section" id="viajes-estudiantiles">
               <div class="student-path-heading">
-                <h2>Viajes estudiantiles disponibles</h2>
-                <p>Primaria Carlos Paz, Secundaria Bariloche y Secundaria Carlos Paz.</p>
+                <p class="section-kicker">Viajes disponibles</p>
+                <h2>Elegí la opción que corresponde al grupo</h2>
+                <p>Entrá al viaje para ver la información específica antes de consultar o inscribirte.</p>
               </div>
               <div class="student-path-grid">
                 ${[
@@ -6431,16 +6439,21 @@
                 <p class="hero-kicker">Primaria</p>
                 <h1>Primaria Carlos Paz</h1>
                 <p>Viaje pensado para que el grupo viva una experiencia segura, organizada y acompañada en Carlos Paz.</p>
-                <a href="#/inscripcion">Inscribirse</a>
+                <div class="student-detail-hero-actions">
+                  <a href="#/inscripcion">Inscribirse</a>
+                  <a href="#detalles-del-viaje">Ver detalles</a>
+                </div>
               </div>
             </section>
 
-            <section class="student-detail-experience">
+            <section class="student-detail-experience" id="detalles-del-viaje">
+              <p class="section-kicker">Experiencia</p>
               <h2>${primariaCarlosPazData.experience.title}</h2>
               <p>${primariaCarlosPazData.experience.text}</p>
             </section>
 
             <section class="student-detail-benefits">
+              <p class="section-kicker">Qué incluye la propuesta</p>
               <h2>Beneficios</h2>
               <ul>
                 ${primariaCarlosPazData.benefits.map(benefit => `<li>${benefit}</li>`).join("")}
@@ -6515,12 +6528,16 @@
                 <p class="hero-kicker">Secundaria</p>
                 <h1>Secundaria Bariloche</h1>
                 <p>El viaje de egresados a Bariloche presentado con experiencias, actividades y consulta directa.</p>
-                <a href="#/inscripcion">Inscribirse</a>
+                <div class="student-detail-hero-actions">
+                  <a href="#/inscripcion">Inscribirse</a>
+                  <a href="#experiencias-bariloche">Ver experiencias</a>
+                </div>
               </div>
             </section>
 
-            <section class="bariloche-experiences">
-              <h2>¿QUÉ EXPERIENCIAS TE ESPERAN?</h2>
+            <section class="bariloche-experiences" id="experiencias-bariloche">
+              <p class="section-kicker">Experiencias</p>
+              <h2>Qué experiencias te esperan</h2>
               ${secundariaBarilocheData.experiences.map(renderExperienceCategory).join("")}
             </section>
 
@@ -6544,16 +6561,21 @@
                 <p class="hero-kicker">Secundaria</p>
                 <h1>Secundaria Carlos Paz</h1>
                 <p>Una propuesta estudiantil clara y cercana para grupos de secundaria que eligen Carlos Paz.</p>
-                <a href="#/inscripcion">Inscribirse</a>
+                <div class="student-detail-hero-actions">
+                  <a href="#/inscripcion">Inscribirse</a>
+                  <a href="#detalles-del-viaje">Ver detalles</a>
+                </div>
               </div>
             </section>
 
-            <section class="student-detail-experience">
+            <section class="student-detail-experience" id="detalles-del-viaje">
+              <p class="section-kicker">Experiencia</p>
               <h2>${secundariaCarlosPazData.experience.title}</h2>
               <p>${secundariaCarlosPazData.experience.text}</p>
             </section>
 
             <section class="student-detail-benefits">
+              <p class="section-kicker">Qué incluye la propuesta</p>
               <h2>Beneficios</h2>
               <ul>
                 ${secundariaCarlosPazData.benefits.map(benefit => `<li>${benefit}</li>`).join("")}
@@ -6574,25 +6596,39 @@
 
       function renderNosotros() {
         document.getElementById("app").innerHTML = `
-          <div class="layout">
-            <section>
-              <p>Institucional V0</p>
-              <img class="brand-logo" src="${companyData.logo}" alt="El Ángel Azul">
-              <h1>El Ángel Azul</h1>
-              <p>Espacio preparado para cargar la información institucional real de la empresa.</p>
+          <div class="layout institutional-layout">
+            <section class="institutional-hero">
+              <div>
+                <p class="section-kicker">Quiénes somos</p>
+                <h1>El Ángel Azul</h1>
+                <p>Una empresa de viajes enfocada en turismo y experiencias estudiantiles, con atención cercana desde la consulta hasta la inscripción.</p>
+                <div class="institutional-actions">
+                  <a href="#/turismo">Ver Turismo</a>
+                  <a href="#/estudiantil">Ver Estudiantil</a>
+                </div>
+              </div>
+              <img class="institutional-logo" src="${companyData.logo}" alt="El Ángel Azul">
             </section>
 
-            <section>
-              <h2>Identidad visual</h2>
-              <p>Colores aplicados: azul ${companyData.colors.blue} y rosa ${companyData.colors.pink}.</p>
-              <img class="asset-image" src="${companyData.brandingImages.turismo}" alt="El Ángel Azul Turismo">
+            <section class="institutional-split">
+              <article>
+                <p class="section-kicker">Turismo</p>
+                <h2>Viajes para familias, parejas y grupos</h2>
+                <p>Paquetes nacionales e internacionales con consulta directa y acompañamiento para elegir la mejor opción.</p>
+                <a href="#/turismo">Explorar paquetes</a>
+              </article>
+              <article>
+                <p class="section-kicker">Estudiantil</p>
+                <h2>Información clara para colegios y cursos</h2>
+                <p>Propuestas separadas por destino y nivel para que cada grupo encuentre rápido su viaje correspondiente.</p>
+                <a href="#/estudiantil">Ver viajes estudiantiles</a>
+              </article>
             </section>
 
-            <section>
-              <h2>Información pendiente</h2>
-              <ul>
-                ${companyData.pending.map(item => `<li>${item}</li>`).join("")}
-              </ul>
+            <section class="institutional-contact-strip">
+              <h2>Consultas y atención</h2>
+              <p>Para dudas sobre viajes, disponibilidad o inscripción, el canal principal es WhatsApp.</p>
+              <a href="${whatsappLink("Hola, quiero consultar por El Ángel Azul.")}" target="_blank" rel="noopener">Consultar por WhatsApp</a>
             </section>
           </div>
         `;
@@ -6600,25 +6636,41 @@
 
       function renderContacto() {
         document.getElementById("app").innerHTML = `
-          <div class="layout">
-            <section>
-              <p>Contacto V0</p>
-              <img class="brand-logo" src="${companyData.logo}" alt="El Ángel Azul">
-              <h1>Contacto</h1>
-              <p>Canales preparados para consultas de Turismo y Estudiantil.</p>
-              <a href="${whatsappLink("Hola, quiero consultar por un viaje con El Ángel Azul.")}" target="_blank" rel="noopener">Consultar por WhatsApp</a>
+          <div class="layout institutional-layout">
+            <section class="institutional-hero contact-hero">
+              <div>
+                <p class="section-kicker">Contacto</p>
+                <h1>Hablemos de tu próximo viaje</h1>
+                <p>Escribinos para consultar por paquetes turísticos, viajes estudiantiles, inscripción o disponibilidad.</p>
+                <div class="institutional-actions">
+                  <a href="${whatsappLink("Hola, quiero consultar por un viaje con El Ángel Azul.")}" target="_blank" rel="noopener">Consultar por WhatsApp</a>
+                  <a href="#/inscripcion">Ir a inscripción</a>
+                </div>
+              </div>
+              <img class="institutional-logo" src="${companyData.logo}" alt="El Ángel Azul">
             </section>
 
-            <section>
-              <h2>Redes sociales</h2>
-              <nav aria-label="Redes sociales">
-                <a href="${companyData.instagram.estudiantil}" target="_blank" rel="noopener">Instagram Estudiantil</a>
-                <a href="${companyData.instagram.turismo}" target="_blank" rel="noopener">Instagram Turismo</a>
-              </nav>
+            <section class="contact-options">
+              <article>
+                <p class="section-kicker">WhatsApp</p>
+                <h2>Consultas directas</h2>
+                <p>Para disponibilidad, formas de pago, contratos o dudas sobre el viaje.</p>
+                <a href="${whatsappLink("Hola, quiero consultar por un viaje con El Ángel Azul.")}" target="_blank" rel="noopener">Enviar mensaje</a>
+              </article>
+              <article>
+                <p class="section-kicker">Instagram</p>
+                <h2>Redes sociales</h2>
+                <p>Seguinos según el tipo de viaje que estás buscando.</p>
+                <div class="contact-socials">
+                  <a href="${companyData.instagram.estudiantil}" target="_blank" rel="noopener">Estudiantil</a>
+                  <a href="${companyData.instagram.turismo}" target="_blank" rel="noopener">Turismo</a>
+                </div>
+              </article>
             </section>
 
-            <section>
+            <section class="institutional-contact-strip">
               <h2>Marca</h2>
+              <p>${companyData.address}</p>
               <img class="brand-mark" src="${companyData.mark}" alt="">
             </section>
           </div>
@@ -6848,17 +6900,18 @@
                 <img src="https://drive.google.com/thumbnail?id=1obNcUj6dt1hOPHOainWFXlpv0fgIY957&sz=w1600" alt="Grupo de estudiantes de viaje">
                 <div class="inscripcion-hero-copy">
                   <span>Inscripción</span>
-                  <h1>Iniciá tu inscripción</h1>
-                  <p>Buscá tu contrato activo y completá la ficha digital para que administración la revise.</p>
+                  <h1>Completá la ficha del viaje de forma ordenada</h1>
+                  <p>Encontrá el contrato activo de tu colegio, confirmá que corresponde a tu curso y avanzá con la ficha digital.</p>
                 </div>
               </div>
               <div class="inscripcion-hero-steps">
-                <h2>Pasos</h2>
+                <p class="section-kicker">Proceso de inscripción</p>
+                <h2>Antes de cargar tus datos, ubicamos el viaje correcto.</h2>
                 <ul>
-                  <li>Elegís nivel, destino y año</li>
-                  <li>Buscás colegio y curso</li>
-                  <li>Confirmás el contrato activo</li>
-                  <li>Completás y firmás la ficha</li>
+                  <li><span>1</span> Elegís nivel, destino y año</li>
+                  <li><span>2</span> Buscás colegio y curso</li>
+                  <li><span>3</span> Confirmás el contrato activo</li>
+                  <li><span>4</span> Completás y firmás la ficha</li>
                 </ul>
               </div>
             </section>
@@ -7718,11 +7771,11 @@
           return;
         }
         if (path === "/nosotros") {
-          location.replace("#/");
+          renderNosotros();
           return;
         }
         if (path === "/contacto") {
-          location.replace("#/");
+          renderContacto();
           return;
         }
         if (path === "/portal-pasajeros") {
