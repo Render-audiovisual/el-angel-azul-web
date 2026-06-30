@@ -7736,14 +7736,32 @@
           if (!ficha.aceptaCondiciones) return showError("Tenés que aceptar las condiciones para enviar la ficha.");
           if (!ficha.firma) return showError("Falta la firma del responsable/tutor.");
 
+          // FIX: antes, si fallaba la sincronización con Google Sheets (ej. credenciales
+          // no configuradas en este entorno), se bloqueaba el envío con un error genérico
+          // AUNQUE la ficha ya se hubiera guardado localmente (fichaAdhesionCollection.save
+          // corre primero y de forma síncrona, antes del intento de sync con Sheets).
+          // Esto perdía el flujo de la familia por un problema de infraestructura ajeno a
+          // sus datos. Ahora: el guardado local es la condición real de éxito; si Sheets
+          // falla, se avisa de forma no bloqueante y se sigue igual.
           const fichas = loadFichasAdhesionDemo();
           fichas.unshift(ficha);
-          const saved = await saveFichasAdhesionDemo(fichas);
-          if (!saved && googleSheetsSyncState.status === "error") {
-            showError("No pudimos guardar la ficha. Intentá nuevamente o consultanos por WhatsApp.");
+          let localSaveOk = true;
+          try {
+            fichaAdhesionCollection.save(fichas);
+          } catch (error) {
+            localSaveOk = false;
+          }
+          if (!localSaveOk) {
+            showError("No pudimos guardar la ficha en este dispositivo. Intentá nuevamente o consultanos por WhatsApp.");
             return;
           }
-          renderFichaAdhesion("Ficha enviada correctamente. Queda pendiente de revisión por administración.");
+          if (!googleSheetsHydrating) {
+            queueGoogleSheetsWrite(["FICHAS_ADHESION"]).catch(() => {});
+          }
+          const syncWarning = googleSheetsSyncState.status === "error"
+            ? " (Quedó guardada en este dispositivo; la sincronización con el sistema central se reintentará.)"
+            : "";
+          renderFichaAdhesion(`Ficha enviada correctamente. Queda pendiente de revisión por administración.${syncWarning}`);
         });
       }
 
