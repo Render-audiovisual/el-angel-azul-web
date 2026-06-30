@@ -6039,14 +6039,17 @@
             const tripId = button.dataset.adminDelete;
             const trip = adminTurismoTrips.find((item) => item.id === tripId);
             const tripName = trip?.titulo || trip?.destino || "este viaje";
-            if (!window.confirm(`¿Eliminar ${tripName}?\n\nEsta acción borra el viaje de este administrador.`)) return;
+            // El backend reemplaza la hoja TURISMO entera en cada escritura (clear + put),
+            // por eso usamos la versión CON feedback: si falla la sync, el operador tiene
+            // que saberlo explícitamente, no asumir en silencio que se borró en Sheets.
+            if (!window.confirm(`¿Eliminar ${tripName}?\n\nEsta acción borra el viaje de este administrador y actualiza Google Sheets.`)) return;
             adminTurismoTrips = adminTurismoTrips.filter((item) => item.id !== tripId);
             if (adminTurismoEditingId === tripId) {
               adminTurismoEditingId = adminTurismoTrips[0]?.id || null;
               adminTurismoEditorOpen = false;
             }
-            saveAdminTurismoTrips();
             renderAdminTurismo();
+            saveAdminTurismoTripsWithFeedback().then(() => renderAdminTurismo()).catch(() => renderAdminTurismo());
           });
         });
 
@@ -6157,8 +6160,8 @@
           const trip = normalizeAdminTurismoTrip(adminTurismoCurrentTrip());
           if (!trip.id) return;
           adminTurismoTrips = adminTurismoTrips.map((item) => item.id === trip.id ? { ...item, estado: "inactivo" } : item);
-          saveAdminTurismoTrips();
           renderAdminTurismo();
+          saveAdminTurismoTripsWithFeedback().then(() => renderAdminTurismo()).catch(() => renderAdminTurismo());
         });
 
         // --- Aplicar estado rápido desde el panel de publicación ---
@@ -6172,8 +6175,8 @@
           if (!select) return;
           const nuevoEstado = select.value;
           adminTurismoTrips = adminTurismoTrips.map((item) => item.id === trip.id ? { ...item, estado: nuevoEstado } : item);
-          saveAdminTurismoTrips();
           renderAdminTurismo();
+          saveAdminTurismoTripsWithFeedback().then(() => renderAdminTurismo()).catch(() => renderAdminTurismo());
         });
 
         document.querySelector("[data-admin-scroll-preview]")?.addEventListener("click", () => {
