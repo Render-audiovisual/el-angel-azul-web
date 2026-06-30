@@ -7048,9 +7048,12 @@
           renderChoiceButtons(anioField, optionGroups.anio, "anio");
         };
 
+        // FIX: usar el helper compartido whatsappLink() (incluye el número real configurado
+        // en data.js). La función local anterior generaba "https://wa.me/?text=..." SIN
+        // número de teléfono, por lo que el botón no llevaba a ningún chat real.
         const whatsappConsultUrl = ({ nivel, viaje, colegio, cursoDivision }) => {
           const message = `Hola, quiero inscribirme pero no encuentro contrato activo para mi colegio. Colegio: ${colegio || "-"} / Nivel: ${nivel || "-"} / Viaje: ${viaje || "-"} / Curso: ${cursoDivision || "-"}.`;
-          return `https://wa.me/?text=${encodeURIComponent(message)}`;
+          return whatsappLink(message);
         };
 
         const renderConfirmedContract = (candidate) => `
