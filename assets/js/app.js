@@ -760,8 +760,11 @@
         if (!googleSheetsHydrating) queueGoogleSheetsWrite(["TURISMO"]);
       }
 
-      // Guardado explícito con feedback directo para el operador
-      async function saveAdminTurismoTripsWithFeedback() {
+      // Guardado explícito con feedback directo para el operador.
+      // deleteIds: ids que se quieren borrar de la hoja explícitamente (ver writeSheet en
+      // server.js: desde el fix de concurrencia, omitir un id de "rows" ya NO lo borra solo,
+      // porque ahora se fusiona con lo que ya existe en Sheets en vez de reemplazar todo).
+      async function saveAdminTurismoTripsWithFeedback(deleteIds = []) {
         localStorage.setItem(ADMIN_TURISMO_STORAGE_KEY, JSON.stringify(adminTurismoTrips.map(normalizeAdminTurismoTrip), null, 2));
         const config = window.ElAngelAzulPersistence.readGoogleSheetsConfig();
         if (!config.enabled || !config.endpoint) {
@@ -770,7 +773,7 @@
         }
         try {
           const rows = googleSheetsTurismoRows(new Date().toISOString());
-          await window.ElAngelAzulPersistence.writeGoogleSheetRows("TURISMO", rows);
+          await window.ElAngelAzulPersistence.writeGoogleSheetRows("TURISMO", rows, deleteIds);
           adminTurismoSaveFeedback = { ok: true, message: `Guardado en Google Sheets: ${rows.length} ${rows.length === 1 ? "viaje" : "viajes"}.` };
           turismoPublicPackagesCache = null;
         } catch (error) {
@@ -2977,7 +2980,7 @@
         }
       }
 
-      function queueGoogleSheetsWrite(sheets = []) {
+      function queueGoogleSheetsWrite(sheets = [], deleteIdsBySheet = {}) {
         const config = window.ElAngelAzulPersistence.readGoogleSheetsConfig();
         if (!config.enabled || !config.endpoint) {
           googleSheetsSyncState = {
@@ -2997,7 +3000,7 @@
           if (uniqueSheets.includes("TURISMO")) rowsByTab.TURISMO = googleSheetsTurismoRows(now);
           for (const sheet of uniqueSheets) {
             if (!["GRUPOS", "CONTRATOS", "PASAJEROS", "FICHAS_ADHESION", "TURISMO"].includes(sheet)) continue;
-            await window.ElAngelAzulPersistence.writeGoogleSheetRows(sheet, rowsByTab[sheet] || []);
+            await window.ElAngelAzulPersistence.writeGoogleSheetRows(sheet, rowsByTab[sheet] || [], deleteIdsBySheet[sheet] || []);
           }
           googleSheetsSyncState = {
             status: "ok",
@@ -6049,7 +6052,7 @@
               adminTurismoEditorOpen = false;
             }
             renderAdminTurismo();
-            saveAdminTurismoTripsWithFeedback().then(() => renderAdminTurismo()).catch(() => renderAdminTurismo());
+            saveAdminTurismoTripsWithFeedback([tripId]).then(() => renderAdminTurismo()).catch(() => renderAdminTurismo());
           });
         });
 

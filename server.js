@@ -182,11 +182,40 @@ async function readSheet(sheet) {
     .map((row) => Object.fromEntries(headers.map((header, index) => [header, row[index] || ""])));
 }
 
-async function writeSheet(sheet, rows) {
+// FIX concurrencia: antes esta función hacía CLEAR + PUT del array completo que mandaba
+// el navegador, asumiendo que ese array era "todo lo que debe existir" en la hoja. Si dos
+// personas (ej. dos administrativos cargando pasajeros) guardaban en paralelo, la última
+// escritura pisaba por completo lo que la otra acababa de guardar, sin fusionar nada.
+//
+// Ahora: se lee el contenido REAL y actual de la hoja justo antes de escribir, se fusiona
+// por "id" (cada fila que llega actualiza/agrega su propio id, preservando cualquier otra
+// fila que ya exista en la hoja y que este navegador no conozca), y solo se eliminan filas
+// cuyo id venga explícito en deleteIds. Esto no es un lock atómico real (Sheets no lo da),
+// pero cubre el escenario real: ediciones de distintas personas separadas por segundos o
+// minutos, no la misma fila en el mismo instante exacto.
+async function writeSheet(sheet, rows, deleteIds = []) {
   const columns = SCHEMA[sheet];
+  const deleteIdSet = new Set((deleteIds || []).map((id) => String(id || "")));
+
+  let mergedRows = Array.isArray(rows) ? rows : [];
+  if (columns.includes("id")) {
+    const currentRows = await readSheet(sheet).catch(() => []);
+    const byId = new Map();
+    currentRows.forEach((row) => {
+      const id = String(row.id || "");
+      if (id) byId.set(id, row);
+    });
+    (Array.isArray(rows) ? rows : []).forEach((row) => {
+      const id = String(row.id || "");
+      if (id) byId.set(id, row);
+    });
+    deleteIdSet.forEach((id) => byId.delete(id));
+    mergedRows = [...byId.values()];
+  }
+
   const values = [
     columns,
-    ...rows.map((row) => columns.map((column) => row[column] || ""))
+    ...mergedRows.map((row) => columns.map((column) => row[column] || ""))
   ];
   const range = encodeURIComponent(`'${sheet}'!A:AZ`);
   await sheetsRequest("POST", `/values/${range}:clear`, {});
@@ -204,7 +233,8 @@ async function handleSheets(req, res, url) {
     const sheet = String(payload.sheet || "");
     if (!SCHEMA[sheet]) return json(res, 400, { ok: false, error: "Hoja no permitida" });
     if (!WRITE_ALLOWED.has(sheet)) return json(res, 403, { ok: false, error: "Escritura no habilitada para esta hoja" });
-    await writeSheet(sheet, Array.isArray(payload.rows) ? payload.rows : []);
+    const deleteIds = Array.isArray(payload.deleteIds) ? payload.deleteIds : [];
+    await writeSheet(sheet, Array.isArray(payload.rows) ? payload.rows : [], deleteIds);
     return json(res, 200, { ok: true, sheet });
   }
   json(res, 405, { ok: false, error: "Método no permitido" });

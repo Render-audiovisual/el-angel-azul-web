@@ -232,7 +232,7 @@
     return Array.isArray(payload.rows) ? payload.rows : [];
   }
 
-  async function writeGoogleSheetRows(sheet, rows = []) {
+  async function writeGoogleSheetRows(sheet, rows = [], deleteIds = []) {
     const config = readGoogleSheetsConfig();
     if (!config.endpoint || config.enabled === false) {
       throw new Error("Google Sheets no configurado");
@@ -240,7 +240,7 @@
     const response = await fetch(config.endpoint, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({ token: config.token, sheet, rows })
+      body: JSON.stringify({ token: config.token, sheet, rows, deleteIds })
     });
     const payload = await response.json();
     if (!payload.ok) throw new Error(payload.error || "No se pudo escribir Google Sheets");
