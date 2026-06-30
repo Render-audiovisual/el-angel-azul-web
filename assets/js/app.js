@@ -3824,6 +3824,9 @@
         // con Y = línea base, el texto quedaba literalmente ENCIMA de los puntos
         // (efecto "tachado") en vez de apoyado arriba de la línea. Se sube 8px.
         const BASELINE_LIFT = 8;
+        // Sangría horizontal: separa el valor de la etiqueta/dos puntos que lo precede
+        // (ej. "Nº:1542" -> "Nº: 1542") para que no quede pegado y sea más legible.
+        const LEFT_INDENT = 10;
         const drawValue = (value, field, options = {}) => {
           const text = options.raw ? fichaFieldValue(value) : textValue(value);
           if (!text) return;
@@ -3831,7 +3834,7 @@
           const fieldOptions = { ...field, ...options };
           const size = fitCanvasFont(context, text, fieldOptions);
           context.font = `${fieldOptions.weight || "bold"} ${size}px Arial, sans-serif`;
-          wrapCanvasText(context, text, field.x, field.y - BASELINE_LIFT, fieldOptions.width || 360, fieldOptions.lineHeight || Math.max(15, size + 2), fieldOptions.lines || 1);
+          wrapCanvasText(context, text, field.x + LEFT_INDENT, field.y - BASELINE_LIFT, fieldOptions.width || 360, fieldOptions.lineHeight || Math.max(15, size + 2), fieldOptions.lines || 1);
         };
 
         const fields = {
