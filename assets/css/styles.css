@@ -1251,6 +1251,30 @@
         font-weight: 800;
       }
 
+      .package-fecha-salida {
+        align-items: center;
+        color: #4f6472;
+        display: flex;
+        flex-wrap: wrap;
+        font-size: 0.84rem;
+        font-weight: 700;
+        gap: 8px;
+        margin: -2px 0 4px;
+      }
+
+      .package-badge-garantizada {
+        background: #e6f6ec;
+        border: 1px solid #9bd4ad;
+        border-radius: 999px;
+        color: #146538;
+        font-size: 0.7rem;
+        font-weight: 900;
+        letter-spacing: 0.03em;
+        padding: 2px 9px;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
       .package-price {
         align-items: end;
         background: #f7fbfe;

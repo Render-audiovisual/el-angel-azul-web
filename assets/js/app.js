@@ -383,6 +383,12 @@
                 <h3>${packageItem.destino}</h3>
               </div>
               <p class="package-duration">${packageItem.duracion}</p>
+              ${packageItem.fechaSalida ? `
+                <p class="package-fecha-salida">
+                  ${packageItem.fechaSalida}${packageItem.fechaRegreso ? ` al ${packageItem.fechaRegreso}` : ""}
+                  ${packageItem.salidaGarantizada ? `<span class="package-badge-garantizada">Salida garantizada</span>` : ""}
+                </p>
+              ` : ""}
               <p class="package-summary">${packageItem.resumen}</p>
               <div class="package-price" aria-label="Precio desde ${packageItem.precioDesde}">
                 <span>Desde</span>
@@ -3795,6 +3801,11 @@
         }
 
         const textValue = (value) => fichaFieldValue(value).toUpperCase();
+        // FIX impresión: en el template, cada renglón tiene una línea punteada en
+        // el mismo eje Y que se usó para calibrar los campos. Como fillText() dibuja
+        // con Y = línea base, el texto quedaba literalmente ENCIMA de los puntos
+        // (efecto "tachado") en vez de apoyado arriba de la línea. Se sube 8px.
+        const BASELINE_LIFT = 8;
         const drawValue = (value, field, options = {}) => {
           const text = options.raw ? fichaFieldValue(value) : textValue(value);
           if (!text) return;
@@ -3802,7 +3813,7 @@
           const fieldOptions = { ...field, ...options };
           const size = fitCanvasFont(context, text, fieldOptions);
           context.font = `${fieldOptions.weight || "bold"} ${size}px Arial, sans-serif`;
-          wrapCanvasText(context, text, field.x, field.y, fieldOptions.width || 360, fieldOptions.lineHeight || Math.max(15, size + 2), fieldOptions.lines || 1);
+          wrapCanvasText(context, text, field.x, field.y - BASELINE_LIFT, fieldOptions.width || 360, fieldOptions.lineHeight || Math.max(15, size + 2), fieldOptions.lines || 1);
         };
 
         const fields = {
