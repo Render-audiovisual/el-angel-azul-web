@@ -6832,17 +6832,21 @@
 
             <div class="portal-result-section">
               <h3>Estado de pagos</h3>
-              <div class="portal-payment-panel">
-                <div class="portal-payment-meter" aria-label="Avance de pago">
-                  <span style="width: ${paidPercentage}%"></span>
+              ${record.total === null || record.total === undefined ? `
+                <p class="portal-notice">Todavía no cargamos el detalle de montos para este viaje. Tu estado de pago actual es <strong>${escapeHtml(paymentStatus)}</strong>. Para el monto exacto, consultanos por WhatsApp.</p>
+              ` : `
+                <div class="portal-payment-panel">
+                  <div class="portal-payment-meter" aria-label="Avance de pago">
+                    <span style="width: ${paidPercentage}%"></span>
+                  </div>
+                  <div class="portal-payment-summary">
+                    <div><span>Total del viaje</span><strong>${formatCurrency(record.total)}</strong></div>
+                    <div><span>Monto pagado</span><strong>${formatCurrency(record.paid)}</strong></div>
+                    <div><span>Saldo pendiente</span><strong>${formatCurrency(record.balance)}</strong></div>
+                    <div><span>Avance</span><strong>${paidPercentage}%</strong></div>
+                  </div>
                 </div>
-                <div class="portal-payment-summary">
-                  <div><span>Total del viaje</span><strong>${formatCurrency(record.total)}</strong></div>
-                  <div><span>Monto pagado</span><strong>${formatCurrency(record.paid)}</strong></div>
-                  <div><span>Saldo pendiente</span><strong>${formatCurrency(record.balance)}</strong></div>
-                  <div><span>Avance</span><strong>${paidPercentage}%</strong></div>
-                </div>
-              </div>
+              `}
               ${record.hasReview ? `<p class="portal-notice">Hay pagos en revisión.</p>` : ""}
             </div>
 
@@ -6888,6 +6892,54 @@
         `;
       }
 
+      // FIX: el portal leía de un archivo Excel hardcodeado ("...simulado_v1.xlsx") con
+      // datos de prueba, completamente desconectado de la base real (Google Sheets) que
+      // usa el resto del sistema. Por eso la ruta pública estaba deshabilitada (redirigía
+      // a Inscripción) - mostrar datos falsos a una familia real hubiera sido peor que no
+      // mostrar nada. Ahora busca sobre los GRUPOS/PASAJEROS reales (los mismos que ya
+      // sincroniza el admin con Sheets).
+      //
+      // Importante: el sistema hoy NO trackea montos reales de pago por pasajero (solo un
+      // estado: "Pendiente" / "Al día" / "Vencido"), así que NO se inventan cifras de saldo.
+      // Se muestra el estado real, y para el detalle de monto se deriva a WhatsApp - es
+      // preferible decir "consultá el monto por WhatsApp" antes que mostrar un número
+      // inventado que la familia podría tomar como real.
+      function buildRealPortalRecord(passenger, group) {
+        const contrato = contractById(passengerContratoId(passenger), group.id);
+        return {
+          contractCode: passengerCodigoContrato(passenger) || "Pendiente",
+          name: passenger.nombre || "Pasajero",
+          dni: passenger.dni || "",
+          passengerStatus: passenger.estado || "Pendiente",
+          trip: {
+            code: group.id || "",
+            name: group.viaje || "",
+            destination: group.viaje || "",
+            type: group.nivel || "",
+            status: group.estado || ""
+          },
+          group: {
+            code: group.id || "",
+            name: `${group.colegio || ""} · ${group.curso || ""} ${group.division || ""}`.trim(),
+            school: group.colegio || "",
+            course: `${group.curso || ""} ${group.division || ""}`.trim()
+          },
+          documentation: {
+            general: passenger.documentacion || "Pendiente de validar",
+            medical: passenger.fichaMedica || "Pendiente de validar",
+            authorization: String(contrato?.estado || "").toLowerCase() === "activo" ? "Aprobada" : "Pendiente de validar"
+          },
+          installments: [],
+          payments: [],
+          total: null,
+          paid: 0,
+          balance: null,
+          nextInstallment: null,
+          hasReview: false,
+          generalStatus: passenger.pago || "Consultar estado"
+        };
+      }
+
       async function consultarPortalPasajeros(event) {
         event.preventDefault();
         const dni = document.getElementById("portal-dni").value.replace(/\D/g, "");
@@ -6895,17 +6947,25 @@
         const result = document.getElementById("portal-result");
         result.innerHTML = `<section class="portal-empty"><p>Cargando datos del pasajero...</p></section>`;
         try {
-          const data = await loadPortalExcelData();
-          const passenger = data.passengers.find(item => (
-            normalizeDni(item.pasajero_dni) === dni &&
-            normalizeCode(item.contrato_codigo) === accessCode
-          ));
-          const record = passenger ? getPassengerPortalRecord(passenger, data) : null;
-          if (!record) {
+          await hydrateGoogleSheetsData();
+          let foundPassenger = null;
+          let foundGroup = null;
+          for (const group of adminPasajerosDemo) {
+            const match = (group.pasajeros || []).find((item) => (
+              normalizeDni(item.dni) === dni &&
+              normalizeCode(passengerCodigoContrato(item)) === accessCode
+            ));
+            if (match) {
+              foundPassenger = match;
+              foundGroup = group;
+              break;
+            }
+          }
+          if (!foundPassenger) {
             renderPortalNotFound();
             return;
           }
-          renderPortalResult(record);
+          renderPortalResult(buildRealPortalRecord(foundPassenger, foundGroup));
         } catch (error) {
           result.innerHTML = `
             <section class="portal-empty">
@@ -6929,7 +6989,8 @@
                 <label for="portal-dni">DNI del pasajero</label>
                 <input id="portal-dni" name="dni" inputmode="numeric" autocomplete="off" placeholder="Ingresá tu DNI" required>
                 <label for="portal-code">Código de contrato</label>
-                <input id="portal-code" name="code" autocomplete="off" placeholder="Ej: CON-DEM-001" required>
+                <input id="portal-code" name="code" autocomplete="off" placeholder="Ej: CON-PRI-RIO-PARANA-6TO-A-CARLOS-PAZ-2026" required>
+                <small class="portal-form-hint">Lo encontrás en tu ficha de adhesión o contrato de viaje.</small>
                 <button type="submit">Consultar</button>
               </form>
             </section>
@@ -7864,17 +7925,18 @@
           renderContacto();
           return;
         }
-        if (path === "/portal-pasajeros") {
-          location.replace("#/inscripcion");
+        // FIX: el portal de pasajeros estaba desconectado del router (redirigía a
+        // Inscripción) porque su fuente de datos era un Excel simulado. Ahora que lee
+        // de la base real (ver buildRealPortalRecord / consultarPortalPasajeros), se
+        // reconecta la ruta pública.
+        if (path === "/portal-pasajeros" || path === "/pasajeros") {
+          await hydrateGoogleSheetsData();
+          renderPortalPasajeros();
           return;
         }
         if (path === "/inscripcion") {
           await hydrateGoogleSheetsData();
           renderInscripcion();
-          return;
-        }
-        if (path === "/pasajeros") {
-          location.replace("#/inscripcion");
           return;
         }
         if (path === "/inscripcion/ficha-adhesion") {
