@@ -4370,6 +4370,12 @@
         justify-content: space-between;
       }
 
+      .admin-fichas-detail-head-actions {
+        display: flex;
+        flex-shrink: 0;
+        gap: 8px;
+      }
+
       .admin-fichas-detail-head h2,
       .admin-fichas-detail-head p,
       .admin-fichas-detail-card h3,

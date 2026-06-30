@@ -3418,7 +3418,10 @@
                 <h2>${escapeHtml(pasajeroNombre || "Ficha sin nombre")}</h2>
                 <p>Preinscripción virtual lista para revisar, asignar y dar de alta oficialmente.</p>
               </div>
-              <button type="button" class="admin-pasajeros-secondary-button" data-ficha-cerrar>Cerrar ficha</button>
+              <div class="admin-fichas-detail-head-actions">
+                <button type="button" class="admin-pasajeros-primary-button" data-ficha-pdf="${escapeHtml(ficha.id)}">⬇ Descargar PDF</button>
+                <button type="button" class="admin-pasajeros-secondary-button" data-ficha-cerrar>Cerrar ficha</button>
+              </div>
             </div>
 
             <div class="admin-fichas-detail-layout">
@@ -5686,6 +5689,21 @@
             adminFichasManuallyClosed = true;
             adminFichasSelectedId = "";
             renderAdminFichasRecibidas();
+          });
+        });
+        document.querySelectorAll("[data-ficha-pdf]").forEach((button) => {
+          button.addEventListener("click", async () => {
+            const originalText = button.textContent;
+            button.disabled = true;
+            button.textContent = "Generando PDF...";
+            try {
+              await downloadFichaAdhesionPdf(button.dataset.fichaPdf);
+            } catch (error) {
+              window.alert("No se pudo generar el PDF: " + (error?.message || "error desconocido"));
+            } finally {
+              button.disabled = false;
+              button.textContent = originalText;
+            }
           });
         });
         document.querySelectorAll("[data-ficha-aprobar]").forEach((button) => {
