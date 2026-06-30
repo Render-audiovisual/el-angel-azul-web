@@ -3676,6 +3676,18 @@
         return text;
       }
 
+      // FIX impresión: la plantilla tiene 3 casilleros separados (día / mes / año) con
+      // "/" ya impresos entre medio. Antes se dibujaba la fecha completa "24/10/2001"
+      // de una sola vez en el primer casillero, chocando con las barras de la plantilla
+      // ("24/10/2001 ......../................"). Ahora se parte en 3 partes para que
+      // cada una caiga en su propio casillero.
+      function fichaPdfDateParts(value) {
+        const formatted = fichaPdfDate(value);
+        const match = formatted.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+        if (match) return { dia: match[1], mes: match[2], anio: match[3] };
+        return { dia: "", mes: "", anio: formatted };
+      }
+
       function loadPdfImage(dataUrl) {
         return new Promise((resolve) => {
           if (!dataUrl) {
@@ -3831,12 +3843,16 @@
 
           pasajeroNombre: { x: 292, y: 489, width: 870, size: 17, minSize: 10 },
           pasajeroDocumento: { x: 292, y: 533, width: 320, size: 16, minSize: 10 },
-          pasajeroNacimiento: { x: 764, y: 533, width: 185, size: 16, minSize: 10 },
+          pasajeroNacimientoDia: { x: 768, y: 533, width: 55, size: 16, minSize: 10 },
+          pasajeroNacimientoMes: { x: 842, y: 533, width: 48, size: 16, minSize: 10 },
+          pasajeroNacimientoAnio: { x: 908, y: 533, width: 80, size: 16, minSize: 10 },
           pasajeroSexo: { x: 1050, y: 533, width: 95, size: 16, minSize: 10 },
 
           responsableNombre: { x: 292, y: 658, width: 870, size: 17, minSize: 10 },
           responsableDocumento: { x: 292, y: 700, width: 320, size: 16, minSize: 10 },
-          responsableNacimiento: { x: 764, y: 700, width: 185, size: 16, minSize: 10 },
+          responsableNacimientoDia: { x: 768, y: 700, width: 55, size: 16, minSize: 10 },
+          responsableNacimientoMes: { x: 842, y: 700, width: 48, size: 16, minSize: 10 },
+          responsableNacimientoAnio: { x: 908, y: 700, width: 80, size: 16, minSize: 10 },
           responsableParentesco: { x: 1082, y: 700, width: 72, size: 13, minSize: 9 },
           responsableEmail: { x: 365, y: 742, width: 335, size: 13, minSize: 9 },
           responsableCuilCuit: { x: 882, y: 742, width: 275, size: 15, minSize: 10 },
@@ -3851,7 +3867,9 @@
           domicilioCelular: { x: 404, y: 958, width: 245, size: 16, minSize: 10 },
           domicilioCodigoPostal: { x: 1050, y: 958, width: 120, size: 16, minSize: 10 },
 
-          fechaInscripcion: { x: 318, y: 1112, width: 170, size: 15, minSize: 10 },
+          fechaInscripcionDia: { x: 322, y: 1112, width: 55, size: 15, minSize: 10 },
+          fechaInscripcionMes: { x: 392, y: 1112, width: 55, size: 15, minSize: 10 },
+          fechaInscripcionAnio: { x: 462, y: 1112, width: 90, size: 15, minSize: 10 },
           valorViaje: { x: 568, y: 1148, width: 70, size: 13, minSize: 8 },
           sena: { x: 862, y: 1148, width: 78, size: 13, minSize: 8 },
           saldo: { x: 1040, y: 1148, width: 92, size: 13, minSize: 8 },
@@ -3876,7 +3894,10 @@
           `${ficha.pasajeroTipoDocumento || "DNI"} ${ficha.pasajeroNumeroDocumento || ficha.pasajeroDni || ""}`,
           fields.pasajeroDocumento
         );
-        drawValue(fichaPdfDate(ficha.pasajeroNacimiento), fields.pasajeroNacimiento, { raw: true });
+        const pasajeroNacParts = fichaPdfDateParts(ficha.pasajeroNacimiento);
+        drawValue(pasajeroNacParts.dia, fields.pasajeroNacimientoDia, { raw: true });
+        drawValue(pasajeroNacParts.mes, fields.pasajeroNacimientoMes, { raw: true });
+        drawValue(pasajeroNacParts.anio, fields.pasajeroNacimientoAnio, { raw: true });
         drawValue(ficha.pasajeroSexo, fields.pasajeroSexo);
 
         drawValue(ficha.responsableNombre, fields.responsableNombre);
@@ -3884,7 +3905,10 @@
           `${ficha.responsableTipoDocumento || "DNI"} ${ficha.responsableNumeroDocumento || ""}`,
           fields.responsableDocumento
         );
-        drawValue(fichaPdfDate(ficha.responsableNacimiento), fields.responsableNacimiento, { raw: true });
+        const responsableNacParts = fichaPdfDateParts(ficha.responsableNacimiento);
+        drawValue(responsableNacParts.dia, fields.responsableNacimientoDia, { raw: true });
+        drawValue(responsableNacParts.mes, fields.responsableNacimientoMes, { raw: true });
+        drawValue(responsableNacParts.anio, fields.responsableNacimientoAnio, { raw: true });
         drawValue(ficha.responsableParentesco, fields.responsableParentesco);
         drawValue(ficha.responsableEmail, fields.responsableEmail, { raw: true });
         drawValue(ficha.responsableCuilCuit, fields.responsableCuilCuit, { raw: true });
@@ -3899,7 +3923,10 @@
         drawValue(ficha.domicilioCelular, fields.domicilioCelular);
         drawValue(ficha.domicilioCodigoPostal, fields.domicilioCodigoPostal);
 
-        drawValue(fichaPdfDate(ficha.createdAt), fields.fechaInscripcion, { raw: true });
+        const fechaInscripcionParts = fichaPdfDateParts(ficha.createdAt);
+        drawValue(fechaInscripcionParts.dia, fields.fechaInscripcionDia, { raw: true });
+        drawValue(fechaInscripcionParts.mes, fields.fechaInscripcionMes, { raw: true });
+        drawValue(fechaInscripcionParts.anio, fields.fechaInscripcionAnio, { raw: true });
         drawValue(fichaMoneyValue(administracion.valorViaje), fields.valorViaje, { raw: true });
         drawValue(fichaMoneyValue(administracion.sena), fields.sena, { raw: true });
         drawValue(fichaMoneyValue(administracion.saldo), fields.saldo, { raw: true });
