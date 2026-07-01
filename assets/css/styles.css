@@ -606,6 +606,7 @@
           linear-gradient(90deg, rgba(8, 20, 36, 0.86) 0%, rgba(8, 30, 55, 0.6) 48%, rgba(8, 20, 36, 0.25) 100%),
           var(--hero-v2-image) center 55% / cover;
         display: flex;
+        min-height: calc(100vh - 78px);
         min-height: calc(100svh - 78px);
         padding: clamp(90px, 11vw, 140px) 18px clamp(40px, 7vw, 80px);
         position: relative;
@@ -1071,6 +1072,240 @@
 
         .cta-v2-badges {
           justify-content: flex-end;
+        }
+      }
+
+
+      /* ============================================================
+         HERO SNOWBOARD SCENE — animación 100% CSS/SVG (sin video real
+         disponible). Escena de montaña + snowboarder + nevada, en
+         loop, respetando la paleta de marca (nada de negro puro).
+         ============================================================ */
+
+      .hero-v2--snow {
+        background: none;
+        overflow: hidden;
+      }
+
+      .hero-snow-scene {
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        position: absolute;
+        z-index: 0;
+      }
+
+      .hero-snow-sky {
+        background: linear-gradient(180deg, #041225 0%, #0a2f57 38%, #0d69a1 68%, #3f9fd6 100%);
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        position: absolute;
+      }
+
+      .hero-snow-stars {
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        position: absolute;
+      }
+
+      .hero-snow-stars span {
+        animation: hsTwinkle 3.4s ease-in-out infinite;
+        animation-delay: calc(var(--i) * 0.35s);
+        background: #fff;
+        border-radius: 50%;
+        height: 3px;
+        left: calc(5% + (var(--i) * 5.4%));
+        opacity: 0.5;
+        position: absolute;
+        top: calc(6% + (var(--i) * 2.2%) % 30%);
+        width: 3px;
+      }
+
+      @keyframes hsTwinkle {
+        0%, 100% { opacity: 0.15; }
+        50% { opacity: 0.85; }
+      }
+
+      .hero-snow-mountains {
+        bottom: 0;
+        height: 72%;
+        position: absolute;
+        width: 100%;
+      }
+
+      .hero-snow-mountains--back polygon {
+        fill: #123f6e;
+      }
+
+      .hero-snow-mountains--back {
+        bottom: 6%;
+        opacity: 0.85;
+      }
+
+      .hero-snow-mountains--front polygon {
+        fill: #0a2c50;
+      }
+
+      .hero-snow-slope {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, #eaf3fb 60%, #d3e6f4 100%);
+        bottom: 0;
+        clip-path: polygon(0% 100%, 0% 62%, 100% 38%, 100% 100%);
+        height: 42%;
+        position: absolute;
+        width: 100%;
+      }
+
+      .hero-snowboarder {
+        animation: hsCarve 7s ease-in-out infinite;
+        height: 130px;
+        left: 8%;
+        position: absolute;
+        top: 44%;
+        width: 110px;
+      }
+
+      @keyframes hsCarve {
+        0%   { transform: translate(0, 0) rotate(-4deg); }
+        20%  { transform: translate(22vw, 6vh) rotate(6deg); }
+        40%  { transform: translate(42vw, 9vh) rotate(-6deg); }
+        60%  { transform: translate(60vw, 15vh) rotate(6deg); }
+        80%  { transform: translate(76vw, 19vh) rotate(-4deg); }
+        100% { transform: translate(92vw, 23vh) rotate(2deg); }
+      }
+
+      .hero-snowboarder-figure {
+        height: 100%;
+        overflow: visible;
+        width: 100%;
+      }
+
+      .hsb-shadow { fill: rgba(6, 20, 40, 0.16); }
+      .hsb-board { fill: var(--color-accent); }
+      .hsb-leg { fill: #10202b; }
+      .hsb-torso { fill: #fff; }
+      .hsb-arm { fill: #fff; }
+      .hsb-head { fill: #f2c9a0; }
+      .hsb-beanie { fill: var(--color-primary); }
+      .hsb-pompom { fill: #fff; }
+      .hsb-scarf { fill: var(--color-accent); }
+
+      .hero-snow-spray {
+        height: 40px;
+        left: -10px;
+        position: absolute;
+        top: 95px;
+        width: 60px;
+      }
+
+      .hero-snow-spray span {
+        animation: hsSpray 0.9s ease-out infinite;
+        animation-delay: calc(var(--i) * 0.08s);
+        background: #fff;
+        border-radius: 50%;
+        height: 6px;
+        left: calc(var(--i) * 4px);
+        opacity: 0;
+        position: absolute;
+        top: 0;
+        width: 6px;
+      }
+
+      @keyframes hsSpray {
+        0% { opacity: 0.9; transform: translate(0, 0) scale(1); }
+        100% { opacity: 0; transform: translate(-18px, 14px) scale(0.3); }
+      }
+
+      .hero-snow-fall {
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        position: absolute;
+      }
+
+      .hero-snow-fall span {
+        animation: hsFall linear infinite;
+        animation-duration: calc(6s + (var(--i) * 0.4s));
+        animation-delay: calc(var(--i) * -0.5s);
+        background: rgba(255, 255, 255, 0.85);
+        border-radius: 50%;
+        height: 4px;
+        left: calc((var(--i) * 4.1%) % 100%);
+        position: absolute;
+        top: -5%;
+        width: 4px;
+      }
+
+      @keyframes hsFall {
+        0% { transform: translate(0, 0); opacity: 0; }
+        10% { opacity: 0.9; }
+        100% { transform: translate(24px, 118vh); opacity: 0.4; }
+      }
+
+      .hero-snow-fade {
+        background: linear-gradient(180deg, transparent 0%, rgba(4, 12, 24, 0.32) 32%, rgba(4, 12, 24, 0.12) 50%, transparent 60%);
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        position: absolute;
+      }
+
+      .hero-v2--snow .hero-v2-content {
+        position: relative;
+        z-index: 2;
+      }
+
+      .hero-v2-destinos {
+        display: flex;
+        gap: 10px;
+        position: absolute;
+        right: 24px;
+        top: 110px;
+        z-index: 2;
+      }
+
+      .hero-v2-destinos span {
+        background: rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.28);
+        border-radius: 999px;
+        color: #fff;
+        font-size: 0.82rem;
+        font-weight: 700;
+        padding: 8px 16px;
+      }
+
+      @media (max-width: 720px) {
+        .hero-v2-destinos {
+          display: none;
+        }
+
+        .hero-snowboarder {
+          left: 4%;
+          top: 40%;
+        }
+
+        @keyframes hsCarve {
+          0%   { transform: translate(0, 0) rotate(-4deg); }
+          25%  { transform: translate(28vw, 5vh) rotate(6deg); }
+          50%  { transform: translate(52vw, 10vh) rotate(-6deg); }
+          75%  { transform: translate(72vw, 16vh) rotate(6deg); }
+          100% { transform: translate(86vw, 20vh) rotate(2deg); }
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .hero-snowboarder,
+        .hero-snow-stars span,
+        .hero-snow-spray span,
+        .hero-snow-fall span {
+          animation: none !important;
         }
       }
 
