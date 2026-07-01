@@ -156,58 +156,130 @@
         `;
       }
 
-      function renderHome() {
-        const trustIcons = ["✈️", "🤝", "💳"];
+      async function renderHome() {
+        const packages = (await loadTurismoPublicPackages()).slice(0, 3);
+        const galleryPhotos = [
+          { src: "assets/img/bariloche/cena-de-velas/cover.webp", alt: "Grupo de estudiantes en la cena de gala de su viaje de egresados" },
+          { src: "assets/img/turismo/hero/montana-patagonia.webp", alt: "Vista aérea de montañas y lago en la Patagonia" },
+          { src: "assets/img/bariloche/fiesta-fluo/cover.webp", alt: "Grupo de estudiantes en la fiesta fluo de su viaje de egresados" },
+          { src: "assets/img/turismo/hero/cataratas-iguazu.webp", alt: "Cataratas del Iguazú desde el mirador" }
+        ];
         document.getElementById("app").innerHTML = `
-          <div class="layout home-layout">
-            <section class="home-hero">
-              <div class="hero-content">
-                <p class="hero-kicker">Viajes estudiantiles y turismo</p>
-                <h1>El Ángel Azul</h1>
-                <p>Organizamos viajes para estudiantes, familias y grupos con acompañamiento cercano, propuestas claras y atención personalizada desde la consulta hasta el regreso.</p>
+          <div class="layout home-layout-v2">
 
-                <div class="home-decision-panel" aria-label="Elegir tipo de viaje">
-                  <div class="home-decision-copy">
-                    <span>Elegí cómo querés viajar</span>
-                    <strong>Dos caminos, una decisión simple.</strong>
+            <!-- HERO -->
+            <section class="hero-v2" style="--hero-v2-image: url('assets/img/home/hero-estudiantes-nieve.webp')">
+              <div class="hero-v2-content">
+                <span class="hero-v2-kicker">Viajes estudiantiles y turismo</span>
+                <h1 class="hero-v2-title">Tu próxima gran aventura <span>comienza aquí</span>.</h1>
+                <p class="hero-v2-subtitle">Organizamos viajes para estudiantes, familias y grupos con acompañamiento cercano, propuestas claras y atención personalizada desde la consulta hasta el regreso.</p>
+                <div class="hero-v2-actions">
+                  <a class="btn-fuchsia" href="${whatsappLink("Hola, quiero consultar por un viaje con El Ángel Azul.")}" target="_blank" rel="noopener">
+                    Consultar por WhatsApp
+                    <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">chat</span>
+                  </a>
+                  <a class="btn-ghost-light" href="#/turismo">Explorar Destinos</a>
+                </div>
+              </div>
+            </section>
+
+            <!-- TRUST -->
+            <section class="trust-v2">
+              <div class="trust-v2-grid">
+                <div class="trust-v2-photo-wrap">
+                  <div class="trust-v2-photo" style="background-image: url('assets/img/bariloche/cena-de-velas/dsc6979.webp')" role="img" aria-label="Equipo de El Ángel Azul acompañando a un grupo de viaje"></div>
+                  <div class="trust-v2-badge">
+                    <div class="trust-v2-badge-head">
+                      <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+                      <p>Acompañamiento en cada etapa</p>
+                    </div>
+                    <p class="trust-v2-quote">"Un equipo presente antes, durante y después del viaje."</p>
                   </div>
-                  <div class="home-path-selector" aria-label="Servicios principales">
-                    <article class="home-path-card">
-                      <h2>Turismo</h2>
-                      <p>Paquetes nacionales e internacionales para viajar en familia, pareja o grupo.</p>
-                      <a href="#/turismo">Ver paquetes</a>
-                    </article>
-                    <article class="home-path-card">
-                      <h2>Estudiantil</h2>
-                      <p>Viajes para primaria y secundaria con información clara por destino.</p>
-                      <a href="#/estudiantil">Ver estudiantil</a>
-                    </article>
+                </div>
+                <div class="trust-v2-copy">
+                  <h2>Seguridad y confianza en <span>cada kilómetro.</span></h2>
+                  <p>Entendemos que un viaje es más que un destino; es una responsabilidad. Por eso combinamos organización clara con un equipo humano cercano para garantizar la tranquilidad de las familias.</p>
+                  <div class="trust-v2-checklist">
+                    ${trustSectionData.cards.slice(0, 3).map((card) => `
+                      <div class="trust-v2-check-item">
+                        <span class="material-symbols-outlined">check_circle</span>
+                        <div>
+                          <h4>${escapeHtml(card.title)}</h4>
+                          <p>${escapeHtml(card.text)}</p>
+                        </div>
+                      </div>
+                    `).join("")}
                   </div>
                 </div>
               </div>
             </section>
 
-            <section class="home-section home-trust" aria-label="Por qué elegir El Ángel Azul">
-              <div class="home-section-heading">
-                <p class="section-kicker">Por qué elegirnos</p>
-                <h2>${trustSectionData.title}</h2>
+            <!-- GALLERY -->
+            <section class="gallery-v2">
+              <div class="gallery-v2-heading">
+                <h2>Momentos que duran <span>para siempre</span></h2>
+                <p>Cada viaje deja recuerdos que se cuentan durante años. Así los vive cada grupo que viaja con nosotros.</p>
               </div>
-              <div class="home-trust-grid">
-                ${trustSectionData.cards.slice(0, 3).map((card, index) => `
-                  <article class="item home-trust-card">
-                    <span class="home-trust-icon" aria-hidden="true">${trustIcons[index] || "✈️"}</span>
-                    <h3>${card.title}</h3>
-                    <p>${card.text}</p>
-                  </article>
+              <div class="gallery-v2-grid">
+                ${galleryPhotos.map((photo, index) => `
+                  <div class="gallery-v2-item${index % 2 === 1 ? " is-offset" : ""}">
+                    <img src="${photo.src}" alt="${escapeHtml(photo.alt)}" loading="lazy">
+                  </div>
                 `).join("")}
               </div>
             </section>
 
-            <section class="home-section home-cta">
-              <h2>${homeData.finalCta.title}</h2>
-              <p>${homeData.finalCta.text}</p>
-              <a href="${whatsappLink("Hola, quiero consultar por un viaje con El Ángel Azul.")}" target="_blank" rel="noopener">${homeData.finalCta.button[0]}</a>
+            <!-- FEATURED PACKAGES -->
+            ${packages.length ? `
+              <section class="packages-v2">
+                <div class="packages-v2-heading">
+                  <div>
+                    <h2>Destinos Destacados</h2>
+                    <p>Paquetes pensados para cada tipo de viajero.</p>
+                  </div>
+                  <a class="packages-v2-viewall" href="#/turismo">Ver todos los destinos <span class="material-symbols-outlined">arrow_forward</span></a>
+                </div>
+                <div class="packages-v2-grid">
+                  ${packages.map((pkg) => `
+                    <article class="packages-v2-card">
+                      <a class="packages-v2-card-media" href="#/turismo/${escapeHtml(pkg.slug)}">
+                        <img src="${pkg.image}" alt="${escapeHtml(pkg.destino)}" loading="lazy">
+                        <span class="packages-v2-tag">${escapeHtml(pkg.categoria || pkg.tipo || "Turismo")}</span>
+                      </a>
+                      <div class="packages-v2-card-body">
+                        <h3><a href="#/turismo/${escapeHtml(pkg.slug)}">${escapeHtml(pkg.destino)}</a></h3>
+                        <p>${escapeHtml(pkg.resumen || "")}</p>
+                        <div class="packages-v2-card-foot">
+                          <span>${escapeHtml(pkg.precio || pkg.precioDesde || "Consultar")}</span>
+                          <a class="packages-v2-card-cta" href="#/turismo/${escapeHtml(pkg.slug)}" aria-label="Ver ${escapeHtml(pkg.destino)}">
+                            <span class="material-symbols-outlined">arrow_forward</span>
+                          </a>
+                        </div>
+                      </div>
+                    </article>
+                  `).join("")}
+                </div>
+              </section>
+            ` : ""}
+
+            <!-- CTA -->
+            <section class="cta-v2">
+              <div class="cta-v2-decoration" aria-hidden="true"><span class="material-symbols-outlined">travel_explore</span></div>
+              <div class="cta-v2-grid">
+                <div>
+                  <h2>${escapeHtml(homeData.finalCta.title)}</h2>
+                  <p>${escapeHtml(homeData.finalCta.text)}</p>
+                  <a class="btn-whatsapp" href="${whatsappLink("Hola, quiero consultar por un viaje con El Ángel Azul.")}" target="_blank" rel="noopener">
+                    ${escapeHtml(homeData.finalCta.button[0])}
+                    <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">chat</span>
+                  </a>
+                </div>
+                <div class="cta-v2-badges">
+                  ${homeData.benefits.map((benefit) => `<span class="cta-v2-badge">${escapeHtml(benefit)}</span>`).join("")}
+                </div>
+              </div>
             </section>
+
           </div>
         `;
       }
@@ -7887,7 +7959,7 @@
         document.body.classList.toggle("turismo-page", path.startsWith("/turismo"));
         closeMobileNav();
         if (path === "/") {
-          renderHome();
+          await renderHome();
           return;
         }
         if (path === "/turismo") {
