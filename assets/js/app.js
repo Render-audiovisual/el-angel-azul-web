@@ -205,7 +205,7 @@
                 <div class="hero-snow-fade"></div>
               </div>
               <div class="hero-v2-content">
-                <h1 class="hero-v2-title">Tu próxima gran aventura <span>comienza aquí</span>.</h1>
+                <h1 class="hero-v2-title">Tu próxima gran aventura <span>comienza aquí</span></h1>
                 <div class="hero-v2-actions">
                   <a class="btn-fuchsia" href="${whatsappLink("Hola, quiero consultar por un viaje con El Ángel Azul.")}" target="_blank" rel="noopener">
                     Consultar por WhatsApp
