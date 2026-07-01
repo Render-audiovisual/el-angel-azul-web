@@ -168,56 +168,25 @@
           <div class="layout home-layout-v2">
 
             <!-- HERO -->
-            <section class="hero-v2 hero-v2--snow">
-              <div class="hero-snow-scene" aria-hidden="true">
-                <div class="hero-snow-sky"></div>
-                <div class="hero-snow-stars">
-                  ${Array.from({ length: 18 }).map((_, i) => `<span style="--i:${i}"></span>`).join("")}
-                </div>
-                <svg class="hero-snow-mountains hero-snow-mountains--back" viewBox="0 0 1200 420" preserveAspectRatio="none">
-                  <polygon points="0,420 0,230 140,110 260,220 380,90 520,230 640,150 760,240 900,120 1040,230 1200,160 1200,420" />
-                </svg>
-                <svg class="hero-snow-mountains hero-snow-mountains--front" viewBox="0 0 1200 380" preserveAspectRatio="none">
-                  <polygon points="0,380 0,280 180,160 340,270 480,180 620,290 780,170 940,270 1080,190 1200,260 1200,380" />
-                </svg>
-                <div class="hero-snow-slope"></div>
-                <div class="hero-snowboarder">
-                  <svg viewBox="0 0 120 150" class="hero-snowboarder-figure">
-                    <ellipse class="hsb-shadow" cx="60" cy="132" rx="30" ry="6"></ellipse>
-                    <rect class="hsb-board" x="14" y="112" width="92" height="12" rx="6" transform="rotate(-18 60 118)"></rect>
-                    <rect class="hsb-leg hsb-leg-back" x="46" y="82" width="12" height="34" rx="5" transform="rotate(10 52 99)"></rect>
-                    <rect class="hsb-leg hsb-leg-front" x="64" y="82" width="12" height="34" rx="5" transform="rotate(-14 70 99)"></rect>
-                    <rect class="hsb-torso" x="42" y="46" width="36" height="42" rx="14" transform="rotate(-8 60 67)"></rect>
-                    <rect class="hsb-arm hsb-arm-back" x="30" y="52" width="11" height="30" rx="5" transform="rotate(35 35 52)"></rect>
-                    <rect class="hsb-arm hsb-arm-front" x="80" y="50" width="11" height="30" rx="5" transform="rotate(-45 85 50)"></rect>
-                    <circle class="hsb-head" cx="61" cy="34" r="15"></circle>
-                    <path class="hsb-beanie" d="M 45 30 Q 61 6 77 30 Q 61 22 45 30 Z"></path>
-                    <circle class="hsb-pompom" cx="61" cy="8" r="4"></circle>
-                    <path class="hsb-scarf" d="M 50 44 Q 61 54 74 45 L 78 58 Q 61 66 46 57 Z"></path>
-                  </svg>
-                  <div class="hero-snow-spray">
-                    ${Array.from({ length: 10 }).map((_, i) => `<span style="--i:${i}"></span>`).join("")}
-                  </div>
-                </div>
-                <div class="hero-snow-fall">
-                  ${Array.from({ length: 26 }).map((_, i) => `<span style="--i:${i}"></span>`).join("")}
-                </div>
-                <div class="hero-snow-fade"></div>
+            <section class="hero-v2 hero-v2--prompt">
+              <div class="hero-prompt-bg" aria-hidden="true"></div>
+              <div class="hero-prompt-snow" aria-hidden="true"></div>
+              <div class="hero-prompt-words" aria-label="Tu próxima gran aventura comienza aquí">
+                <h1 class="hero-word hero-word-one">Tu próxima</h1>
+                <h1 class="hero-word hero-word-two">aventura</h1>
+                <h1 class="hero-word hero-word-three">comienza aquí</h1>
               </div>
-              <div class="hero-v2-content">
-                <h1 class="hero-v2-title">Tu próxima gran aventura <span>comienza aquí</span></h1>
-                <div class="hero-v2-actions">
+              <div class="hero-prompt-actions">
                   <a class="btn-fuchsia" href="${whatsappLink("Hola, quiero consultar por un viaje con El Ángel Azul.")}" target="_blank" rel="noopener">
                     Consultar por WhatsApp
                     <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">chat</span>
                   </a>
                   <a class="btn-ghost-light" href="#/turismo">Explorar Destinos</a>
-                </div>
               </div>
-              <div class="hero-v2-destinos" aria-label="Algunos de nuestros destinos">
-                <span>Bariloche</span>
-                <span>Cataratas</span>
-                <span>Mendoza</span>
+              <div class="hero-prompt-destinos" aria-label="Algunos de nuestros destinos">
+                <span class="hero-destino hero-destino-one">Bariloche</span>
+                <span class="hero-destino hero-destino-two">Cataratas</span>
+                <span class="hero-destino hero-destino-three">Mendoza</span>
               </div>
             </section>
 

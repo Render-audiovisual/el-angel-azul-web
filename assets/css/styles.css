@@ -1339,6 +1339,213 @@
         }
       }
 
+      .hero-v2--prompt {
+        background: #04101f;
+        display: block;
+        min-height: 100svh;
+        overflow: hidden;
+        padding: 0;
+      }
+
+      .hero-prompt-bg {
+        background:
+          linear-gradient(90deg, rgba(2, 8, 17, 0.92) 0%, rgba(2, 8, 17, 0.24) 44%, rgba(2, 8, 17, 0.62) 100%),
+          linear-gradient(180deg, rgba(2, 8, 17, 0.12) 0%, rgba(2, 8, 17, 0.9) 100%),
+          url("../img/home/hero-snowboard-cinematic.png") center center / cover;
+        inset: 0;
+        position: absolute;
+        transform: scale(1.02);
+        z-index: 0;
+      }
+
+      .hero-prompt-bg::after {
+        background:
+          radial-gradient(circle at 80% 14%, rgba(235, 62, 143, 0.18), transparent 22%),
+          radial-gradient(circle at 18% 78%, rgba(40, 184, 246, 0.15), transparent 28%),
+          linear-gradient(180deg, transparent 60%, rgba(0, 0, 0, 0.66));
+        content: "";
+        inset: 0;
+        position: absolute;
+      }
+
+      .hero-prompt-snow {
+        animation: hsFall 12s linear infinite;
+        background-image:
+          radial-gradient(circle, rgba(255, 255, 255, 0.72) 0 1.2px, transparent 1.8px),
+          radial-gradient(circle, rgba(255, 255, 255, 0.42) 0 1px, transparent 1.5px);
+        background-position: 0 0, 42px 74px;
+        background-size: 132px 132px, 188px 188px;
+        inset: -20%;
+        opacity: 0.36;
+        pointer-events: none;
+        position: absolute;
+        z-index: 1;
+      }
+
+      .hero-prompt-actions,
+      .hero-prompt-destinos {
+        position: relative;
+        z-index: 2;
+      }
+
+      .hero-prompt-words {
+        inset: 0;
+        position: absolute;
+        z-index: 2;
+      }
+
+      .hero-word {
+        color: #fff;
+        font-family: var(--font-hero);
+        font-size: clamp(4.2rem, 8.2vw, 7.8rem);
+        font-weight: 800;
+        letter-spacing: -0.045em;
+        line-height: 0.92;
+        margin: 0;
+        position: absolute;
+        text-shadow: 0 26px 58px rgba(0, 0, 0, 0.48);
+        white-space: nowrap;
+      }
+
+      .hero-word-one {
+        left: clamp(22px, 5vw, 70px);
+        top: 18%;
+      }
+
+      .hero-word-two {
+        right: clamp(24px, 6vw, 88px);
+        top: 36%;
+      }
+
+      .hero-word-three {
+        color: #fff;
+        left: clamp(160px, 26vw, 365px);
+        top: 58%;
+      }
+
+      .hero-prompt-actions {
+        bottom: clamp(34px, 8vw, 88px);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        left: clamp(22px, 5vw, 70px);
+        position: absolute;
+      }
+
+      .hero-v2--prompt .btn-fuchsia,
+      .hero-v2--prompt .btn-ghost-light {
+        min-height: 54px;
+        padding-inline: 26px;
+      }
+
+      .hero-prompt-destinos {
+        inset: 0;
+        pointer-events: none;
+        position: absolute;
+      }
+
+      .hero-destino {
+        backdrop-filter: blur(14px);
+        background: rgba(255, 255, 255, 0.14);
+        border: 1px solid rgba(255, 255, 255, 0.32);
+        border-radius: 999px;
+        color: #fff;
+        font-size: clamp(0.78rem, 1.1vw, 0.95rem);
+        font-weight: 800;
+        padding: 9px 16px;
+        position: absolute;
+        text-shadow: 0 12px 28px rgba(0, 0, 0, 0.24);
+      }
+
+      .hero-destino-one {
+        right: clamp(42px, 10vw, 148px);
+        top: 16%;
+      }
+
+      .hero-destino-two {
+        left: clamp(72px, 10vw, 150px);
+        bottom: 20%;
+      }
+
+      .hero-destino-three {
+        right: clamp(34px, 8vw, 110px);
+        bottom: 12%;
+      }
+
+      body.home-page:not(.nav-scrolled) .site-header {
+        border-bottom-color: transparent;
+        padding: 16px clamp(16px, 4vw, 42px) 0;
+      }
+
+      body.home-page:not(.nav-scrolled) .brand-link,
+      body.home-page:not(.nav-scrolled) .site-nav {
+        backdrop-filter: blur(18px);
+        background: rgba(9, 16, 29, 0.78);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 999px;
+        box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22);
+      }
+
+      body.home-page:not(.nav-scrolled) .brand-link {
+        align-items: center;
+        min-height: 52px;
+        padding: 7px 16px;
+      }
+
+      body.home-page:not(.nav-scrolled) .site-nav {
+        padding: 8px;
+      }
+
+      @media (max-width: 720px) {
+        .hero-v2--prompt {
+          min-height: 92svh;
+        }
+
+        .hero-prompt-bg {
+          background-position: 58% center;
+        }
+
+        .hero-word {
+          font-size: clamp(3.1rem, 16vw, 4.7rem);
+          letter-spacing: -0.045em;
+          white-space: normal;
+        }
+
+        .hero-word-one {
+          left: 18px;
+          right: 18px;
+          top: 25%;
+        }
+
+        .hero-word-two {
+          left: 18px;
+          right: 18px;
+          top: 43%;
+        }
+
+        .hero-word-three {
+          left: 18px;
+          right: 18px;
+          top: 58%;
+        }
+
+        .hero-prompt-actions {
+          bottom: 34px;
+          left: 18px;
+          right: 18px;
+        }
+
+        .hero-v2--prompt .btn-fuchsia,
+        .hero-v2--prompt .btn-ghost-light {
+          justify-content: center;
+          width: 100%;
+        }
+
+        .hero-prompt-destinos {
+          display: none;
+        }
+      }
+
       .home-hero {
         background:
           linear-gradient(90deg, rgba(2, 15, 28, 0.88) 0%, rgba(5, 35, 58, 0.72) 46%, rgba(2, 15, 28, 0.36) 100%),
