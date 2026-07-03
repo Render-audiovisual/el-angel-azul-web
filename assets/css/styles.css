@@ -1379,16 +1379,17 @@
       .hero-clean {
         align-items: flex-end;
         display: flex;
-        margin: -18px -18px 0;
+        margin: 0;
         min-height: 100vh;
         min-height: 100svh;
         overflow: hidden;
         padding: 0;
         position: relative;
+        width: 100%;
       }
 
       .hero-clean-bg {
-        background: url("../img/turismo/hero/montana-patagonia.webp") center 35% / cover no-repeat;
+        background: url("../img/home/hero-snowboard-cinematic.webp") center 42% / cover no-repeat;
         bottom: 0;
         left: 0;
         position: absolute;
@@ -1468,7 +1469,7 @@
         background:
           linear-gradient(90deg, rgba(2, 8, 17, 0.92) 0%, rgba(2, 8, 17, 0.24) 44%, rgba(2, 8, 17, 0.62) 100%),
           linear-gradient(180deg, rgba(2, 8, 17, 0.12) 0%, rgba(2, 8, 17, 0.9) 100%),
-          url("../img/home/hero-snowboard-cinematic.png") center center / cover;
+          url("../img/home/hero-snowboard-cinematic.webp") center center / cover;
         inset: 0;
         position: absolute;
         transform: scale(1.02);
@@ -1622,7 +1623,7 @@
 
       @media (max-width: 720px) {
         .hero-v2--prompt {
-          min-height: 92svh;
+          min-height: 88svh;
         }
 
         .hero-prompt-bg {
@@ -1630,31 +1631,31 @@
         }
 
         .hero-word {
-          font-size: clamp(3.1rem, 16vw, 4.7rem);
-          letter-spacing: -0.045em;
+          font-size: clamp(2.72rem, 14vw, 4.2rem);
+          letter-spacing: -0.025em;
           white-space: normal;
         }
 
         .hero-word-one {
           left: 18px;
           right: 18px;
-          top: 25%;
+          top: 24%;
         }
 
         .hero-word-two {
           left: 18px;
           right: 18px;
-          top: 43%;
+          top: 40%;
         }
 
         .hero-word-three {
           left: 18px;
           right: 18px;
-          top: 58%;
+          top: 54%;
         }
 
         .hero-prompt-actions {
-          bottom: 34px;
+          bottom: 28px;
           left: 18px;
           right: 18px;
         }
@@ -9399,6 +9400,233 @@
         body.nav-scrolled .site-nav,
         body:not(.home-page) .site-nav {
           background: transparent;
+        }
+      }
+
+      @media (max-width: 720px) {
+        html,
+        body {
+          overflow-x: clip;
+        }
+
+        .site-header {
+          min-height: 68px;
+          padding: 10px 14px;
+        }
+
+        body.home-page:not(.nav-scrolled) .site-header {
+          padding: 10px 14px;
+        }
+
+        body.home-page:not(.nav-scrolled) .brand-link,
+        body.home-page:not(.nav-scrolled) .site-nav {
+          backdrop-filter: none;
+          background: #fff;
+          border-color: var(--color-border);
+          border-radius: 16px;
+          box-shadow: var(--shadow-panel);
+        }
+
+        body.home-page:not(.nav-scrolled) .brand-link {
+          background: rgba(255, 255, 255, 0.92);
+          border-radius: 999px;
+          min-height: 48px;
+          padding: 6px 12px;
+        }
+
+        .site-nav {
+          align-items: stretch;
+          background: #fff;
+          border-color: var(--color-border);
+          border-radius: 16px;
+          box-shadow: 0 20px 42px rgba(16, 32, 43, 0.18);
+          gap: 6px;
+          left: 14px;
+          max-height: calc(100svh - 88px);
+          overflow-y: auto;
+          padding: 10px;
+          right: 14px;
+          top: calc(100% + 6px);
+        }
+
+        .site-nav a,
+        .site-nav summary,
+        body.home-page:not(.nav-scrolled) .site-nav a,
+        body.home-page:not(.nav-scrolled) .site-nav summary {
+          background: transparent;
+          border: 1px solid transparent;
+          border-radius: 12px;
+          color: var(--color-text);
+          justify-content: flex-start;
+          min-height: 44px;
+          padding: 11px 12px;
+          text-shadow: none;
+        }
+
+        .site-nav a:hover,
+        .site-nav summary:hover,
+        body.home-page:not(.nav-scrolled) .site-nav a:hover,
+        body.home-page:not(.nav-scrolled) .site-nav summary:hover {
+          background: var(--color-surface-soft);
+          border-color: var(--color-border);
+          color: var(--color-primary);
+        }
+
+        .nav-dropdown {
+          display: grid;
+          gap: 6px;
+        }
+
+        .nav-dropdown-menu {
+          background: var(--color-surface-soft);
+          border-color: var(--color-border);
+          box-shadow: none;
+          margin: 0;
+          min-width: 0;
+          padding: 8px;
+          position: static;
+        }
+
+        .nav-dropdown-menu a {
+          background: #fff;
+          min-height: 40px;
+          padding: 10px 12px;
+        }
+
+        .nav-dropdown-label {
+          padding: 6px 10px 0;
+        }
+
+        .site-nav .nav-whatsapp,
+        body.home-page:not(.nav-scrolled) .site-nav .nav-whatsapp {
+          background: var(--color-accent);
+          border-color: var(--color-accent);
+          color: #fff;
+          justify-content: center;
+          min-height: 46px;
+        }
+
+        body.nav-open .whatsapp-fab {
+          display: none;
+        }
+
+        .whatsapp-fab {
+          bottom: max(14px, env(safe-area-inset-bottom));
+          height: 50px;
+          right: 12px;
+          width: 50px;
+          z-index: 34;
+        }
+
+        body:not(.home-page) .whatsapp-fab {
+          display: none;
+        }
+
+        .whatsapp-fab .material-symbols-outlined {
+          font-size: 26px;
+        }
+
+        .mobile-whatsapp {
+          display: none;
+        }
+
+        .turismo-hero {
+          min-height: 62svh;
+          padding-bottom: 32px;
+          padding-top: 34px;
+        }
+
+        .turismo-hero-carousel span {
+          animation: none;
+          transform: none;
+        }
+
+        .turismo-hero-carousel span:first-child {
+          opacity: 1;
+        }
+
+        .turismo-hero-carousel span:not(:first-child) {
+          background-image: none;
+          display: none;
+        }
+
+        .turismo-hero-content {
+          gap: 14px;
+          min-height: calc(62svh - 66px);
+          place-content: end;
+        }
+
+        .turismo-hero h1 {
+          color: #fff;
+          font-size: clamp(2.18rem, 11vw, 3.35rem);
+          line-height: 1;
+        }
+
+        .turismo-hero p {
+          color: rgba(255, 255, 255, 0.92);
+          font-size: 0.98rem;
+          line-height: 1.45;
+        }
+
+        .turismo-hero .turismo-kicker,
+        .turismo-hero .turismo-proof {
+          color: rgba(255, 255, 255, 0.94);
+        }
+
+        .turismo-hero-actions {
+          display: grid;
+          gap: 8px;
+        }
+
+        .turismo-hero button,
+        .turismo-hero a {
+          min-height: 46px;
+          width: 100%;
+        }
+
+        .inscripcion-hero-media {
+          min-height: 500px;
+        }
+
+        .inscripcion-hero-media::after {
+          background:
+            linear-gradient(180deg, rgba(4, 16, 31, 0.1), rgba(4, 16, 31, 0.92) 64%, rgba(4, 16, 31, 0.98)),
+            linear-gradient(90deg, rgba(4, 16, 31, 0.46), rgba(4, 16, 31, 0.12));
+        }
+
+        .inscripcion-hero-copy {
+          color: #fff;
+          gap: 12px;
+          min-height: 500px;
+          padding: 28px 18px;
+          text-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
+        }
+
+        .inscripcion-hero-copy h1 {
+          color: #fff;
+          font-size: clamp(2.05rem, 10vw, 3rem);
+          line-height: 1.02;
+        }
+
+        .inscripcion-hero-copy p,
+        .inscripcion-hero-copy span {
+          color: rgba(255, 255, 255, 0.9);
+        }
+
+        .inscripcion-hero-steps {
+          gap: 10px;
+          padding: 16px;
+        }
+
+        .inscripcion-hero-steps h2 {
+          font-size: clamp(1.45rem, 8vw, 2.1rem);
+        }
+
+        .inscripcion-hero-steps li {
+          align-items: center;
+          grid-template-columns: auto minmax(0, 1fr);
+          min-height: 64px;
+          padding: 12px;
         }
       }
 

@@ -565,8 +565,8 @@
               </div>
               <div class="turismo-hero-content">
                 <p class="turismo-kicker">Turismo nacional e internacional</p>
-                <h1>Encontrá un viaje que cierre con tus fechas, tu grupo y tu presupuesto</h1>
-                <p>Explorá paquetes cargados por El Ángel Azul y consultá por disponibilidad, formas de pago y detalles antes de decidir.</p>
+                <h1>Elegí tu próximo viaje</h1>
+                <p>Compará destinos, fechas y precios de referencia. Te asesoramos por WhatsApp antes de decidir.</p>
                 <span class="turismo-proof">Asesoramiento personalizado para familias, parejas y grupos.</span>
                 <div class="turismo-hero-actions">
                   <a href="#turismo-catalogo">Ver viajes</a>
@@ -7098,8 +7098,8 @@
                 <img src="https://drive.google.com/thumbnail?id=1obNcUj6dt1hOPHOainWFXlpv0fgIY957&sz=w1600" alt="Grupo de estudiantes de viaje">
                 <div class="inscripcion-hero-copy">
                   <span>Inscripción</span>
-                  <h1>Completá la ficha del viaje de forma ordenada</h1>
-                  <p>Encontrá el contrato activo de tu colegio, confirmá que corresponde a tu curso y avanzá con la ficha digital.</p>
+                  <h1>Completá tu ficha de viaje</h1>
+                  <p>Buscá tu colegio, confirmá el contrato activo y avanzá con la inscripción digital.</p>
                 </div>
               </div>
               <div class="inscripcion-hero-steps">
