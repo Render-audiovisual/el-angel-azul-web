@@ -1594,23 +1594,30 @@
         padding: 16px clamp(16px, 4vw, 42px) 0;
       }
 
-      body.home-page:not(.nav-scrolled) .brand-link,
-      body.home-page:not(.nav-scrolled) .site-nav {
+      body.home-page:not(.nav-scrolled) .brand-link {
+        align-items: center;
         backdrop-filter: blur(18px);
         background: rgba(9, 16, 29, 0.78);
         border: 1px solid rgba(255, 255, 255, 0.12);
         border-radius: 999px;
         box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22);
-      }
-
-      body.home-page:not(.nav-scrolled) .brand-link {
-        align-items: center;
         min-height: 52px;
         padding: 7px 16px;
       }
 
-      body.home-page:not(.nav-scrolled) .site-nav {
-        padding: 8px;
+      /* En mobile: el menú desplegable usa fondo CLARO (legible).
+         En desktop: el nav inline usa el estilo oscuro tipo píldora.
+         Antes: el fondo oscuro se aplicaba en ambos tamaños, causando
+         un blob negro ilegible al abrir el menú en el celular. */
+      @media (min-width: 720px) {
+        body.home-page:not(.nav-scrolled) .site-nav {
+          backdrop-filter: blur(18px);
+          background: rgba(9, 16, 29, 0.78);
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          border-radius: 999px;
+          box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22);
+          padding: 8px;
+        }
       }
 
       @media (max-width: 720px) {
