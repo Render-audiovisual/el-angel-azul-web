@@ -331,12 +331,12 @@
         border-color: transparent;
         color: #10202b;
         display: inline-flex;
-        font-size: 0.82rem;
+        font-size: 0.88rem;
         font-weight: 750;
         justify-content: center;
         letter-spacing: 0.02em;
-        min-height: 40px;
-        padding: 10px 14px;
+        min-height: 44px;
+        padding: 12px 16px;
         text-transform: uppercase;
       }
 
@@ -431,10 +431,10 @@
         border-color: rgba(13, 105, 161, 0.16);
         display: inline-grid;
         gap: 4px;
-        height: 40px;
+        height: 44px;
         justify-content: center;
         padding: 0;
-        width: 40px;
+        width: 44px;
       }
 
       .nav-toggle span {
@@ -682,12 +682,19 @@
       }
 
       .trust-v2-photo {
-        aspect-ratio: 4 / 5;
+        aspect-ratio: 3 / 2;
         background-position: center;
         background-size: cover;
-        border-radius: 28px;
+        border-radius: 20px;
         box-shadow: var(--shadow-panel);
         width: 100%;
+      }
+
+      @media (min-width: 900px) {
+        .trust-v2-photo {
+          aspect-ratio: 4 / 5;
+          border-radius: 28px;
+        }
       }
 
       .trust-v2-badge {
@@ -695,12 +702,21 @@
         backdrop-filter: blur(14px);
         border: 1px solid rgba(255, 255, 255, 0.7);
         border-radius: 20px;
-        bottom: -28px;
         box-shadow: var(--shadow-panel);
+        margin-top: -40px;
         max-width: 300px;
         padding: 22px;
-        position: absolute;
-        right: 16px;
+        position: relative;
+        z-index: 1;
+      }
+
+      @media (min-width: 900px) {
+        .trust-v2-badge {
+          bottom: -28px;
+          margin-top: 0;
+          position: absolute;
+          right: 16px;
+        }
       }
 
       .trust-v2-badge-head {
@@ -824,9 +840,16 @@
       }
 
       .gallery-v2-item {
-        aspect-ratio: 3 / 4;
-        border-radius: 22px;
+        aspect-ratio: 1 / 1;
+        border-radius: 14px;
         overflow: hidden;
+      }
+
+      @media (min-width: 720px) {
+        .gallery-v2-item {
+          aspect-ratio: 3 / 4;
+          border-radius: 22px;
+        }
       }
 
       .gallery-v2-item img {
@@ -963,8 +986,7 @@
       .packages-v2-card-body > p {
         color: var(--color-muted);
         line-height: 1.5;
-        margin: 0 0 20px;
-        min-height: 3em;
+        margin: 0 0 16px;
       }
 
       .packages-v2-card-foot {
@@ -1049,9 +1071,17 @@
       }
 
       .cta-v2-badges {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      @media (min-width: 780px) {
+        .cta-v2-badges {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 12px;
+        }
       }
 
       .cta-v2-badge {
