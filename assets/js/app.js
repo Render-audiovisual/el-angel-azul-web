@@ -168,25 +168,18 @@
           <div class="layout home-layout-v2">
 
             <!-- HERO -->
-            <section class="hero-v2 hero-v2--prompt">
-              <div class="hero-prompt-bg" aria-hidden="true"></div>
-              <div class="hero-prompt-snow" aria-hidden="true"></div>
-              <div class="hero-prompt-words" aria-label="Tu próxima gran aventura comienza aquí">
-                <h1 class="hero-word hero-word-one">Tu próxima</h1>
-                <h1 class="hero-word hero-word-two">aventura</h1>
-                <h1 class="hero-word hero-word-three">comienza aquí</h1>
-              </div>
-              <div class="hero-prompt-actions">
+            <section class="hero-clean">
+              <div class="hero-clean-bg" aria-hidden="true"></div>
+              <div class="hero-clean-overlay" aria-hidden="true"></div>
+              <div class="hero-clean-content">
+                <h1 class="hero-clean-title">Tu próxima gran aventura <span>comienza aquí</span>.</h1>
+                <div class="hero-clean-actions">
                   <a class="btn-fuchsia" href="${whatsappLink("Hola, quiero consultar por un viaje con El Ángel Azul.")}" target="_blank" rel="noopener">
                     Consultar por WhatsApp
                     <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">chat</span>
                   </a>
                   <a class="btn-ghost-light" href="#/turismo">Explorar Destinos</a>
-              </div>
-              <div class="hero-prompt-destinos" aria-label="Algunos de nuestros destinos">
-                <span class="hero-destino hero-destino-one">Bariloche</span>
-                <span class="hero-destino hero-destino-two">Cataratas</span>
-                <span class="hero-destino hero-destino-three">Mendoza</span>
+                </div>
               </div>
             </section>
 
