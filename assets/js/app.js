@@ -7740,12 +7740,19 @@
         document.getElementById("app").innerHTML = `
           <div class="layout ficha-adhesion-layout">
             <section class="ficha-adhesion-hero">
-              <p>Ficha de adhesión digital</p>
-              <h1>Completar datos del pasajero</h1>
-              <p>Esta ficha registra los datos familiares y la deja pendiente de revisión por administración.</p>
+              <p>Paso 2 de 2</p>
+              <h1>Ficha y firma</h1>
+              <p>Cargá los datos del alumno, del responsable legal y firmá la inscripción desde el celular.</p>
             </section>
 
             <section class="ficha-adhesion-panel">
+              <div class="ficha-adhesion-progress" aria-label="Progreso de inscripción">
+                <div>
+                  <span>90% completado</span>
+                  <strong>Datos y firma</strong>
+                </div>
+                <i aria-hidden="true"></i>
+              </div>
               <div class="ficha-adhesion-context">
                 <span>Contexto del viaje</span>
                 <strong>${escapeHtml(fichaContext.nivel)} · ${escapeHtml(fichaContext.viaje)} · ${escapeHtml(fichaContext.colegio)} · ${escapeHtml(fichaContext.cursoDivision)}</strong>
@@ -7765,6 +7772,7 @@
                 <input type="hidden" name="cursoDivision" value="${escapeHtml(fichaContext.cursoDivision)}">
                 <fieldset>
                   <legend>Datos del pasajero</legend>
+                  <p class="ficha-fieldset-note">Información del alumno que viaja.</p>
                   <label>Apellido y nombres
                     <input name="pasajeroNombre" required>
                   </label>
@@ -7795,6 +7803,7 @@
 
                 <fieldset>
                   <legend>Datos del padre / madre / tutor responsable</legend>
+                  <p class="ficha-fieldset-note">Adulto responsable de la inscripción.</p>
                   <label>Apellido y nombres
                     <input name="responsableNombre" required>
                   </label>
@@ -7831,6 +7840,7 @@
 
                 <fieldset>
                   <legend>Domicilio</legend>
+                  <p class="ficha-fieldset-note">Datos de contacto y domicilio declarados.</p>
                   <label>Calle
                     <input name="domicilioCalle">
                   </label>
@@ -7856,6 +7866,7 @@
 
                 <fieldset>
                   <legend>Condiciones</legend>
+                  <p class="ficha-fieldset-note">Confirmación previa al envío.</p>
                   <label class="ficha-adhesion-check">
                     <input name="aceptaCondiciones" type="checkbox" value="si">
                     Acepto que esta ficha sea revisada por administración y entiendo que no confirma pagos ni cupo definitivo.
@@ -7864,6 +7875,7 @@
 
                 <fieldset>
                   <legend>Firma del responsable / tutor</legend>
+                  <p class="ficha-fieldset-note">Firmá dentro del recuadro usando el dedo o lápiz óptico.</p>
                   <div class="ficha-adhesion-signature">
                     <span>Firma del responsable/tutor</span>
                     <canvas width="720" height="220" data-ficha-signature></canvas>
