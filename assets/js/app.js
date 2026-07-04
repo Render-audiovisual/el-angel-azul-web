@@ -213,9 +213,6 @@
                     `;
                   }).join("")}
                 </div>
-                <a class="quienes-somos-link" href="#/nosotros">Conocer más sobre nosotros
-                  <span class="material-symbols-outlined">arrow_forward</span>
-                </a>
               </div>
             </section>
 
