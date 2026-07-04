@@ -3975,6 +3975,96 @@
         overflow: hidden;
       }
 
+      /* Hero compacto de inscripción: antes ocupaba 62svh (foto grande +
+         lista de pasos duplicada con el stepper real de abajo). En mobile,
+         eso empujaba todo el formulario fuera de la vista inicial. Ahora
+         es un bloque de texto simple, sin foto ni scroll innecesario. */
+      .inscripcion-page-hero--compact {
+        background: linear-gradient(135deg, var(--color-deep-blue, #083b7a), var(--color-primary, #0d69a1));
+        border: none;
+        padding: 28px 20px;
+      }
+
+      .inscripcion-hero-copy-compact {
+        color: #fff;
+        display: grid;
+        gap: 8px;
+        max-width: 640px;
+      }
+
+      .inscripcion-hero-copy-compact span {
+        font-size: 0.75rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        opacity: 0.85;
+        text-transform: uppercase;
+      }
+
+      .inscripcion-hero-copy-compact h1 {
+        font-size: clamp(1.5rem, 4.5vw, 2.1rem);
+        margin: 0;
+      }
+
+      .inscripcion-hero-copy-compact p {
+        font-size: 0.92rem;
+        line-height: 1.5;
+        margin: 0;
+        opacity: 0.92;
+      }
+
+      @media (min-width: 720px) {
+        .inscripcion-page-hero--compact {
+          padding: 40px 36px;
+        }
+      }
+
+      /* Stepper compacto tipo app: barra + "Paso X de 5". Visible en mobile,
+         reemplaza a las 5 cajas de texto que se apilaban verticalmente. */
+      .inscripcion-progress-compact {
+        display: grid;
+        gap: 8px;
+        margin-bottom: 4px;
+      }
+
+      .inscripcion-progress-bar {
+        background: #e2edf2;
+        border-radius: 999px;
+        height: 6px;
+        overflow: hidden;
+        width: 100%;
+      }
+
+      .inscripcion-progress-bar span {
+        background: var(--color-primary, #0d69a1);
+        border-radius: 999px;
+        display: block;
+        height: 100%;
+        transition: width 0.25s ease;
+      }
+
+      [data-inscripcion-progress-label] {
+        color: #425460;
+        font-size: 0.85rem;
+        font-weight: 800;
+        margin: 0;
+      }
+
+      @media (max-width: 720px) {
+        .inscripcion-progress-compact {
+          display: grid;
+        }
+
+        .inscripcion-progress {
+          display: none;
+        }
+      }
+
+      @media (min-width: 721px) {
+        .inscripcion-progress-compact {
+          display: none;
+        }
+      }
+
       .inscripcion-hero-media {
         min-height: 62svh;
         position: relative;

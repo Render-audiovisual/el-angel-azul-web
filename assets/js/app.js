@@ -7176,24 +7176,11 @@
       function renderInscripcion() {
         document.getElementById("app").innerHTML = `
           <div class="layout portal-layout public-inscripcion-layout">
-            <section class="inscripcion-page-hero">
-              <div class="inscripcion-hero-media">
-                <img src="https://drive.google.com/thumbnail?id=1obNcUj6dt1hOPHOainWFXlpv0fgIY957&sz=w1600" alt="Grupo de estudiantes de viaje">
-                <div class="inscripcion-hero-copy">
-                  <span>Inscripción</span>
-                  <h1>Completá tu ficha de viaje</h1>
-                  <p>Buscá tu colegio, confirmá el contrato activo y avanzá con la inscripción digital.</p>
-                </div>
-              </div>
-              <div class="inscripcion-hero-steps">
-                <p class="section-kicker">Proceso de inscripción</p>
-                <h2>Antes de cargar tus datos, ubicamos el viaje correcto.</h2>
-                <ul>
-                  <li><span>1</span> Elegís nivel, destino y año</li>
-                  <li><span>2</span> Buscás colegio y curso</li>
-                  <li><span>3</span> Confirmás el contrato activo</li>
-                  <li><span>4</span> Completás y firmás la ficha</li>
-                </ul>
+            <section class="inscripcion-page-hero inscripcion-page-hero--compact">
+              <div class="inscripcion-hero-copy-compact">
+                <span>Inscripción</span>
+                <h1>Completá tu ficha de viaje</h1>
+                <p>Buscá tu colegio, confirmá el contrato activo y avanzá con la inscripción digital.</p>
               </div>
             </section>
 
@@ -7214,6 +7201,13 @@
                   <select data-inscripcion-anio>
                     ${inscripcionAnios.map((anio) => `<option>${escapeHtml(anio)}</option>`).join("")}
                   </select>
+                </div>
+
+                <div class="inscripcion-progress-compact" aria-hidden="true">
+                  <div class="inscripcion-progress-bar">
+                    <span data-inscripcion-progress-fill></span>
+                  </div>
+                  <p data-inscripcion-progress-label>Paso 1 de 5 · Nivel</p>
                 </div>
 
                 <div class="inscripcion-progress">
@@ -7433,6 +7427,10 @@
           return nivelField.value && destinoField.value && anioField.value && colegioField.value.trim() && cursoField.value.trim() && confirmedContrato;
         };
 
+        const stepLabels = ["Nivel", "Destino", "Año", "Colegio", "Confirmación"];
+        const progressFill = document.querySelector("[data-inscripcion-progress-fill]");
+        const progressLabel = document.querySelector("[data-inscripcion-progress-label]");
+
         const renderStep = () => {
           stepBlocks.forEach((block) => {
             block.hidden = Number(block.dataset.inscripcionStep) !== currentStep;
@@ -7441,6 +7439,8 @@
             item.classList.toggle("active", Number(item.dataset.inscripcionProgress) === currentStep);
             item.classList.toggle("done", Number(item.dataset.inscripcionProgress) < currentStep);
           });
+          if (progressFill) progressFill.style.width = `${(currentStep / 5) * 100}%`;
+          if (progressLabel) progressLabel.textContent = `Paso ${currentStep} de 5 · ${stepLabels[currentStep - 1]}`;
           backButton.disabled = currentStep === 1;
           nextButton.textContent = currentStep === 5 ? "Completar ficha de adhesión" : "Siguiente";
           errorMessage.hidden = true;
