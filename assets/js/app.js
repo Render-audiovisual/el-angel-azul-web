@@ -612,27 +612,37 @@
               <div class="catalog-heading">
                 <p class="section-kicker">Antes de viajar</p>
                 <h2>Te ayudamos a elegir sin vueltas</h2>
+                <p>Si todavía no sabés qué destino conviene, la consulta arranca por fecha, cantidad de personas y presupuesto aproximado.</p>
               </div>
               <div class="turismo-trust-grid">
                 <article>
-                  <strong>Asesoramiento real</strong>
-                  <p>Consultá fechas, cupos y alternativas antes de decidir.</p>
+                  <span>01</span>
+                  <strong>Contanos qué buscás</strong>
+                  <p>Fecha tentativa, cantidad de personas y tipo de viaje.</p>
                 </article>
                 <article>
-                  <strong>Viajes acompañados</strong>
-                  <p>Opciones organizadas para familias, parejas y grupos.</p>
+                  <span>02</span>
+                  <strong>Revisamos opciones</strong>
+                  <p>Te pasan destinos disponibles, cupos y condiciones actuales.</p>
                 </article>
                 <article>
-                  <strong>Pago a consultar</strong>
-                  <p>Te pasan condiciones actuales según destino y temporada.</p>
+                  <span>03</span>
+                  <strong>Definís con claridad</strong>
+                  <p>Comparás precio, duración e incluidos antes de reservar.</p>
                 </article>
               </div>
             </section>
 
             <section class="turismo-cta">
-              <h2>¿No encontraste el viaje que buscabas?</h2>
-              <p>Podés pedir asesoramiento según tu presupuesto, fecha y cantidad de personas.</p>
-              <a href="${whatsappLink("Hola, quiero consultar por un viaje turístico que no encontré en la web de El Ángel Azul.")}" target="_blank" rel="noopener">Consultar por WhatsApp</a>
+              <div>
+                <p class="turismo-cta-kicker">Consulta personalizada</p>
+                <h2>¿No encontraste el viaje que buscabas?</h2>
+                <p>Escribinos qué destino, fecha o presupuesto tenés en mente y te ayudamos a encontrar una opción.</p>
+              </div>
+              <div class="turismo-cta-actions">
+                <a href="${whatsappLink("Hola, quiero consultar por un viaje turístico que no encontré en la web de El Ángel Azul. Busco opciones según fecha, presupuesto y cantidad de personas.")}" target="_blank" rel="noopener">Consultar por WhatsApp</a>
+                <a href="#turismo-catalogo">Volver a ver viajes</a>
+              </div>
             </section>
           </div>
         `;

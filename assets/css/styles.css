@@ -2939,7 +2939,9 @@
         background: #fff;
         border: 1px solid #d9e7ef;
         border-radius: 8px;
-        padding: 20px;
+        display: grid;
+        gap: 18px;
+        padding: clamp(20px, 4vw, 30px);
       }
 
       .turismo-trust-grid {
@@ -2948,12 +2950,25 @@
       }
 
       .turismo-trust-grid article {
-        background: #f7fbfe;
+        background: linear-gradient(180deg, #f7fbfe, #fff);
         border: 1px solid #d9e7ef;
         border-radius: 8px;
         display: grid;
-        gap: 6px;
-        padding: 14px;
+        gap: 8px;
+        padding: 16px;
+      }
+
+      .turismo-trust-grid article > span {
+        align-items: center;
+        background: #0d69a1;
+        border-radius: 999px;
+        color: #fff;
+        display: inline-flex;
+        font-size: 0.76rem;
+        font-weight: 900;
+        height: 28px;
+        justify-content: center;
+        width: 28px;
       }
 
       .turismo-trust-grid strong,
@@ -2976,6 +2991,7 @@
       }
 
       .turismo-cta {
+        align-items: center;
         background:
           linear-gradient(135deg, rgba(13, 105, 161, 0.96), rgba(16, 32, 43, 0.96)),
           url("../img/turismo/hero/montana-patagonia.webp") center / cover;
@@ -2983,13 +2999,34 @@
         border-radius: 8px;
         color: #fff;
         display: grid;
-        gap: 12px;
-        padding: 22px;
+        gap: 18px;
+        padding: clamp(22px, 4vw, 34px);
       }
 
       .turismo-cta h2,
       .turismo-cta p {
         margin: 0;
+      }
+
+      .turismo-cta h2 {
+        font-size: clamp(1.7rem, 4vw, 2.6rem);
+        line-height: 1.04;
+        text-wrap: balance;
+      }
+
+      .turismo-cta-kicker {
+        color: rgba(255, 255, 255, 0.76);
+        font-size: 0.78rem;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        margin: 0 0 8px;
+        text-transform: uppercase;
+      }
+
+      .turismo-cta-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
       }
 
       .turismo-cta a {
@@ -3002,6 +3039,12 @@
         justify-content: center;
         min-height: 42px;
         width: fit-content;
+      }
+
+      .turismo-cta-actions a:last-child {
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.56);
+        color: #fff;
       }
 
       .package-detail-cta .turismo-hero-actions a:last-child {
@@ -9179,6 +9222,10 @@
           grid-template-columns: repeat(3, minmax(0, 1fr));
         }
 
+        .turismo-cta {
+          grid-template-columns: minmax(0, 1fr) auto;
+        }
+
         .student-path-grid {
           grid-template-columns: repeat(2, minmax(0, 1fr));
         }
@@ -9819,6 +9866,14 @@
         .turismo-hero button,
         .turismo-hero a {
           min-height: 46px;
+          width: 100%;
+        }
+
+        .turismo-cta-actions {
+          display: grid;
+        }
+
+        .turismo-cta a {
           width: 100%;
         }
 
