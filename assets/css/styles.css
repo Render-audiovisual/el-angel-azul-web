@@ -762,15 +762,16 @@
 
       .quienes-somos-heading h2 {
         color: var(--color-primary-strong, #0a4f79);
-        font-size: clamp(2rem, 5vw, 3.4rem);
-        line-height: 1.04;
+        font-size: clamp(2.15rem, 5vw, 3.4rem);
+        line-height: 1.06;
         margin: 0;
       }
 
       .quienes-somos-heading > p {
         color: var(--color-muted-strong, #33454f);
-        font-size: 1.02rem;
-        line-height: 1.6;
+        font-size: clamp(1.08rem, 2.2vw, 1.22rem);
+        font-weight: 500;
+        line-height: 1.62;
         margin: 0;
       }
 
@@ -811,14 +812,15 @@
 
       .quienes-somos-card strong {
         color: #10202b;
-        font-size: 0.9rem;
+        font-size: 0.96rem;
         font-weight: 800;
       }
 
       .quienes-somos-card p {
-        color: var(--color-muted, #4f6472);
-        font-size: 0.8rem;
-        line-height: 1.4;
+        color: var(--color-muted-strong, #33454f);
+        font-size: 0.88rem;
+        font-weight: 500;
+        line-height: 1.42;
         margin: 0;
       }
 
@@ -855,7 +857,7 @@
         }
 
         .quienes-somos-card p {
-          font-size: 0.85rem;
+          font-size: 0.92rem;
         }
       }
 
@@ -895,12 +897,12 @@
         }
 
         .quienes-somos-card strong {
-          font-size: 0.76rem;
+          font-size: 0.82rem;
         }
 
         .quienes-somos-card p {
-          font-size: 0.68rem;
-          line-height: 1.25;
+          font-size: 0.76rem;
+          line-height: 1.33;
         }
       }
 
@@ -1057,7 +1059,8 @@
 
       .gallery-v2-heading h2 {
         color: var(--color-primary-strong);
-        font-size: clamp(1.9rem, 4.4vw, 3rem);
+        font-size: clamp(2.15rem, 5vw, 3.4rem);
+        line-height: 1.06;
         margin: 0 0 12px;
       }
 
@@ -1066,9 +1069,10 @@
       }
 
       .gallery-v2-heading p {
-        color: var(--color-muted);
-        font-size: 1.05rem;
-        line-height: 1.55;
+        color: var(--color-muted-strong);
+        font-size: clamp(1.08rem, 2.2vw, 1.22rem);
+        font-weight: 500;
+        line-height: 1.62;
         margin: 0;
       }
 
@@ -1133,12 +1137,16 @@
 
       .packages-v2-heading h2 {
         color: var(--color-primary-strong);
-        font-size: clamp(1.7rem, 3.6vw, 2.4rem);
+        font-size: clamp(2.15rem, 5vw, 3.4rem);
+        line-height: 1.06;
         margin: 0 0 6px;
       }
 
       .packages-v2-heading p {
-        color: var(--color-muted);
+        color: var(--color-muted-strong);
+        font-size: clamp(1.08rem, 2.2vw, 1.22rem);
+        font-weight: 500;
+        line-height: 1.52;
         margin: 0;
       }
 
@@ -1225,8 +1233,10 @@
       }
 
       .packages-v2-card-body > p {
-        color: var(--color-muted);
-        line-height: 1.5;
+        color: var(--color-muted-strong);
+        font-size: 1rem;
+        font-weight: 500;
+        line-height: 1.55;
         margin: 0 0 16px;
       }
 
@@ -1298,17 +1308,18 @@
 
       .cta-v2-grid h2 {
         color: #fff;
-        font-size: clamp(1.7rem, 3.6vw, 2.4rem);
-        line-height: 1.2;
+        font-size: clamp(2.15rem, 5vw, 3.4rem);
+        line-height: 1.06;
         margin: 0 0 16px;
       }
 
       .cta-v2-grid > div:first-child > p {
-        color: rgba(255, 255, 255, 0.82);
-        font-size: 1.05rem;
-        line-height: 1.55;
+        color: rgba(255, 255, 255, 0.9);
+        font-size: clamp(1.08rem, 2.2vw, 1.22rem);
+        font-weight: 500;
+        line-height: 1.62;
         margin: 0 0 28px;
-        max-width: 440px;
+        max-width: 560px;
       }
 
       .cta-v2-badges {
