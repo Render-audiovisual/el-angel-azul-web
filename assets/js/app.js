@@ -785,19 +785,23 @@
               ` : ""}
             </section>
 
-            <!-- ITINERARIO -->
+            <!-- ITINERARIO (acordeón: primer día expandido, resto colapsado) -->
             ${itinerario.length ? `
               <section class="package-detail-itinerario">
                 <p class="section-kicker">Programa</p>
                 <h2>Itinerario día por día</h2>
-                <div class="package-itinerario-list">
+                <div class="package-itinerario-list" data-itinerario-accordion>
                   ${itinerario.map((dia, index) => `
-                    <div class="package-itinerario-item">
-                      <div class="package-itinerario-num">Día ${escapeHtml(String(dia.dia || index + 1))}</div>
-                      <div class="package-itinerario-body">
-                        <strong>${escapeHtml(dia.titulo)}</strong>
-                        ${dia.descripcion ? `<p>${escapeHtml(dia.descripcion)}</p>` : ""}
-                      </div>
+                    <div class="package-itinerario-item${index === 0 ? " is-open" : ""}" data-itinerario-item>
+                      <button type="button" class="package-itinerario-toggle" data-itinerario-toggle aria-expanded="${index === 0 ? "true" : "false"}">
+                        <span class="package-itinerario-num">${escapeHtml(String(dia.dia || index + 1).padStart(2, "0"))}</span>
+                        <span class="package-itinerario-toggle-text">
+                          <strong>${escapeHtml(dia.titulo)}</strong>
+                          <small>Actividad principal</small>
+                        </span>
+                        <span class="material-symbols-outlined package-itinerario-chevron">expand_more</span>
+                      </button>
+                      ${dia.descripcion ? `<div class="package-itinerario-body"><p>${escapeHtml(dia.descripcion)}</p></div>` : ""}
                     </div>
                   `).join("")}
                 </div>
@@ -836,7 +840,28 @@
             </section>
 
           </div>
+
+          <!-- Barra fija inferior: precio + WhatsApp siempre accesible al scrollear -->
+          <div class="package-sticky-bar">
+            <div>
+              <span>Desde</span>
+              <strong>${escapeHtml(packageItem.precioDesde || "Consultar")}</strong>
+            </div>
+            <a href="${whatsappHref}" target="_blank" rel="noopener">Consultar por WhatsApp</a>
+          </div>
         `;
+        bindPackageDetailItinerario();
+      }
+
+      function bindPackageDetailItinerario() {
+        document.querySelectorAll("[data-itinerario-toggle]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const item = button.closest("[data-itinerario-item]");
+            if (!item) return;
+            const isOpen = item.classList.toggle("is-open");
+            button.setAttribute("aria-expanded", isOpen ? "true" : "false");
+          });
+        });
       }
 
       const ADMIN_TURISMO_STORAGE_KEY = "angelAzulAdminTurismoTripsV2";

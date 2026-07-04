@@ -3289,41 +3289,137 @@
 
       .package-itinerario-list {
         display: grid;
-        gap: 0;
+        gap: 10px;
       }
 
       .package-itinerario-item {
-        border-left: 2px solid #0d69a1;
-        display: grid;
-        gap: 6px;
-        grid-template-columns: 80px 1fr;
-        padding: 14px 0 14px 16px;
+        background: #fff;
+        border: 1px solid #d9e7ef;
+        border-radius: 14px;
+        overflow: hidden;
       }
 
-      .package-itinerario-item:last-child {
-        padding-bottom: 0;
+      .package-itinerario-toggle {
+        align-items: center;
+        background: none;
+        border: none;
+        cursor: pointer;
+        display: grid;
+        font: inherit;
+        gap: 12px;
+        grid-template-columns: 40px 1fr 24px;
+        padding: 14px 16px;
+        text-align: left;
+        width: 100%;
       }
 
       .package-itinerario-num {
+        align-items: center;
+        background: var(--color-surface-soft, #eef6fb);
+        border-radius: 999px;
         color: #0d69a1;
-        font-size: 0.78rem;
+        display: flex;
+        font-size: 0.82rem;
         font-weight: 900;
-        padding-top: 3px;
-        text-transform: uppercase;
+        height: 40px;
+        justify-content: center;
+        width: 40px;
       }
 
-      .package-itinerario-body strong {
+      .package-itinerario-toggle-text {
+        display: grid;
+        gap: 2px;
+      }
+
+      .package-itinerario-toggle-text strong {
         color: #10202b;
-        display: block;
         font-size: 0.95rem;
         font-weight: 800;
+      }
+
+      .package-itinerario-toggle-text small {
+        color: #6b7d88;
+        font-size: 0.78rem;
+      }
+
+      .package-itinerario-chevron {
+        color: #6b7d88;
+        justify-self: end;
+        transition: transform 0.2s ease;
+      }
+
+      .package-itinerario-item.is-open .package-itinerario-chevron {
+        color: #0d69a1;
+        transform: rotate(180deg);
+      }
+
+      .package-itinerario-body {
+        display: none;
+        padding: 0 16px 16px 68px;
+      }
+
+      .package-itinerario-item.is-open .package-itinerario-body {
+        display: block;
       }
 
       .package-itinerario-body p {
         color: #4f6472;
         font-size: 0.9rem;
         line-height: 1.5;
-        margin: 6px 0 0;
+        margin: 0;
+      }
+
+      /* --- Barra fija inferior en detalle de paquete: precio + WhatsApp
+         siempre accesibles, sin tener que scrollear hasta el CTA final --- */
+      .package-sticky-bar {
+        align-items: center;
+        background: #fff;
+        border-top: 1px solid #d9e7ef;
+        box-shadow: 0 -8px 24px rgba(16, 32, 43, 0.1);
+        bottom: 0;
+        display: flex;
+        gap: 12px;
+        justify-content: space-between;
+        left: 0;
+        padding: 12px 16px;
+        position: fixed;
+        right: 0;
+        z-index: 30;
+      }
+
+      .package-sticky-bar > div {
+        display: grid;
+        gap: 0;
+        line-height: 1.1;
+      }
+
+      .package-sticky-bar span {
+        color: #6b7d88;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      .package-sticky-bar strong {
+        color: #083b7a;
+        font-size: 1.15rem;
+        font-weight: 900;
+      }
+
+      .package-sticky-bar a {
+        background: var(--color-whatsapp, #18a957);
+        border-radius: 999px;
+        color: #fff;
+        flex-shrink: 0;
+        font-size: 0.88rem;
+        font-weight: 800;
+        padding: 12px 18px;
+        text-decoration: none;
+        white-space: nowrap;
+      }
+
+      body[data-app-entry="admin"] .package-sticky-bar {
+        display: none;
       }
 
       /* --- Condición de venta --- */
