@@ -7203,59 +7203,53 @@
                   </select>
                 </div>
 
-                <div class="inscripcion-progress-compact" aria-hidden="true">
-                  <div class="inscripcion-progress-bar">
-                    <span data-inscripcion-progress-fill></span>
+                <div class="inscripcion-stepper-v2">
+                  <div class="inscripcion-stepper-v2-item" data-macro-indicator="1">
+                    <span class="inscripcion-stepper-v2-dot">1</span>
+                    <small>Selección</small>
                   </div>
-                  <p data-inscripcion-progress-label>Paso 1 de 5 · Nivel</p>
-                </div>
-
-                <div class="inscripcion-progress">
-                  <span data-inscripcion-progress="1">Nivel</span>
-                  <span data-inscripcion-progress="2">Destino</span>
-                  <span data-inscripcion-progress="3">Año</span>
-                  <span data-inscripcion-progress="4">Colegio</span>
-                  <span data-inscripcion-progress="5">Confirmación</span>
-                </div>
-
-                <div class="inscripcion-step" data-inscripcion-step="1">
-                  <span>Paso 1</span>
-                  <h3>Elegí el nivel</h3>
-                  <p>Seleccioná si el viaje corresponde a primaria o secundaria.</p>
-                  <div class="inscripcion-option-group" data-inscripcion-options="nivel"></div>
-                </div>
-
-                <div class="inscripcion-step" data-inscripcion-step="2" hidden>
-                  <span>Paso 2</span>
-                  <h3>Elegí el destino</h3>
-                  <p>Indicá el viaje que corresponde a tu grupo.</p>
-                  <div class="inscripcion-option-group" data-inscripcion-options="destino"></div>
-                </div>
-
-                <div class="inscripcion-step" data-inscripcion-step="3" hidden>
-                  <span>Paso 3</span>
-                  <h3>Elegí el año del viaje</h3>
-                  <p>Usamos este dato para encontrar el contrato correcto.</p>
-                  <div class="inscripcion-option-group" data-inscripcion-options="anio"></div>
-                </div>
-
-                <div class="inscripcion-step" data-inscripcion-step="4" hidden>
-                  <span>Paso 4</span>
-                  <h3>Buscá tu colegio y curso</h3>
-                  <p>Escribí el colegio y curso/división tal como figura en la información del viaje.</p>
-                  <div class="public-inscripcion-grid">
-                    <label>Colegio
-                      <input data-inscripcion-colegio placeholder="Ej: San José">
-                    </label>
-                    <label>Curso / División
-                      <input data-inscripcion-curso placeholder="Ej: 5to B">
-                    </label>
+                  <div class="inscripcion-stepper-v2-track">
+                    <span data-macro-fill></span>
                   </div>
-                  <div data-inscripcion-contract-result class="inscripcion-contract-result"></div>
+                  <div class="inscripcion-stepper-v2-item" data-macro-indicator="2">
+                    <span class="inscripcion-stepper-v2-dot">2</span>
+                    <small>Ficha y firma</small>
+                  </div>
+                </div>
+                <p class="inscripcion-stepper-v2-label" data-macro-label>Paso 1 de 2: Selección de viaje</p>
+
+                <div class="inscripcion-macro-step" data-macro-step="1">
+                  <div class="inscripcion-field-block">
+                    <h3><span>1</span> Elegí el nivel escolar</h3>
+                    <div class="inscripcion-option-group inscripcion-option-group--nivel" data-inscripcion-options="nivel"></div>
+                  </div>
+
+                  <div class="inscripcion-field-block">
+                    <h3><span>2</span> Elegí el destino</h3>
+                    <div class="inscripcion-option-group" data-inscripcion-options="destino"></div>
+                  </div>
+
+                  <div class="inscripcion-field-block">
+                    <h3><span>3</span> Año del viaje</h3>
+                    <div class="inscripcion-option-group" data-inscripcion-options="anio"></div>
+                  </div>
+
+                  <div class="inscripcion-field-block">
+                    <h3><span>4</span> Tu institución</h3>
+                    <div class="public-inscripcion-grid">
+                      <label>Colegio
+                        <input data-inscripcion-colegio placeholder="Ej: San José">
+                      </label>
+                      <label>Curso / División
+                        <input data-inscripcion-curso placeholder="Ej: 5to B">
+                      </label>
+                    </div>
+                    <p class="inscripcion-field-hint">Si no encontrás tu colegio, contactanos vía WhatsApp.</p>
+                    <div data-inscripcion-contract-result class="inscripcion-contract-result"></div>
+                  </div>
                 </div>
 
-                <div class="inscripcion-step" data-inscripcion-step="5" hidden>
-                  <span>Paso 5</span>
+                <div class="inscripcion-macro-step" data-macro-step="2" hidden>
                   <div data-inscripcion-summary></div>
                 </div>
 
@@ -7263,7 +7257,7 @@
                 <div class="ficha-adhesion-error" data-inscripcion-error hidden></div>
                 <div class="inscripcion-step-actions">
                   <button type="button" data-inscripcion-back>Volver</button>
-                  <button type="button" data-inscripcion-next>Siguiente</button>
+                  <button type="button" data-inscripcion-next>Continuar Registro</button>
                 </div>
               </form>
             </section>
@@ -7282,8 +7276,8 @@
         const contractResult = document.querySelector("[data-inscripcion-contract-result]");
         const summary = document.querySelector("[data-inscripcion-summary]");
         const contextSummary = document.querySelector("[data-inscripcion-context-summary]");
-        const progressItems = [...document.querySelectorAll("[data-inscripcion-progress]")];
-        const stepBlocks = [...document.querySelectorAll("[data-inscripcion-step]")];
+        const progressItems = [];
+        const stepBlocks = [...document.querySelectorAll("[data-macro-step]")];
         const backButton = document.querySelector("[data-inscripcion-back]");
         const nextButton = document.querySelector("[data-inscripcion-next]");
         const errorMessage = document.querySelector("[data-inscripcion-error]");
@@ -7436,41 +7430,45 @@
           renderChoiceGroups();
         };
 
-        const stepValue = (step) => {
-          if (step === 1) return nivelField.value;
-          if (step === 2) return destinoField.value;
-          if (step === 3) return anioField.value;
-          if (step === 4) return colegioField.value.trim() && cursoField.value.trim() && confirmedContrato;
-          return nivelField.value && destinoField.value && anioField.value && colegioField.value.trim() && cursoField.value.trim() && confirmedContrato;
-        };
+        // Con 2 macro-pasos, "avanzar" siempre exige que TODO el bloque de
+        // selección esté completo y el contrato confirmado (antes se
+        // validaba campo por campo entre 5 pasos separados).
+        const allSelectionValid = () => Boolean(
+          nivelField.value && destinoField.value && anioField.value &&
+          colegioField.value.trim() && cursoField.value.trim() && confirmedContrato
+        );
+        const stepValue = (step) => (step >= 5 ? allSelectionValid() : allSelectionValid());
 
-        const stepLabels = ["Nivel", "Destino", "Año", "Colegio", "Confirmación"];
-        const progressFill = document.querySelector("[data-inscripcion-progress-fill]");
-        const progressLabel = document.querySelector("[data-inscripcion-progress-label]");
+        const macroLabels = ["Paso 1 de 2: Selección de viaje", "Paso 2 de 2: Confirmá y avanzá a la ficha"];
+        const progressFill = document.querySelector("[data-macro-fill]");
+        const progressLabel = document.querySelector("[data-macro-label]");
+        const macroIndicators = [...document.querySelectorAll("[data-macro-indicator]")];
 
         const renderStep = () => {
+          const macroStep = currentStep >= 5 ? 2 : 1;
           stepBlocks.forEach((block) => {
-            block.hidden = Number(block.dataset.inscripcionStep) !== currentStep;
+            block.hidden = Number(block.dataset.macroStep) !== macroStep;
           });
-          progressItems.forEach((item) => {
-            item.classList.toggle("active", Number(item.dataset.inscripcionProgress) === currentStep);
-            item.classList.toggle("done", Number(item.dataset.inscripcionProgress) < currentStep);
+          macroIndicators.forEach((item) => {
+            const step = Number(item.dataset.macroIndicator);
+            item.classList.toggle("active", step === macroStep);
+            item.classList.toggle("done", step < macroStep);
           });
-          if (progressFill) progressFill.style.width = `${(currentStep / 5) * 100}%`;
-          if (progressLabel) progressLabel.textContent = `Paso ${currentStep} de 5 · ${stepLabels[currentStep - 1]}`;
-          backButton.disabled = currentStep === 1;
-          nextButton.textContent = currentStep === 5 ? "Completar ficha de adhesión" : "Siguiente";
+          if (progressFill) progressFill.style.width = macroStep === 2 ? "100%" : "8%";
+          if (progressLabel) progressLabel.textContent = macroLabels[macroStep - 1];
+          backButton.disabled = macroStep === 1;
+          nextButton.textContent = macroStep === 2 ? "Completar ficha de adhesión" : "Continuar Registro";
           errorMessage.hidden = true;
         };
 
         const goNext = () => {
           if (!stepValue(currentStep)) {
-            errorMessage.textContent = currentStep === 4 && colegioField.value.trim() && cursoField.value.trim() ? "Confirmá un contrato activo válido antes de continuar." : requiredMessage;
+            errorMessage.textContent = colegioField.value.trim() && cursoField.value.trim() && !confirmedContrato ? "Confirmá un contrato activo válido antes de continuar." : requiredMessage;
             errorMessage.hidden = false;
             return;
           }
           if (currentStep < 5) {
-            currentStep += 1;
+            currentStep = 5;
             renderStep();
             return;
           }
@@ -7514,7 +7512,7 @@
           errorMessage.hidden = true;
         });
         backButton.addEventListener("click", () => {
-          currentStep = Math.max(1, currentStep - 1);
+          currentStep = 1;
           renderStep();
         });
         nextButton.addEventListener("click", goNext);

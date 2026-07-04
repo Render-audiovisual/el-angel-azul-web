@@ -4020,6 +4020,125 @@
         }
       }
 
+      /* Stepper de 2 macro-pasos (Selección / Ficha y firma), inspirado en
+         el mockup de Visily. Reemplaza el stepper de 5 pasos + la barra
+         compacta que se usaban antes. */
+      .inscripcion-stepper-v2 {
+        align-items: center;
+        display: flex;
+        gap: 10px;
+        margin-bottom: 4px;
+      }
+
+      .inscripcion-stepper-v2-item {
+        align-items: center;
+        display: grid;
+        gap: 4px;
+        justify-items: center;
+        text-align: center;
+      }
+
+      .inscripcion-stepper-v2-dot {
+        align-items: center;
+        background: #e2edf2;
+        border-radius: 999px;
+        color: #6b7d88;
+        display: flex;
+        font-weight: 800;
+        height: 32px;
+        justify-content: center;
+        width: 32px;
+      }
+
+      .inscripcion-stepper-v2-item.active .inscripcion-stepper-v2-dot {
+        background: var(--color-primary, #0d69a1);
+        color: #fff;
+      }
+
+      .inscripcion-stepper-v2-item.done .inscripcion-stepper-v2-dot {
+        background: var(--color-success-text, #1d6b32);
+        color: #fff;
+      }
+
+      .inscripcion-stepper-v2-item small {
+        color: #6b7d88;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      .inscripcion-stepper-v2-item.active small {
+        color: var(--color-primary, #0d69a1);
+      }
+
+      .inscripcion-stepper-v2-track {
+        background: #e2edf2;
+        border-radius: 999px;
+        flex: 1;
+        height: 4px;
+        overflow: hidden;
+      }
+
+      .inscripcion-stepper-v2-track span {
+        background: var(--color-primary, #0d69a1);
+        display: block;
+        height: 100%;
+        transition: width 0.25s ease;
+      }
+
+      .inscripcion-stepper-v2-label {
+        color: #425460;
+        font-size: 0.85rem;
+        font-weight: 800;
+        margin: 0 0 8px;
+      }
+
+      .inscripcion-macro-step {
+        display: grid;
+        gap: 22px;
+      }
+
+      .inscripcion-field-block h3 {
+        align-items: center;
+        color: #10202b;
+        display: flex;
+        font-size: 1rem;
+        gap: 10px;
+        margin: 0 0 12px;
+      }
+
+      .inscripcion-field-block h3 span {
+        align-items: center;
+        background: var(--color-surface-soft, #eef6fb);
+        border-radius: 999px;
+        color: var(--color-primary, #0d69a1);
+        display: flex;
+        flex-shrink: 0;
+        font-size: 0.85rem;
+        font-weight: 800;
+        height: 26px;
+        justify-content: center;
+        width: 26px;
+      }
+
+      .inscripcion-field-hint {
+        color: #6b7d88;
+        font-size: 0.8rem;
+        margin: 6px 0 0;
+      }
+
+      /* Nivel como 2 tarjetas grandes con ícono, igual que Visily,
+         en vez de botones angostos en fila. */
+      .inscripcion-option-group--nivel {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      }
+
+      .inscripcion-option-group--nivel .inscripcion-option-button {
+        min-height: 96px;
+      }
+
       /* Stepper compacto tipo app: barra + "Paso X de 5". Visible en mobile,
          reemplaza a las 5 cajas de texto que se apilaban verticalmente. */
       .inscripcion-progress-compact {
