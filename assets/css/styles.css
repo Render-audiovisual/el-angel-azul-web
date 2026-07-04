@@ -4001,11 +4001,13 @@
       }
 
       .inscripcion-hero-copy-compact h1 {
+        color: #fff;
         font-size: clamp(1.5rem, 4.5vw, 2.1rem);
         margin: 0;
       }
 
       .inscripcion-hero-copy-compact p {
+        color: rgba(255, 255, 255, 0.92);
         font-size: 0.92rem;
         line-height: 1.5;
         margin: 0;
@@ -4347,12 +4349,15 @@
 	      }
 
       .public-inscripcion-layout {
-        gap: 26px;
+        background: #f5f8fb;
+        gap: 14px;
       }
 
       .public-inscripcion-card {
+        border-radius: 18px;
         display: grid;
         gap: 18px;
+        overflow: hidden;
       }
 
       .public-inscripcion-card form {
@@ -4412,15 +4417,31 @@
 	      .inscripcion-option-button {
 	        background: #fff;
 	        border: 1px solid #c9d8df;
-	        border-radius: 8px;
+	        border-radius: 14px;
 	        color: #10202b;
 	        cursor: pointer;
+	        display: grid;
 	        font: inherit;
-	        font-weight: 800;
+	        gap: 4px;
 	        line-height: 1.25;
-	        min-height: 48px;
-	        padding: 12px;
+	        min-height: 62px;
+	        padding: 13px;
 	        text-align: left;
+	      }
+
+	      .inscripcion-option-button strong,
+	      .inscripcion-option-button small {
+	        display: block;
+	      }
+
+	      .inscripcion-option-button strong {
+	        font-weight: 900;
+	      }
+
+	      .inscripcion-option-button small {
+	        color: #5c6c76;
+	        font-size: 0.78rem;
+	        font-weight: 750;
 	      }
 
 	      .inscripcion-option-button:hover {
@@ -4432,6 +4453,10 @@
 	        border-color: #0d69a1;
 	        box-shadow: 0 8px 18px rgba(13, 105, 161, 0.16);
 	        color: #fff;
+	      }
+
+	      .inscripcion-option-button.selected small {
+	        color: rgba(255, 255, 255, 0.82);
 	      }
 
 	      .inscripcion-step p,
@@ -4660,8 +4685,30 @@
 	      }
 
 	      @media (max-width: 520px) {
+	        .public-inscripcion-layout {
+	          gap: 10px;
+	        }
+
+	        .inscripcion-page-hero--compact {
+	          border-radius: 0 0 18px 18px;
+	          margin-left: -18px;
+	          margin-right: -18px;
+	          padding: 28px 18px 22px;
+	        }
+
+	        .public-inscripcion-card {
+	          border-radius: 18px;
+	          margin-left: -6px;
+	          margin-right: -6px;
+	          padding: 14px;
+	        }
+
+	        .public-inscripcion-card form {
+	          gap: 14px;
+	        }
+
 	        .inscripcion-progress {
-	          grid-template-columns: 1fr;
+	          display: none;
 	        }
 
 	        .inscripcion-option-group {
@@ -4669,12 +4716,39 @@
 	        }
 
 	        .inscripcion-option-button {
-	          min-height: 52px;
+	          min-height: 58px;
 	        }
 
 	        .inscripcion-step,
-	        .inscripcion-summary {
+	        .inscripcion-summary,
+	        .inscripcion-context-summary {
+	          border-radius: 16px;
 	          padding: 14px;
+	        }
+
+	        .inscripcion-context-summary {
+	          order: 3;
+	        }
+
+	        .inscripcion-step-actions {
+	          background: rgba(255, 255, 255, 0.96);
+	          border: 1px solid #d9e7ef;
+	          border-radius: 16px 16px 0 0;
+	          bottom: 0;
+	          box-shadow: 0 -14px 32px rgba(16, 32, 43, 0.14);
+	          display: grid;
+	          grid-template-columns: 0.8fr 1.2fr;
+	          left: 0;
+	          padding: 10px 12px max(10px, env(safe-area-inset-bottom));
+	          position: sticky;
+	          right: 0;
+	          z-index: 8;
+	        }
+
+	        .inscripcion-step-actions button {
+	          border-radius: 12px;
+	          min-height: 46px;
+	          padding: 10px 12px;
 	        }
 	      }
 

@@ -7218,23 +7218,31 @@
                   <span data-inscripcion-progress="5">Confirmación</span>
                 </div>
 
-                <div data-inscripcion-step="1">
+                <div class="inscripcion-step" data-inscripcion-step="1">
+                  <span>Paso 1</span>
                   <h3>Elegí el nivel</h3>
+                  <p>Seleccioná si el viaje corresponde a primaria o secundaria.</p>
                   <div class="inscripcion-option-group" data-inscripcion-options="nivel"></div>
                 </div>
 
-                <div data-inscripcion-step="2" hidden>
+                <div class="inscripcion-step" data-inscripcion-step="2" hidden>
+                  <span>Paso 2</span>
                   <h3>Elegí el destino</h3>
+                  <p>Indicá el viaje que corresponde a tu grupo.</p>
                   <div class="inscripcion-option-group" data-inscripcion-options="destino"></div>
                 </div>
 
-                <div data-inscripcion-step="3" hidden>
+                <div class="inscripcion-step" data-inscripcion-step="3" hidden>
+                  <span>Paso 3</span>
                   <h3>Elegí el año del viaje</h3>
+                  <p>Usamos este dato para encontrar el contrato correcto.</p>
                   <div class="inscripcion-option-group" data-inscripcion-options="anio"></div>
                 </div>
 
-                <div data-inscripcion-step="4" hidden>
+                <div class="inscripcion-step" data-inscripcion-step="4" hidden>
+                  <span>Paso 4</span>
                   <h3>Buscá tu colegio y curso</h3>
+                  <p>Escribí el colegio y curso/división tal como figura en la información del viaje.</p>
                   <div class="public-inscripcion-grid">
                     <label>Colegio
                       <input data-inscripcion-colegio placeholder="Ej: San José">
@@ -7246,7 +7254,8 @@
                   <div data-inscripcion-contract-result class="inscripcion-contract-result"></div>
                 </div>
 
-                <div data-inscripcion-step="5" hidden>
+                <div class="inscripcion-step" data-inscripcion-step="5" hidden>
+                  <span>Paso 5</span>
                   <div data-inscripcion-summary></div>
                 </div>
 
@@ -7294,13 +7303,21 @@
           `<option value="${escapeHtml(item)}" ${item === selected ? "selected" : ""}>${escapeHtml(item)}</option>`
         )).join("");
 
+        const optionDescription = (key, value) => {
+          if (key === "nivel") return value === "Primaria" ? "Viajes para nivel primario" : "Viajes para nivel secundario";
+          if (key === "destino") return "Seleccionar destino del grupo";
+          if (key === "anio") return "Año previsto de salida";
+          return "";
+        };
+
         const renderChoiceButtons = (field, group, key) => {
           if (!field || !group) return;
           group.innerHTML = [...field.options].map((option) => {
             const selected = option.value === field.value;
             return `
               <button class="inscripcion-option-button${selected ? " selected" : ""}" type="button" data-inscripcion-option="${key}" data-value="${escapeHtml(option.value)}" aria-pressed="${selected ? "true" : "false"}">
-                ${escapeHtml(option.textContent)}
+                <strong>${escapeHtml(option.textContent)}</strong>
+                <small>${escapeHtml(optionDescription(key, option.value))}</small>
               </button>
             `;
           }).join("");
