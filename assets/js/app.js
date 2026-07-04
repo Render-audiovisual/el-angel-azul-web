@@ -665,6 +665,11 @@
                 <h1>${escapeHtml(packageItem.titulo || packageItem.destino)}</h1>
                 ${fechasSalida ? `<p class="package-detail-fechas">${escapeHtml(fechasSalida)}</p>` : ""}
                 ${packageItem.salidaGarantizada ? `<span class="package-detail-badge">Salida garantizada</span>` : ""}
+                <div class="package-detail-hero-highlights" aria-label="Datos principales del viaje">
+                  <span>${escapeHtml(packageItem.duracion || "Duración a confirmar")}</span>
+                  <span>${escapeHtml(packageItem.precioDesde || "Precio a consultar")}</span>
+                  <span>${escapeHtml(packageItem.tipo || "Turismo")}</span>
+                </div>
                 <div class="turismo-hero-actions">
                   <a href="${whatsappHref}" target="_blank" rel="noopener">Consultar por WhatsApp</a>
                 </div>
