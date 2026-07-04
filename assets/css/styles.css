@@ -2793,7 +2793,7 @@
 
       .package-detail-gallery {
         display: grid;
-        gap: 12px;
+        gap: 14px;
       }
 
       .package-gallery-main,
@@ -2806,21 +2806,28 @@
 
       .package-gallery-main {
         aspect-ratio: 16 / 10;
+        box-shadow: 0 16px 34px rgba(16, 32, 43, 0.12);
       }
 
       .package-gallery-strip {
         display: grid;
-        gap: 12px;
-        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+        gap: 10px;
+        grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
       }
 
       .package-gallery-strip img {
         aspect-ratio: 4 / 3;
+        border: 1px solid #d9e7ef;
       }
 
       .package-detail-summary {
         display: grid;
         gap: 10px;
+      }
+
+      .package-detail-section-head {
+        display: grid;
+        gap: 6px;
       }
 
       .package-detail-summary h2,
@@ -2838,7 +2845,7 @@
 
       .package-detail-content {
         display: grid;
-        gap: 18px;
+        gap: 14px;
       }
 
       .package-detail-content h2,
@@ -2857,6 +2864,75 @@
       .package-detail-content li,
       .package-detail-payment li {
         margin-bottom: 8px;
+      }
+
+      .package-detail-payment {
+        display: grid;
+        gap: 14px;
+      }
+
+      .package-detail-payment-list {
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      }
+
+      .package-detail-list-card {
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        display: grid;
+        gap: 12px;
+        padding: 16px;
+      }
+
+      .package-detail-list-card--positive {
+        background: #f4fbf7;
+        border-color: #c7ead4;
+      }
+
+      .package-detail-list-card--neutral {
+        background: #f8fbfd;
+      }
+
+      .package-detail-check-list,
+      .package-detail-payment-list {
+        display: grid;
+        gap: 8px;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .package-detail-check-list li,
+      .package-detail-payment-list li {
+        align-items: start;
+        color: #334957;
+        display: grid;
+        font-weight: 700;
+        gap: 8px;
+        grid-template-columns: 18px 1fr;
+        line-height: 1.4;
+        margin: 0;
+      }
+
+      .package-detail-check-list li::before,
+      .package-detail-payment-list li::before {
+        align-items: center;
+        background: #0d69a1;
+        border-radius: 999px;
+        color: #fff;
+        content: "✓";
+        display: inline-flex;
+        font-size: 0.72rem;
+        font-weight: 900;
+        height: 18px;
+        justify-content: center;
+        line-height: 1;
+        margin-top: 1px;
+        width: 18px;
+      }
+
+      .package-detail-list-card--neutral .package-detail-check-list li::before {
+        background: #6a7b84;
+        content: "•";
       }
 
       .turismo-trust {
@@ -3142,7 +3218,17 @@
         background: #f7fbfe;
         border: 1px solid #d9e7ef;
         border-radius: 8px;
+        display: grid;
+        gap: 6px;
         padding: 14px 18px;
+      }
+
+      .package-detail-condicion strong {
+        color: #10202b;
+        font-size: 0.78rem;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
       }
 
       .package-detail-condicion p {
@@ -3163,6 +3249,10 @@
         border: 1px solid #d9e7ef;
         border-radius: 8px;
         padding: 18px;
+      }
+
+      .package-detail-condicion {
+        background: #f7fbfe;
       }
 
       @media (max-width: 780px) {

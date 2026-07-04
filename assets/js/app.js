@@ -707,6 +707,10 @@
             <!-- GALERÍA -->
             ${gallery.length > 1 ? `
               <section class="package-detail-gallery" aria-label="Galería de ${escapeHtml(packageItem.destino)}">
+                <div class="package-detail-section-head">
+                  <p class="section-kicker">Fotos del destino</p>
+                  <h2>Un vistazo al viaje</h2>
+                </div>
                 <img class="package-gallery-main" src="${gallery[0]}" alt="${escapeHtml(packageItem.destino)}">
                 <div class="package-gallery-strip">
                   ${gallery.slice(1).map((image, index) => `
@@ -725,16 +729,16 @@
 
             <!-- INCLUYE / NO INCLUYE -->
             <section class="package-detail-content">
-              <div>
+              <div class="package-detail-list-card package-detail-list-card--positive">
                 <h2>Qué incluye</h2>
-                <ul>
+                <ul class="package-detail-check-list">
                   ${packageItem.incluye.map(item => `<li>${escapeHtml(item)}</li>`).join("")}
                 </ul>
               </div>
               ${packageItem.noIncluye?.length ? `
-                <div>
+                <div class="package-detail-list-card package-detail-list-card--neutral">
                   <h2>Qué no incluye</h2>
-                  <ul>
+                  <ul class="package-detail-check-list">
                     ${packageItem.noIncluye.map(item => `<li>${escapeHtml(item)}</li>`).join("")}
                   </ul>
                 </div>
@@ -763,8 +767,11 @@
             <!-- FORMAS DE PAGO -->
             ${formasPago.length ? `
               <section class="package-detail-payment">
-                <h2>Formas de pago</h2>
-                <ul>
+                <div class="package-detail-section-head">
+                  <p class="section-kicker">Reserva y pago</p>
+                  <h2>Formas de pago</h2>
+                </div>
+                <ul class="package-detail-payment-list">
                   ${formasPago.map(item => `<li>${escapeHtml(item)}</li>`).join("")}
                 </ul>
               </section>
@@ -773,6 +780,7 @@
             <!-- CONDICIÓN DE VENTA -->
             ${packageItem.condicionVenta ? `
               <section class="package-detail-condicion">
+                <strong>Condición de venta</strong>
                 <p>${escapeHtml(packageItem.condicionVenta)}</p>
               </section>
             ` : ""}
