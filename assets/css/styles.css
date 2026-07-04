@@ -355,7 +355,10 @@
         border: 1px solid transparent;
         border-radius: 999px;
         cursor: pointer;
+        display: flex;
+        justify-content: center;
         list-style: none;
+        width: 100%;
       }
 
       .nav-dropdown summary::-webkit-details-marker {
@@ -375,7 +378,7 @@
       }
 
       .nav-dropdown-menu a {
-        justify-content: flex-start;
+        justify-content: center;
         text-transform: none;
       }
 
@@ -1389,7 +1392,7 @@
       }
 
       .hero-clean-bg {
-        background: url("../img/home/hero-snowboard-cinematic.webp") center 42% / cover no-repeat;
+        background: url("../img/turismo/hero/montana-patagonia.webp") center 35% / cover no-repeat;
         bottom: 0;
         left: 0;
         position: absolute;
