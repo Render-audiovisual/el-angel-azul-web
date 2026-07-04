@@ -666,6 +666,188 @@
       }
 
       /* --- Trust --- */
+      /* ============================================================
+         QUIÉNES SOMOS — reemplaza la sección "Seguridad y confianza"
+         del Home. Layout basado en el mockup de Visily: foto + card
+         flotante a la izquierda, copy + 3 cuadros de info a la derecha
+         (en mobile: foto arriba, 3 cuadros en fila abajo, como en el
+         diseño mobile de referencia).
+         ============================================================ */
+
+      .quienes-somos {
+        background: var(--color-surface-soft, #eef6fb);
+        padding: clamp(48px, 8vw, 96px) 18px;
+      }
+
+      .quienes-somos-grid {
+        align-items: center;
+        display: grid;
+        gap: 40px;
+        margin: 0 auto;
+        max-width: 1160px;
+      }
+
+      .quienes-somos-photo-wrap {
+        position: relative;
+      }
+
+      .quienes-somos-photo {
+        aspect-ratio: 3 / 2;
+        background-position: center;
+        background-size: cover;
+        border-radius: 20px;
+        box-shadow: var(--shadow-panel);
+        width: 100%;
+      }
+
+      .quienes-somos-badge {
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(14px);
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        border-radius: 20px;
+        box-shadow: var(--shadow-panel);
+        margin-top: -32px;
+        max-width: 300px;
+        padding: 20px;
+        position: relative;
+        z-index: 1;
+      }
+
+      .quienes-somos-badge-head {
+        align-items: center;
+        display: flex;
+        gap: 10px;
+        margin-bottom: 8px;
+      }
+
+      .quienes-somos-badge-head .material-symbols-outlined {
+        align-items: center;
+        background: rgba(13, 105, 161, 0.12);
+        border-radius: 999px;
+        color: var(--color-primary, #0d69a1);
+        display: flex;
+        flex-shrink: 0;
+        height: 38px;
+        justify-content: center;
+        width: 38px;
+      }
+
+      .quienes-somos-badge-head p {
+        color: var(--color-primary-strong, #0a4f79);
+        font-size: 0.88rem;
+        font-weight: 800;
+        margin: 0;
+      }
+
+      .quienes-somos-quote {
+        color: var(--color-muted, #4f6472);
+        font-size: 0.85rem;
+        font-style: italic;
+        margin: 0;
+      }
+
+      .quienes-somos-copy > .section-kicker {
+        color: var(--color-accent, #eb3e8f);
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .quienes-somos-copy h2 {
+        color: var(--color-primary-strong, #0a4f79);
+        font-size: clamp(1.8rem, 3.6vw, 2.5rem);
+        margin: 4px 0 12px;
+      }
+
+      .quienes-somos-copy > p {
+        color: var(--color-muted-strong, #33454f);
+        font-size: 1.02rem;
+        line-height: 1.6;
+        margin: 0 0 22px;
+      }
+
+      /* 3 cuadros con ícono — mismo patrón visual que el mockup mobile
+         (Seguridad/Precios/Expertos), pero con info real de la empresa
+         en vez de credenciales no verificadas. Ya en fila de a 3 desde
+         mobile, tal como el diseño de referencia. */
+      .quienes-somos-cards {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(3, 1fr);
+        margin-bottom: 24px;
+      }
+
+      .quienes-somos-card {
+        background: #fff;
+        border: 1px solid var(--color-border, #d9e7ef);
+        border-radius: 14px;
+        display: grid;
+        gap: 6px;
+        justify-items: start;
+        padding: 14px 10px;
+        text-align: left;
+      }
+
+      .quienes-somos-card .material-symbols-outlined {
+        align-items: center;
+        background: var(--color-surface-soft, #eef6fb);
+        border-radius: 999px;
+        color: var(--color-primary, #0d69a1);
+        display: flex;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+      }
+
+      .quienes-somos-card strong {
+        color: #10202b;
+        font-size: 0.82rem;
+        font-weight: 800;
+      }
+
+      .quienes-somos-card p {
+        color: var(--color-muted, #4f6472);
+        font-size: 0.72rem;
+        line-height: 1.35;
+        margin: 0;
+      }
+
+      .quienes-somos-link {
+        align-items: center;
+        color: var(--color-primary, #0d69a1);
+        display: inline-flex;
+        font-weight: 800;
+        gap: 8px;
+        text-decoration: none;
+      }
+
+      .quienes-somos-link:hover {
+        gap: 12px;
+      }
+
+      @media (min-width: 900px) {
+        .quienes-somos-grid {
+          grid-template-columns: minmax(0, 0.85fr) minmax(0, 1fr);
+        }
+
+        .quienes-somos-photo {
+          aspect-ratio: 4 / 5;
+        }
+
+        .quienes-somos-badge {
+          bottom: -28px;
+          margin-top: 0;
+          max-width: 300px;
+          position: absolute;
+          right: 16px;
+        }
+
+        .quienes-somos-card p {
+          font-size: 0.78rem;
+        }
+      }
+
       .trust-v2 {
         background: var(--color-surface-soft);
         padding: clamp(48px, 8vw, 96px) 18px;

@@ -184,32 +184,38 @@
             </section>
 
             <!-- TRUST -->
-            <section class="trust-v2">
-              <div class="trust-v2-grid">
-                <div class="trust-v2-photo-wrap">
-                  <div class="trust-v2-photo" style="background-image: url('assets/img/bariloche/cena-de-velas/dsc6979.webp')" role="img" aria-label="Equipo de El Ángel Azul acompañando a un grupo de viaje"></div>
-                  <div class="trust-v2-badge">
-                    <div class="trust-v2-badge-head">
-                      <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">verified_user</span>
-                      <p>Acompañamiento en cada etapa</p>
+            <!-- QUIÉNES SOMOS -->
+            <section class="quienes-somos">
+              <div class="quienes-somos-grid">
+                <div class="quienes-somos-photo-wrap">
+                  <div class="quienes-somos-photo" style="background-image: url('assets/img/bariloche/cena-de-velas/dsc6979.webp')" role="img" aria-label="Equipo de El Ángel Azul"></div>
+                  <div class="quienes-somos-badge">
+                    <div class="quienes-somos-badge-head">
+                      <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">groups</span>
+                      <p>El equipo de El Ángel Azul</p>
                     </div>
-                    <p class="trust-v2-quote">"Un equipo presente antes, durante y después del viaje."</p>
+                    <p class="quienes-somos-quote">"Un equipo presente antes, durante y después del viaje."</p>
                   </div>
                 </div>
-                <div class="trust-v2-copy">
-                  <h2>Seguridad y confianza en <span>cada kilómetro.</span></h2>
-                  <p>Entendemos que un viaje es más que un destino; es una responsabilidad. Por eso combinamos organización clara con un equipo humano cercano para garantizar la tranquilidad de las familias.</p>
-                  <div class="trust-v2-checklist">
-                    ${trustSectionData.cards.slice(0, 3).map((card) => `
-                      <div class="trust-v2-check-item">
-                        <span class="material-symbols-outlined">check_circle</span>
-                        <div>
-                          <h4>${escapeHtml(card.title)}</h4>
+                <div class="quienes-somos-copy">
+                  <p class="section-kicker">Quiénes somos</p>
+                  <h2>El Ángel Azul</h2>
+                  <p>Una empresa de viajes enfocada en turismo y experiencias estudiantiles, con atención cercana desde la consulta hasta la inscripción.</p>
+                  <div class="quienes-somos-cards">
+                    ${trustSectionData.cards.slice(0, 3).map((card) => {
+                      const icons = { "Experiencia": "military_tech", "Acompañamiento": "support_agent", "Financiación": "payments" };
+                      return `
+                        <div class="quienes-somos-card">
+                          <span class="material-symbols-outlined">${icons[card.title] || "check_circle"}</span>
+                          <strong>${escapeHtml(card.title)}</strong>
                           <p>${escapeHtml(card.text)}</p>
                         </div>
-                      </div>
-                    `).join("")}
+                      `;
+                    }).join("")}
                   </div>
+                  <a class="quienes-somos-link" href="#/nosotros">Conocer más sobre nosotros
+                    <span class="material-symbols-outlined">arrow_forward</span>
+                  </a>
                 </div>
               </div>
             </section>
