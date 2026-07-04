@@ -2297,6 +2297,48 @@
         margin: 0;
       }
 
+      .turismo-results-count {
+        background: #f7fbfe;
+        border: 1px solid #d9e7ef;
+        border-radius: 999px;
+        color: #0d69a1;
+        display: inline-flex;
+        font-size: 0.82rem;
+        font-weight: 900;
+        padding: 7px 11px;
+        width: fit-content;
+      }
+
+      .turismo-search {
+        background: #fff;
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        box-shadow: 0 14px 32px rgba(16, 32, 43, 0.08);
+        display: grid;
+        gap: 8px;
+        padding: 12px;
+      }
+
+      .turismo-search span {
+        color: #4f6472;
+        font-size: 0.76rem;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .turismo-search input {
+        background: #f7fbfe;
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        color: #10202b;
+        font: inherit;
+        font-weight: 700;
+        min-height: 44px;
+        padding: 11px 12px;
+        width: 100%;
+      }
+
       .package-grid {
         display: grid;
         gap: 18px;
@@ -9856,6 +9898,121 @@
           border-radius: 12px;
           font-size: 0.82rem;
           padding: 8px 10px;
+        }
+
+        .turismo-intention-section,
+        .catalog-section {
+          background: #f5f8fb;
+          border: 1px solid #d9e7ef;
+          border-radius: 16px;
+          margin-left: -6px;
+          margin-right: -6px;
+          padding: 14px;
+        }
+
+        .turismo-intention-section .catalog-heading,
+        .catalog-section .catalog-heading {
+          gap: 7px;
+          margin-bottom: 14px;
+        }
+
+        .turismo-intention-section .catalog-heading h2,
+        .catalog-section .catalog-heading h2 {
+          font-size: 1.34rem;
+          line-height: 1.12;
+        }
+
+        .turismo-search {
+          border-radius: 14px;
+          box-shadow: 0 14px 28px rgba(16, 32, 43, 0.1);
+          margin-bottom: 12px;
+        }
+
+        .intention-chip-row {
+          display: flex;
+          gap: 8px;
+          margin-left: -14px;
+          margin-right: -14px;
+          overflow-x: auto;
+          padding: 0 14px 4px;
+          scroll-snap-type: x proximity;
+        }
+
+        .intention-chip {
+          flex: 0 0 auto;
+          min-height: 40px;
+          scroll-snap-align: start;
+          white-space: nowrap;
+        }
+
+        .package-grid {
+          gap: 12px;
+        }
+
+        .turismo-package-card {
+          border-radius: 16px;
+          box-shadow: 0 14px 28px rgba(16, 32, 43, 0.1);
+        }
+
+        .turismo-package-card .package-card-carousel {
+          aspect-ratio: 16 / 10;
+        }
+
+        .package-image-wrap span,
+        .package-carousel-count {
+          font-size: 0.68rem;
+        }
+
+        .package-carousel-arrow {
+          height: 34px;
+          width: 34px;
+        }
+
+        .package-card-body {
+          gap: 10px;
+          padding: 12px;
+        }
+
+        .package-card h3 {
+          font-size: 1.16rem;
+        }
+
+        .package-meta,
+        .package-summary {
+          font-size: 0.86rem;
+        }
+
+        .package-summary {
+          line-height: 1.38;
+        }
+
+        .package-quick-info span,
+        .package-includes span {
+          font-size: 0.76rem;
+          padding: 6px 8px;
+        }
+
+        .package-price {
+          align-items: center;
+          border-radius: 12px;
+          padding: 10px;
+        }
+
+        .package-price strong {
+          font-size: 1.28rem;
+        }
+
+        .package-actions {
+          display: grid;
+          gap: 8px;
+        }
+
+        .package-actions a,
+        .package-actions button {
+          border-radius: 12px;
+          flex-basis: auto;
+          min-height: 44px;
+          width: 100%;
         }
 
         .turismo-hero-actions {

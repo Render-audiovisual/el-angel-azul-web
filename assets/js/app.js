@@ -522,13 +522,33 @@
         `;
       }
 
-      function updateTurismoPackages(filter = "todos") {
+      function turismoPackageMatchesSearch(packageItem, query = "") {
+        const normalizedQuery = String(query || "").trim().toLowerCase();
+        if (!normalizedQuery) return true;
+        const searchable = [
+          packageItem.destino,
+          packageItem.titulo,
+          packageItem.tipo,
+          packageItem.temporada,
+          packageItem.categoria,
+          packageItem.duracion,
+          packageItem.resumen,
+          ...(Array.isArray(packageItem.incluye) ? packageItem.incluye : [])
+        ].join(" ").toLowerCase();
+        return searchable.includes(normalizedQuery);
+      }
+
+      function updateTurismoPackages(filter = "todos", query = "") {
         const grid = document.querySelector("[data-turismo-package-grid]");
+        const count = document.querySelector("[data-turismo-results-count]");
         if (!grid) return;
         const packages = turismoPackages().filter((packageItem) => {
-          if (filter === "todos") return true;
-          return packageItem.intenciones?.includes(filter);
+          const matchesFilter = filter === "todos" || packageItem.intenciones?.includes(filter);
+          return matchesFilter && turismoPackageMatchesSearch(packageItem, query);
         });
+        if (count) {
+          count.textContent = packages.length === 1 ? "1 opción encontrada" : `${packages.length} opciones encontradas`;
+        }
         grid.innerHTML = packages.length
           ? packages.map(renderTurismoPackageCard).join("")
           : renderTurismoEmptyState();
@@ -537,13 +557,18 @@
 
       function bindTurismoIntentions() {
         const chips = [...document.querySelectorAll("[data-turismo-intention]")];
+        const search = document.querySelector("[data-turismo-search]");
+        const applyFilters = () => {
+          const activeChip = document.querySelector("[data-turismo-intention].active");
+          updateTurismoPackages(activeChip?.dataset.turismoIntention || "todos", search?.value || "");
+        };
         chips.forEach((chip) => {
           chip.addEventListener("click", () => {
-            const filter = chip.dataset.turismoIntention;
             chips.forEach((item) => item.classList.toggle("active", item === chip));
-            updateTurismoPackages(filter);
+            applyFilters();
           });
         });
+        search?.addEventListener("input", applyFilters);
       }
 
       async function renderTurismo() {
@@ -590,6 +615,10 @@
                 <h2>Buscá por tipo de experiencia</h2>
                 <p>Ordená el catálogo según el plan que tenés en mente.</p>
               </div>
+              <label class="turismo-search" for="turismo-search">
+                <span>Buscar destino</span>
+                <input id="turismo-search" type="search" placeholder="Ej: Bariloche, Cataratas, playa..." data-turismo-search>
+              </label>
               <div class="intention-chip-row" aria-label="Selector de intención visual">
                 ${turismoIntentionFilters.map(([value, label], index) => `
                   <button class="intention-chip${index === 0 ? " active" : ""}" type="button" data-turismo-intention="${value}">${label}</button>
@@ -602,6 +631,7 @@
                 <p class="section-kicker">Viajes destacados</p>
                 <h2>Opciones disponibles para consultar</h2>
                 <p>Compará destino, duración, precio de referencia e incluidos. La disponibilidad final se confirma por WhatsApp.</p>
+                <strong class="turismo-results-count" data-turismo-results-count>${packages.length} opciones encontradas</strong>
               </div>
               <div class="package-grid" data-turismo-package-grid>
                 ${packages.map(renderTurismoPackageCard).join("")}
