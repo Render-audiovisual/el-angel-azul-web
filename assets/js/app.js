@@ -188,8 +188,7 @@
             <section class="quienes-somos">
               <div class="quienes-somos-inner">
                 <div class="quienes-somos-heading">
-                  <p class="section-kicker">Quiénes somos</p>
-                  <h2>El Ángel Azul</h2>
+                  <h2>Quiénes somos</h2>
                   <p>Una empresa de viajes enfocada en turismo y experiencias estudiantiles, con atención cercana desde la consulta hasta la inscripción.</p>
                 </div>
                 <div class="quienes-somos-photo-wrap">
