@@ -6967,15 +6967,29 @@
         const paidPercentage = record.total > 0 ? Math.min(100, Math.max(0, Math.round((record.paid / record.total) * 100))) : 0;
         const pendingDocs = portalDocumentationItems(record).filter(item => !item.isComplete).length;
         const whatsappHref = portalWhatsappHref(record);
+        const nextActions = [
+          paymentStatus === "Al día" ? "Mantené tu comprobante guardado por cualquier revisión." : "Consultá el detalle de pago y próxima cuota.",
+          pendingDocs ? "Revisá la documentación pendiente con administración." : "La documentación figura sin pendientes cargados.",
+          "Guardá este acceso para volver a consultar tu viaje."
+        ];
         result.innerHTML = `
           <section class="portal-result portal-result-dashboard">
             <div class="portal-result-head">
               <div>
-                <span>Portal del pasajero</span>
+                <span>Mi viaje</span>
                 <h2>${escapeHtml(record.name)}</h2>
                 <p>${escapeHtml(record.group.school || record.group.name || "Grupo pendiente")} · ${escapeHtml(record.group.course || "Curso pendiente")}</p>
               </div>
               <a href="${whatsappHref}" target="_blank" rel="noopener">Consultar por WhatsApp</a>
+            </div>
+
+            <div class="portal-trip-card">
+              <div>
+                <span>Viaje asignado</span>
+                <strong>${escapeHtml(record.trip.name || "Viaje pendiente")}</strong>
+                <p>${escapeHtml(record.group.name || "Grupo pendiente")} · Contrato ${escapeHtml(record.contractCode || "Pendiente")}</p>
+              </div>
+              <strong class="portal-status-pill ${portalStatusTone(record.generalStatus)}">${escapeHtml(record.generalStatus || "Consultar")}</strong>
             </div>
 
             <div class="portal-status-grid">
@@ -6996,6 +7010,16 @@
                 <strong>${pendingDocs ? `${pendingDocs} pendiente${pendingDocs > 1 ? "s" : ""}` : "Al día"}</strong>
                 <small>${pendingDocs ? "Revisá el detalle de documentación más abajo." : "No figuran pendientes cargados."}</small>
               </article>
+            </div>
+
+            <div class="portal-next-actions">
+              <span>Próximos pasos</span>
+              ${nextActions.map((action, index) => `
+                <div>
+                  <strong>${index + 1}</strong>
+                  <p>${escapeHtml(action)}</p>
+                </div>
+              `).join("")}
             </div>
 
             <div class="portal-result-section">
@@ -7160,18 +7184,24 @@
         document.getElementById("app").innerHTML = `
           <div class="layout portal-layout">
             <section class="portal-hero">
-              <h1>Portal de pasajeros</h1>
-              <p>Consultá el estado de tu viaje y tus pagos.</p>
+              <span>Mi viaje</span>
+              <h1>Estado de inscripción</h1>
+              <p>Consultá desde el celular tu viaje, documentación y estado de pagos con DNI y código de contrato.</p>
             </section>
 
             <section class="portal-panel">
+              <div class="portal-panel-head">
+                <span>Acceso rápido</span>
+                <h2>Ingresá tus datos</h2>
+                <p>El código figura en la ficha o contrato de viaje.</p>
+              </div>
               <form class="portal-form" id="portal-form">
                 <label for="portal-dni">DNI del pasajero</label>
                 <input id="portal-dni" name="dni" inputmode="numeric" autocomplete="off" placeholder="Ingresá tu DNI" required>
                 <label for="portal-code">Código de contrato</label>
                 <input id="portal-code" name="code" autocomplete="off" placeholder="Ej: CON-PRI-RIO-PARANA-6TO-A-CARLOS-PAZ-2026" required>
                 <small class="portal-form-hint">Lo encontrás en tu ficha de adhesión o contrato de viaje.</small>
-                <button type="submit">Consultar</button>
+                <button type="submit">Ver mi viaje</button>
               </form>
             </section>
 
@@ -8136,7 +8166,7 @@
         // Inscripción) porque su fuente de datos era un Excel simulado. Ahora que lee
         // de la base real (ver buildRealPortalRecord / consultarPortalPasajeros), se
         // reconecta la ruta pública.
-        if (path === "/portal-pasajeros" || path === "/pasajeros") {
+        if (path === "/portal-pasajeros" || path === "/pasajeros" || path === "/mi-viaje") {
           await hydrateGoogleSheetsData();
           renderPortalPasajeros();
           return;

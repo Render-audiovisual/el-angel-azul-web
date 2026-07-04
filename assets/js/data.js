@@ -123,8 +123,8 @@
           ]
         },
         "/portal-pasajeros": {
-          title: "Portal de pasajeros",
-          description: "Consulta demo del estado de viaje y pagos.",
+          title: "Mi viaje",
+          description: "Consulta del estado de inscripción, viaje, documentación y pagos.",
           links: [
             ["Home", "#/"],
             ["Contacto", "#/contacto"]

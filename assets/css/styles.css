@@ -4010,26 +4010,40 @@
       }
 
       .portal-layout {
-        gap: 24px;
+        background: #f5f8fb;
+        gap: 14px;
       }
 
       .portal-hero {
         background:
-          linear-gradient(180deg, rgba(13, 105, 161, 0.94), rgba(8, 45, 78, 0.9)),
+          linear-gradient(135deg, rgba(8, 59, 122, 0.96), rgba(13, 105, 161, 0.94)),
           url("../img/brand-estudiantil-egresados.png") center / cover;
         border: 0;
+        border-radius: 0 0 18px 18px;
         color: #fff;
         margin: -18px -18px 0;
-        padding: 34px 18px;
+        padding: 34px 18px 28px;
+      }
+
+      .portal-hero span {
+        color: rgba(255, 255, 255, 0.78);
+        display: block;
+        font-size: 0.78rem;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        margin-bottom: 8px;
+        text-transform: uppercase;
       }
 
       .portal-hero h1 {
-        font-size: clamp(2.1rem, 10vw, 4.2rem);
-        line-height: 1;
-        margin: 0 0 14px;
+        color: #fff;
+        font-size: clamp(1.9rem, 8vw, 3.4rem);
+        line-height: 1.04;
+        margin: 0 0 10px;
       }
 
       .portal-hero p {
+        color: rgba(255, 255, 255, 0.9);
         font-size: 1.05rem;
         line-height: 1.55;
         margin: 0;
@@ -4042,8 +4056,39 @@
       .admin-demo-section {
         background: #fff;
         border: 1px solid #d9e7ef;
-        border-radius: 8px;
+        border-radius: 18px;
+        box-shadow: 0 12px 28px rgba(16, 32, 43, 0.06);
         padding: 18px;
+      }
+
+      .portal-panel-head {
+        display: grid;
+        gap: 4px;
+        margin-bottom: 16px;
+      }
+
+      .portal-panel-head span {
+        color: #0d69a1;
+        font-size: 0.78rem;
+        font-weight: 900;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .portal-panel-head h2,
+      .portal-panel-head p {
+        margin: 0;
+      }
+
+      .portal-panel-head h2 {
+        color: #10202b;
+        font-size: 1.22rem;
+        line-height: 1.15;
+      }
+
+      .portal-panel-head p {
+        color: #5c6c76;
+        line-height: 1.4;
       }
 
       .portal-notice {
@@ -4066,9 +4111,10 @@
 
       .portal-form input {
         border: 1px solid #b8d4e4;
-        border-radius: 8px;
+        border-radius: 14px;
         color: #10202b;
         font: inherit;
+        min-height: 50px;
         padding: 12px;
       }
 
@@ -4084,10 +4130,12 @@
       .portal-empty a {
         background: #eb3e8f;
         border-color: #eb3e8f;
+        border-radius: 14px;
         color: #fff;
         display: inline-flex;
         font-weight: 700;
         justify-content: center;
+        min-height: 50px;
       }
 
       .inscripcion-page-hero {
@@ -5021,13 +5069,13 @@
       }
 
       .portal-result-dashboard {
-        gap: 22px;
+        gap: 14px;
       }
 
       .portal-result-head {
         align-items: start;
         display: grid;
-        gap: 16px;
+        gap: 12px;
       }
 
       .portal-result-head span,
@@ -5043,8 +5091,43 @@
       }
 
       .portal-result-head h2 {
-        font-size: clamp(1.7rem, 5vw, 2.7rem);
+        color: #10202b;
+        font-size: clamp(1.55rem, 5vw, 2.45rem);
         line-height: 1.05;
+      }
+
+      .portal-trip-card {
+        align-items: start;
+        background: linear-gradient(135deg, #eef8fd, #fff);
+        border: 1px solid #d9e7ef;
+        border-radius: 18px;
+        display: grid;
+        gap: 12px;
+        padding: 16px;
+      }
+
+      .portal-trip-card span,
+      .portal-next-actions > span {
+        color: #0d69a1;
+        display: block;
+        font-size: 0.78rem;
+        font-weight: 900;
+        letter-spacing: 0.06em;
+        margin-bottom: 6px;
+        text-transform: uppercase;
+      }
+
+      .portal-trip-card strong:not(.portal-status-pill) {
+        color: #10202b;
+        display: block;
+        font-size: 1.25rem;
+        line-height: 1.12;
+        margin-bottom: 6px;
+      }
+
+      .portal-trip-card p {
+        color: #425460;
+        line-height: 1.4;
       }
 
       .portal-status-grid {
@@ -5055,7 +5138,7 @@
       .portal-status-card {
         background: #f7fbfe;
         border: 1px solid #d9e7ef;
-        border-radius: 8px;
+        border-radius: 18px;
         display: grid;
         gap: 8px;
         padding: 16px;
@@ -5086,6 +5169,43 @@
         padding-top: 18px;
       }
 
+      .portal-next-actions {
+        background: #fff;
+        border: 1px solid #d9e7ef;
+        border-radius: 18px;
+        display: grid;
+        gap: 10px;
+        padding: 16px;
+      }
+
+      .portal-next-actions div {
+        align-items: start;
+        background: #f7fbfe;
+        border: 1px solid #d9e7ef;
+        border-radius: 14px;
+        display: grid;
+        gap: 10px;
+        grid-template-columns: auto minmax(0, 1fr);
+        padding: 12px;
+      }
+
+      .portal-next-actions div strong {
+        align-items: center;
+        background: #0d69a1;
+        border-radius: 999px;
+        color: #fff;
+        display: inline-flex;
+        font-size: 0.82rem;
+        height: 28px;
+        justify-content: center;
+        width: 28px;
+      }
+
+      .portal-next-actions div p {
+        color: #425460;
+        line-height: 1.4;
+      }
+
       .portal-result-section:first-child {
         border-top: 0;
         padding-top: 0;
@@ -5100,7 +5220,7 @@
       .portal-installment {
         background: #f7fbfe;
         border: 1px solid #d9e7ef;
-        border-radius: 8px;
+        border-radius: 14px;
         display: grid;
         gap: 6px;
         padding: 12px;
@@ -5140,7 +5260,7 @@
       .portal-payment-panel {
         background: #f7fbfe;
         border: 1px solid #d9e7ef;
-        border-radius: 8px;
+        border-radius: 18px;
         display: grid;
         gap: 14px;
         padding: 14px;
@@ -5169,7 +5289,7 @@
       .portal-doc-ok {
         background: #fff;
         border: 1px solid #d9e7ef;
-        border-radius: 8px;
+        border-radius: 14px;
         padding: 12px;
       }
 
@@ -5200,7 +5320,7 @@
       .portal-whatsapp-panel {
         align-items: center;
         background: #0d69a1;
-        border-radius: 8px;
+        border-radius: 18px;
         color: #fff;
         display: grid;
         gap: 16px;
@@ -5221,6 +5341,35 @@
         background: #eb3e8f;
         border-color: #eb3e8f;
         color: #fff;
+      }
+
+      @media (max-width: 620px) {
+        .portal-layout {
+          gap: 10px;
+        }
+
+        .portal-panel,
+        .portal-result,
+        .portal-empty {
+          margin-left: -6px;
+          margin-right: -6px;
+          padding: 14px;
+        }
+
+        .portal-form button,
+        .portal-result a,
+        .portal-empty a,
+        .portal-whatsapp-panel a {
+          width: 100%;
+        }
+
+        .portal-status-card,
+        .portal-trip-card,
+        .portal-next-actions,
+        .portal-payment-panel,
+        .portal-whatsapp-panel {
+          border-radius: 18px;
+        }
       }
 
       .admin-demo-grid {
@@ -9834,7 +9983,8 @@
         }
 
         .portal-result-head,
-        .portal-whatsapp-panel {
+        .portal-whatsapp-panel,
+        .portal-trip-card {
           grid-template-columns: minmax(0, 1fr) auto;
         }
 
