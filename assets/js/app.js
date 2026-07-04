@@ -186,7 +186,12 @@
             <!-- TRUST -->
             <!-- QUIÉNES SOMOS -->
             <section class="quienes-somos">
-              <div class="quienes-somos-grid">
+              <div class="quienes-somos-inner">
+                <div class="quienes-somos-heading">
+                  <p class="section-kicker">Quiénes somos</p>
+                  <h2>El Ángel Azul</h2>
+                  <p>Una empresa de viajes enfocada en turismo y experiencias estudiantiles, con atención cercana desde la consulta hasta la inscripción.</p>
+                </div>
                 <div class="quienes-somos-photo-wrap">
                   <div class="quienes-somos-photo" style="background-image: url('assets/img/bariloche/cena-de-velas/dsc6979.webp')" role="img" aria-label="Equipo de El Ángel Azul"></div>
                   <div class="quienes-somos-badge">
@@ -197,26 +202,21 @@
                     <p class="quienes-somos-quote">"Un equipo presente antes, durante y después del viaje."</p>
                   </div>
                 </div>
-                <div class="quienes-somos-copy">
-                  <p class="section-kicker">Quiénes somos</p>
-                  <h2>El Ángel Azul</h2>
-                  <p>Una empresa de viajes enfocada en turismo y experiencias estudiantiles, con atención cercana desde la consulta hasta la inscripción.</p>
-                  <div class="quienes-somos-cards">
-                    ${trustSectionData.cards.slice(0, 3).map((card) => {
-                      const icons = { "Experiencia": "military_tech", "Acompañamiento": "support_agent", "Financiación": "payments" };
-                      return `
-                        <div class="quienes-somos-card">
-                          <span class="material-symbols-outlined">${icons[card.title] || "check_circle"}</span>
-                          <strong>${escapeHtml(card.title)}</strong>
-                          <p>${escapeHtml(card.text)}</p>
-                        </div>
-                      `;
-                    }).join("")}
-                  </div>
-                  <a class="quienes-somos-link" href="#/nosotros">Conocer más sobre nosotros
-                    <span class="material-symbols-outlined">arrow_forward</span>
-                  </a>
+                <div class="quienes-somos-cards">
+                  ${trustSectionData.cards.slice(0, 3).map((card) => {
+                    const icons = { "Experiencia": "military_tech", "Acompañamiento": "support_agent", "Financiación": "payments" };
+                    return `
+                      <div class="quienes-somos-card">
+                        <span class="material-symbols-outlined">${icons[card.title] || "check_circle"}</span>
+                        <strong>${escapeHtml(card.title)}</strong>
+                        <p>${escapeHtml(card.text)}</p>
+                      </div>
+                    `;
+                  }).join("")}
                 </div>
+                <a class="quienes-somos-link" href="#/nosotros">Conocer más sobre nosotros
+                  <span class="material-symbols-outlined">arrow_forward</span>
+                </a>
               </div>
             </section>
 

@@ -679,12 +679,17 @@
         padding: clamp(48px, 8vw, 96px) 18px;
       }
 
-      .quienes-somos-grid {
-        align-items: center;
+      .quienes-somos-inner {
         display: grid;
-        gap: 40px;
+        gap: 18px;
         margin: 0 auto;
         max-width: 1160px;
+      }
+
+      .quienes-somos-heading {
+        display: grid;
+        gap: 10px;
+        max-width: 760px;
       }
 
       .quienes-somos-photo-wrap {
@@ -692,10 +697,10 @@
       }
 
       .quienes-somos-photo {
-        aspect-ratio: 3 / 2;
+        aspect-ratio: 16 / 10;
         background-position: center;
         background-size: cover;
-        border-radius: 20px;
+        border-radius: 22px;
         box-shadow: var(--shadow-panel);
         width: 100%;
       }
@@ -746,25 +751,27 @@
         margin: 0;
       }
 
-      .quienes-somos-copy > .section-kicker {
+      .quienes-somos-heading > .section-kicker {
         color: var(--color-accent, #eb3e8f);
         font-size: 0.78rem;
         font-weight: 800;
         letter-spacing: 0.08em;
+        margin: 0;
         text-transform: uppercase;
       }
 
-      .quienes-somos-copy h2 {
+      .quienes-somos-heading h2 {
         color: var(--color-primary-strong, #0a4f79);
-        font-size: clamp(1.8rem, 3.6vw, 2.5rem);
-        margin: 4px 0 12px;
+        font-size: clamp(2rem, 5vw, 3.4rem);
+        line-height: 1.04;
+        margin: 0;
       }
 
-      .quienes-somos-copy > p {
+      .quienes-somos-heading > p {
         color: var(--color-muted-strong, #33454f);
         font-size: 1.02rem;
         line-height: 1.6;
-        margin: 0 0 22px;
+        margin: 0;
       }
 
       /* 3 cuadros con ícono — mismo patrón visual que el mockup mobile
@@ -773,20 +780,22 @@
          mobile, tal como el diseño de referencia. */
       .quienes-somos-cards {
         display: grid;
-        gap: 10px;
-        grid-template-columns: repeat(3, 1fr);
-        margin-bottom: 24px;
+        gap: 12px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        margin-top: 2px;
       }
 
       .quienes-somos-card {
         background: #fff;
         border: 1px solid var(--color-border, #d9e7ef);
-        border-radius: 14px;
+        border-radius: 18px;
+        box-shadow: 0 12px 28px rgba(16, 32, 43, 0.06);
         display: grid;
-        gap: 6px;
-        justify-items: start;
-        padding: 14px 10px;
-        text-align: left;
+        gap: 8px;
+        justify-items: center;
+        min-width: 0;
+        padding: 16px 12px;
+        text-align: center;
       }
 
       .quienes-somos-card .material-symbols-outlined {
@@ -802,14 +811,14 @@
 
       .quienes-somos-card strong {
         color: #10202b;
-        font-size: 0.82rem;
+        font-size: 0.9rem;
         font-weight: 800;
       }
 
       .quienes-somos-card p {
         color: var(--color-muted, #4f6472);
-        font-size: 0.72rem;
-        line-height: 1.35;
+        font-size: 0.8rem;
+        line-height: 1.4;
         margin: 0;
       }
 
@@ -819,6 +828,7 @@
         display: inline-flex;
         font-weight: 800;
         gap: 8px;
+        justify-self: start;
         text-decoration: none;
       }
 
@@ -827,24 +837,70 @@
       }
 
       @media (min-width: 900px) {
-        .quienes-somos-grid {
-          grid-template-columns: minmax(0, 0.85fr) minmax(0, 1fr);
+        .quienes-somos-inner {
+          gap: 24px;
         }
 
         .quienes-somos-photo {
-          aspect-ratio: 4 / 5;
+          aspect-ratio: 16 / 7;
+          border-radius: 28px;
         }
 
         .quienes-somos-badge {
-          bottom: -28px;
+          bottom: 24px;
           margin-top: 0;
           max-width: 300px;
           position: absolute;
-          right: 16px;
+          right: 24px;
         }
 
         .quienes-somos-card p {
-          font-size: 0.78rem;
+          font-size: 0.85rem;
+        }
+      }
+
+      @media (max-width: 620px) {
+        .quienes-somos {
+          padding: 40px 12px;
+        }
+
+        .quienes-somos-inner {
+          gap: 14px;
+        }
+
+        .quienes-somos-photo {
+          aspect-ratio: 4 / 3;
+          border-radius: 18px;
+        }
+
+        .quienes-somos-badge {
+          border-radius: 16px;
+          margin: -28px 12px 0;
+          max-width: none;
+          padding: 14px;
+        }
+
+        .quienes-somos-cards {
+          gap: 8px;
+        }
+
+        .quienes-somos-card {
+          border-radius: 14px;
+          padding: 12px 8px;
+        }
+
+        .quienes-somos-card .material-symbols-outlined {
+          height: 32px;
+          width: 32px;
+        }
+
+        .quienes-somos-card strong {
+          font-size: 0.76rem;
+        }
+
+        .quienes-somos-card p {
+          font-size: 0.68rem;
+          line-height: 1.25;
         }
       }
 
