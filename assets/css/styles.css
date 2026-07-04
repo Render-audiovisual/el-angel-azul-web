@@ -2426,6 +2426,34 @@
         z-index: 3;
       }
 
+      /* Tags de categoría con color propio (mismas categorías reales que ya
+         existen en el admin de Turismo: playa, nieve, familiar, pareja,
+         grupo, escapada, nacional, internacional) - antes eran todos del
+         mismo gris oscuro genérico, ahora se distinguen de un vistazo. */
+      .package-image-wrap span[data-categoria="nieve"] {
+        background: rgba(13, 105, 161, 0.88);
+      }
+
+      .package-image-wrap span[data-categoria="playa"] {
+        background: rgba(235, 62, 143, 0.88);
+      }
+
+      .package-image-wrap span[data-categoria="familiar"] {
+        background: rgba(24, 169, 87, 0.88);
+      }
+
+      .package-image-wrap span[data-categoria="pareja"] {
+        background: rgba(216, 47, 128, 0.88);
+      }
+
+      .package-image-wrap span[data-categoria="internacional"] {
+        background: rgba(8, 59, 122, 0.88);
+      }
+
+      .package-image-wrap span[data-categoria="nacional"] {
+        background: rgba(16, 32, 43, 0.78);
+      }
+
       .package-carousel-arrow {
         align-items: center;
         background: rgba(16, 32, 43, 0.62);

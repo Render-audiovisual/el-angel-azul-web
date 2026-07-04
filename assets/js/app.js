@@ -446,7 +446,7 @@
                   <img class="${index === 0 ? "active" : ""}" src="${image}" alt="${packageItem.destino} ${index + 1}" data-carousel-slide>
                 `).join("")}
               </div>
-              <span>${packageItem.categoria}</span>
+              <span data-categoria="${((packageItem.intenciones && packageItem.intenciones[0]) || "").toLowerCase()}">${packageItem.categoria}</span>
               <button class="package-carousel-arrow package-carousel-prev" type="button" aria-label="Foto anterior de ${packageItem.destino}" data-carousel-prev>‹</button>
               <button class="package-carousel-arrow package-carousel-next" type="button" aria-label="Foto siguiente de ${packageItem.destino}" data-carousel-next>›</button>
               <div class="package-carousel-count" aria-hidden="true">1/${gallery.length}</div>
