@@ -2057,28 +2057,29 @@
         border: 0;
         color: #fff;
         margin: -18px -18px 0;
-        min-height: 72svh;
+        min-height: 66svh;
         overflow: hidden;
-        padding: 42px 18px;
+        padding: 36px 18px;
         position: relative;
       }
 
       .turismo-hero-content {
         display: grid;
-        gap: 20px;
-        max-width: 820px;
-        min-height: calc(72svh - 84px);
+        gap: 18px;
+        max-width: 760px;
+        min-height: calc(66svh - 72px);
         place-content: center;
         position: relative;
         z-index: 2;
       }
 
       .turismo-hero h1 {
-        font-size: clamp(2.45rem, 7vw, 5rem);
-        line-height: 0.98;
+        font-size: clamp(2.35rem, 6vw, 4.65rem);
+        line-height: 1;
         margin: 0;
-        max-width: 880px;
+        max-width: 780px;
         text-shadow: 0 3px 28px rgba(12, 10, 8, 0.38);
+        text-wrap: balance;
       }
 
       .turismo-hero p {
@@ -2142,11 +2143,7 @@
       }
 
       @keyframes turismoHeroCarousel {
-        0% {
-          opacity: 0;
-          transform: scale(1.03);
-        }
-
+        0%,
         8%,
         24% {
           opacity: 1;
@@ -2172,6 +2169,22 @@
         color: rgba(255, 255, 255, 0.78);
         font-size: 0.95rem;
         font-weight: 700;
+      }
+
+      .turismo-proof-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .turismo-proof-list span {
+        background: rgba(255, 255, 255, 0.13);
+        border: 1px solid rgba(255, 255, 255, 0.28);
+        border-radius: 999px;
+        color: rgba(255, 255, 255, 0.94);
+        font-size: 0.86rem;
+        font-weight: 800;
+        padding: 8px 11px;
       }
 
       .turismo-hero-actions,
@@ -2234,7 +2247,7 @@
         background: #fff;
         border: 1px solid #d9e7ef;
         border-radius: 8px;
-        padding: 22px;
+        padding: 20px;
       }
 
       .mi-consulta-preview h2,
@@ -2247,6 +2260,7 @@
         gap: 10px;
         overflow-x: auto;
         padding-bottom: 4px;
+        scrollbar-width: thin;
       }
 
       .intention-chip {
@@ -2255,6 +2269,8 @@
         color: #0d69a1;
         flex: 0 0 auto;
         font-weight: 800;
+        min-height: 42px;
+        white-space: nowrap;
       }
 
       .intention-chip.active {
@@ -2283,7 +2299,7 @@
 
       .package-grid {
         display: grid;
-        gap: 22px;
+        gap: 18px;
       }
 
       .turismo-empty-state {
@@ -2322,6 +2338,7 @@
 
       .turismo-package-card {
         box-shadow: 0 16px 36px rgba(16, 32, 43, 0.08);
+        grid-template-rows: auto 1fr;
       }
 
       .package-image-wrap {
@@ -2418,8 +2435,8 @@
 
       .package-card-body {
         display: grid;
-        gap: 14px;
-        padding: 18px;
+        gap: 12px;
+        padding: 16px;
       }
 
       .package-card h3,
@@ -2434,7 +2451,7 @@
 
       .package-card h3 {
         color: #10202b;
-        font-size: 1.42rem;
+        font-size: 1.34rem;
         line-height: 1.1;
       }
 
@@ -2443,10 +2460,26 @@
         line-height: 1.5;
       }
 
-      .package-duration {
+      .package-duration,
+      .package-quick-info {
         color: #0d69a1;
         font-size: 0.98rem;
         font-weight: 800;
+      }
+
+      .package-quick-info {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .package-quick-info span {
+        background: #f7fbfe;
+        border: 1px solid #d9e7ef;
+        border-radius: 999px;
+        color: #0d69a1;
+        font-size: 0.86rem;
+        padding: 7px 10px;
       }
 
       .package-fecha-salida {
@@ -2478,8 +2511,10 @@
         background: #f7fbfe;
         border: 1px solid #d9e7ef;
         border-radius: 8px;
-        display: grid;
+        display: flex;
+        flex-wrap: wrap;
         gap: 2px;
+        justify-content: space-between;
         padding: 12px;
       }
 
@@ -2493,8 +2528,8 @@
 
       .package-price strong {
         color: #10202b;
-        font-size: clamp(1.75rem, 8vw, 2.45rem);
-        line-height: 0.95;
+        font-size: clamp(1.25rem, 4vw, 1.75rem);
+        line-height: 1;
       }
 
       .package-facts span,
@@ -2509,7 +2544,7 @@
 
       .package-includes {
         display: grid;
-        gap: 8px;
+        gap: 7px;
       }
 
       .package-includes strong {
@@ -2530,9 +2565,9 @@
         border: 1px solid #d9e7ef;
         border-radius: 999px;
         color: #10202b;
-        font-size: 0.88rem;
+        font-size: 0.84rem;
         font-weight: 800;
-        padding: 7px 10px;
+        padding: 6px 9px;
       }
 
       .package-meta {
@@ -2821,7 +2856,35 @@
         background: #fff;
         border: 1px solid #d9e7ef;
         border-radius: 8px;
-        padding: 18px;
+        padding: 20px;
+      }
+
+      .turismo-trust-grid {
+        display: grid;
+        gap: 12px;
+      }
+
+      .turismo-trust-grid article {
+        background: #f7fbfe;
+        border: 1px solid #d9e7ef;
+        border-radius: 8px;
+        display: grid;
+        gap: 6px;
+        padding: 14px;
+      }
+
+      .turismo-trust-grid strong,
+      .turismo-trust-grid p {
+        margin: 0;
+      }
+
+      .turismo-trust-grid strong {
+        color: #10202b;
+      }
+
+      .turismo-trust-grid p {
+        color: #4f6472;
+        line-height: 1.45;
       }
 
       .turismo-trust h2,
@@ -2830,7 +2893,9 @@
       }
 
       .turismo-cta {
-        background: #0d69a1;
+        background:
+          linear-gradient(135deg, rgba(13, 105, 161, 0.96), rgba(16, 32, 43, 0.96)),
+          url("../img/turismo/hero/montana-patagonia.webp") center / cover;
         border: 0;
         border-radius: 8px;
         color: #fff;
@@ -8965,6 +9030,10 @@
           grid-template-columns: repeat(3, minmax(0, 1fr));
         }
 
+        .turismo-trust-grid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
         .student-path-grid {
           grid-template-columns: repeat(2, minmax(0, 1fr));
         }
@@ -9199,6 +9268,15 @@
       .admin-login-note span,
       .ficha-adhesion-context span {
         color: var(--color-muted);
+      }
+
+      .turismo-hero h1,
+      .turismo-hero p,
+      .turismo-hero .turismo-kicker,
+      .turismo-proof-list span,
+      .turismo-cta h2,
+      .turismo-cta p {
+        color: #fff;
       }
 
       a,
@@ -9534,9 +9612,9 @@
         }
 
         .turismo-hero {
-          min-height: 62svh;
-          padding-bottom: 32px;
-          padding-top: 34px;
+          min-height: 58svh;
+          padding-bottom: 28px;
+          padding-top: 30px;
         }
 
         .turismo-hero-carousel span {
@@ -9555,7 +9633,7 @@
 
         .turismo-hero-content {
           gap: 14px;
-          min-height: calc(62svh - 66px);
+          min-height: calc(58svh - 58px);
           place-content: end;
         }
 
@@ -9572,8 +9650,20 @@
         }
 
         .turismo-hero .turismo-kicker,
-        .turismo-hero .turismo-proof {
+        .turismo-hero .turismo-proof,
+        .turismo-proof-list span {
           color: rgba(255, 255, 255, 0.94);
+        }
+
+        .turismo-proof-list {
+          display: grid;
+          gap: 7px;
+        }
+
+        .turismo-proof-list span {
+          border-radius: 12px;
+          font-size: 0.82rem;
+          padding: 8px 10px;
         }
 
         .turismo-hero-actions {

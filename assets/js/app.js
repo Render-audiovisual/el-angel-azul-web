@@ -436,6 +436,8 @@
 
       function renderTurismoPackageCard(packageItem) {
         const gallery = packageItem.gallery?.length ? packageItem.gallery.slice(0, 3) : [packageItem.image];
+        const priceText = packageItem.precioDesde && packageItem.precioDesde !== "Consultar" ? packageItem.precioDesde : "Consultar";
+        const includeItems = Array.isArray(packageItem.incluye) ? packageItem.incluye.slice(0, 3) : [];
         return `
           <article class="package-card turismo-package-card">
             <div class="package-image-wrap package-card-carousel" data-card-carousel data-carousel-index="0">
@@ -454,7 +456,10 @@
                 <p class="package-meta">${packageItem.tipo} · ${packageItem.temporada}</p>
                 <h3>${packageItem.destino}</h3>
               </div>
-              <p class="package-duration">${packageItem.duracion}</p>
+              <div class="package-quick-info">
+                <span>${packageItem.duracion}</span>
+                <span>${packageItem.categoria}</span>
+              </div>
               ${packageItem.fechaSalida ? `
                 <p class="package-fecha-salida">
                   ${packageItem.fechaSalida}${packageItem.fechaRegreso ? ` al ${packageItem.fechaRegreso}` : ""}
@@ -462,19 +467,19 @@
                 </p>
               ` : ""}
               <p class="package-summary">${packageItem.resumen}</p>
-              <div class="package-price" aria-label="Precio desde ${packageItem.precioDesde}">
-                <span>Desde</span>
-                <strong>${packageItem.precioDesde}</strong>
+              <div class="package-price" aria-label="Precio desde ${priceText}">
+                <span>Precio de referencia</span>
+                <strong>${priceText}</strong>
               </div>
-              <div class="package-includes" aria-label="Incluye">
+              ${includeItems.length ? `<div class="package-includes" aria-label="Incluye">
                 <strong>Incluye</strong>
                 <div>
-                  ${packageItem.incluye.map((item) => `<span>${item}</span>`).join("")}
+                  ${includeItems.map((item) => `<span>${item}</span>`).join("")}
                 </div>
-              </div>
+              </div>` : ""}
               <div class="package-actions">
                 <a href="#/turismo/${packageItem.slug}">Ver detalles</a>
-                <a class="package-whatsapp" href="${turismoWhatsappForPackage(packageItem)}" target="_blank" rel="noopener">Consultar</a>
+                <a class="package-whatsapp" href="${turismoWhatsappForPackage(packageItem)}" target="_blank" rel="noopener">WhatsApp</a>
               </div>
             </div>
           </article>
@@ -566,8 +571,12 @@
               <div class="turismo-hero-content">
                 <p class="turismo-kicker">Turismo nacional e internacional</p>
                 <h1>Elegí tu próximo viaje</h1>
-                <p>Compará destinos, fechas y precios de referencia. Te asesoramos por WhatsApp antes de decidir.</p>
-                <span class="turismo-proof">Asesoramiento personalizado para familias, parejas y grupos.</span>
+                <p>Destinos para viajar en familia, pareja o grupo, con asesoramiento cercano antes de reservar.</p>
+                <div class="turismo-proof-list" aria-label="Beneficios principales">
+                  <span>Destinos nacionales e internacionales</span>
+                  <span>Disponibilidad por WhatsApp</span>
+                  <span>Formas de pago a consultar</span>
+                </div>
                 <div class="turismo-hero-actions">
                   <a href="#turismo-catalogo">Ver viajes</a>
                   <a href="${whatsappLink("Hola, quiero que me asesoren para elegir un viaje turístico con El Ángel Azul.")}" target="_blank" rel="noopener">Pedir asesoramiento</a>
@@ -578,8 +587,8 @@
             <section class="turismo-intention-section">
               <div class="catalog-heading">
                 <p class="section-kicker">Filtrar opciones</p>
-                <h2>Primero elegí la intención del viaje</h2>
-                <p>Usá estos filtros para ordenar el catálogo según la experiencia que tenés en mente.</p>
+                <h2>Buscá por tipo de experiencia</h2>
+                <p>Ordená el catálogo según el plan que tenés en mente.</p>
               </div>
               <div class="intention-chip-row" aria-label="Selector de intención visual">
                 ${turismoIntentionFilters.map(([value, label], index) => `
@@ -592,17 +601,38 @@
               <div class="catalog-heading">
                 <p class="section-kicker">Viajes destacados</p>
                 <h2>Opciones disponibles para consultar</h2>
-                <p>Cada ficha muestra destino, duración, precio de referencia e incluye. El cierre final se confirma por WhatsApp.</p>
+                <p>Compará destino, duración, precio de referencia e incluidos. La disponibilidad final se confirma por WhatsApp.</p>
               </div>
               <div class="package-grid" data-turismo-package-grid>
                 ${packages.map(renderTurismoPackageCard).join("")}
               </div>
             </section>
 
+            <section class="turismo-trust">
+              <div class="catalog-heading">
+                <p class="section-kicker">Antes de viajar</p>
+                <h2>Te ayudamos a elegir sin vueltas</h2>
+              </div>
+              <div class="turismo-trust-grid">
+                <article>
+                  <strong>Asesoramiento real</strong>
+                  <p>Consultá fechas, cupos y alternativas antes de decidir.</p>
+                </article>
+                <article>
+                  <strong>Viajes acompañados</strong>
+                  <p>Opciones organizadas para familias, parejas y grupos.</p>
+                </article>
+                <article>
+                  <strong>Pago a consultar</strong>
+                  <p>Te pasan condiciones actuales según destino y temporada.</p>
+                </article>
+              </div>
+            </section>
+
             <section class="turismo-cta">
               <h2>¿No encontraste el viaje que buscabas?</h2>
               <p>Podés pedir asesoramiento según tu presupuesto, fecha y cantidad de personas.</p>
-              <a href="${whatsappLink("Hola, quiero consultar por un viaje turístico que no encontré en la web de El Ángel Azul.")}" target="_blank" rel="noopener">Consultar</a>
+              <a href="${whatsappLink("Hola, quiero consultar por un viaje turístico que no encontré en la web de El Ángel Azul.")}" target="_blank" rel="noopener">Consultar por WhatsApp</a>
             </section>
           </div>
         `;
