@@ -775,10 +775,8 @@
         margin: 0;
       }
 
-      /* 3 cuadros con ícono — mismo patrón visual que el mockup mobile
-         (Seguridad/Precios/Expertos), pero con info real de la empresa
-         en vez de credenciales no verificadas. Ya en fila de a 3 desde
-         mobile, tal como el diseño de referencia. */
+      /* 3 cuadros con ícono — mismo patrón visual que el mockup,
+         pero con info real de la empresa en vez de credenciales no verificadas. */
       .quienes-somos-cards {
         display: grid;
         gap: 14px;
@@ -873,29 +871,35 @@
         }
 
         .quienes-somos-cards {
-          gap: 8px;
+          gap: 10px;
+          grid-template-columns: 1fr;
         }
 
         .quienes-somos-card {
+          align-items: center;
           border-radius: 15px;
-          gap: 7px;
-          min-height: 116px;
-          padding: 13px 8px;
+          column-gap: 14px;
+          grid-template-columns: auto 1fr;
+          justify-items: start;
+          min-height: 0;
+          padding: 16px;
+          text-align: left;
         }
 
         .quienes-somos-card .material-symbols-outlined {
-          font-size: 1.08rem;
-          height: 32px;
-          width: 32px;
+          font-size: 1.18rem;
+          grid-row: span 2;
+          height: 38px;
+          width: 38px;
         }
 
         .quienes-somos-card strong {
-          font-size: 0.9rem;
+          font-size: 1rem;
         }
 
         .quienes-somos-card p {
-          font-size: 0.8rem;
-          line-height: 1.35;
+          font-size: 0.9rem;
+          line-height: 1.42;
         }
       }
 
