@@ -8175,6 +8175,32 @@
         padding: 12px;
       }
 
+      .ficha-dob-group {
+        align-items: center;
+        display: flex;
+        gap: 6px;
+      }
+
+      .ficha-dob-group input {
+        min-height: 48px;
+        text-align: center;
+        width: 100%;
+      }
+
+      .ficha-dob-group input[data-dob-day],
+      .ficha-dob-group input[data-dob-month] {
+        max-width: 60px;
+      }
+
+      .ficha-dob-group input[data-dob-year] {
+        max-width: 84px;
+      }
+
+      .ficha-dob-group span {
+        color: #8fa5b0;
+        font-weight: 800;
+      }
+
       .ficha-adhesion-check {
         align-items: center;
         display: flex !important;

@@ -7822,7 +7822,14 @@
                     <input name="pasajeroNumeroDocumento" required>
                   </label>
                   <label>Fecha de nacimiento
-                    <input name="pasajeroNacimiento" type="date">
+                    <span class="ficha-dob-group" data-dob-group="pasajeroNacimiento">
+                      <input type="text" inputmode="numeric" maxlength="2" placeholder="DD" data-dob-day aria-label="Día de nacimiento">
+                      <span>/</span>
+                      <input type="text" inputmode="numeric" maxlength="2" placeholder="MM" data-dob-month aria-label="Mes de nacimiento">
+                      <span>/</span>
+                      <input type="text" inputmode="numeric" maxlength="4" placeholder="AAAA" data-dob-year aria-label="Año de nacimiento">
+                    </span>
+                    <input type="hidden" name="pasajeroNacimiento" data-dob-hidden>
                   </label>
                   <label>Sexo
                     <select name="pasajeroSexo">
@@ -7853,7 +7860,14 @@
                     <input name="responsableNumeroDocumento" required>
                   </label>
                   <label>Fecha de nacimiento
-                    <input name="responsableNacimiento" type="date">
+                    <span class="ficha-dob-group" data-dob-group="responsableNacimiento">
+                      <input type="text" inputmode="numeric" maxlength="2" placeholder="DD" data-dob-day aria-label="Día de nacimiento del responsable">
+                      <span>/</span>
+                      <input type="text" inputmode="numeric" maxlength="2" placeholder="MM" data-dob-month aria-label="Mes de nacimiento del responsable">
+                      <span>/</span>
+                      <input type="text" inputmode="numeric" maxlength="4" placeholder="AAAA" data-dob-year aria-label="Año de nacimiento del responsable">
+                    </span>
+                    <input type="hidden" name="responsableNacimiento" data-dob-hidden>
                   </label>
                   <label>Parentesco
                     <input name="responsableParentesco" placeholder="Madre, padre, tutor">
@@ -7927,6 +7941,56 @@
       }
 
       function bindFichaAdhesion() {
+        // Fecha de nacimiento: día/mes/año con autoavance en vez del selector
+        // nativo type="date" (que no dejaba llegar cómodo a años viejos como
+        // 1970/1980 para el responsable, y no avanzaba de campo al escribir).
+        document.querySelectorAll("[data-dob-group]").forEach((group) => {
+          const dayInput = group.querySelector("[data-dob-day]");
+          const monthInput = group.querySelector("[data-dob-month]");
+          const yearInput = group.querySelector("[data-dob-year]");
+          const hiddenInput = group.parentElement.querySelector("[data-dob-hidden]");
+          if (!dayInput || !monthInput || !yearInput || !hiddenInput) return;
+
+          const clampNumeric = (input, max) => {
+            input.value = input.value.replace(/\D/g, "").slice(0, max);
+          };
+
+          const syncHidden = () => {
+            const day = dayInput.value.padStart(2, "0");
+            const month = monthInput.value.padStart(2, "0");
+            const year = yearInput.value;
+            if (dayInput.value && monthInput.value && year.length === 4) {
+              hiddenInput.value = `${year}-${month}-${day}`;
+            } else {
+              hiddenInput.value = "";
+            }
+          };
+
+          dayInput.addEventListener("input", () => {
+            clampNumeric(dayInput, 2);
+            if (Number(dayInput.value) > 31) dayInput.value = "31";
+            if (dayInput.value.length === 2) monthInput.focus();
+            syncHidden();
+          });
+          monthInput.addEventListener("input", () => {
+            clampNumeric(monthInput, 2);
+            if (Number(monthInput.value) > 12) monthInput.value = "12";
+            if (monthInput.value.length === 2) yearInput.focus();
+            syncHidden();
+          });
+          yearInput.addEventListener("input", () => {
+            clampNumeric(yearInput, 4);
+            syncHidden();
+          });
+          // Backspace en un campo vacío vuelve al anterior (auto-retroceso)
+          monthInput.addEventListener("keydown", (event) => {
+            if (event.key === "Backspace" && !monthInput.value) dayInput.focus();
+          });
+          yearInput.addEventListener("keydown", (event) => {
+            if (event.key === "Backspace" && !yearInput.value) monthInput.focus();
+          });
+        });
+
         const form = document.querySelector("[data-ficha-adhesion-form]");
         const canvas = document.querySelector("[data-ficha-signature]");
         const clearButton = document.querySelector("[data-ficha-clear-signature]");
