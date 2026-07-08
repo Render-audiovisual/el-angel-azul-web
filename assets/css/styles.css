@@ -1860,7 +1860,7 @@
         border: 0;
         color: #fff;
         margin: -18px -18px 0;
-        min-height: 66svh;
+        min-height: 82svh;
         overflow: hidden;
         padding: 36px 18px;
         position: relative;
@@ -1870,7 +1870,7 @@
         display: grid;
         gap: 18px;
         max-width: 760px;
-        min-height: calc(66svh - 72px);
+        min-height: calc(82svh - 72px);
         place-content: center;
         position: relative;
         z-index: 2;
