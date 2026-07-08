@@ -118,9 +118,10 @@
 
       .site-header {
         align-items: center;
-        background: transparent;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-        box-shadow: none;
+        background: rgba(255, 255, 255, 0.86);
+        backdrop-filter: blur(18px);
+        border-bottom: 1px solid rgba(13, 105, 161, 0.13);
+        box-shadow: 0 18px 42px rgba(16, 32, 43, 0.08);
         display: flex;
         gap: 16px;
         justify-content: space-between;
@@ -130,19 +131,10 @@
         top: 0;
         left: 0;
         right: 0;
-        transition: background 180ms ease, border-color 180ms ease, box-shadow 180ms ease, backdrop-filter 180ms ease;
         z-index: 40;
       }
 
-      body.nav-scrolled .site-header,
-      body:not(.home-page) .site-header {
-        background: rgba(255, 255, 255, 0.86);
-        backdrop-filter: blur(18px);
-        border-bottom-color: rgba(13, 105, 161, 0.13);
-        box-shadow: 0 18px 42px rgba(16, 32, 43, 0.08);
-      }
-
-      body:not(.home-page) main {
+      main {
         padding-top: 112px;
       }
 
@@ -1561,37 +1553,6 @@
         .hero-clean-actions .btn-ghost-light {
           justify-content: center;
           width: 100%;
-        }
-      }
-
-      body.home-page:not(.nav-scrolled) .site-header {
-        border-bottom-color: transparent;
-        padding: 16px clamp(16px, 4vw, 42px) 0;
-      }
-
-      body.home-page:not(.nav-scrolled) .brand-link {
-        align-items: center;
-        backdrop-filter: blur(18px);
-        background: rgba(9, 16, 29, 0.78);
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        border-radius: 999px;
-        box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22);
-        min-height: 52px;
-        padding: 7px 16px;
-      }
-
-      /* En mobile: el menú desplegable usa fondo CLARO (legible).
-         En desktop: el nav inline usa el estilo oscuro tipo píldora.
-         Antes: el fondo oscuro se aplicaba en ambos tamaños, causando
-         un blob negro ilegible al abrir el menú en el celular. */
-      @media (min-width: 720px) {
-        body.home-page:not(.nav-scrolled) .site-nav {
-          backdrop-filter: blur(18px);
-          background: rgba(9, 16, 29, 0.78);
-          border: 1px solid rgba(255, 255, 255, 0.12);
-          border-radius: 999px;
-          box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22);
-          padding: 8px;
         }
       }
 
@@ -9384,25 +9345,6 @@
           display: none;
         }
 
-        body.home-page:not(.nav-scrolled) .site-nav a,
-        body.home-page:not(.nav-scrolled) .site-nav summary {
-          color: #fff;
-          text-shadow: 0 1px 20px rgba(2, 15, 28, 0.34);
-        }
-
-        body.home-page:not(.nav-scrolled) .site-nav a:hover,
-        body.home-page:not(.nav-scrolled) .site-nav summary:hover {
-          background: rgba(255, 255, 255, 0.11);
-          border-color: rgba(255, 255, 255, 0.16);
-          color: #fff;
-        }
-
-        body.home-page:not(.nav-scrolled) .site-nav .nav-whatsapp {
-          background: rgba(235, 62, 143, 0.88);
-          border-color: rgba(235, 62, 143, 0.88);
-          color: #fff;
-        }
-
         .nav-dropdown-menu {
           position: absolute;
           right: 0;
@@ -9648,13 +9590,6 @@
 
       body[data-app-entry="admin"] {
         background: var(--color-background-soft);
-      }
-
-      body.nav-scrolled .site-header,
-      body:not(.home-page) .site-header {
-        background: color-mix(in srgb, var(--color-surface) 88%, transparent);
-        border-bottom-color: var(--color-border);
-        box-shadow: var(--shadow-soft);
       }
 
       .site-nav,
@@ -9999,11 +9934,6 @@
           border: 0;
           box-shadow: none;
         }
-
-        body.nav-scrolled .site-nav,
-        body:not(.home-page) .site-nav {
-          background: transparent;
-        }
       }
 
       @media (max-width: 720px) {
@@ -10015,26 +9945,6 @@
         .site-header {
           min-height: 68px;
           padding: 10px 14px;
-        }
-
-        body.home-page:not(.nav-scrolled) .site-header {
-          padding: 10px 14px;
-        }
-
-        body.home-page:not(.nav-scrolled) .brand-link,
-        body.home-page:not(.nav-scrolled) .site-nav {
-          backdrop-filter: none;
-          background: #fff;
-          border-color: var(--color-border);
-          border-radius: 16px;
-          box-shadow: var(--shadow-panel);
-        }
-
-        body.home-page:not(.nav-scrolled) .brand-link {
-          background: rgba(255, 255, 255, 0.92);
-          border-radius: 999px;
-          min-height: 48px;
-          padding: 6px 12px;
         }
 
         .site-nav {
@@ -10053,9 +9963,7 @@
         }
 
         .site-nav a,
-        .site-nav summary,
-        body.home-page:not(.nav-scrolled) .site-nav a,
-        body.home-page:not(.nav-scrolled) .site-nav summary {
+        .site-nav summary {
           background: transparent;
           border: 1px solid transparent;
           border-radius: 12px;
@@ -10067,9 +9975,7 @@
         }
 
         .site-nav a:hover,
-        .site-nav summary:hover,
-        body.home-page:not(.nav-scrolled) .site-nav a:hover,
-        body.home-page:not(.nav-scrolled) .site-nav summary:hover {
+        .site-nav summary:hover {
           background: var(--color-surface-soft);
           border-color: var(--color-border);
           color: var(--color-primary);
@@ -10100,8 +10006,7 @@
           padding: 6px 10px 0;
         }
 
-        .site-nav .nav-whatsapp,
-        body.home-page:not(.nav-scrolled) .site-nav .nav-whatsapp {
+        .site-nav .nav-whatsapp {
           background: var(--color-accent);
           border-color: var(--color-accent);
           color: #fff;
