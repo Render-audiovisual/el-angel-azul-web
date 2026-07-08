@@ -17,19 +17,64 @@ const GOOGLE_SHEETS_CREDENTIALS_JSON =
   "";
 const ADMIN_SESSION_COOKIE = "eaa_admin_session";
 const ADMIN_SESSION_TTL_MS = 8 * 60 * 60 * 1000;
+// SEGURIDAD: antes había una contraseña hardcodeada como fallback
+// ("aguselmejor1") directamente en el código fuente. Como este repo es
+// PÚBLICO en GitHub, esa contraseña quedaba visible para cualquiera,
+// y si la variable de entorno no estaba bien configurada en el host,
+// el admin quedaba accesible con una clave conocida públicamente.
+// Ahora: si la variable de entorno no está configurada, esa cuenta
+// queda deshabilitada (password null = nunca hace match) en vez de
+// caer a un valor por defecto inseguro.
 const ADMIN_USERS = {
   admin: {
-    password: process.env.EAA_ADMIN_PASSWORD || "aguselmejor1",
+    password: process.env.EAA_ADMIN_PASSWORD || null,
     role: "admin",
     label: "Admin"
   },
   agencia: {
-    password: process.env.EAA_AGENCIA_PASSWORD || "aguselmejor1",
+    password: process.env.EAA_AGENCIA_PASSWORD || null,
     role: "agencia",
     label: "Agencia"
   }
 };
 const adminSessions = new Map();
+
+// SEGURIDAD: antes /api/admin/login no tenía ningún límite de intentos -
+// alguien podía probar contraseñas sin parar con un script. Bloqueo simple
+// en memoria: 5 intentos fallidos por IP, 15 minutos de espera después.
+// No es un rate-limiter distribuido (se resetea si el proceso reinicia),
+// pero corta un ataque de fuerza bruta automatizado básico.
+const LOGIN_ATTEMPT_LIMIT = 5;
+const LOGIN_ATTEMPT_WINDOW_MS = 15 * 60 * 1000;
+const loginAttempts = new Map();
+
+function loginRateLimited(ip) {
+  const record = loginAttempts.get(ip);
+  if (!record) return false;
+  if (Date.now() - record.firstAttemptAt > LOGIN_ATTEMPT_WINDOW_MS) {
+    loginAttempts.delete(ip);
+    return false;
+  }
+  return record.count >= LOGIN_ATTEMPT_LIMIT;
+}
+
+function registerFailedLogin(ip) {
+  const record = loginAttempts.get(ip);
+  if (!record || Date.now() - record.firstAttemptAt > LOGIN_ATTEMPT_WINDOW_MS) {
+    loginAttempts.set(ip, { count: 1, firstAttemptAt: Date.now() });
+    return;
+  }
+  record.count += 1;
+}
+
+function clearLoginAttempts(ip) {
+  loginAttempts.delete(ip);
+}
+
+function clientIp(req) {
+  const forwarded = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim();
+  return forwarded || req.socket.remoteAddress || "unknown";
+}
 
 const SCHEMA = {
   GRUPOS: ["id", "nivel", "viaje", "colegio", "curso", "division", "pasajeros_esperados", "estado", "created_at", "updated_at"],
@@ -57,8 +102,18 @@ function parseCookies(req) {
     }));
 }
 
-function sessionCookie(token, maxAgeSeconds) {
-  return `${ADMIN_SESSION_COOKIE}=${encodeURIComponent(token)}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${maxAgeSeconds}`;
+function sessionCookie(token, maxAgeSeconds, isSecureRequest = false) {
+  const secureFlag = isSecureRequest ? " Secure;" : "";
+  return `${ADMIN_SESSION_COOKIE}=${encodeURIComponent(token)}; HttpOnly;${secureFlag} SameSite=Lax; Path=/; Max-Age=${maxAgeSeconds}`;
+}
+
+// Railway (y la mayoría de los hosts con proxy) terminan HTTPS en el borde y
+// reenvían por HTTP puro al contenedor, seteando x-forwarded-proto=https.
+// En localhost (npm start) no hay proxy, así que esto da false correctamente
+// y la cookie funciona igual en desarrollo sin el flag Secure (que el
+// navegador ignoraría/bloquearía sobre HTTP de todos modos).
+function isHttpsRequest(req) {
+  return req.headers["x-forwarded-proto"] === "https";
 }
 
 function currentAdminSession(req) {
@@ -222,10 +277,24 @@ async function writeSheet(sheet, rows, deleteIds = []) {
   await sheetsRequest("PUT", `/values/${range}?valueInputOption=RAW`, { values });
 }
 
+// SEGURIDAD: TURISMO/CONFIG son públicas por diseño (catálogo web).
+// GRUPOS y CONTRATOS también quedan públicas a propósito: no tienen
+// datos personales (solo nivel/viaje/colegio/curso/estado), y la
+// Inscripción pública NECESITA leerlas sin login para encontrar el
+// contrato del colegio+curso que escribe la familia.
+// PASAJEROS, FICHAS_ADHESION, PAGOS y CUOTAS SÍ tienen datos
+// personales reales (DNI, teléfono, nombre de responsables, muchos
+// de menores de edad) - antes cualquiera podía leerlas sin
+// autenticarse, con solo saber la URL. Ahora exigen sesión de admin.
+const PUBLIC_READ_SHEETS = new Set(["TURISMO", "CONFIG", "GRUPOS", "CONTRATOS"]);
+
 async function handleSheets(req, res, url) {
   if (req.method === "GET") {
     const sheet = String(url.searchParams.get("sheet") || "");
     if (!SCHEMA[sheet]) return json(res, 400, { ok: false, error: "Hoja no permitida" });
+    if (!PUBLIC_READ_SHEETS.has(sheet) && !currentAdminSession(req)) {
+      return json(res, 401, { ok: false, error: "Necesitás iniciar sesión para ver esta información" });
+    }
     return json(res, 200, { ok: true, sheet, rows: await readSheet(sheet) });
   }
   if (req.method === "POST") {
@@ -245,13 +314,19 @@ async function handleAdminAuth(req, res, url) {
     return json(res, 200, { ok: true, ...adminSessionPayload(currentAdminSession(req)) });
   }
   if (url.pathname === "/api/admin/login" && req.method === "POST") {
+    const ip = clientIp(req);
+    if (loginRateLimited(ip)) {
+      return json(res, 429, { ok: false, error: "Demasiados intentos fallidos. Esperá unos minutos antes de volver a intentar." });
+    }
     const payload = JSON.parse(await readBody(req) || "{}");
     const username = String(payload.username || "").trim().toLowerCase();
     const password = String(payload.password || "");
     const user = ADMIN_USERS[username];
-    if (!user || user.password !== password) {
+    if (!user || !user.password || user.password !== password) {
+      registerFailedLogin(ip);
       return json(res, 401, { ok: false, error: "Usuario o contraseña incorrectos" });
     }
+    clearLoginAttempts(ip);
     const token = crypto.randomBytes(32).toString("base64url");
     const session = {
       user: username,
@@ -262,14 +337,14 @@ async function handleAdminAuth(req, res, url) {
     };
     adminSessions.set(token, session);
     return jsonWithHeaders(res, 200, { ok: true, ...adminSessionPayload(session) }, {
-      "Set-Cookie": sessionCookie(token, Math.floor(ADMIN_SESSION_TTL_MS / 1000))
+      "Set-Cookie": sessionCookie(token, Math.floor(ADMIN_SESSION_TTL_MS / 1000), isHttpsRequest(req))
     });
   }
   if (url.pathname === "/api/admin/logout" && req.method === "POST") {
     const session = currentAdminSession(req);
     if (session) adminSessions.delete(session.token);
     return jsonWithHeaders(res, 200, { ok: true, authenticated: false }, {
-      "Set-Cookie": sessionCookie("", 0)
+      "Set-Cookie": sessionCookie("", 0, isHttpsRequest(req))
     });
   }
   json(res, 404, { ok: false, error: "Endpoint no encontrado" });

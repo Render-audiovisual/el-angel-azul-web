@@ -3084,11 +3084,20 @@
         if (!config.enabled || !config.endpoint) return false;
         if (googleSheetsHydrated && !force) return true;
         try {
+          // FIX seguridad: PASAJEROS y FICHAS_ADHESION ahora requieren sesión de
+          // admin en el servidor (contienen datos personales reales). Desde
+          // páginas públicas (Inscripción, Portal) esas dos van a devolver 401 -
+          // eso es esperado y correcto. Antes, un solo Promise.all sin catch
+          // individual hacía que CUALQUIER fetch fallido tirara abajo TODA la
+          // hidratación, incluyendo GRUPOS/CONTRATOS (que sí siguen públicas y
+          // que Inscripción necesita para encontrar el contrato). Ahora cada
+          // fetch tiene su propio catch, así un 401 esperado en una hoja no
+          // rompe las demás.
           const [grupos, contratos, pasajeros, fichas, turismo] = await Promise.all([
-            window.ElAngelAzulPersistence.fetchGoogleSheetRows("GRUPOS"),
-            window.ElAngelAzulPersistence.fetchGoogleSheetRows("CONTRATOS"),
-            window.ElAngelAzulPersistence.fetchGoogleSheetRows("PASAJEROS"),
-            window.ElAngelAzulPersistence.fetchGoogleSheetRows("FICHAS_ADHESION"),
+            window.ElAngelAzulPersistence.fetchGoogleSheetRows("GRUPOS").catch(() => []),
+            window.ElAngelAzulPersistence.fetchGoogleSheetRows("CONTRATOS").catch(() => []),
+            window.ElAngelAzulPersistence.fetchGoogleSheetRows("PASAJEROS").catch(() => []),
+            window.ElAngelAzulPersistence.fetchGoogleSheetRows("FICHAS_ADHESION").catch(() => []),
             window.ElAngelAzulPersistence.fetchGoogleSheetRows("TURISMO").catch(() => [])
           ]);
           // Hidratar viajes de turismo desde Sheets si hay datos
