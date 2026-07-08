@@ -4400,13 +4400,15 @@
       .inscripcion-page-hero--compact {
         background: linear-gradient(135deg, var(--color-deep-blue, #083b7a), var(--color-primary, #0d69a1));
         border: none;
-        padding: 28px 20px;
+        align-items: center;
+        min-height: 126px;
+        padding: 26px 32px;
       }
 
       .inscripcion-hero-copy-compact {
         color: #fff;
         display: grid;
-        gap: 8px;
+        gap: 10px;
         max-width: 640px;
       }
 
@@ -4414,6 +4416,7 @@
         font-size: 0.75rem;
         font-weight: 800;
         letter-spacing: 0.08em;
+        line-height: 1;
         opacity: 0.85;
         text-transform: uppercase;
       }
@@ -5243,7 +5246,8 @@
 	          border-radius: 0 0 18px 18px;
 	          margin-left: -18px;
 	          margin-right: -18px;
-	          padding: 28px 18px 22px;
+	          min-height: 156px;
+	          padding: 26px 18px;
 	        }
 
 	        .public-inscripcion-card {
