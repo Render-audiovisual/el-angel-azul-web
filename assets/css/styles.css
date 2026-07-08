@@ -4521,6 +4521,16 @@
         gap: 22px;
       }
 
+      /* FIX: display:grid en la regla de arriba le ganaba en prioridad al
+         atributo [hidden] del navegador (que pone display:none). El JS
+         marcaba block.hidden = true correctamente, pero visualmente el
+         paso seguía mostrándose igual, apilado con el siguiente paso -
+         por eso el formulario "avanzaba" internamente (el stepper decía
+         Paso 2 de 2) sin que se notara ningún cambio visual real. */
+      .inscripcion-macro-step[hidden] {
+        display: none;
+      }
+
       .inscripcion-field-block h3 {
         align-items: center;
         color: #10202b;

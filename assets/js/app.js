@@ -7211,7 +7211,7 @@
               <div class="inscripcion-section-heading">
                 <span>Inscripción oficial</span>
                 <h2>Buscar contrato activo</h2>
-                <p>Para continuar necesitás encontrar el contrato activo de tu colegio y curso. Si no aparece, podés pedir ayuda por WhatsApp.</p>
+                <p>Buscá el contrato de tu colegio y curso. Si no aparece, podés continuar igual — nuestro equipo lo va a vincular manualmente.</p>
               </div>
 
               <form data-inscripcion-form>
