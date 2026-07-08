@@ -419,10 +419,28 @@ const PUBLIC_READ_SHEETS = new Set(["TURISMO", "CONFIG", "GRUPOS", "CONTRATOS"])
 // puntual. Todo lo demás exige sesión de admin válida.
 const PUBLIC_WRITE_SHEETS = new Set(["FICHAS_ADHESION"]);
 
+// FIX: el límite plano de 1000 caracteres por campo truncaba (corrompía)
+// el itinerario y las fotos de Turismo en cuanto un viaje tenía un
+// itinerario real de varios días o varias fotos - ambos se guardan como
+// JSON serializado en un solo campo, y un itinerario de 7 días modesto
+// ya ocupa ~1560 caracteres. Estos campos necesitan un límite bien más
+// generoso; el resto de los campos (nombre, teléfono, etc.) se queda
+// con el límite chico original.
+const LONG_FIELD_LIMITS = {
+  itinerario: 20000,
+  fotos: 10000,
+  descripcion_larga: 5000,
+  observaciones: 3000
+};
+
+function fieldLimitFor(column) {
+  return LONG_FIELD_LIMITS[column] || MAX_FIELD_LENGTH;
+}
+
 function sanitizeRow(row, columns) {
   const clean = {};
   columns.forEach((column) => {
-    clean[column] = String(row && typeof row === "object" ? row[column] || "" : "").slice(0, MAX_FIELD_LENGTH);
+    clean[column] = String(row && typeof row === "object" ? row[column] || "" : "").slice(0, fieldLimitFor(column));
   });
   return clean;
 }
