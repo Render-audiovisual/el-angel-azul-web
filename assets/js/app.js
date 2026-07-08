@@ -7401,9 +7401,10 @@
             `;
             return;
           }
-          contractResult.className = "inscripcion-contract-result is-alert";
+          contractResult.className = "inscripcion-contract-result is-info";
           contractResult.innerHTML = `
             <strong>${noContractMessage}</strong>
+            <p class="inscripcion-contract-info-text">No hay problema: podés continuar igual con la inscripción. Nuestro equipo va a revisar y vincular tu colegio manualmente.</p>
             <a href="${escapeHtml(whatsappConsultUrl({ nivel, viaje, colegio, cursoDivision }))}" target="_blank" rel="noopener">Consultar por WhatsApp</a>
           `;
         };
@@ -7453,12 +7454,14 @@
           renderChoiceGroups();
         };
 
-        // Con 2 macro-pasos, "avanzar" siempre exige que TODO el bloque de
-        // selección esté completo y el contrato confirmado (antes se
-        // validaba campo por campo entre 5 pasos separados).
+        // Ya NO se exige un contrato confirmado para avanzar: cualquier
+        // colegio puede enviar su ficha, aunque no esté cargado en el
+        // sistema todavía. El admin ya soporta fichas sin contrato
+        // vinculado (las marca "Bloqueada" en fichaValidationResult y
+        // permite asignar grupo/contrato a mano desde ahí).
         const allSelectionValid = () => Boolean(
           nivelField.value && destinoField.value && anioField.value &&
-          colegioField.value.trim() && cursoField.value.trim() && confirmedContrato
+          colegioField.value.trim() && cursoField.value.trim()
         );
         const stepValue = (step) => (step >= 5 ? allSelectionValid() : allSelectionValid());
 
@@ -7486,7 +7489,7 @@
 
         const goNext = () => {
           if (!stepValue(currentStep)) {
-            errorMessage.textContent = colegioField.value.trim() && cursoField.value.trim() && !confirmedContrato ? "Confirmá un contrato activo válido antes de continuar." : requiredMessage;
+            errorMessage.textContent = requiredMessage;
             errorMessage.hidden = false;
             return;
           }
@@ -7542,20 +7545,20 @@
         form.addEventListener("submit", (event) => {
           event.preventDefault();
           if (!stepValue(5)) {
-            errorMessage.textContent = colegioField.value.trim() && cursoField.value.trim() ? "Confirmá un contrato activo válido antes de continuar." : requiredMessage;
+            errorMessage.textContent = requiredMessage;
             errorMessage.hidden = false;
             return;
           }
-          const codigoContrato = confirmedContrato.codigoContrato;
+          const codigoContrato = confirmedContrato?.codigoContrato || "";
           const params = new URLSearchParams({
             nivel: nivelField.value,
             viaje: `${destinoField.value} ${anioField.value}`,
             destino: destinoField.value,
             anio: anioField.value,
-            colegio: confirmedContrato.colegioNombre,
+            colegio: confirmedContrato?.colegioNombre || colegioField.value.trim(),
             colegioOriginal: colegioField.value.trim(),
-            grupoId: confirmedContrato.grupoId,
-            contratoId: confirmedContrato.contratoId,
+            grupoId: confirmedContrato?.grupoId || "",
+            contratoId: confirmedContrato?.contratoId || "",
             codigoContrato,
             numeroContrato: codigoContrato,
             cursoDivision: cursoField.value.trim()
