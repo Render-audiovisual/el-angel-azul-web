@@ -7586,18 +7586,26 @@
 
       function hasValidFichaAdhesionContext(params = currentHashParams()) {
         const context = fichaAdhesionContextFromParams(params);
+        // FIX: grupoId/contratoId/codigoContrato ya NO son obligatorios acá.
+        // Desde que se sacó el bloqueo por colegio no encontrado en el paso
+        // de selección (para permitir que cualquier colegio envíe su ficha),
+        // esos 3 campos llegan vacíos a propósito en ese escenario. Esta
+        // función seguía exigiéndolos, así que cualquier inscripción sin
+        // contrato encontrado rebotaba de vuelta a /inscripcion apenas
+        // tocaba 'Completar ficha de adhesión' - perdiendo todos los datos
+        // cargados. Ahora solo se exigen los datos que la familia SÍ carga
+        // siempre (nivel/destino/año/colegio/curso); el vínculo con
+        // grupo/contrato, si existe, se valida pero ya no es bloqueante.
         const required = [
           context.nivel,
           context.destino,
           context.anio,
           context.colegio,
           context.colegioOriginal,
-          context.cursoDivision,
-          context.grupoId,
-          context.contratoId,
-          context.codigoContrato
+          context.cursoDivision
         ];
         if (required.some((value) => !String(value || "").trim())) return false;
+        if (!context.grupoId && !context.contratoId && !context.codigoContrato) return true;
         const group = adminPasajerosDemo.find((item) => item.id === context.grupoId);
         if (!group) return false;
         const contract = contractById(context.contratoId, context.grupoId);
