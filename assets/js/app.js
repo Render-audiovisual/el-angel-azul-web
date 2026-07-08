@@ -157,7 +157,6 @@
       }
 
       async function renderHome() {
-        const packages = (await loadTurismoPublicPackages()).slice(0, 3);
         const galleryPhotos = [
           { src: "assets/img/bariloche/cena-de-velas/cover.webp", alt: "Grupo de estudiantes en la cena de gala de su viaje de egresados" },
           { src: "assets/img/turismo/hero/montana-patagonia.webp", alt: "Vista aérea de montañas y lago en la Patagonia" },
@@ -230,39 +229,6 @@
                 `).join("")}
               </div>
             </section>
-
-            <!-- FEATURED PACKAGES -->
-            ${packages.length ? `
-              <section class="packages-v2">
-                <div class="packages-v2-heading">
-                  <div>
-                    <h2>Destinos Destacados</h2>
-                    <p>Paquetes pensados para cada tipo de viajero.</p>
-                  </div>
-                  <a class="packages-v2-viewall" href="#/turismo">Ver todos los destinos <span class="material-symbols-outlined">arrow_forward</span></a>
-                </div>
-                <div class="packages-v2-grid">
-                  ${packages.map((pkg) => `
-                    <article class="packages-v2-card">
-                      <a class="packages-v2-card-media" href="#/turismo/${escapeHtml(pkg.slug)}">
-                        <img src="${pkg.image}" alt="${escapeHtml(pkg.destino)}" loading="lazy">
-                        <span class="packages-v2-tag">${escapeHtml(pkg.categoria || pkg.tipo || "Turismo")}</span>
-                      </a>
-                      <div class="packages-v2-card-body">
-                        <h3><a href="#/turismo/${escapeHtml(pkg.slug)}">${escapeHtml(pkg.destino)}</a></h3>
-                        <p>${escapeHtml(pkg.resumen || "")}</p>
-                        <div class="packages-v2-card-foot">
-                          <span>${escapeHtml(pkg.precio || pkg.precioDesde || "Consultar")}</span>
-                          <a class="packages-v2-card-cta" href="#/turismo/${escapeHtml(pkg.slug)}" aria-label="Ver ${escapeHtml(pkg.destino)}">
-                            <span class="material-symbols-outlined">arrow_forward</span>
-                          </a>
-                        </div>
-                      </div>
-                    </article>
-                  `).join("")}
-                </div>
-              </section>
-            ` : ""}
 
             <!-- CTA -->
             <section class="cta-v2">
