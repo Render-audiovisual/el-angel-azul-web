@@ -8127,7 +8127,11 @@
           if (!ficha.responsableNombre) return showError("El nombre del responsable es obligatorio.");
           if (!ficha.responsableNumeroDocumento) return showError("El documento del responsable es obligatorio.");
           if (!ficha.responsableCelular) return showError("El celular del responsable es obligatorio.");
-          if (!ficha.grupoAsignadoId || !ficha.contratoId || !ficha.codigoContrato) return showError("No pudimos resolver el contrato del colegio/curso. Volvé a iniciar la inscripción.");
+          // FIX: ya no se exige contrato resuelto para enviar la ficha - es el
+          // mismo caso que se habilitó en el paso de selección (colegio no
+          // encontrado). El admin ya maneja fichas sin grupo/contrato
+          // asignado (las marca "Bloqueada" y permite vincularlas a mano
+          // desde el panel de asignación).
           if (!ficha.aceptaCondiciones) return showError("Tenés que aceptar las condiciones para enviar la ficha.");
           if (!ficha.firma) return showError("Falta la firma del responsable/tutor.");
 
