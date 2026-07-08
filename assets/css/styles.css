@@ -5122,6 +5122,10 @@
 	        color: #10202b;
 	      }
 
+	      .inscripcion-contract-result.is-info a {
+	        color: #fff;
+	      }
+
 	      .inscripcion-contract-info-text {
 	        color: #425460;
 	        font-size: 0.88rem;
