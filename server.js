@@ -17,9 +17,13 @@ const GOOGLE_SHEETS_CREDENTIALS_JSON =
   "";
 const ADMIN_SESSION_COOKIE = "eaa_admin_session";
 const ADMIN_SESSION_TTL_MS = 8 * 60 * 60 * 1000;
+const MAX_BODY_BYTES = 1_000_000;
+const MAX_ADMIN_ROWS_PER_WRITE = 5000;
+const MAX_DELETE_IDS_PER_WRITE = 1000;
+const MAX_FIELD_LENGTH = 1000;
 // SEGURIDAD: antes había una contraseña hardcodeada como fallback
-// ("aguselmejor1") directamente en el código fuente. Como este repo es
-// PÚBLICO en GitHub, esa contraseña quedaba visible para cualquiera,
+// directamente en el código fuente. Como este repo es PÚBLICO en GitHub,
+// ese valor quedaba visible para cualquiera,
 // y si la variable de entorno no estaba bien configurada en el host,
 // el admin quedaba accesible con una clave conocida públicamente.
 // Ahora: si la variable de entorno no está configurada, esa cuenta
@@ -55,6 +59,36 @@ const loginAttempts = new Map();
 const FICHA_SUBMIT_LIMIT = 10;
 const FICHA_SUBMIT_WINDOW_MS = 60 * 60 * 1000;
 const fichaSubmitAttempts = new Map();
+
+const GENERAL_API_LIMIT = 240;
+const GENERAL_API_WINDOW_MS = 15 * 60 * 1000;
+const apiAttempts = new Map();
+
+function genericRateLimited(store, key, limit, windowMs) {
+  const record = store.get(key);
+  if (!record) return false;
+  if (Date.now() - record.firstAttemptAt > windowMs) {
+    store.delete(key);
+    return false;
+  }
+  return record.count >= limit;
+}
+
+function registerGenericAttempt(store, key, windowMs) {
+  const record = store.get(key);
+  if (!record || Date.now() - record.firstAttemptAt > windowMs) {
+    store.set(key, { count: 1, firstAttemptAt: Date.now() });
+    return;
+  }
+  record.count += 1;
+}
+
+function apiRateLimited(req, url) {
+  const key = `${clientIp(req)}:${url.pathname}`;
+  if (genericRateLimited(apiAttempts, key, GENERAL_API_LIMIT, GENERAL_API_WINDOW_MS)) return true;
+  registerGenericAttempt(apiAttempts, key, GENERAL_API_WINDOW_MS);
+  return false;
+}
 
 function fichaSubmitRateLimited(ip) {
   const record = fichaSubmitAttempts.get(ip);
@@ -140,6 +174,7 @@ function sessionCookie(token, maxAgeSeconds, isSecureRequest = false) {
 // y la cookie funciona igual en desarrollo sin el flag Secure (que el
 // navegador ignoraría/bloquearía sobre HTTP de todos modos).
 function isHttpsRequest(req) {
+  if (!req || !req.headers) return false;
   return req.headers["x-forwarded-proto"] === "https";
 }
 
@@ -166,29 +201,45 @@ function adminSessionPayload(session) {
   };
 }
 
+function securityHeaders(req) {
+  req = req && req.headers ? req : { headers: {}, socket: {} };
+  const headers = {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "SAMEORIGIN",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=()"
+  };
+  if (isHttpsRequest(req)) {
+    headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains";
+  }
+  return headers;
+}
+
 function json(res, status, payload) {
   res.writeHead(status, {
     "Content-Type": "application/json; charset=utf-8",
-    "Cache-Control": "no-store"
+    "Cache-Control": "no-store",
+    ...securityHeaders(res.req || {})
   });
   res.end(JSON.stringify(payload));
 }
 
-function jsonWithHeaders(res, status, payload, headers) {
+function jsonWithHeaders(req, res, status, payload, headers) {
   res.writeHead(status, {
     "Content-Type": "application/json; charset=utf-8",
     "Cache-Control": "no-store",
+    ...securityHeaders(req),
     ...headers
   });
   res.end(JSON.stringify(payload));
 }
 
-function readBody(req) {
+function readBody(req, limitBytes = MAX_BODY_BYTES) {
   return new Promise((resolve, reject) => {
     let body = "";
     req.on("data", (chunk) => {
       body += chunk;
-      if (body.length > 2_000_000) {
+      if (Buffer.byteLength(body, "utf8") > limitBytes) {
         reject(new Error("Payload demasiado grande"));
         req.destroy();
       }
@@ -196,6 +247,41 @@ function readBody(req) {
     req.on("end", () => resolve(body));
     req.on("error", reject);
   });
+}
+
+async function readJsonBody(req, limitBytes = MAX_BODY_BYTES) {
+  const raw = await readBody(req, limitBytes);
+  if (!raw.trim()) return {};
+  try {
+    return JSON.parse(raw);
+  } catch (error) {
+    const invalidJson = new Error("JSON inválido");
+    invalidJson.statusCode = 400;
+    throw invalidJson;
+  }
+}
+
+function isStateChangingMethod(method) {
+  return ["POST", "PUT", "PATCH", "DELETE"].includes(String(method || "").toUpperCase());
+}
+
+function sameOriginRequest(req) {
+  if (!req || !req.headers) return false;
+  const origin = req.headers.origin;
+  if (!origin) return true;
+  const host = req.headers["x-forwarded-host"] || req.headers.host || "";
+  const protocol = req.headers["x-forwarded-proto"] || (req.socket.encrypted ? "https" : "http");
+  try {
+    return new URL(origin).origin === `${protocol}://${host}`;
+  } catch (error) {
+    return false;
+  }
+}
+
+function requireSameOrigin(req, res) {
+  if (!isStateChangingMethod(req.method) || sameOriginRequest(req)) return false;
+  json(res, 403, { ok: false, error: "Origen no permitido" });
+  return true;
 }
 
 function credentials() {
@@ -252,6 +338,13 @@ async function sheetsRequest(method, apiPath, body) {
   const payload = await response.json();
   if (!response.ok) throw new Error(payload.error?.message || "Error de Google Sheets");
   return payload;
+}
+
+async function appendSheetRows(sheet, rows) {
+  const columns = SCHEMA[sheet];
+  const values = rows.map((row) => columns.map((column) => row[column] || ""));
+  const range = encodeURIComponent(`'${sheet}'!A:AZ`);
+  await sheetsRequest("POST", `/values/${range}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`, { values });
 }
 
 async function readSheet(sheet) {
@@ -325,14 +418,36 @@ const PUBLIC_READ_SHEETS = new Set(["TURISMO", "CONFIG", "GRUPOS", "CONTRATOS"])
 // inscripción pública la necesita), y con reglas estrictas para ese caso
 // puntual. Todo lo demás exige sesión de admin válida.
 const PUBLIC_WRITE_SHEETS = new Set(["FICHAS_ADHESION"]);
-const MAX_FIELD_LENGTH = 1000;
 
 function sanitizeRow(row, columns) {
   const clean = {};
   columns.forEach((column) => {
-    clean[column] = String(row[column] || "").slice(0, MAX_FIELD_LENGTH);
+    clean[column] = String(row && typeof row === "object" ? row[column] || "" : "").slice(0, MAX_FIELD_LENGTH);
   });
   return clean;
+}
+
+function sanitizeRows(rows, columns) {
+  return rows
+    .filter((row) => row && typeof row === "object" && !Array.isArray(row))
+    .map((row) => sanitizeRow(row, columns));
+}
+
+function sanitizeDeleteIds(deleteIds) {
+  return deleteIds
+    .map((id) => String(id || "").trim().slice(0, 200))
+    .filter(Boolean);
+}
+
+function validPublicFicha(row) {
+  const dni = String(row.pasajero_dni || "").replace(/\D/g, "");
+  const hasPassenger = dni.length >= 6 && String(row.pasajero_nombre || "").trim().length >= 3;
+  const hasResponsible = String(row.responsable_nombre || "").trim().length >= 3 &&
+    String(row.responsable_telefono || "").replace(/\D/g, "").length >= 6;
+  const hasTripContext = Boolean(
+    String(row.codigo_contrato || row.contrato_id || row.grupo_asignado_id || row.colegio || row.curso_division || "").trim()
+  );
+  return hasPassenger && hasResponsible && hasTripContext;
 }
 
 async function handleSheets(req, res, url) {
@@ -345,7 +460,8 @@ async function handleSheets(req, res, url) {
     return json(res, 200, { ok: true, sheet, rows: await readSheet(sheet) });
   }
   if (req.method === "POST") {
-    const payload = JSON.parse(await readBody(req) || "{}");
+    if (requireSameOrigin(req, res)) return;
+    const payload = await readJsonBody(req);
     const sheet = String(payload.sheet || "");
     if (!SCHEMA[sheet]) return json(res, 400, { ok: false, error: "Hoja no permitida" });
     if (!WRITE_ALLOWED.has(sheet)) return json(res, 403, { ok: false, error: "Escritura no habilitada para esta hoja" });
@@ -357,6 +473,12 @@ async function handleSheets(req, res, url) {
 
     let rows = Array.isArray(payload.rows) ? payload.rows : [];
     let deleteIds = Array.isArray(payload.deleteIds) ? payload.deleteIds : [];
+    if (rows.length > MAX_ADMIN_ROWS_PER_WRITE) {
+      return json(res, 413, { ok: false, error: "Demasiadas filas para una sola escritura" });
+    }
+    if (deleteIds.length > MAX_DELETE_IDS_PER_WRITE) {
+      return json(res, 413, { ok: false, error: "Demasiadas eliminaciones para una sola escritura" });
+    }
 
     if (sheet === "FICHAS_ADHESION" && !isAdmin) {
       const ip = clientIp(req);
@@ -372,9 +494,16 @@ async function handleSheets(req, res, url) {
         id: `ficha-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`
       }));
       deleteIds = [];
+      if (!rows.length || !validPublicFicha(rows[0])) {
+        return json(res, 400, { ok: false, error: "Ficha incompleta o inválida" });
+      }
       registerFichaSubmit(ip);
+      await appendSheetRows(sheet, rows);
+      return json(res, 200, { ok: true, sheet });
     }
 
+    rows = sanitizeRows(rows, SCHEMA[sheet]);
+    deleteIds = sanitizeDeleteIds(deleteIds);
     await writeSheet(sheet, rows, deleteIds);
     return json(res, 200, { ok: true, sheet });
   }
@@ -386,11 +515,12 @@ async function handleAdminAuth(req, res, url) {
     return json(res, 200, { ok: true, ...adminSessionPayload(currentAdminSession(req)) });
   }
   if (url.pathname === "/api/admin/login" && req.method === "POST") {
+    if (requireSameOrigin(req, res)) return;
     const ip = clientIp(req);
     if (loginRateLimited(ip)) {
       return json(res, 429, { ok: false, error: "Demasiados intentos fallidos. Esperá unos minutos antes de volver a intentar." });
     }
-    const payload = JSON.parse(await readBody(req) || "{}");
+    const payload = await readJsonBody(req, 20_000);
     const username = String(payload.username || "").trim().toLowerCase();
     const password = String(payload.password || "");
     const user = ADMIN_USERS[username];
@@ -408,14 +538,15 @@ async function handleAdminAuth(req, res, url) {
       expiresAt: Date.now() + ADMIN_SESSION_TTL_MS
     };
     adminSessions.set(token, session);
-    return jsonWithHeaders(res, 200, { ok: true, ...adminSessionPayload(session) }, {
+    return jsonWithHeaders(req, res, 200, { ok: true, ...adminSessionPayload(session) }, {
       "Set-Cookie": sessionCookie(token, Math.floor(ADMIN_SESSION_TTL_MS / 1000), isHttpsRequest(req))
     });
   }
   if (url.pathname === "/api/admin/logout" && req.method === "POST") {
+    if (requireSameOrigin(req, res)) return;
     const session = currentAdminSession(req);
     if (session) adminSessions.delete(session.token);
-    return jsonWithHeaders(res, 200, { ok: true, authenticated: false }, {
+    return jsonWithHeaders(req, res, 200, { ok: true, authenticated: false }, {
       "Set-Cookie": sessionCookie("", 0, isHttpsRequest(req))
     });
   }
@@ -459,20 +590,26 @@ function staticFile(req, res, url) {
   };
   res.writeHead(200, {
     "Content-Type": types[ext] || "application/octet-stream",
-    "X-Content-Type-Options": "nosniff",
-    "X-Frame-Options": "SAMEORIGIN"
+    ...securityHeaders(req)
   });
   fs.createReadStream(target).pipe(res);
 }
 
 http.createServer(async (req, res) => {
+  res.req = req;
   const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
   try {
+    if (url.pathname.startsWith("/api/") && apiRateLimited(req, url)) {
+      return json(res, 429, { ok: false, error: "Demasiadas solicitudes. Probá de nuevo más tarde." });
+    }
     if (url.pathname.startsWith("/api/admin/")) return await handleAdminAuth(req, res, url);
     if (url.pathname === "/api/google-sheets") return await handleSheets(req, res, url);
     return staticFile(req, res, url);
   } catch (error) {
-    return json(res, 500, { ok: false, error: error.message || "Error interno" });
+    const status = Number(error.statusCode || 500);
+    const message = status >= 500 ? "Error interno" : (error.message || "Solicitud inválida");
+    if (status >= 500) console.error(error);
+    return json(res, status, { ok: false, error: message });
   }
 }).listen(PORT, "0.0.0.0", () => {
   console.log(`El Ángel Azul server listening on ${PORT}`);

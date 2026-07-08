@@ -96,4 +96,5 @@ El servidor usa estos usuarios:
 - No subir `google-sheets-service-account.json`.
 - No subir archivos `.env`.
 - No subir `node_modules`.
-- El endpoint `/api/google-sheets` todavia se protege en una prioridad posterior del admin.
+- No definir contraseñas por defecto en scripts versionados. `start-public.sh` falla si no recibe `EAA_ADMIN_PASSWORD` y `EAA_AGENCIA_PASSWORD` desde el entorno.
+- `/api/google-sheets` deja públicas solo las hojas necesarias para la web/inscripción (`TURISMO`, `CONFIG`, `GRUPOS`, `CONTRATOS`). Las hojas con datos personales y las escrituras internas requieren sesión admin.
