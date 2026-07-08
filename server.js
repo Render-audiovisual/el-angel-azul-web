@@ -427,6 +427,10 @@ const PUBLIC_WRITE_SHEETS = new Set(["FICHAS_ADHESION"]);
 // generoso; el resto de los campos (nombre, teléfono, etc.) se queda
 // con el límite chico original.
 const LONG_FIELD_LIMITS = {
+  categorias: 3000,
+  incluye: 8000,
+  no_incluye: 5000,
+  formas_pago: 5000,
   itinerario: 20000,
   fotos: 10000,
   descripcion_larga: 5000,
