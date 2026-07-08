@@ -457,7 +457,11 @@ function staticFile(req, res, url) {
     ".jpeg": "image/jpeg",
     ".webp": "image/webp"
   };
-  res.writeHead(200, { "Content-Type": types[ext] || "application/octet-stream" });
+  res.writeHead(200, {
+    "Content-Type": types[ext] || "application/octet-stream",
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "SAMEORIGIN"
+  });
   fs.createReadStream(target).pipe(res);
 }
 
