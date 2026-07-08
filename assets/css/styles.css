@@ -4401,14 +4401,21 @@
         background: linear-gradient(135deg, var(--color-deep-blue, #083b7a), var(--color-primary, #0d69a1));
         border: none;
         align-items: center;
-        min-height: 126px;
-        padding: 26px 32px;
+        box-sizing: border-box;
+        min-height: 168px;
+        padding: 44px 32px;
+      }
+
+      .public-inscripcion-layout > .inscripcion-page-hero--compact {
+        padding-top: 44px;
       }
 
       .inscripcion-hero-copy-compact {
+        align-content: center;
         color: #fff;
         display: grid;
-        gap: 10px;
+        gap: 12px;
+        min-height: 80px;
         max-width: 640px;
       }
 
@@ -4437,7 +4444,12 @@
 
       @media (min-width: 720px) {
         .inscripcion-page-hero--compact {
-          padding: 40px 36px;
+          min-height: 176px;
+          padding: 52px 36px;
+        }
+
+        .public-inscripcion-layout > .inscripcion-page-hero--compact {
+          padding-top: 52px;
         }
       }
 
@@ -5260,8 +5272,12 @@
 	          border-radius: 0 0 18px 18px;
 	          margin-left: -18px;
 	          margin-right: -18px;
-	          min-height: 156px;
-	          padding: 26px 18px;
+	          min-height: 178px;
+	          padding: 44px 18px;
+	        }
+
+	        .public-inscripcion-layout > .inscripcion-page-hero--compact {
+	          padding-top: 44px;
 	        }
 
 	        .public-inscripcion-card {
