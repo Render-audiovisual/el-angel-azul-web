@@ -48,6 +48,33 @@ const LOGIN_ATTEMPT_LIMIT = 5;
 const LOGIN_ATTEMPT_WINDOW_MS = 15 * 60 * 1000;
 const loginAttempts = new Map();
 
+// Mismo patrón que el login: limita cuántas fichas de adhesión puede
+// mandar una misma IP sin loguearse, para que no se pueda saturar el
+// sistema (ni Sheets, ni la bandeja del admin) con envíos automatizados,
+// aunque cada uno individualmente pase la validación de una sola fila.
+const FICHA_SUBMIT_LIMIT = 10;
+const FICHA_SUBMIT_WINDOW_MS = 60 * 60 * 1000;
+const fichaSubmitAttempts = new Map();
+
+function fichaSubmitRateLimited(ip) {
+  const record = fichaSubmitAttempts.get(ip);
+  if (!record) return false;
+  if (Date.now() - record.firstAttemptAt > FICHA_SUBMIT_WINDOW_MS) {
+    fichaSubmitAttempts.delete(ip);
+    return false;
+  }
+  return record.count >= FICHA_SUBMIT_LIMIT;
+}
+
+function registerFichaSubmit(ip) {
+  const record = fichaSubmitAttempts.get(ip);
+  if (!record || Date.now() - record.firstAttemptAt > FICHA_SUBMIT_WINDOW_MS) {
+    fichaSubmitAttempts.set(ip, { count: 1, firstAttemptAt: Date.now() });
+    return;
+  }
+  record.count += 1;
+}
+
 function loginRateLimited(ip) {
   const record = loginAttempts.get(ip);
   if (!record) return false;
@@ -288,6 +315,26 @@ async function writeSheet(sheet, rows, deleteIds = []) {
 // autenticarse, con solo saber la URL. Ahora exigen sesión de admin.
 const PUBLIC_READ_SHEETS = new Set(["TURISMO", "CONFIG", "GRUPOS", "CONTRATOS"]);
 
+// SEGURIDAD: antes CUALQUIERA (sin login) podía escribir en /api/google-sheets
+// para CUALQUIER hoja permitida (GRUPOS, CONTRATOS, PASAJEROS, TURISMO,
+// FICHAS_ADHESION) - solo se chequeaba que la hoja existiera, nunca quién
+// hacía el pedido. Eso significaba que alguien podía, sin loguearse:
+//   - inyectar/corromper pasajeros, grupos, contratos o paquetes de turismo
+//   - pisar la ficha de OTRA familia mandando el mismo "id" que ya existe
+// Ahora: solo FICHAS_ADHESION admite escritura sin sesión (porque la
+// inscripción pública la necesita), y con reglas estrictas para ese caso
+// puntual. Todo lo demás exige sesión de admin válida.
+const PUBLIC_WRITE_SHEETS = new Set(["FICHAS_ADHESION"]);
+const MAX_FIELD_LENGTH = 1000;
+
+function sanitizeRow(row, columns) {
+  const clean = {};
+  columns.forEach((column) => {
+    clean[column] = String(row[column] || "").slice(0, MAX_FIELD_LENGTH);
+  });
+  return clean;
+}
+
 async function handleSheets(req, res, url) {
   if (req.method === "GET") {
     const sheet = String(url.searchParams.get("sheet") || "");
@@ -302,8 +349,33 @@ async function handleSheets(req, res, url) {
     const sheet = String(payload.sheet || "");
     if (!SCHEMA[sheet]) return json(res, 400, { ok: false, error: "Hoja no permitida" });
     if (!WRITE_ALLOWED.has(sheet)) return json(res, 403, { ok: false, error: "Escritura no habilitada para esta hoja" });
-    const deleteIds = Array.isArray(payload.deleteIds) ? payload.deleteIds : [];
-    await writeSheet(sheet, Array.isArray(payload.rows) ? payload.rows : [], deleteIds);
+
+    const isAdmin = Boolean(currentAdminSession(req));
+    if (!PUBLIC_WRITE_SHEETS.has(sheet) && !isAdmin) {
+      return json(res, 401, { ok: false, error: "Necesitás iniciar sesión para modificar esta información" });
+    }
+
+    let rows = Array.isArray(payload.rows) ? payload.rows : [];
+    let deleteIds = Array.isArray(payload.deleteIds) ? payload.deleteIds : [];
+
+    if (sheet === "FICHAS_ADHESION" && !isAdmin) {
+      const ip = clientIp(req);
+      if (fichaSubmitRateLimited(ip)) {
+        return json(res, 429, { ok: false, error: "Se alcanzó el límite de envíos. Probá de nuevo más tarde o consultanos por WhatsApp." });
+      }
+      // Envío público (familia sin login): máximo 1 ficha por pedido, el
+      // servidor genera su propio id (ignora el que mande el cliente) para
+      // que nadie pueda pisar la ficha de otra familia mandando un id que
+      // ya exista, y se acotan los campos a un largo razonable.
+      rows = rows.slice(0, 1).map((row) => ({
+        ...sanitizeRow(row, SCHEMA.FICHAS_ADHESION),
+        id: `ficha-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`
+      }));
+      deleteIds = [];
+      registerFichaSubmit(ip);
+    }
+
+    await writeSheet(sheet, rows, deleteIds);
     return json(res, 200, { ok: true, sheet });
   }
   json(res, 405, { ok: false, error: "Método no permitido" });
