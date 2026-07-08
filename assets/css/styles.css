@@ -4480,7 +4480,7 @@
 
       .inscripcion-stepper-v2-item small {
         color: #6b7d88;
-        font-size: 0.72rem;
+        font-size: 0.8rem;
         font-weight: 800;
         letter-spacing: 0.04em;
         text-transform: uppercase;
@@ -4508,7 +4508,7 @@
 
       .inscripcion-stepper-v2-label {
         color: #425460;
-        font-size: 0.85rem;
+        font-size: 0.92rem;
         font-weight: 800;
         margin: 0 0 8px;
       }
@@ -4543,7 +4543,7 @@
 
       .inscripcion-field-hint {
         color: #6b7d88;
-        font-size: 0.8rem;
+        font-size: 0.88rem;
         margin: 6px 0 0;
       }
 
@@ -4910,7 +4910,7 @@
       .public-inscripcion-card label {
         color: #33454f;
         display: grid;
-        font-size: 0.9rem;
+        font-size: 1rem;
         font-weight: 800;
         gap: 8px;
       }
@@ -4977,7 +4977,7 @@
 
 	      .inscripcion-option-button small {
 	        color: #5c6c76;
-	        font-size: 0.78rem;
+	        font-size: 0.88rem;
 	        font-weight: 750;
 	      }
 
