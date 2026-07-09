@@ -1126,7 +1126,7 @@
       /* --- CTA --- */
       .cta-v2 {
         margin: 0 auto clamp(56px, 9vw, 110px);
-        max-width: 1200px;
+        max-width: 1240px;
         padding: 0 18px;
       }
 
@@ -1139,7 +1139,9 @@
       }
 
       .cta-v2-content {
-        padding: clamp(32px, 6vw, 64px);
+        align-content: center;
+        display: grid;
+        padding: clamp(36px, 6vw, 72px);
         position: relative;
         z-index: 2;
       }
@@ -1147,8 +1149,8 @@
       .cta-v2-brand {
         align-items: center;
         display: flex;
-        gap: 10px;
-        margin-bottom: clamp(24px, 5vw, 44px);
+        gap: 12px;
+        margin-bottom: clamp(28px, 6vw, 48px);
       }
 
       .cta-v2-brand-mark {
@@ -1156,77 +1158,88 @@
            quedaría casi invisible. Se invierte a blanco vía filtro CSS en
            vez de caer al texto solo, ya que el logo SÍ está disponible. */
         filter: brightness(0) invert(1);
-        height: 28px;
+        height: 40px;
         width: auto;
       }
 
       .cta-v2-brand span {
         color: #fff;
-        font-size: 0.95rem;
+        font-size: 1.15rem;
         font-weight: 800;
-        letter-spacing: 0.02em;
+        letter-spacing: 0.01em;
       }
 
       .cta-v2-grid h2 {
         color: #fff;
-        font-size: clamp(2rem, 4.4vw, 3rem);
-        line-height: 1.1;
-        margin: 0 0 16px;
-        max-width: 520px;
+        font-size: clamp(2.4rem, 5vw, 3.8rem);
+        font-weight: 800;
+        line-height: 1.08;
+        margin: 0 0 20px;
+        max-width: 560px;
       }
 
       .cta-v2-content > p {
-        color: rgba(255, 255, 255, 0.86);
-        font-size: clamp(1rem, 1.8vw, 1.12rem);
+        color: rgba(255, 255, 255, 0.88);
+        font-size: clamp(1.05rem, 1.9vw, 1.2rem);
         line-height: 1.6;
-        margin: 0 0 28px;
-        max-width: 480px;
+        margin: 0 0 32px;
+        max-width: 500px;
       }
 
       .cta-v2-whatsapp {
-        margin-bottom: clamp(28px, 5vw, 40px);
+        box-shadow: 0 12px 24px rgba(24, 169, 87, 0.24);
+        font-size: 1.05rem;
+        margin-bottom: clamp(32px, 6vw, 48px);
+        padding: 16px 32px;
+        width: fit-content;
       }
 
       .cta-v2-badges {
         display: grid;
         gap: 12px;
         grid-template-columns: repeat(2, 1fr);
-        max-width: 460px;
+        max-width: 480px;
       }
 
+      /* Chips prolijos: fondo + borde propio, no una lista plana */
       .cta-v2-badge {
         align-items: center;
-        color: rgba(255, 255, 255, 0.94);
+        background: rgba(255, 255, 255, 0.07);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 16px;
+        color: rgba(255, 255, 255, 0.96);
         display: flex;
-        font-size: 0.88rem;
+        font-size: 0.86rem;
         font-weight: 700;
         gap: 10px;
+        line-height: 1.25;
+        padding: 12px 14px;
       }
 
       .cta-v2-badge .material-symbols-outlined {
         align-items: center;
-        background: rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.14);
         border-radius: 999px;
         color: #fff;
         display: flex;
         flex-shrink: 0;
-        font-size: 20px;
-        height: 38px;
+        font-size: 19px;
+        height: 34px;
         justify-content: center;
-        width: 38px;
+        width: 34px;
       }
 
       .cta-v2-photo {
         background-position: center;
         background-size: cover;
-        min-height: 260px;
+        min-height: 280px;
         position: relative;
       }
 
       /* Overlay azul suave: integra la foto con el panel sin taparla -
          más transparente hacia la derecha para que se vean bien las caras. */
       .cta-v2-photo::after {
-        background: linear-gradient(90deg, var(--color-deep-blue) 0%, rgba(6, 42, 82, 0.55) 22%, rgba(6, 42, 82, 0.08) 55%, transparent 75%);
+        background: linear-gradient(90deg, var(--color-deep-blue) 0%, rgba(6, 42, 82, 0.5) 20%, rgba(6, 42, 82, 0.05) 50%, transparent 70%);
         content: "";
         inset: 0;
         position: absolute;
@@ -1234,7 +1247,8 @@
 
       @media (min-width: 860px) {
         .cta-v2-grid {
-          grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+          grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+          min-height: 520px;
         }
 
         .cta-v2-photo {
