@@ -315,7 +315,6 @@
         }
         const slides = [...document.querySelectorAll(".hero-clean-slide")];
         if (slides.length < 2) return;
-        if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
         let current = slides.findIndex((slide) => slide.classList.contains("is-active"));
         if (current < 0) current = 0;
         heroCarouselInterval = setInterval(() => {
