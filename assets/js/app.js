@@ -232,19 +232,28 @@
 
             <!-- CTA -->
             <section class="cta-v2">
-              <div class="cta-v2-decoration" aria-hidden="true"><span class="material-symbols-outlined">travel_explore</span></div>
               <div class="cta-v2-grid">
-                <div>
+                <div class="cta-v2-content">
+                  <div class="cta-v2-brand">
+                    <img src="assets/img/logo-completo-azul.svg" alt="" class="cta-v2-brand-mark" aria-hidden="true">
+                    <span>Ángel Azul</span>
+                  </div>
                   <h2>${escapeHtml(homeData.finalCta.title)}</h2>
                   <p>${escapeHtml(homeData.finalCta.text)}</p>
-                  <a class="btn-whatsapp" href="${whatsappLink("Hola, quiero consultar por un viaje con El Ángel Azul.")}" target="_blank" rel="noopener">
-                    ${escapeHtml(homeData.finalCta.button[0])}
+                  <a class="btn-whatsapp cta-v2-whatsapp" href="${whatsappLink("Hola, quiero consultar por el viaje de egresados con El Ángel Azul.")}" target="_blank" rel="noopener">
                     <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">chat</span>
+                    ${escapeHtml(homeData.finalCta.button[0])}
                   </a>
+                  <div class="cta-v2-badges">
+                    ${["support_agent", "payments", "map", "groups"].map((icon, index) => `
+                      <span class="cta-v2-badge">
+                        <span class="material-symbols-outlined">${icon}</span>
+                        ${escapeHtml(homeData.benefits[index])}
+                      </span>
+                    `).join("")}
+                  </div>
                 </div>
-                <div class="cta-v2-badges">
-                  ${homeData.benefits.map((benefit) => `<span class="cta-v2-badge">${escapeHtml(benefit)}</span>`).join("")}
-                </div>
+                <div class="cta-v2-photo" style="background-image: url('assets/img/bariloche/cena-de-velas/cover.webp')" role="img" aria-label="Grupo de estudiantes viajando con El Ángel Azul"></div>
               </div>
             </section>
 

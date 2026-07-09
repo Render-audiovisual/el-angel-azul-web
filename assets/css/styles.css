@@ -1130,77 +1130,115 @@
         padding: 0 18px;
       }
 
-      .cta-v2 {
-        display: block;
-      }
-
-      .cta-v2::before {
-        content: none;
-      }
-
-      .cta-v2-decoration {
-        display: none;
-      }
-
       .cta-v2-grid {
-        align-items: center;
-        background: var(--color-deep-blue);
-        border-radius: 40px;
+        background: linear-gradient(135deg, var(--color-deep-blue) 0%, #062a52 100%);
+        border-radius: 32px;
         display: grid;
-        gap: 36px;
         overflow: hidden;
-        padding: clamp(32px, 6vw, 72px);
         position: relative;
+      }
+
+      .cta-v2-content {
+        padding: clamp(32px, 6vw, 64px);
+        position: relative;
+        z-index: 2;
+      }
+
+      .cta-v2-brand {
+        align-items: center;
+        display: flex;
+        gap: 10px;
+        margin-bottom: clamp(24px, 5vw, 44px);
+      }
+
+      .cta-v2-brand-mark {
+        /* Logo disponible es azul medio (#0d69a1) - sobre este fondo oscuro
+           quedaría casi invisible. Se invierte a blanco vía filtro CSS en
+           vez de caer al texto solo, ya que el logo SÍ está disponible. */
+        filter: brightness(0) invert(1);
+        height: 28px;
+        width: auto;
+      }
+
+      .cta-v2-brand span {
+        color: #fff;
+        font-size: 0.95rem;
+        font-weight: 800;
+        letter-spacing: 0.02em;
       }
 
       .cta-v2-grid h2 {
         color: #fff;
-        font-size: clamp(2.15rem, 5vw, 3.4rem);
-        line-height: 1.06;
+        font-size: clamp(2rem, 4.4vw, 3rem);
+        line-height: 1.1;
         margin: 0 0 16px;
+        max-width: 520px;
       }
 
-      .cta-v2-grid > div:first-child > p {
-        color: rgba(255, 255, 255, 0.9);
-        font-size: clamp(1.08rem, 2.2vw, 1.22rem);
-        font-weight: 500;
-        line-height: 1.62;
+      .cta-v2-content > p {
+        color: rgba(255, 255, 255, 0.86);
+        font-size: clamp(1rem, 1.8vw, 1.12rem);
+        line-height: 1.6;
         margin: 0 0 28px;
-        max-width: 560px;
+        max-width: 480px;
+      }
+
+      .cta-v2-whatsapp {
+        margin-bottom: clamp(28px, 5vw, 40px);
       }
 
       .cta-v2-badges {
         display: grid;
-        gap: 10px;
+        gap: 12px;
         grid-template-columns: repeat(2, 1fr);
-      }
-
-      @media (min-width: 780px) {
-        .cta-v2-badges {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 12px;
-        }
+        max-width: 460px;
       }
 
       .cta-v2-badge {
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.18);
-        border-radius: 16px;
-        color: #fff;
-        font-size: 0.9rem;
+        align-items: center;
+        color: rgba(255, 255, 255, 0.94);
+        display: flex;
+        font-size: 0.88rem;
         font-weight: 700;
-        padding: 14px 18px;
-        text-align: center;
+        gap: 10px;
       }
 
-      @media (min-width: 780px) {
+      .cta-v2-badge .material-symbols-outlined {
+        align-items: center;
+        background: rgba(255, 255, 255, 0.12);
+        border-radius: 999px;
+        color: #fff;
+        display: flex;
+        flex-shrink: 0;
+        font-size: 20px;
+        height: 38px;
+        justify-content: center;
+        width: 38px;
+      }
+
+      .cta-v2-photo {
+        background-position: center;
+        background-size: cover;
+        min-height: 260px;
+        position: relative;
+      }
+
+      /* Overlay azul suave: integra la foto con el panel sin taparla -
+         más transparente hacia la derecha para que se vean bien las caras. */
+      .cta-v2-photo::after {
+        background: linear-gradient(90deg, var(--color-deep-blue) 0%, rgba(6, 42, 82, 0.55) 22%, rgba(6, 42, 82, 0.08) 55%, transparent 75%);
+        content: "";
+        inset: 0;
+        position: absolute;
+      }
+
+      @media (min-width: 860px) {
         .cta-v2-grid {
-          grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+          grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
         }
 
-        .cta-v2-badges {
-          justify-content: flex-end;
+        .cta-v2-photo {
+          min-height: 100%;
         }
       }
 

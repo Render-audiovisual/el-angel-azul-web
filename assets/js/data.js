@@ -511,15 +511,15 @@
           ["Turismo Nacional", "#/turismo"]
         ],
         benefits: [
-          "Acompañamiento",
-          "Experiencia",
-          "Opciones de financiación",
-          "Atención por WhatsApp"
+          "Atención personalizada",
+          "Financiación disponible",
+          "Destinos nacionales",
+          "Acompañamiento para grupos"
         ],
         finalCta: {
-          title: "¿Querés consultar por un viaje?",
-          text: "Escribinos y te ayudamos a encontrar la mejor opción.",
-          button: ["Hablar por WhatsApp", "#/contacto"]
+          title: "Tu viaje de egresados empieza con una charla",
+          text: "Escribinos por WhatsApp y diseñamos juntos una experiencia inolvidable para tu grupo, con destinos, financiación y acompañamiento real en cada etapa.",
+          button: ["Consultar por WhatsApp", "#/contacto"]
         }
       };
 
