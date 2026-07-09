@@ -171,13 +171,22 @@
               <div class="hero-clean-bg" aria-hidden="true"></div>
               <div class="hero-clean-overlay" aria-hidden="true"></div>
               <div class="hero-clean-content">
-                <h1 class="hero-clean-title">Tu próxima gran aventura <span>comienza aquí</span>.</h1>
+                <h1 class="hero-clean-title">El viaje que tu grupo <span>va a recordar siempre</span>.</h1>
+                <p class="hero-clean-subtitle">Destinos, financiación y acompañamiento real para vivir una experiencia segura, organizada e inolvidable.</p>
                 <div class="hero-clean-actions">
-                  <a class="btn-fuchsia" href="${whatsappLink("Hola, quiero consultar por un viaje con El Ángel Azul.")}" target="_blank" rel="noopener">
-                    Consultar por WhatsApp
+                  <a class="btn-whatsapp" href="${whatsappLink("Hola, quiero consultar por un viaje con El Ángel Azul.")}" target="_blank" rel="noopener">
                     <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">chat</span>
+                    Consultar por WhatsApp
                   </a>
-                  <a class="btn-ghost-light" href="#/turismo">Explorar Destinos</a>
+                  <a class="btn-ghost-light" href="#/turismo">Ver destinos</a>
+                </div>
+                <div class="hero-clean-benefits">
+                  ${[["payments", "Financiación disponible"], ["groups", "Acompañamiento en destino"], ["support_agent", "Atención personalizada"], ["map", "Destinos nacionales"]].map(([icon, label]) => `
+                    <span class="hero-clean-benefit">
+                      <span class="material-symbols-outlined">${icon}</span>
+                      ${escapeHtml(label)}
+                    </span>
+                  `).join("")}
                 </div>
               </div>
             </section>

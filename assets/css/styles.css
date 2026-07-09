@@ -1659,8 +1659,8 @@
         align-items: flex-end;
         display: flex;
         margin: 0;
-        min-height: 100vh;
-        min-height: 100svh;
+        min-height: 88vh;
+        min-height: 92svh;
         overflow: hidden;
         padding: 0;
         position: relative;
@@ -1716,10 +1716,44 @@
         color: #6cd0f5;
       }
 
+      .hero-clean-subtitle {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: clamp(1.02rem, 2vw, 1.2rem);
+        line-height: 1.55;
+        margin: -12px 0 0;
+        max-width: 560px;
+        text-shadow: 0 3px 18px rgba(2, 10, 22, 0.45);
+      }
+
       .hero-clean-actions {
         display: flex;
         flex-wrap: wrap;
         gap: 12px;
+      }
+
+      .hero-clean-benefits {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 4px;
+      }
+
+      .hero-clean-benefit {
+        align-items: center;
+        background: rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.24);
+        border-radius: 999px;
+        color: #fff;
+        display: inline-flex;
+        font-size: 0.82rem;
+        font-weight: 700;
+        gap: 7px;
+        padding: 8px 14px;
+      }
+
+      .hero-clean-benefit .material-symbols-outlined {
+        font-size: 16px;
       }
 
       @media (min-width: 720px) {
@@ -1729,10 +1763,19 @@
       }
 
       @media (max-width: 480px) {
-        .hero-clean-actions .btn-fuchsia,
+        .hero-clean-actions .btn-whatsapp,
         .hero-clean-actions .btn-ghost-light {
           justify-content: center;
           width: 100%;
+        }
+
+        .hero-clean-benefits {
+          gap: 8px;
+        }
+
+        .hero-clean-benefit {
+          font-size: 0.76rem;
+          padding: 7px 12px;
         }
       }
 
