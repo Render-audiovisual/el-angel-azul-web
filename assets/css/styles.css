@@ -1256,6 +1256,124 @@
         }
       }
 
+      /* Contenido mobile-only oculto por defecto (fuera del breakpoint
+         mobile, en desktop, no se muestra nunca). No afecta nada del
+         bloque desktop de arriba. */
+      .cta-v2-only-mobile {
+        display: none;
+      }
+
+      /* ============================================================
+         CTA MOBILE — pieza vertical propia, no el layout de desktop
+         apilado. Todo acotado a este @media, cero impacto en desktop.
+         ============================================================ */
+      @media (max-width: 859px) {
+        .cta-v2-only-desktop {
+          display: none;
+        }
+
+        .cta-v2-only-mobile {
+          display: block;
+        }
+
+        .cta-v2 {
+          padding: 0 16px;
+        }
+
+        .cta-v2-grid {
+          border-radius: 28px;
+        }
+
+        .cta-v2-content {
+          padding: 40px 24px 32px;
+          text-align: center;
+        }
+
+        .cta-v2-brand {
+          justify-content: center;
+          margin-bottom: 28px;
+        }
+
+        .cta-v2-brand-mark {
+          height: 48px;
+        }
+
+        .cta-v2-brand span {
+          font-size: 1.05rem;
+        }
+
+        .cta-v2-grid h2.cta-v2-only-mobile {
+          font-size: clamp(2.1rem, 8.5vw, 2.6rem);
+          font-weight: 800;
+          line-height: 1.15;
+          margin: 0 auto 16px;
+          max-width: 100%;
+        }
+
+        .cta-v2-content > p.cta-v2-only-mobile {
+          font-size: clamp(1.12rem, 4.6vw, 1.35rem);
+          line-height: 1.5;
+          margin: 0 auto 28px;
+          max-width: 100%;
+        }
+
+        .cta-v2-whatsapp {
+          box-shadow: 0 10px 26px rgba(24, 169, 87, 0.32);
+          justify-content: center;
+          margin: 0 auto 32px;
+          min-height: 56px;
+          width: 100%;
+        }
+
+        /* Beneficios: grilla 2x2, ícono grande arriba + texto debajo,
+           centrado - nada de chips chicos ni bullets */
+        .cta-v2-badges-mobile.cta-v2-only-mobile {
+          display: grid;
+          gap: 20px 12px;
+          grid-template-columns: repeat(2, 1fr);
+          margin: 0 auto;
+          max-width: 340px;
+        }
+
+        .cta-v2-badge-mobile {
+          align-items: center;
+          display: grid;
+          gap: 10px;
+          justify-items: center;
+        }
+
+        .cta-v2-badge-mobile .material-symbols-outlined {
+          align-items: center;
+          background: rgba(255, 255, 255, 0.14);
+          border-radius: 999px;
+          color: #fff;
+          display: flex;
+          font-size: 26px;
+          height: 56px;
+          justify-content: center;
+          width: 56px;
+        }
+
+        .cta-v2-badge-mobile span:last-child {
+          color: rgba(255, 255, 255, 0.96);
+          font-size: 0.9rem;
+          font-weight: 700;
+          line-height: 1.3;
+          text-align: center;
+        }
+
+        /* Foto pasa a bloque inferior, ancho completo, con degradado
+           azul de arriba hacia abajo (antes era izquierda->derecha,
+           pensado para el layout lado a lado de desktop) */
+        .cta-v2-photo {
+          min-height: 220px;
+        }
+
+        .cta-v2-photo::after {
+          background: linear-gradient(180deg, var(--color-deep-blue) 0%, rgba(6, 42, 82, 0.45) 18%, rgba(6, 42, 82, 0.05) 40%, transparent 60%);
+        }
+      }
+
 
       /* ============================================================
          HERO SNOWBOARD SCENE — animación 100% CSS/SVG (sin video real

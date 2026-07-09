@@ -238,18 +238,37 @@
                     <img src="assets/img/logo-completo-azul.svg" alt="" class="cta-v2-brand-mark" aria-hidden="true">
                     <span>Ángel Azul</span>
                   </div>
-                  <h2>${escapeHtml(homeData.finalCta.title)}</h2>
-                  <p>${escapeHtml(homeData.finalCta.text)}</p>
+
+                  <!-- Copy desktop (se oculta en mobile) -->
+                  <h2 class="cta-v2-only-desktop">${escapeHtml(homeData.finalCta.title)}</h2>
+                  <p class="cta-v2-only-desktop">${escapeHtml(homeData.finalCta.text)}</p>
+
+                  <!-- Copy mobile (se oculta en desktop) -->
+                  <h2 class="cta-v2-only-mobile">¿Listos para planear el viaje de egresados?</h2>
+                  <p class="cta-v2-only-mobile">Escribinos por WhatsApp y te ayudamos a elegir destino, financiación y la mejor opción para tu grupo.</p>
+
                   <a class="btn-whatsapp cta-v2-whatsapp" href="${whatsappLink("Hola, quiero consultar por el viaje de egresados con El Ángel Azul.")}" target="_blank" rel="noopener">
                     <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">chat</span>
                     ${escapeHtml(homeData.finalCta.button[0])}
                   </a>
-                  <div class="cta-v2-badges">
+
+                  <!-- Beneficios desktop: chips compactos -->
+                  <div class="cta-v2-badges cta-v2-only-desktop">
                     ${["support_agent", "payments", "map", "groups"].map((icon, index) => `
                       <span class="cta-v2-badge">
                         <span class="material-symbols-outlined">${icon}</span>
                         ${escapeHtml(homeData.benefits[index])}
                       </span>
+                    `).join("")}
+                  </div>
+
+                  <!-- Beneficios mobile: grilla 2x2 con ícono grande arriba -->
+                  <div class="cta-v2-badges-mobile cta-v2-only-mobile">
+                    ${[["bolt", "Respuesta rápida"], ["support_agent", "Atención personalizada"], ["payments", "Opciones de financiación"], ["directions_bus", "Acompañamiento en destino"]].map(([icon, label]) => `
+                      <div class="cta-v2-badge-mobile">
+                        <span class="material-symbols-outlined">${icon}</span>
+                        <span>${escapeHtml(label)}</span>
+                      </div>
                     `).join("")}
                   </div>
                 </div>
