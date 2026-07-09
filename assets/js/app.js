@@ -168,7 +168,12 @@
 
             <!-- HERO -->
             <section class="hero-clean">
-              <div class="hero-clean-bg" aria-hidden="true"></div>
+              <div class="hero-clean-carousel" aria-hidden="true">
+                <div class="hero-clean-slide is-active" style="background-image: url('assets/img/home/hero-carousel/remeras-marca.webp'); background-position: center 20%"></div>
+                <div class="hero-clean-slide" style="background-image: url('assets/img/home/hero-carousel/dia-de-granja.webp'); background-position: center 35%"></div>
+                <div class="hero-clean-slide" style="background-image: url('assets/img/home/hero-carousel/nieve-grupo.webp'); background-position: center 30%"></div>
+                <div class="hero-clean-slide" style="background-image: url('assets/img/home/hero-carousel/grupo-bariloche-pista.webp'); background-position: center 45%"></div>
+              </div>
               <div class="hero-clean-overlay" aria-hidden="true"></div>
               <div class="hero-clean-content">
                 <h1 class="hero-clean-title">El viaje que tu grupo va a<br><span>recordar siempre</span>.</h1>
@@ -294,6 +299,30 @@
 
           </div>
         `;
+        bindHeroCarousel();
+      }
+
+      // Carrusel automático del hero: rota las fotos cada 3 segundos con
+      // crossfade. Se limpia el interval anterior antes de arrancar uno
+      // nuevo, por si renderHome() se llama de nuevo (volver a Inicio
+      // varias veces en la misma sesión) - evita que se acumulen varios
+      // intervals corriendo en simultáneo y el carrusel se acelere.
+      let heroCarouselInterval = null;
+      function bindHeroCarousel() {
+        if (heroCarouselInterval) {
+          clearInterval(heroCarouselInterval);
+          heroCarouselInterval = null;
+        }
+        const slides = [...document.querySelectorAll(".hero-clean-slide")];
+        if (slides.length < 2) return;
+        if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+        let current = slides.findIndex((slide) => slide.classList.contains("is-active"));
+        if (current < 0) current = 0;
+        heroCarouselInterval = setInterval(() => {
+          slides[current].classList.remove("is-active");
+          current = (current + 1) % slides.length;
+          slides[current].classList.add("is-active");
+        }, 3000);
       }
 
       const turismoIntentionFilters = [
@@ -8223,6 +8252,10 @@
         document.body.classList.toggle("home-page", path === "/");
         document.body.classList.toggle("turismo-page", path.startsWith("/turismo"));
         closeMobileNav();
+        if (path !== "/" && heroCarouselInterval) {
+          clearInterval(heroCarouselInterval);
+          heroCarouselInterval = null;
+        }
         if (path === "/") {
           await renderHome();
           return;
