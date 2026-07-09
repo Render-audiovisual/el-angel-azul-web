@@ -244,59 +244,6 @@
               </div>
             </section>
 
-            <!-- CTA -->
-            <section class="cta-v2">
-              <div class="cta-v2-grid">
-                <div class="cta-v2-content">
-                  <div class="cta-v2-brand">
-                    <img src="assets/img/logo-completo-azul.svg" alt="" class="cta-v2-brand-mark" aria-hidden="true">
-                    <span>Ángel Azul</span>
-                  </div>
-
-                  <!-- Copy desktop (se oculta en mobile) -->
-                  <h2 class="cta-v2-only-desktop">${escapeHtml(homeData.finalCta.title)}</h2>
-                  <p class="cta-v2-only-desktop">${escapeHtml(homeData.finalCta.text)}</p>
-
-                  <!-- Copy mobile (se oculta en desktop) -->
-                  <h2 class="cta-v2-only-mobile">¿Listos para planear el viaje de egresados?</h2>
-                  <p class="cta-v2-only-mobile">Escribinos por WhatsApp y te ayudamos a elegir destino, financiación y la mejor opción para tu grupo.</p>
-
-                  <a class="btn-whatsapp cta-v2-whatsapp" href="${whatsappLink("Hola, quiero consultar por el viaje de egresados con El Ángel Azul.")}" target="_blank" rel="noopener">
-                    <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">chat</span>
-                    ${escapeHtml(homeData.finalCta.button[0])}
-                  </a>
-
-                  <!-- Beneficios desktop: chips compactos -->
-                  <div class="cta-v2-badges cta-v2-only-desktop">
-                    ${["support_agent", "payments", "map", "groups"].map((icon, index) => `
-                      <span class="cta-v2-badge">
-                        <span class="material-symbols-outlined">${icon}</span>
-                        ${escapeHtml(homeData.benefits[index])}
-                      </span>
-                    `).join("")}
-                  </div>
-
-                  <!-- Beneficios mobile: grilla 2x2 con ícono grande arriba -->
-                  <div class="cta-v2-badges-mobile cta-v2-only-mobile">
-                    ${[["bolt", "Respuesta rápida"], ["support_agent", "Atención personalizada"], ["payments", "Opciones de financiación"], ["directions_bus", "Acompañamiento en destino"]].map(([icon, label]) => `
-                      <div class="cta-v2-badge-mobile">
-                        <span class="material-symbols-outlined">${icon}</span>
-                        <span>${escapeHtml(label)}</span>
-                      </div>
-                    `).join("")}
-                  </div>
-                </div>
-                <!-- FOTO DEL CTA: fácil de reemplazar, solo cambiar esta URL.
-                     No hay ninguna foto real de una excursión al aire libre CON
-                     gente de El Ángel Azul disponible todavía en el proyecto -
-                     las opciones reales son paisajes solos (como este) o fotos
-                     de eventos puertas adentro (cena, fiesta). Se usa este
-                     paisaje real de Bariloche mientras se consigue una foto
-                     real de grupo en una excursión. -->
-                <div class="cta-v2-photo" style="background-image: url('assets/img/turismo/hero/montana-patagonia.webp')" role="img" aria-label="Paisaje de montaña y lago en Bariloche, Patagonia"></div>
-              </div>
-            </section>
-
           </div>
         `;
         bindHeroCarousel();
