@@ -272,7 +272,14 @@
                     `).join("")}
                   </div>
                 </div>
-                <div class="cta-v2-photo" style="background-image: url('assets/img/bariloche/cena-de-velas/cover.webp')" role="img" aria-label="Grupo de estudiantes viajando con El Ángel Azul"></div>
+                <!-- FOTO DEL CTA: fácil de reemplazar, solo cambiar esta URL.
+                     No hay ninguna foto real de una excursión al aire libre CON
+                     gente de El Ángel Azul disponible todavía en el proyecto -
+                     las opciones reales son paisajes solos (como este) o fotos
+                     de eventos puertas adentro (cena, fiesta). Se usa este
+                     paisaje real de Bariloche mientras se consigue una foto
+                     real de grupo en una excursión. -->
+                <div class="cta-v2-photo" style="background-image: url('assets/img/turismo/hero/montana-patagonia.webp')" role="img" aria-label="Paisaje de montaña y lago en Bariloche, Patagonia"></div>
               </div>
             </section>
 

@@ -517,7 +517,7 @@
           "Acompañamiento para grupos"
         ],
         finalCta: {
-          title: "Tu viaje de egresados empieza con una charla",
+          title: "El viaje de egresados empieza con una charla",
           text: "Escribinos por WhatsApp y diseñamos juntos una experiencia inolvidable para tu grupo, con destinos, financiación y acompañamiento real en cada etapa.",
           button: ["Consultar por WhatsApp", "#/contacto"]
         }
