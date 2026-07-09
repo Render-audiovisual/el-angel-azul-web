@@ -218,8 +218,8 @@
             <!-- GALLERY -->
             <section class="gallery-v2">
               <div class="gallery-v2-heading">
-                <h2>Momentos que duran <span>para siempre</span></h2>
-                <p>Cada viaje deja recuerdos que se cuentan durante años. Así los vive cada grupo que viaja con nosotros.</p>
+                <h2>Sucursales</h2>
+                <p>Tenemos nuestras oficinas en Posadas, Misiones, y en Corrientes Capital, listas para asesorarte en persona.</p>
               </div>
               <div class="gallery-v2-grid">
                 ${galleryPhotos.map((photo, index) => `
