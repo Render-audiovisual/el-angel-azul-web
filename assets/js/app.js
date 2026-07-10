@@ -7486,7 +7486,7 @@
         );
         const stepValue = (step) => (step >= 5 ? allSelectionValid() : allSelectionValid());
 
-        const macroLabels = ["Paso 1 de 2: Selección de viaje", "Paso 2 de 2: Confirmá y avanzá a la ficha"];
+        const macroLabels = ["50% completado: elegí el viaje", "90% completado: falta completar datos y firma"];
         const progressFill = document.querySelector("[data-macro-fill]");
         const progressLabel = document.querySelector("[data-macro-label]");
         const macroIndicators = [...document.querySelectorAll("[data-macro-indicator]")];
@@ -7501,7 +7501,7 @@
             item.classList.toggle("active", step === macroStep);
             item.classList.toggle("done", step < macroStep);
           });
-          if (progressFill) progressFill.style.width = macroStep === 2 ? "100%" : "8%";
+          if (progressFill) progressFill.style.width = macroStep === 2 ? "90%" : "50%";
           if (progressLabel) progressLabel.textContent = macroLabels[macroStep - 1];
           backButton.disabled = macroStep === 1;
           nextButton.textContent = macroStep === 2 ? "Completar ficha de adhesión" : "Seguir con la ficha";
@@ -7784,6 +7784,13 @@
           document.getElementById("app").innerHTML = `
             <div class="layout ficha-adhesion-layout">
               <section class="ficha-adhesion-panel ficha-adhesion-success-screen">
+                <div class="ficha-adhesion-progress ficha-adhesion-progress--complete" aria-label="Progreso de inscripción">
+                  <div>
+                    <span>100% completado</span>
+                    <strong>Ficha enviada</strong>
+                  </div>
+                  <i aria-hidden="true"></i>
+                </div>
                 <div class="ficha-adhesion-success ficha-adhesion-success-large">Recibimos tu ficha correctamente.</div>
                 <p>Queda pendiente de revisión por administración. Te contactaremos si necesitamos validar algún dato.</p>
                 <a class="ficha-adhesion-home-link" href="#/inscripcion">Volver al inicio</a>
@@ -7804,7 +7811,7 @@
               <div class="ficha-adhesion-progress" aria-label="Progreso de inscripción">
                 <div>
                   <span>90% completado</span>
-                  <strong>Datos y firma</strong>
+                  <strong>Último tramo: datos y firma</strong>
                 </div>
                 <i aria-hidden="true"></i>
               </div>

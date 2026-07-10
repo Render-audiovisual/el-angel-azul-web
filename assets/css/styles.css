@@ -7653,6 +7653,7 @@
       }
 
       .ficha-adhesion-progress {
+        --ficha-progress: 90%;
         display: grid;
         gap: 8px;
       }
@@ -7673,10 +7674,14 @@
       }
 
       .ficha-adhesion-progress i {
-        background: linear-gradient(90deg, #2aa8ee 90%, #e2edf2 90%);
+        background: linear-gradient(90deg, #2aa8ee var(--ficha-progress), #e2edf2 var(--ficha-progress));
         border-radius: 999px;
         display: block;
         height: 8px;
+      }
+
+      .ficha-adhesion-progress--complete {
+        --ficha-progress: 100%;
       }
 
       .ficha-adhesion-context {
