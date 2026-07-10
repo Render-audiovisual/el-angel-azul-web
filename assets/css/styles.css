@@ -1728,11 +1728,14 @@
         letter-spacing: -0.02em;
         line-height: 1.08;
         margin: 0;
+        max-width: 620px;
         text-shadow: 0 6px 40px rgba(2, 10, 22, 0.5);
+        text-wrap: balance;
       }
 
       .hero-clean-title span {
         color: #6cd0f5;
+        white-space: nowrap;
       }
 
       .hero-clean-subtitle {

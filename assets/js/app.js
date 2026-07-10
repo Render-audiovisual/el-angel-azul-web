@@ -176,7 +176,7 @@
               </div>
               <div class="hero-clean-overlay" aria-hidden="true"></div>
               <div class="hero-clean-content">
-                <h1 class="hero-clean-title">El viaje que tu grupo va a<br><span>recordar siempre</span>.</h1>
+                <h1 class="hero-clean-title">El viaje que tu grupo va a <span>recordar siempre</span>.</h1>
                 <p class="hero-clean-subtitle">Destinos, financiación y acompañamiento real para vivir una experiencia segura, organizada e inolvidable.</p>
                 <div class="hero-clean-actions">
                   <a class="btn-whatsapp" href="${whatsappLink("Hola, quiero consultar por un viaje con El Ángel Azul.")}" target="_blank" rel="noopener">
