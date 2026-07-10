@@ -2091,9 +2091,9 @@
       }
 
       .turismo-layout {
-        gap: 36px;
+        gap: 34px;
         grid-template-columns: minmax(0, 1fr);
-        padding-bottom: 108px;
+        padding-bottom: 78px;
       }
 
       .turismo-layout > * {
@@ -2136,9 +2136,9 @@
         border: 0;
         color: #fff;
         margin: -18px -18px 0;
-        min-height: 82svh;
+        min-height: 62svh;
         overflow: hidden;
-        padding: 36px 18px;
+        padding: 34px 18px;
         position: relative;
       }
 
@@ -2146,17 +2146,17 @@
         display: grid;
         gap: 18px;
         max-width: 760px;
-        min-height: calc(82svh - 72px);
+        min-height: calc(62svh - 68px);
         place-content: center;
         position: relative;
         z-index: 2;
       }
 
       .turismo-hero h1 {
-        font-size: clamp(2.35rem, 6vw, 4.65rem);
+        font-size: clamp(2.3rem, 5.4vw, 4.3rem);
         line-height: 1;
         margin: 0;
-        max-width: 780px;
+        max-width: 840px;
         text-shadow: 0 3px 28px rgba(12, 10, 8, 0.38);
         text-wrap: balance;
       }
@@ -2172,8 +2172,9 @@
 
       .turismo-hero::after {
         background:
-          linear-gradient(90deg, rgba(12, 10, 8, 0.62), rgba(12, 10, 8, 0.42) 34%, rgba(12, 10, 8, 0.14) 62%, rgba(12, 10, 8, 0.03)),
-          linear-gradient(180deg, rgba(12, 10, 8, 0.06), rgba(12, 10, 8, 0.18));
+          radial-gradient(circle at 18% 54%, rgba(13, 105, 161, 0.2), transparent 36%),
+          linear-gradient(90deg, rgba(8, 17, 28, 0.72), rgba(8, 17, 28, 0.48) 38%, rgba(8, 17, 28, 0.18) 66%, rgba(8, 17, 28, 0.04)),
+          linear-gradient(180deg, rgba(8, 17, 28, 0.08), rgba(8, 17, 28, 0.24));
         content: "";
         inset: 0;
         pointer-events: none;
@@ -2323,10 +2324,16 @@
       .turismo-intention-section,
       .mi-consulta-preview,
       .turismo-detail-preview {
-        background: #fff;
+        background: linear-gradient(180deg, #fff, #f7fbfe);
         border: 1px solid #d9e7ef;
         border-radius: 8px;
         padding: 20px;
+      }
+
+      .turismo-intention-section {
+        align-items: end;
+        display: grid;
+        gap: 14px;
       }
 
       .mi-consulta-preview h2,
@@ -2336,7 +2343,7 @@
 
       .intention-chip-row {
         display: flex;
-        gap: 10px;
+        gap: 8px;
         overflow-x: auto;
         padding-bottom: 4px;
         scrollbar-width: thin;
@@ -2348,7 +2355,8 @@
         color: #0d69a1;
         flex: 0 0 auto;
         font-weight: 800;
-        min-height: 42px;
+        min-height: 38px;
+        padding: 9px 12px;
         white-space: nowrap;
       }
 
@@ -2366,8 +2374,8 @@
 
       .catalog-heading {
         display: grid;
-        gap: 10px;
-        margin-bottom: 20px;
+        gap: 8px;
+        margin-bottom: 18px;
         max-width: 760px;
       }
 
@@ -2392,9 +2400,9 @@
         background: #fff;
         border: 1px solid #d9e7ef;
         border-radius: 8px;
-        box-shadow: 0 14px 32px rgba(16, 32, 43, 0.08);
+        box-shadow: 0 10px 24px rgba(16, 32, 43, 0.06);
         display: grid;
-        gap: 8px;
+        gap: 7px;
         padding: 12px;
       }
 
@@ -2420,7 +2428,12 @@
 
       .package-grid {
         display: grid;
-        gap: 18px;
+        gap: 20px;
+      }
+
+      .package-grid[data-result-count="1"],
+      .package-grid[data-result-count="2"] {
+        justify-content: center;
       }
 
       .turismo-empty-state {
@@ -2458,8 +2471,15 @@
       }
 
       .turismo-package-card {
-        box-shadow: 0 16px 36px rgba(16, 32, 43, 0.08);
+        box-shadow: 0 16px 36px rgba(16, 32, 43, 0.09);
         grid-template-rows: auto 1fr;
+        transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+      }
+
+      .turismo-package-card:hover {
+        border-color: rgba(13, 105, 161, 0.28);
+        box-shadow: 0 22px 48px rgba(16, 32, 43, 0.13);
+        transform: translateY(-2px);
       }
 
       .package-image-wrap {
@@ -2584,8 +2604,8 @@
 
       .package-card-body {
         display: grid;
-        gap: 12px;
-        padding: 16px;
+        gap: 13px;
+        padding: 20px;
       }
 
       .package-card h3,
@@ -2600,13 +2620,13 @@
 
       .package-card h3 {
         color: #10202b;
-        font-size: 1.34rem;
+        font-size: 1.48rem;
         line-height: 1.1;
       }
 
       .package-summary {
         color: #4f6472;
-        line-height: 1.5;
+        line-height: 1.52;
       }
 
       .package-duration,
@@ -2657,14 +2677,14 @@
 
       .package-price {
         align-items: end;
-        background: #f7fbfe;
+        background: linear-gradient(180deg, #f7fbfe, #fff);
         border: 1px solid #d9e7ef;
         border-radius: 8px;
         display: flex;
         flex-wrap: wrap;
-        gap: 2px;
+        gap: 6px 12px;
         justify-content: space-between;
-        padding: 12px;
+        padding: 13px 14px;
       }
 
       .package-price span {
@@ -2742,6 +2762,12 @@
         border: 1px solid #b8d4e4;
         color: #0d69a1;
         display: inline-flex;
+      }
+
+      .package-actions .package-whatsapp {
+        background: #eb3e8f;
+        border-color: #eb3e8f;
+        color: #fff;
       }
 
       .package-actions button:last-child {
@@ -3085,11 +3111,11 @@
       }
 
       .turismo-trust {
-        background: #fff;
-        border: 1px solid #d9e7ef;
+        background: linear-gradient(180deg, #fff, #f7fbfe);
+        border: 1px solid #cfe1ec;
         border-radius: 8px;
         display: grid;
-        gap: 18px;
+        gap: 20px;
         padding: clamp(20px, 4vw, 30px);
       }
 
@@ -3099,12 +3125,28 @@
       }
 
       .turismo-trust-grid article {
-        background: linear-gradient(180deg, #f7fbfe, #fff);
+        background: rgba(255, 255, 255, 0.78);
         border: 1px solid #d9e7ef;
         border-radius: 8px;
         display: grid;
         gap: 8px;
         padding: 16px;
+      }
+
+      .turismo-trust-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .turismo-trust-actions a {
+        align-items: center;
+        border-radius: 8px;
+        display: inline-flex;
+        font-weight: 800;
+        justify-content: center;
+        min-height: 44px;
+        padding: 12px 16px;
       }
 
       .turismo-trust-grid article > span {
@@ -9675,6 +9717,18 @@
           padding: 24px;
         }
 
+        .turismo-intention-section {
+          grid-template-columns: minmax(260px, 0.8fr) minmax(320px, 1.2fr);
+        }
+
+        .turismo-intention-section .catalog-heading {
+          margin-bottom: 0;
+        }
+
+        .turismo-intention-section .intention-chip-row {
+          grid-column: 1 / -1;
+        }
+
         .mi-consulta-preview {
           grid-template-columns: 1fr minmax(320px, 0.8fr);
         }
@@ -9750,7 +9804,16 @@
         }
 
         .package-grid {
-          grid-template-columns: repeat(3, minmax(0, 1fr));
+          grid-template-columns: repeat(auto-fit, minmax(280px, 360px));
+          justify-content: center;
+        }
+
+        .package-grid[data-result-count="3"],
+        .package-grid[data-result-count="4"],
+        .package-grid[data-result-count="5"],
+        .package-grid[data-result-count="6"] {
+          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+          justify-content: stretch;
         }
 
         .turismo-trust-grid {
@@ -10169,6 +10232,7 @@
       .package-whatsapp,
       .turismo-cta a,
       .turismo-cta button,
+      .turismo-trust-actions a,
       .mi-consulta-actions button:first-child,
       .mi-consulta-bar button,
       .package-actions button:first-child,
@@ -10325,9 +10389,9 @@
         }
 
         .turismo-hero {
-          min-height: 58svh;
-          padding-bottom: 28px;
-          padding-top: 30px;
+          min-height: 54svh;
+          padding-bottom: 24px;
+          padding-top: 26px;
         }
 
         .turismo-hero-carousel span {
@@ -10345,22 +10409,22 @@
         }
 
         .turismo-hero-content {
-          gap: 14px;
-          min-height: calc(58svh - 58px);
+          gap: 12px;
+          min-height: calc(54svh - 50px);
           place-content: end;
           transform: none;
         }
 
         .turismo-hero h1 {
           color: #fff;
-          font-size: clamp(2.18rem, 11vw, 3.35rem);
-          line-height: 1;
+          font-size: clamp(2rem, 9.6vw, 3rem);
+          line-height: 0.98;
         }
 
         .turismo-hero p {
           color: rgba(255, 255, 255, 0.92);
-          font-size: 0.98rem;
-          line-height: 1.45;
+          font-size: 0.94rem;
+          line-height: 1.4;
         }
 
         .turismo-hero .turismo-kicker,
@@ -10376,8 +10440,8 @@
 
         .turismo-proof-list span {
           border-radius: 12px;
-          font-size: 0.82rem;
-          padding: 8px 10px;
+          font-size: 0.78rem;
+          padding: 7px 9px;
         }
 
         .turismo-intention-section,
@@ -10404,7 +10468,7 @@
 
         .turismo-search {
           border-radius: 14px;
-          box-shadow: 0 14px 28px rgba(16, 32, 43, 0.1);
+          box-shadow: 0 10px 22px rgba(16, 32, 43, 0.08);
           margin-bottom: 12px;
         }
 
@@ -10426,7 +10490,7 @@
         }
 
         .package-grid {
-          gap: 12px;
+          gap: 14px;
         }
 
         .turismo-package-card {
@@ -10449,8 +10513,8 @@
         }
 
         .package-card-body {
-          gap: 10px;
-          padding: 12px;
+          gap: 11px;
+          padding: 14px;
         }
 
         .package-card h3 {
@@ -10482,6 +10546,21 @@
           font-size: 1.28rem;
         }
 
+        .turismo-trust {
+          border-radius: 16px;
+          margin-left: -6px;
+          margin-right: -6px;
+          padding: 16px;
+        }
+
+        .turismo-trust-grid {
+          gap: 10px;
+        }
+
+        .turismo-trust-grid article {
+          padding: 14px;
+        }
+
         .package-actions {
           display: grid;
           gap: 8px;
@@ -10502,7 +10581,7 @@
 
         .turismo-hero button,
         .turismo-hero a {
-          min-height: 46px;
+          min-height: 44px;
           width: 100%;
         }
 
@@ -10511,6 +10590,10 @@
         }
 
         .turismo-cta a {
+          width: 100%;
+        }
+
+        .turismo-trust-actions a {
           width: 100%;
         }
 

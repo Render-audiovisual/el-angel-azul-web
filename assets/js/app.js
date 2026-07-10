@@ -536,6 +536,7 @@
         if (count) {
           count.textContent = packages.length === 1 ? "1 opción encontrada" : `${packages.length} opciones encontradas`;
         }
+        grid.dataset.resultCount = String(packages.length);
         grid.innerHTML = packages.length
           ? packages.map(renderTurismoPackageCard).join("")
           : renderTurismoEmptyState();
@@ -582,12 +583,12 @@
               </div>
               <div class="turismo-hero-content">
                 <p class="turismo-kicker">Turismo nacional e internacional</p>
-                <h1>Elegí tu próximo viaje</h1>
-                <p>Destinos para viajar en familia, pareja o grupo, con asesoramiento cercano antes de reservar.</p>
+                <h1>Elegí tu próximo viaje con alguien que te acompañe</h1>
+                <p>Opciones nacionales e internacionales para viajar en familia, pareja o grupo, con una consulta clara antes de reservar.</p>
                 <div class="turismo-proof-list" aria-label="Beneficios principales">
-                  <span>Destinos nacionales e internacionales</span>
-                  <span>Disponibilidad por WhatsApp</span>
-                  <span>Formas de pago a consultar</span>
+                  <span>Opciones nacionales e internacionales</span>
+                  <span>Consulta directa por WhatsApp</span>
+                  <span>Fechas y pagos a confirmar</span>
                 </div>
                 <div class="turismo-hero-actions">
                   <a href="#turismo-catalogo">Ver viajes</a>
@@ -598,9 +599,9 @@
 
             <section class="turismo-intention-section">
               <div class="catalog-heading">
-                <p class="section-kicker">Filtrar opciones</p>
-                <h2>Buscá por tipo de experiencia</h2>
-                <p>Ordená el catálogo según el plan que tenés en mente.</p>
+                <p class="section-kicker">Encontrá una opción</p>
+                <h2>Buscá por destino o tipo de experiencia</h2>
+                <p>Usá los filtros para ordenar las opciones disponibles. La consulta final siempre se confirma con asesoramiento personalizado.</p>
               </div>
               <label class="turismo-search" for="turismo-search">
                 <span>Buscar destino</span>
@@ -616,11 +617,11 @@
             <section class="catalog-section" id="turismo-catalogo">
               <div class="catalog-heading">
                 <p class="section-kicker">Viajes destacados</p>
-                <h2>Opciones disponibles para consultar</h2>
-                <p>Compará destino, duración, precio de referencia e incluidos. La disponibilidad final se confirma por WhatsApp.</p>
+                <h2>Opciones disponibles</h2>
+                <p>Compará destino, duración, precio de referencia e incluidos. Fechas, cupos y condiciones se confirman por WhatsApp.</p>
                 <strong class="turismo-results-count" data-turismo-results-count>${packages.length} opciones encontradas</strong>
               </div>
-              <div class="package-grid" data-turismo-package-grid>
+              <div class="package-grid" data-turismo-package-grid data-result-count="${packages.length}">
                 ${packages.map(renderTurismoPackageCard).join("")}
               </div>
             </section>
@@ -629,7 +630,7 @@
               <div class="catalog-heading">
                 <p class="section-kicker">Antes de viajar</p>
                 <h2>Te ayudamos a elegir sin vueltas</h2>
-                <p>Si todavía no sabés qué destino conviene, la consulta arranca por fecha, cantidad de personas y presupuesto aproximado.</p>
+                <p>Si no encontrás el viaje exacto, la consulta arranca por fecha, cantidad de personas y presupuesto aproximado.</p>
               </div>
               <div class="turismo-trust-grid">
                 <article>
@@ -648,17 +649,8 @@
                   <p>Comparás precio, duración e incluidos antes de reservar.</p>
                 </article>
               </div>
-            </section>
-
-            <section class="turismo-cta">
-              <div>
-                <p class="turismo-cta-kicker">Consulta personalizada</p>
-                <h2>¿No encontraste el viaje que buscabas?</h2>
-                <p>Escribinos qué destino, fecha o presupuesto tenés en mente y te ayudamos a encontrar una opción.</p>
-              </div>
-              <div class="turismo-cta-actions">
-                <a href="${whatsappLink("Hola, quiero consultar por un viaje turístico que no encontré en la web de El Ángel Azul. Busco opciones según fecha, presupuesto y cantidad de personas.")}" target="_blank" rel="noopener">Consultar por WhatsApp</a>
-                <a href="#turismo-catalogo">Volver a ver viajes</a>
+              <div class="turismo-trust-actions">
+                <a class="package-whatsapp" href="${whatsappLink("Hola, quiero consultar por un viaje turístico con El Ángel Azul. Busco opciones según fecha, presupuesto y cantidad de personas.")}" target="_blank" rel="noopener">Consultar por WhatsApp</a>
               </div>
             </section>
           </div>

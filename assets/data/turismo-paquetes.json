@@ -10,8 +10,8 @@
     "precioValor": 890000,
     "moneda": "ARS",
     "categorias": ["nieve", "familiar", "nacional"],
-    "descripcionCorta": "Viaje demo para validar la carga manual, el catalogo publico y el flujo de exportacion.",
-    "descripcionLarga": "Ficha demo de Bariloche para probar el impacto de turismo-paquetes.json en catalogo, filtros, detalle y WhatsApp. Reemplazar por informacion real antes de publicar comercialmente.",
+    "descripcionCorta": "Nieve, lagos y montana con una propuesta organizada para viajar con acompanamiento desde la consulta.",
+    "descripcionLarga": "Una opcion para vivir Bariloche con paisajes de Patagonia, nieve, salidas coordinadas y asesoramiento claro antes de reservar. Ideal para familias, parejas o grupos que quieren comparar fechas, incluidos y formas de pago sin vueltas.",
     "incluye": ["Traslado coordinado", "Alojamiento seleccionado", "Asesoramiento personalizado"],
     "noIncluye": ["Comidas no detalladas", "Excursiones opcionales", "Gastos personales"],
     "fotos": [
@@ -46,8 +46,8 @@
     "precioValor": 1250000,
     "moneda": "ARS",
     "categorias": ["playa", "pareja", "grupo", "internacional"],
-    "descripcionCorta": "Una opcion internacional de playa para viajar con acompanamiento y organizacion.",
-    "descripcionLarga": "Viaje demo para probar el catalogo publico con una propuesta internacional, fotos de galeria, categorias controladas y consulta contextual por WhatsApp.",
+    "descripcionCorta": "Playa internacional, descanso y coordinacion para consultar una salida clara antes de decidir.",
+    "descripcionLarga": "Una propuesta internacional para quienes buscan playa, descanso y planificacion simple. El equipo acompana la consulta con disponibilidad, condiciones, documentacion necesaria y formas de pago.",
     "incluye": ["Traslado coordinado", "Alojamiento seleccionado", "Asistencia durante el viaje"],
     "noIncluye": ["Comidas no detalladas", "Gastos personales", "Excursiones opcionales"],
     "fotos": [
