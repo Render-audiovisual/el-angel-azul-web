@@ -630,22 +630,22 @@
               <div class="catalog-heading">
                 <p class="section-kicker">Antes de viajar</p>
                 <h2>Te ayudamos a elegir sin vueltas</h2>
-                <p>Si no encontrás el viaje exacto, la consulta arranca por fecha, cantidad de personas y presupuesto aproximado.</p>
+                <p>Si no encontrás el viaje exacto, te orientamos con fechas, cantidad de personas y presupuesto aproximado.</p>
               </div>
               <div class="turismo-trust-grid">
                 <article>
                   <span>01</span>
-                  <strong>Contanos qué buscás</strong>
-                  <p>Fecha tentativa, cantidad de personas y tipo de viaje.</p>
+                  <strong>Contanos la idea</strong>
+                  <p>Fecha tentativa, cantidad de personas y estilo de viaje.</p>
                 </article>
                 <article>
                   <span>02</span>
-                  <strong>Revisamos opciones</strong>
-                  <p>Te pasan destinos disponibles, cupos y condiciones actuales.</p>
+                  <strong>Filtramos opciones</strong>
+                  <p>Revisamos destinos, cupos y condiciones actuales.</p>
                 </article>
                 <article>
                   <span>03</span>
-                  <strong>Definís con claridad</strong>
+                  <strong>Decidís con claridad</strong>
                   <p>Comparás precio, duración e incluidos antes de reservar.</p>
                 </article>
               </div>

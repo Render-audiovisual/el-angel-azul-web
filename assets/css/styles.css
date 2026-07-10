@@ -230,6 +230,10 @@
         word-break: break-word;
       }
 
+      .footer-contact-list a[href^="mailto:"] {
+        overflow-wrap: anywhere;
+      }
+
       .footer-links a:hover,
       .footer-contact-list a:hover,
       .footer-socials a:hover {
@@ -3125,11 +3129,12 @@
       }
 
       .turismo-trust-grid article {
-        background: rgba(255, 255, 255, 0.78);
+        background: rgba(255, 255, 255, 0.84);
         border: 1px solid #d9e7ef;
         border-radius: 8px;
         display: grid;
         gap: 8px;
+        grid-template-columns: auto 1fr;
         padding: 16px;
       }
 
@@ -3159,6 +3164,7 @@
         font-weight: 900;
         height: 28px;
         justify-content: center;
+        margin-top: 1px;
         width: 28px;
       }
 
@@ -3169,10 +3175,12 @@
 
       .turismo-trust-grid strong {
         color: #10202b;
+        align-self: center;
       }
 
       .turismo-trust-grid p {
         color: #4f6472;
+        grid-column: 2;
         line-height: 1.45;
       }
 
