@@ -1815,7 +1815,7 @@
         }
 
         .hero-clean-content {
-          gap: 13px;
+          gap: 17px;
           padding: 0 18px 22px;
         }
 
@@ -1828,11 +1828,13 @@
         .hero-clean-subtitle {
           font-size: 0.98rem;
           line-height: 1.45;
+          margin-bottom: 12px;
           max-width: 31ch;
         }
 
         .hero-clean-actions {
           gap: 0;
+          margin-bottom: 4px;
         }
 
         .hero-clean-actions .btn-whatsapp {
@@ -1857,7 +1859,7 @@
           display: grid;
           gap: 0;
           grid-template-columns: repeat(3, minmax(0, 1fr));
-          margin: 6px -18px -22px;
+          margin: 20px -18px -22px;
           padding: 10px 10px 12px;
         }
 
