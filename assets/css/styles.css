@@ -1800,25 +1800,43 @@
 
       @media (max-width: 480px) {
         .hero-clean {
-          min-height: 70vh;
-          min-height: 72svh;
+          align-items: flex-end;
+          min-height: 82vh;
+          min-height: 84svh;
+        }
+
+        .hero-clean-slide {
+          background-position: center 28%;
+        }
+
+        .hero-clean-overlay {
+          background:
+            linear-gradient(180deg, rgba(4, 18, 37, 0.06) 0%, rgba(4, 18, 37, 0.16) 38%, rgba(4, 18, 37, 0.76) 100%);
         }
 
         .hero-clean-content {
-          gap: 16px;
-          padding-bottom: 40px;
+          gap: 13px;
+          padding: 0 18px 22px;
         }
 
         .hero-clean-title {
-          font-size: clamp(2rem, 8.5vw, 2.5rem);
+          font-size: clamp(2.05rem, 9vw, 2.65rem);
+          line-height: 1.02;
+          max-width: 11ch;
         }
 
         .hero-clean-subtitle {
-          font-size: clamp(1rem, 4vw, 1.1rem);
+          font-size: 0.98rem;
+          line-height: 1.45;
+          max-width: 31ch;
         }
 
-        .hero-clean-actions .btn-whatsapp,
-        .hero-clean-actions .btn-ghost-light {
+        .hero-clean-actions {
+          gap: 0;
+        }
+
+        .hero-clean-actions .btn-whatsapp {
+          box-shadow: 0 12px 28px rgba(16, 185, 129, 0.24);
           font-size: 1rem;
           justify-content: center;
           min-height: 52px;
@@ -1826,13 +1844,45 @@
           width: 100%;
         }
 
+        .hero-clean-actions .btn-ghost-light {
+          display: none;
+        }
+
         .hero-clean-benefits {
-          gap: 6px;
+          background: rgba(255, 255, 255, 0.95);
+          border: 1px solid rgba(229, 237, 247, 0.9);
+          border-radius: 0;
+          box-shadow: 0 -12px 30px rgba(2, 10, 22, 0.12);
+          color: #0f3558;
+          display: grid;
+          gap: 0;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          margin: 6px -18px -22px;
+          padding: 10px 10px 12px;
         }
 
         .hero-clean-benefit {
-          font-size: 0.72rem;
-          padding: 6px 11px;
+          background: transparent;
+          backdrop-filter: none;
+          border: 0;
+          border-radius: 0;
+          color: #174263;
+          display: grid;
+          font-size: 0.68rem;
+          gap: 5px;
+          justify-items: center;
+          line-height: 1.15;
+          padding: 4px 6px;
+          text-align: center;
+        }
+
+        .hero-clean-benefit:nth-child(n+4) {
+          display: none;
+        }
+
+        .hero-clean-benefit .material-symbols-outlined {
+          color: #0e8cc0;
+          font-size: 18px;
         }
       }
 
@@ -10415,6 +10465,10 @@
         }
 
         body:not(.home-page) .whatsapp-fab {
+          display: none;
+        }
+
+        body.home-page .whatsapp-fab {
           display: none;
         }
 
