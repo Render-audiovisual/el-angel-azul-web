@@ -7223,7 +7223,7 @@
               <div class="inscripcion-hero-copy-compact">
                 <span>Inscripción</span>
                 <h1>Completá tu ficha de viaje</h1>
-                <p>Buscá tu colegio, confirmá el contrato activo y avanzá con la inscripción digital.</p>
+                <p>Elegí el viaje, cargá colegio y curso, y completá la ficha digital en el siguiente paso.</p>
               </div>
             </section>
 
@@ -7231,7 +7231,7 @@
               <div class="inscripcion-section-heading">
                 <span>Inscripción oficial</span>
                 <h2>Buscar contrato activo</h2>
-                <p>Buscá el contrato de tu colegio y curso. Si no aparece, podés continuar igual — nuestro equipo lo va a vincular manualmente.</p>
+                <p>Buscá tu colegio y curso. Si el contrato no aparece, podés continuar igual: administración lo revisa y vincula después.</p>
               </div>
 
               <form data-inscripcion-form>
@@ -7300,7 +7300,7 @@
                 <div class="ficha-adhesion-error" data-inscripcion-error hidden></div>
                 <div class="inscripcion-step-actions">
                   <button type="button" data-inscripcion-back>Volver</button>
-                  <button type="button" data-inscripcion-next>Continuar Registro</button>
+                  <button type="button" data-inscripcion-next>Seguir con la ficha</button>
                 </div>
               </form>
             </section>
@@ -7445,6 +7445,7 @@
             ? resolveInscripcionContract({ nivel, viaje: currentViaje, colegio: currentColegio, cursoDivision: currentCurso })
             : { status: "idle", candidates: [] };
           const currentContrato = confirmedContrato?.codigoContrato || "";
+          const contractStatus = currentContrato || "Se vincula manualmente";
           const currentColegioReal = confirmedContrato?.colegioNombre || currentColegio;
           renderContractResult({ nivel, viaje: currentViaje, colegio: currentColegio, cursoDivision: currentCurso });
           contextSummary.innerHTML = `
@@ -7454,7 +7455,7 @@
               <li><strong>Destino:</strong> ${escapeHtml(destino || "Pendiente")}</li>
               <li><strong>Año:</strong> ${escapeHtml(anio || "Pendiente")}</li>
               <li><strong>Colegio:</strong> ${escapeHtml(currentColegioReal || "Pendiente")}</li>
-              <li><strong>Número de contrato:</strong> ${escapeHtml(currentContrato || "Pendiente")}</li>
+              <li><strong>Contrato:</strong> ${escapeHtml(currentColegio && currentCurso ? contractStatus : "Pendiente")}</li>
               <li><strong>Curso / División:</strong> ${escapeHtml(currentCurso || "Pendiente")}</li>
             </ul>
           `;
@@ -7466,7 +7467,7 @@
               <li><strong>Viaje:</strong> ${escapeHtml(destino)}</li>
               <li><strong>Año:</strong> ${escapeHtml(anio)}</li>
               <li><strong>Colegio:</strong> ${escapeHtml(currentColegioReal)}</li>
-              <li><strong>Número de contrato:</strong> ${escapeHtml(currentContrato)}</li>
+              <li><strong>Contrato:</strong> ${escapeHtml(contractStatus)}</li>
               <li><strong>Curso / División:</strong> ${escapeHtml(currentCurso)}</li>
             </ul>
             <p class="inscripcion-next-note">El siguiente paso es cargar los datos del pasajero y del padre/madre o tutor.</p>
@@ -7503,7 +7504,7 @@
           if (progressFill) progressFill.style.width = macroStep === 2 ? "100%" : "8%";
           if (progressLabel) progressLabel.textContent = macroLabels[macroStep - 1];
           backButton.disabled = macroStep === 1;
-          nextButton.textContent = macroStep === 2 ? "Completar ficha de adhesión" : "Continuar Registro";
+          nextButton.textContent = macroStep === 2 ? "Completar ficha de adhesión" : "Seguir con la ficha";
           errorMessage.hidden = true;
         };
 
@@ -7810,7 +7811,11 @@
               <div class="ficha-adhesion-context">
                 <span>Contexto del viaje</span>
                 <strong>${escapeHtml(fichaContext.nivel)} · ${escapeHtml(fichaContext.viaje)} · ${escapeHtml(fichaContext.colegio)} · ${escapeHtml(fichaContext.cursoDivision)}</strong>
-                <p>Número de contrato: <strong>${escapeHtml(fichaContext.codigoContrato || "Pendiente")}</strong></p>
+                <p>Contrato: <strong>${escapeHtml(fichaContext.codigoContrato || "se vincula manualmente")}</strong></p>
+              </div>
+              <div class="ficha-adhesion-help">
+                <strong>Antes de empezar</strong>
+                <p>Te va a llevar unos minutos. Tené a mano el DNI del pasajero y del padre, madre o tutor responsable.</p>
               </div>
               <form class="ficha-adhesion-form" data-ficha-adhesion-form novalidate>
                 <input type="hidden" name="nivel" value="${escapeHtml(fichaContext.nivel)}">

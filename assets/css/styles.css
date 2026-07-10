@@ -4630,12 +4630,13 @@
 	        padding: 8px 12px;
 	      }
 
-	      .inscripcion-context-summary {
-	        align-self: start;
-	        background: #fbfdfe;
-	        position: sticky;
-	        top: 88px;
-	      }
+      .inscripcion-context-summary {
+        align-self: start;
+        background: #fbfdfe;
+        order: 2;
+        position: sticky;
+        top: 88px;
+      }
 
 	      .inscripcion-context-summary ul {
 	        display: grid;
@@ -4801,11 +4802,12 @@
 	        padding: 10px 16px;
 	      }
 
-	      .inscripcion-step-actions {
-	        display: flex;
-	        gap: 10px;
-	        justify-content: flex-end;
-	      }
+      .inscripcion-step-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        order: 3;
+      }
 
 	      .inscripcion-step-actions button {
 	        border-radius: 8px;
@@ -4874,11 +4876,11 @@
 	          padding: 14px;
 	        }
 
-	        .inscripcion-context-summary {
-	          order: 3;
-	        }
+        .inscripcion-context-summary {
+          order: 2;
+        }
 
-	        .inscripcion-step-actions {
+        .inscripcion-step-actions {
 	          background: rgba(255, 255, 255, 0.96);
 	          border: 1px solid #d9e7ef;
 	          border-radius: 16px 16px 0 0;
@@ -4888,10 +4890,11 @@
 	          grid-template-columns: 0.8fr 1.2fr;
 	          left: 0;
 	          padding: 10px 12px max(10px, env(safe-area-inset-bottom));
-	          position: sticky;
-	          right: 0;
-	          z-index: 8;
-	        }
+          position: sticky;
+          right: 0;
+          order: 4;
+          z-index: 8;
+        }
 
 	        .inscripcion-step-actions button {
 	          border-radius: 12px;
@@ -7694,6 +7697,28 @@
 
       .ficha-adhesion-context strong,
       .ficha-adhesion-context p {
+        margin: 0;
+      }
+
+      .ficha-adhesion-help {
+        background: #fff8ec;
+        border: 1px solid #f0d7a9;
+        border-radius: 12px;
+        display: grid;
+        gap: 4px;
+        padding: 12px 14px;
+      }
+
+      .ficha-adhesion-help strong {
+        color: #7a4b09;
+        font-size: 0.86rem;
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+
+      .ficha-adhesion-help p {
+        color: #5c4a31;
+        line-height: 1.45;
         margin: 0;
       }
 
