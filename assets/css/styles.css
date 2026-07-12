@@ -2192,7 +2192,7 @@
         border: 0;
         color: #fff;
         margin: -18px -18px 0;
-        min-height: 62svh;
+        min-height: 78svh;
         overflow: hidden;
         padding: 34px 18px;
         position: relative;
@@ -2202,7 +2202,7 @@
         display: grid;
         gap: 18px;
         max-width: 760px;
-        min-height: calc(62svh - 68px);
+        min-height: calc(78svh - 68px);
         place-content: center;
         position: relative;
         z-index: 2;
@@ -10484,7 +10484,7 @@
 
         .turismo-hero {
           margin-top: -10px;
-          min-height: 78svh;
+          min-height: 84svh;
           padding: 28px 16px 16px;
         }
 
@@ -10511,7 +10511,7 @@
         .turismo-hero-content {
           align-content: end;
           gap: 12px;
-          min-height: calc(78svh - 44px);
+          min-height: calc(84svh - 44px);
           place-content: initial;
           transform: none;
         }
