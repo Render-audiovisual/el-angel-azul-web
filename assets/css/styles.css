@@ -1662,6 +1662,7 @@
       .hero-clean {
         align-items: center;
         display: flex;
+        height: 78svh;
         margin: 0;
         min-height: 74vh;
         min-height: 78svh;
@@ -1801,6 +1802,7 @@
       @media (max-width: 480px) {
         .hero-clean {
           align-items: flex-end;
+          height: 84svh;
           min-height: 82vh;
           min-height: 84svh;
         }
@@ -2191,7 +2193,9 @@
       .turismo-hero {
         border: 0;
         color: #fff;
+        height: 78svh;
         margin: -18px -18px 0;
+        min-height: 74vh;
         min-height: 78svh;
         overflow: hidden;
         padding: 34px 18px;
@@ -2202,6 +2206,7 @@
         display: grid;
         gap: 18px;
         max-width: 760px;
+        min-height: calc(74vh - 68px);
         min-height: calc(78svh - 68px);
         place-content: center;
         position: relative;
@@ -10483,7 +10488,9 @@
         }
 
         .turismo-hero {
+          height: 84svh;
           margin-top: -10px;
+          min-height: 82vh;
           min-height: 84svh;
           padding: 28px 16px 16px;
         }
@@ -10511,6 +10518,7 @@
         .turismo-hero-content {
           align-content: end;
           gap: 12px;
+          min-height: calc(82vh - 44px);
           min-height: calc(84svh - 44px);
           place-content: initial;
           transform: none;
