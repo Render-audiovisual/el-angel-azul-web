@@ -1718,7 +1718,7 @@
         display: grid;
         gap: 22px;
         max-width: 760px;
-        padding: 0 20px 64px;
+        padding: 84px 20px 64px;
         position: relative;
         width: 100%;
         z-index: 2;
@@ -1794,7 +1794,7 @@
 
       @media (min-width: 720px) {
         .hero-clean-content {
-          padding: 0 clamp(32px, 5vw, 72px) 72px;
+          padding: 96px clamp(32px, 5vw, 72px) 72px;
         }
       }
 
@@ -1816,7 +1816,7 @@
 
         .hero-clean-content {
           gap: 17px;
-          padding: 0 18px 22px;
+          padding: 34px 18px 24px;
         }
 
         .hero-clean-title {
