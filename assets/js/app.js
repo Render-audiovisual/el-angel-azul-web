@@ -169,10 +169,12 @@
             <!-- HERO -->
             <section class="hero-clean">
               <div class="hero-clean-carousel" aria-hidden="true">
-                <div class="hero-clean-slide is-active" style="background-image: url('assets/img/home/hero-carousel/remeras-marca.webp'); background-position: center 20%"></div>
-                <div class="hero-clean-slide" style="background-image: url('assets/img/home/hero-carousel/dia-de-granja.webp'); background-position: center 35%"></div>
-                <div class="hero-clean-slide" style="background-image: url('assets/img/home/hero-carousel/nieve-grupo.webp'); background-position: center 30%"></div>
-                <div class="hero-clean-slide" style="background-image: url('assets/img/home/hero-carousel/grupo-bariloche-pista.webp'); background-position: center 45%"></div>
+                <div class="hero-clean-slide is-active" style="background-image: url('assets/img/home/hero-carousel/bariloche-cartel-lago.webp'); background-position: center 38%"></div>
+                <div class="hero-clean-slide" style="background-image: url('assets/img/home/hero-carousel/bariloche-lago-montana.webp'); background-position: center 42%"></div>
+                <div class="hero-clean-slide" style="background-image: url('assets/img/home/hero-carousel/bariloche-centro-civico.webp'); background-position: center 43%"></div>
+                <div class="hero-clean-slide" style="background-image: url('assets/img/home/hero-carousel/bariloche-nieve-cielo.webp'); background-position: center 46%"></div>
+                <div class="hero-clean-slide" style="background-image: url('assets/img/home/hero-carousel/carlos-paz-escape-room.webp'); background-position: center 45%"></div>
+                <div class="hero-clean-slide" style="background-image: url('assets/img/home/hero-carousel/bariloche-nieve-grupo.webp'); background-position: center 47%"></div>
               </div>
               <div class="hero-clean-overlay" aria-hidden="true"></div>
               <div class="hero-clean-content">
