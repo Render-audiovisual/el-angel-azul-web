@@ -2888,7 +2888,8 @@
 
       function saveAdminContratosDemo() {
         adminContratosDemo = contratosCollection.save(adminContratosDemo);
-        if (!googleSheetsHydrating) queueGoogleSheetsWrite(["CONTRATOS"]);
+        if (!googleSheetsHydrating) return queueGoogleSheetsWrite(["CONTRATOS"]);
+        return Promise.resolve();
       }
 
       function saveAdminPasajerosDemo() {
@@ -2898,7 +2899,8 @@
 
       function saveAdminGruposDemo() {
         adminPasajerosDemo = adminPasajerosCollection.save(adminPasajerosDemo);
-        if (!googleSheetsHydrating) queueGoogleSheetsWrite(["GRUPOS"]);
+        if (!googleSheetsHydrating) return queueGoogleSheetsWrite(["GRUPOS"]);
+        return Promise.resolve();
       }
 
       function createAdminPasajerosGroup({ nivel, viaje, colegio, curso, division, pasajerosEsperados = 0 }) {
@@ -5142,6 +5144,12 @@
           renderAdminContratos();
           return;
         }
+        const duplicatedCodigo = adminContratosDemo.some((contract, idx) => idx !== index && contract.codigo_contrato === codigo);
+        if (duplicatedCodigo) {
+          adminContratosEditError = "Ya existe otro contrato con ese código. El código de contrato debe ser único.";
+          renderAdminContratos();
+          return;
+        }
         const now = new Date().toISOString();
         adminContratosDemo[index] = {
           ...current,
@@ -5150,13 +5158,15 @@
           observaciones,
           updated_at: now
         };
-        saveAdminContratosDemo();
         adminContratosEditId = "";
         adminContratosEditError = "";
         googleSheetsSyncState = {
           status: "pending",
           message: "Guardando contrato en Google Sheets..."
         };
+        saveAdminContratosDemo().then(() => {
+          if (currentPath() === "/admin/contratos") renderAdminContratos();
+        });
         renderAdminContratos();
       }
 
@@ -5555,7 +5565,9 @@
             status: "pending",
             message: "Guardando grupo en Google Sheets..."
           };
-          saveAdminGruposDemo();
+          saveAdminGruposDemo().then(() => {
+            if (currentPath() === "/admin/grupos") renderAdminGrupos();
+          });
           renderAdminGrupos();
         });
         document.querySelectorAll("[data-admin-grupo-view-contracts]").forEach((button) => {
@@ -5657,9 +5669,11 @@
             renderAdminPasajeros();
             return;
           }
-          const duplicatedDni = selectedGroup.pasajeros.some((item) => String(item.dni) === passenger.dni);
+          const duplicatedDni = adminPasajerosDemo.some((group) => (
+            group.pasajeros.some((item) => normalizeFichaDni(item.dni) === normalizeFichaDni(passenger.dni))
+          ));
           if (duplicatedDni) {
-            adminPasajerosFormError = "Ya existe un pasajero con ese DNI dentro de este curso/división.";
+            adminPasajerosFormError = "Ya existe un pasajero con ese DNI (revisá otros colegios/viajes, el DNI es único en toda la base).";
             renderAdminPasajeros();
             return;
           }
@@ -5777,6 +5791,17 @@
           if (!targetGroup) return;
           const passengerIndex = targetGroup.pasajeros.findIndex((p) => String(p.dni) === String(passenger.dni));
           if (passengerIndex === -1) return;
+          const duplicatedDni = adminPasajerosDemo.some((g) => (
+            g.pasajeros.some((item, idx) => (
+              !(g.id === targetGroup.id && idx === passengerIndex) &&
+              normalizeFichaDni(item.dni) === normalizeFichaDni(dni)
+            ))
+          ));
+          if (duplicatedDni) {
+            adminPasajerosEditError = "Ya existe otro pasajero con ese DNI (el DNI es único en toda la base).";
+            renderAdminPasajeros();
+            return;
+          }
           targetGroup.pasajeros[passengerIndex] = {
             ...targetGroup.pasajeros[passengerIndex],
             nombre,
