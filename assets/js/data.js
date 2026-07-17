@@ -151,19 +151,6 @@
             "Envío a administración"
           ]
         },
-        "/admin-portal": {
-          title: "Admin portal",
-          description: "Vista interna demo para validar estructura de viajes, grupos, pasajeros, cuotas y pagos.",
-          links: [
-            ["Portal de pasajeros", "#/portal-pasajeros"]
-          ],
-          map: [
-            "Listado de viajes",
-            "Grupos",
-            "Pasajeros",
-            "Resumen de pagos"
-          ]
-        }
       };
 
       const whatsappBase = "https://wa.me/5493794331380?text=";

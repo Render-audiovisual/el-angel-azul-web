@@ -35,11 +35,6 @@
         return `${path}/`;
       }
 
-      function adminProtectedUrl(path) {
-        if (path === "/admin-turismo") return "/admin-turismo/";
-        if (path === "/admin") return "/admin/";
-        return `${path}/`;
-      }
 
       function isAdminPath(path) {
         return path === "/admin" ||
@@ -53,142 +48,54 @@
           path === "/admin/configuracion";
       }
 
-      function renderTrustSection(blockLabel) {
-        return `
-          <section>
-            <p>${blockLabel}</p>
-            <h2>${trustSectionData.title}</h2>
-            <div class="items">
-              ${trustSectionData.cards.map(card => `
-                <article class="item">
-                  <h3>${card.title}</h3>
-                  <p>${card.text}</p>
-                </article>
-              `).join("")}
-            </div>
-          </section>
-        `;
-      }
 
-      function renderGallerySection(gallery = {}, blockLabel = "Galería de fotos") {
-        const photos = gallery.photos || [];
 
-        return `
-          <section>
-            <p>${blockLabel}</p>
-            <h2>${gallery.title || "Galería de fotos"}</h2>
-            <div class="items">
-              ${photos.map(photo => `
-                <figure class="item">
-                  <div class="placeholder">Foto</div>
-                  <figcaption>${photo.caption || ""}</figcaption>
-                </figure>
-              `).join("")}
-            </div>
-          </section>
-        `;
-      }
 
-      function renderVideoSection(video = {}, blockLabel = "Video principal") {
-        return `
-          <section>
-            <p>${blockLabel}</p>
-            <h2>${video.title || "Video principal"}</h2>
-            ${video.url ? `<a href="${video.url}" target="_blank" rel="noopener">Ver video</a>` : ""}
-          </section>
-        `;
-      }
 
-      function renderTestimonialsSection(testimonials = {}, blockLabel = "Testimonios") {
-        const items = testimonials.items || [];
 
-        return `
-          <section>
-            <p>${blockLabel}</p>
-            <h2>${testimonials.title || "Testimonios"}</h2>
-            <div class="items">
-              ${items.map(testimonial => `
-                <article class="item">
-                  <p>${testimonial.text || ""}</p>
-                  <p>${testimonial.author || ""}</p>
-                </article>
-              `).join("")}
-            </div>
-          </section>
-        `;
-      }
-
-      function renderItinerarySection(itinerary = {}, blockLabel = "Itinerario") {
-        const items = itinerary.items || [];
-
-        return `
-          <section>
-            <p>${blockLabel}</p>
-            <h2>${itinerary.title || "Itinerario"}</h2>
-            <div class="items">
-              ${items.map(item => `
-                <article class="item">
-                  <h3>${item.title || ""}</h3>
-                  <p>${item.text || ""}</p>
-                </article>
-              `).join("")}
-            </div>
-          </section>
-        `;
-      }
-
-      function renderFaqSection(faq = {}, blockLabel = "Preguntas frecuentes") {
-        const questions = faq.questions || [];
-
-        return `
-          <section>
-            <p>${blockLabel}</p>
-            <h2>${faq.title || "Preguntas frecuentes"}</h2>
-            <div class="items">
-              ${questions.map(item => `
-                <article class="item">
-                  <h3>${item.question || ""}</h3>
-                  <p>${item.answer || ""}</p>
-                </article>
-              `).join("")}
-            </div>
-          </section>
-        `;
-      }
 
       async function renderHome() {
-        const galleryPhotos = [
-          { src: "assets/img/bariloche/cena-de-velas/cover.webp", alt: "Grupo de estudiantes en la cena de gala de su viaje de egresados" },
-          { src: "assets/img/turismo/hero/montana-patagonia.webp", alt: "Vista aérea de montañas y lago en la Patagonia" },
-          { src: "assets/img/bariloche/fiesta-fluo/cover.webp", alt: "Grupo de estudiantes en la fiesta fluo de su viaje de egresados" },
-          { src: "assets/img/turismo/hero/cataratas-iguazu.webp", alt: "Cataratas del Iguazú desde el mirador" }
+        const heroSlides = [
+          { src: "assets/img/home/hero-carousel/bariloche-atardecer-grupo-hero.webp", pos: "center 42%" },
+          { src: "assets/img/home/hero-carousel/bariloche-nieve-cerro-grupo-hero.webp", pos: "center 30%" },
+          { src: "assets/img/home/hero-carousel/bariloche-cartel-brc-grupo-hero.webp", pos: "center 38%" },
+          { src: "assets/img/home/hero-carousel/bariloche-centro-civico-grupo-hero.webp", pos: "center 40%" },
+          { src: "assets/img/home/hero-carousel/carlos-paz-reloj-cucu-grupo-hero.webp", pos: "center 40%" }
+        ];
+        const carouselPhotos = [
+          { name: "bariloche-atardecer-grupo", alt: "Grupo de estudiantes al atardecer frente al lago en Bariloche", cap: "Bariloche · atardecer sobre el lago" },
+          { name: "bariloche-centro-civico-grupo", alt: "Grupo con las camperas de El Ángel Azul en el Centro Cívico de Bariloche", cap: "Bariloche · Centro Cívico" },
+          { name: "bariloche-nieve-cerro-grupo", alt: "Grupo de egresados en la nieve al pie del cerro en Bariloche", cap: "Bariloche · día de nieve" },
+          { name: "bariloche-cartel-brc-grupo", alt: "Grupo posando en el cartel de Bariloche a la orilla del lago", cap: "Bariloche · a la orilla del Nahuel Huapi" },
+          { name: "carlos-paz-reloj-cucu-grupo", alt: "Grupo frente al reloj cucú de Villa Carlos Paz", cap: "Carlos Paz · el reloj cucú" },
+          { name: "bariloche-nieve-panoramica-grupo", alt: "Grupo de estudiantes con vista panorámica de las montañas nevadas", cap: "Bariloche · panorámica de montaña" },
+          { name: "bariloche-lago-montana-grupo", alt: "Grupo de estudiantes frente al lago y la montaña nevada", cap: "Bariloche · lago y cordillera" },
+          { name: "carlos-paz-escape-room-grupo", alt: "Grupo de primaria en una actividad de escape room en Carlos Paz", cap: "Carlos Paz · viaje de primaria" }
         ];
         document.getElementById("app").innerHTML = `
           <div class="layout home-layout-v2">
 
             <!-- HERO -->
-            <section class="hero-clean">
+            <section class="hero-clean hero-cine">
               <div class="hero-clean-carousel" aria-hidden="true">
-                <div class="hero-clean-slide is-active" style="background-image: url('assets/img/home/hero-carousel/bariloche-cartel-lago.webp'); background-position: center 38%"></div>
-                <div class="hero-clean-slide" style="background-image: url('assets/img/home/hero-carousel/bariloche-lago-montana.webp'); background-position: center 42%"></div>
-                <div class="hero-clean-slide" style="background-image: url('assets/img/home/hero-carousel/bariloche-centro-civico.webp'); background-position: center 43%"></div>
-                <div class="hero-clean-slide" style="background-image: url('assets/img/home/hero-carousel/bariloche-nieve-cielo.webp'); background-position: center 46%"></div>
-                <div class="hero-clean-slide" style="background-image: url('assets/img/home/hero-carousel/carlos-paz-escape-room.webp'); background-position: center 45%"></div>
-                <div class="hero-clean-slide" style="background-image: url('assets/img/home/hero-carousel/bariloche-nieve-grupo.webp'); background-position: center 47%"></div>
+                ${heroSlides.map((slide, index) => `
+                  <div class="hero-clean-slide${index === 0 ? " is-active" : ""}" style="background-image: url('${slide.src}'); background-position: ${slide.pos}"></div>
+                `).join("")}
               </div>
               <div class="hero-clean-overlay" aria-hidden="true"></div>
               <div class="hero-clean-content">
-                <h1 class="hero-clean-title">El viaje que tu grupo va a <span>recordar siempre</span>.</h1>
-                <p class="hero-clean-subtitle">Destinos, financiación y acompañamiento real para vivir una experiencia segura, organizada e inolvidable.</p>
+                <p class="hero-clean-kicker">El Ángel Azul · Turismo estudiantil</p>
+                <h1 class="hero-clean-title" data-hero-title>El viaje que tu grupo va a <span class="ht-accent">recordar toda la vida</span></h1>
+                <p class="hero-clean-subtitle">Organizamos cada detalle y viajamos con el grupo. Las familias quedan tranquilas y los chicos vuelven con la historia de su vida.</p>
                 <div class="hero-clean-actions">
-                  <a class="btn-whatsapp" href="${whatsappLink("Hola, quiero consultar por un viaje con El Ángel Azul.")}" target="_blank" rel="noopener">
-                    <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">chat</span>
-                    Consultar por WhatsApp
+                  <a class="btn-whatsapp btn-icon-pair" href="${whatsappLink("Hola, quiero consultar por un viaje con El Ángel Azul.")}" target="_blank" rel="noopener">
+                    <span>Hablar con El Ángel Azul</span>
+                    <span class="btn-icon-circle" aria-hidden="true"><span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">chat</span></span>
                   </a>
                   <a class="btn-ghost-light" href="#/turismo">Ver destinos</a>
                 </div>
                 <div class="hero-clean-benefits">
-                  ${[["payments", "Financiación disponible"], ["groups", "Acompañamiento en destino"], ["support_agent", "Atención personalizada"], ["map", "Destinos nacionales"]].map(([icon, label]) => `
+                  ${[["verified_user", "Acompañamiento en destino"], ["payments", "Financiación disponible"], ["support_agent", "Atención personalizada"], ["diversity_3", "Primaria y secundaria"]].map(([icon, label]) => `
                     <span class="hero-clean-benefit">
                       <span class="material-symbols-outlined">${icon}</span>
                       ${escapeHtml(label)}
@@ -196,59 +103,87 @@
                   `).join("")}
                 </div>
               </div>
+              <div class="hero-clean-scroll" aria-hidden="true">
+                <span class="material-symbols-outlined">expand_more</span>
+              </div>
             </section>
 
-            <!-- TRUST -->
             <!-- QUIÉNES SOMOS -->
-            <section class="quienes-somos">
+            <section class="quienes-somos" data-reveal-section>
               <div class="quienes-somos-inner">
-                <div class="quienes-somos-heading">
-                  <h2>Quiénes somos</h2>
-                  <p>Una empresa de viajes enfocada en turismo y experiencias estudiantiles, con atención cercana desde la consulta hasta la inscripción.</p>
-                </div>
-                <div class="quienes-somos-photo-wrap">
-                  <div class="quienes-somos-photo" style="background-image: url('assets/img/bariloche/cena-de-velas/dsc6979.webp')" role="img" aria-label="Equipo de El Ángel Azul"></div>
+                <div class="quienes-somos-photo-wrap" data-reveal>
+                  <div class="quienes-somos-photo-shell">
+                    <div class="quienes-somos-photo" style="background-image: url('assets/img/home/experiencia/bariloche-lago-companeros.webp')" role="img" aria-label="Grupo de estudiantes de El Ángel Azul frente al lago en Bariloche"></div>
+                  </div>
                   <div class="quienes-somos-badge">
                     <div class="quienes-somos-badge-head">
-                      <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">groups</span>
-                      <p>El equipo de El Ángel Azul</p>
+                      <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">volunteer_activism</span>
+                      <p>Cerca en todo el viaje</p>
                     </div>
-                    <p class="quienes-somos-quote">"Un equipo presente antes, durante y después del viaje."</p>
+                    <p class="quienes-somos-quote">"Acompañamos al grupo antes, durante y después."</p>
                   </div>
                 </div>
-                <div class="quienes-somos-cards">
-                  ${trustSectionData.cards.slice(0, 3).map((card) => {
-                    const icons = { "Experiencia": "military_tech", "Acompañamiento": "support_agent", "Financiación": "payments" };
-                    return `
-                      <div class="quienes-somos-card">
-                        <span class="material-symbols-outlined">${icons[card.title] || "check_circle"}</span>
-                        <strong>${escapeHtml(card.title)}</strong>
-                        <p>${escapeHtml(card.text)}</p>
-                      </div>
-                    `;
-                  }).join("")}
+                <div class="quienes-somos-body">
+                  <div class="quienes-somos-heading" data-reveal>
+                    <p class="section-kicker">Quiénes somos</p>
+                    <h2>Una agencia que acompaña de verdad, en cada etapa</h2>
+                    <p>Somos una empresa de Corrientes especializada en turismo y viajes estudiantiles. Estamos cerca desde la primera consulta hasta que el grupo vuelve a casa, con organización clara y trato humano.</p>
+                  </div>
+                  <div class="quienes-somos-values" data-reveal>
+                    ${trustSectionData.cards.slice(0, 3).map((card) => {
+                      const icons = { "Experiencia": "workspace_premium", "Acompañamiento": "support_agent", "Financiación": "payments" };
+                      return `
+                        <div class="quienes-somos-value">
+                          <span class="quienes-somos-value-icon"><span class="material-symbols-outlined">${icons[card.title] || "check_circle"}</span></span>
+                          <div>
+                            <strong>${escapeHtml(card.title)}</strong>
+                            <p>${escapeHtml(card.text)}</p>
+                          </div>
+                        </div>
+                      `;
+                    }).join("")}
+                  </div>
                 </div>
               </div>
             </section>
 
-            <!-- GALLERY -->
-            <section class="gallery-v2">
-              <div class="gallery-v2-heading">
-                <h2>Sucursales</h2>
-                <p>Tenemos nuestras oficinas en Posadas, Misiones, y en Corrientes Capital, listas para asesorarte en persona.</p>
+            <!-- CARRUSEL DE VIAJES -->
+            <section class="viajes-carousel-section" data-reveal-section>
+              <div class="viajes-carousel-heading" data-reveal>
+                <p class="section-kicker">Momentos reales</p>
+                <h2>Viajes que ya quedaron para siempre</h2>
+                <p>Fotos de nuestros grupos en destino. Así se ve un viaje organizado y acompañado por El Ángel Azul.</p>
               </div>
-              <div class="gallery-v2-grid">
-                ${galleryPhotos.map((photo, index) => `
-                  <div class="gallery-v2-item${index % 2 === 1 ? " is-offset" : ""}">
-                    <img src="${photo.src}" alt="${escapeHtml(photo.alt)}" loading="lazy">
+              <div class="viajes-carousel" data-viajes-carousel data-reveal>
+                <div class="swiper">
+                  <div class="swiper-wrapper">
+                    ${carouselPhotos.map((photo) => `
+                      <div class="swiper-slide">
+                        <figure class="viajes-slide">
+                          <img src="assets/img/home/carrusel-viajes/${photo.name}.webp" srcset="assets/img/home/carrusel-viajes/${photo.name}-800.webp 800w, assets/img/home/carrusel-viajes/${photo.name}.webp 1600w" sizes="(max-width: 720px) 90vw, 60vw" alt="${escapeHtml(photo.alt)}" loading="lazy">
+                          <figcaption>${escapeHtml(photo.cap)}</figcaption>
+                        </figure>
+                      </div>
+                    `).join("")}
                   </div>
-                `).join("")}
+                </div>
+                <button class="viajes-carousel-nav viajes-carousel-prev" type="button" aria-label="Foto anterior"><span class="material-symbols-outlined">arrow_back</span></button>
+                <button class="viajes-carousel-nav viajes-carousel-next" type="button" aria-label="Foto siguiente"><span class="material-symbols-outlined">arrow_forward</span></button>
+                <div class="viajes-carousel-pagination" data-viajes-pagination></div>
+              </div>
+              <div class="viajes-carousel-cta" data-reveal>
+                <a class="btn-whatsapp btn-icon-pair" href="${whatsappLink("Hola, quiero que mi grupo viva un viaje así con El Ángel Azul.")}" target="_blank" rel="noopener">
+                  <span>Quiero un viaje así</span>
+                  <span class="btn-icon-circle" aria-hidden="true"><span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">chat</span></span>
+                </a>
               </div>
             </section>
 
           </div>
         `;
         bindHeroCarousel();
+        bindViajesCarousel();
+        bindHomeAnimations();
       }
 
       // Carrusel automático del hero: rota las fotos cada 3 segundos con
@@ -271,6 +206,255 @@
           current = (current + 1) % slides.length;
           slides[current].classList.add("is-active");
         }, 3000);
+      }
+
+      // Animaciones de Home (GSAP, cargado por CDN en index.html). Todo es
+      // progresivo: si el CDN falla o el usuario tiene reducir-movimiento
+      // activado, el DOM queda tal cual lo dejó el CSS (nada se esconde vía
+      // opacity:0 en CSS, así que no hay riesgo de contenido invisible).
+      // Se limpian los ScrollTriggers/tweens anteriores por si renderHome()
+      // se llama de nuevo (volver a Inicio varias veces en la sesión).
+      let homeScrollTriggers = [];
+      let homeHeroZoomTween = null;
+
+      function killHomeAnimations() {
+        homeScrollTriggers.forEach((trigger) => trigger.kill());
+        homeScrollTriggers = [];
+        if (homeHeroZoomTween) {
+          homeHeroZoomTween.kill();
+          homeHeroZoomTween = null;
+        }
+      }
+
+      // Parte un título en palabras (cada una envuelta en su propio span) para
+      // animarlas de a una - revelado "fade-in-blur" tipo editorial en vez de
+      // opacity plana sobre todo el bloque. Preserva el tramo acentuado
+      // (.ht-accent) del hero. Idempotente - no vuelve a partir si ya se hizo.
+      function splitWords(titleEl) {
+        if (!titleEl || titleEl.dataset.split === "true") return [];
+        const frag = document.createDocumentFragment();
+        const words = [];
+        const makeWord = (word, accent) => {
+          const span = document.createElement("span");
+          span.className = "reveal-word" + (accent ? " is-accent" : "");
+          span.textContent = word;
+          words.push(span);
+          return span;
+        };
+        const pushText = (text, accent) => {
+          text.split(/(\s+)/).forEach((part) => {
+            if (part === "") return;
+            if (/^\s+$/.test(part)) frag.appendChild(document.createTextNode(" "));
+            else frag.appendChild(makeWord(part, accent));
+          });
+        };
+        [...titleEl.childNodes].forEach((node) => {
+          if (node.nodeType === Node.TEXT_NODE) pushText(node.textContent, false);
+          else if (node.nodeType === Node.ELEMENT_NODE) pushText(node.textContent, node.classList.contains("ht-accent"));
+        });
+        titleEl.innerHTML = "";
+        titleEl.appendChild(frag);
+        titleEl.dataset.split = "true";
+        return words;
+      }
+
+      // Revelado "fade-in-blur" palabra por palabra (referencia: text-reveal de
+      // cnippet.dev/21st.dev): cada palabra pasa de desenfocada+transparente a
+      // nítida+opaca, con un stagger corto. Devuelve el tween para poder
+      // encadenarlo en una timeline o dispararlo por ScrollTrigger.
+      function fadeInBlurWords(words, vars = {}) {
+        return gsap.from(words, {
+          autoAlpha: 0,
+          filter: "blur(10px)",
+          y: 10,
+          duration: 0.7,
+          stagger: 0.05,
+          ease: "power2.out",
+          ...vars
+        });
+      }
+
+      function bindHomeAnimations() {
+        if (typeof gsap === "undefined") return;
+        killHomeAnimations();
+        // "Reducir movimiento" ya NO apaga el reveal de texto por completo -
+        // antes lo hacía (return acá mismo) y eso deja el título/las secciones
+        // sin ninguna animación para cualquiera que tenga esa preferencia del
+        // sistema activada (muy común sin que el usuario lo haya elegido a
+        // propósito). Ahora corre una versión mínima: fade simple, sin blur,
+        // sin desplazamiento, mucho más corta - sigue siendo respetuosa con
+        // la preferencia de accesibilidad, pero el texto SÍ hace una
+        // transición visible en vez de aparecer estático de golpe. Lo que sí
+        // se sigue salteando del todo bajo reducir-movimiento: el zoom
+        // continuo del carrusel, el parallax de scroll y Lenis (scroll suave)
+        // - esos son movimiento continuo/vestibular, no revelado de texto.
+        const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        if (typeof ScrollTrigger !== "undefined") gsap.registerPlugin(ScrollTrigger);
+
+        const heroCarousel = document.querySelector(".hero-clean-carousel");
+        const heroKicker = document.querySelector(".hero-clean-kicker");
+        const heroTitle = document.querySelector("[data-hero-title]");
+        const heroSubtitle = document.querySelector(".hero-clean-subtitle");
+        const heroActions = document.querySelector(".hero-clean-actions");
+        const heroBenefits = document.querySelectorAll(".hero-clean-benefit");
+
+        // Entrada del hero: kicker aparece, las palabras del título entran con
+        // fade-in-blur (de desenfocadas+transparentes a nítidas, en cascada),
+        // y detrás entran subtítulo, CTAs y beneficios. Bajo reducir-movimiento
+        // se corre la misma secuencia pero sin blur/desplazamiento y bien corta.
+        if (heroTitle) {
+          const words = splitWords(heroTitle);
+          const heroIntro = gsap.timeline({ defaults: { ease: "power3.out" } });
+          if (reduceMotion) {
+            heroIntro
+              .from(heroKicker, { autoAlpha: 0, duration: 0.25 })
+              .from(words, { autoAlpha: 0, duration: 0.35, stagger: 0.015 }, "-=0.1")
+              .from(heroSubtitle, { autoAlpha: 0, duration: 0.25 }, "-=0.2")
+              .from(heroActions ? heroActions.children : [], { autoAlpha: 0, duration: 0.25, stagger: 0.04 }, "-=0.15")
+              .from(heroBenefits, { autoAlpha: 0, duration: 0.25, stagger: 0.03 }, "-=0.15");
+          } else {
+            heroIntro
+              .from(heroKicker, { autoAlpha: 0, y: 16, duration: 0.5 })
+              .add(fadeInBlurWords(words, { duration: 0.9, stagger: 0.07 }), "-=0.15")
+              .from(heroSubtitle, { autoAlpha: 0, y: 18, duration: 0.6 }, "-=0.6")
+              .from(heroActions ? heroActions.children : [], { autoAlpha: 0, y: 16, duration: 0.5, stagger: 0.08 }, "-=0.4")
+              .from(heroBenefits, { autoAlpha: 0, y: 12, duration: 0.45, stagger: 0.06 }, "-=0.35");
+          }
+          // Anti "título en blanco": el revelado esconde las palabras (blur +
+          // opacity 0) y las muestra al reproducirse. Si el ticker de GSAP está
+          // pausado (pestaña en segundo plano, renderers/headless que capturan
+          // sin rAF), el timeline no avanza y el título quedaría oculto.
+          // setTimeout SÍ dispara en ese caso: si a los 1.4s no arrancó,
+          // forzamos el estado final (progress(1) renderiza sincrónicamente).
+          setTimeout(() => { if (heroIntro.progress() < 1) heroIntro.progress(1); }, 1400);
+        }
+
+        // Zoom cinematográfico lento y continuo sobre el carrusel de fotos:
+        // movimiento continuo/de fondo, no revelado de texto - se saltea del
+        // todo bajo reducir-movimiento (es justo el tipo de motion que esa
+        // preferencia pide evitar).
+        if (heroCarousel && !reduceMotion) {
+          homeHeroZoomTween = gsap.to(heroCarousel, {
+            scale: 1.08,
+            duration: 16,
+            ease: "none",
+            repeat: -1,
+            yoyo: true,
+            transformOrigin: "center center"
+          });
+        }
+
+        if (typeof ScrollTrigger === "undefined") return;
+
+        // Parallax sutil (scroll-linked, continuo): mismo criterio que el
+        // zoom, se saltea con reducir-movimiento.
+        if (heroCarousel && !reduceMotion) {
+          const parallax = gsap.to(heroCarousel, {
+            yPercent: 12,
+            ease: "none",
+            scrollTrigger: { trigger: ".hero-clean", start: "top top", end: "bottom top", scrub: true }
+          });
+          if (parallax.scrollTrigger) homeScrollTriggers.push(parallax.scrollTrigger);
+        }
+
+        // Anti "contenido en blanco": mismo resguardo que el hero. Si al
+        // entrar en viewport el ticker de GSAP está pausado (pestaña oculta,
+        // renderers/headless sin rAF), la animación queda parada en su estado
+        // inicial (oculto). Si a los 1.2s de haber entrado no avanzó, se
+        // fuerza el estado final - no depende del rAF.
+        const armAntiBlankFallback = (animation) => {
+          setTimeout(() => { if (animation.progress() < 1) animation.progress(1); }, 1200);
+        };
+
+        // Reveal sutil al hacer scroll: cada bloque marcado con [data-reveal]
+        // hace un fade-up cuando entra en viewport (bajo reducir-movimiento,
+        // la misma secuencia pero corta y sin desplazamiento/blur - nunca se
+        // saltea del todo, es revelado de texto/contenido, no motion continuo).
+        // El default (sin JS) los deja visibles, así que nunca queda
+        // contenido escondido. Si el bloque tiene un título (h1/h2), ese
+        // título se revela palabra por palabra en fade-in-blur y el resto del
+        // bloque (kicker, texto) hace el fade-up de siempre alrededor.
+        gsap.utils.toArray("[data-reveal]").forEach((el) => {
+          const heading = el.querySelector(":scope > h1, :scope > h2");
+          const blockVars = reduceMotion
+            ? { autoAlpha: 0, duration: 0.3, stagger: 0.03 }
+            : { autoAlpha: 0, y: 20, duration: 0.55, stagger: 0.06 };
+          if (!heading) {
+            const tween = gsap.from(el, {
+              autoAlpha: 0,
+              y: reduceMotion ? 0 : 26,
+              duration: reduceMotion ? 0.3 : 0.65,
+              ease: "power2.out",
+              scrollTrigger: { trigger: el, start: "top 86%", toggleActions: "play none none reverse", onEnter: () => armAntiBlankFallback(tween) }
+            });
+            if (tween.scrollTrigger) homeScrollTriggers.push(tween.scrollTrigger);
+            return;
+          }
+          const words = splitWords(heading);
+          const before = [...el.children].filter((child) => child !== heading && child.compareDocumentPosition(heading) & Node.DOCUMENT_POSITION_FOLLOWING);
+          const after = [...el.children].filter((child) => child !== heading && !before.includes(child));
+          const tl = gsap.timeline({
+            defaults: { ease: "power2.out" },
+            scrollTrigger: { trigger: el, start: "top 86%", toggleActions: "play none none reverse", onEnter: () => armAntiBlankFallback(tl) }
+          });
+          if (before.length) tl.from(before, blockVars);
+          tl.add(fadeInBlurWords(words, reduceMotion
+            ? { duration: 0.35, stagger: 0.015, filter: "blur(0px)", y: 0 }
+            : { duration: 0.7, stagger: 0.045 }), before.length ? "-=0.3" : 0);
+          if (after.length) tl.from(after, blockVars, "-=0.25");
+          if (tl.scrollTrigger) homeScrollTriggers.push(tl.scrollTrigger);
+        });
+      }
+
+      // Carrusel premium de viajes (Swiper, cargado por CDN). Si Swiper no está
+      // disponible (CDN caído / bloqueado), el .swiper queda como una fila con
+      // scroll-snap horizontal via CSS -> las fotos siguen siendo navegables,
+      // no se rompe nada. Se destruye la instancia anterior antes de crear una
+      // nueva por si se vuelve a Inicio en la misma sesión.
+      let viajesSwiper = null;
+      function bindViajesCarousel() {
+        if (viajesSwiper && typeof viajesSwiper.destroy === "function") {
+          viajesSwiper.destroy(true, true);
+          viajesSwiper = null;
+        }
+        const root = document.querySelector("[data-viajes-carousel]");
+        if (!root || typeof Swiper === "undefined") return;
+        const swiperEl = root.querySelector(".swiper");
+        const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        viajesSwiper = new Swiper(swiperEl, {
+          slidesPerView: 1.15,
+          spaceBetween: 16,
+          centeredSlides: true,
+          loop: true,
+          grabCursor: true,
+          speed: 600,
+          // observer/observeParents + los update() de abajo evitan que Swiper
+          // quede con un ancho mal medido si se inicializa antes de que el
+          // layout o las imágenes (lazy) terminen de resolver su tamaño.
+          observer: true,
+          observeParents: true,
+          autoplay: reduceMotion ? false : { delay: 4200, disableOnInteraction: false, pauseOnMouseEnter: true },
+          keyboard: { enabled: true },
+          a11y: { prevSlideMessage: "Foto anterior", nextSlideMessage: "Foto siguiente" },
+          navigation: {
+            prevEl: root.querySelector(".viajes-carousel-prev"),
+            nextEl: root.querySelector(".viajes-carousel-next")
+          },
+          pagination: {
+            el: root.querySelector("[data-viajes-pagination]"),
+            clickable: true
+          },
+          breakpoints: {
+            720: { slidesPerView: 1.6, spaceBetween: 22 },
+            1040: { slidesPerView: 2.2, spaceBetween: 26 }
+          }
+        });
+        const refresh = () => { if (viajesSwiper && typeof viajesSwiper.update === "function") viajesSwiper.update(); };
+        requestAnimationFrame(refresh);
+        window.addEventListener("load", refresh, { once: true });
+        swiperEl.querySelectorAll("img").forEach((img) => {
+          if (!img.complete) img.addEventListener("load", refresh, { once: true });
+        });
       }
 
       const turismoIntentionFilters = [
@@ -543,6 +727,96 @@
           ? packages.map(renderTurismoPackageCard).join("")
           : renderTurismoEmptyState();
         bindTurismoCardCarousels(grid);
+        bindTurismoCardReveal();
+      }
+
+      // Animaciones de Turismo: deliberadamente más livianas que las del Home
+      // (fade-up simple, sin blur ni split de palabras) - Home es la primera
+      // impresión cinematográfica, Turismo es la sección funcional donde el
+      // cliente compara viajes. Dos listas separadas de ScrollTriggers: una
+      // para encabezados/hero (se limpia solo al re-renderizar toda la
+      // página) y otra para las cards del listado (se limpia y rearma cada
+      // vez que cambian los filtros, porque el grid se reemplaza entero).
+      let turismoScrollTriggers = [];
+      let turismoCardTriggers = [];
+
+      function killTurismoAnimations() {
+        turismoScrollTriggers.forEach((trigger) => trigger.kill());
+        turismoScrollTriggers = [];
+        turismoCardTriggers.forEach((trigger) => trigger.kill());
+        turismoCardTriggers = [];
+      }
+
+      // Mismo resguardo que en Home: si a los 1.2/1.3s la animación no avanzó
+      // (ticker de GSAP pausado - pestaña oculta, renderer headless sin rAF),
+      // se fuerza el estado final para que nunca quede contenido invisible.
+      function turismoAntiBlankFallback(animation) {
+        setTimeout(() => { if (animation.progress() < 1) animation.progress(1); }, 1200);
+      }
+
+      function bindTurismoCardReveal() {
+        turismoCardTriggers.forEach((trigger) => trigger.kill());
+        turismoCardTriggers = [];
+        if (typeof gsap === "undefined" || typeof ScrollTrigger === "undefined") return;
+        const cards = [...document.querySelectorAll("[data-turismo-package-grid] .turismo-package-card")];
+        if (!cards.length) return;
+        const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        gsap.set(cards, { autoAlpha: 0, y: reduceMotion ? 0 : 22 });
+        const batchTriggers = ScrollTrigger.batch(cards, {
+          start: "top 92%",
+          onEnter: (elements) => gsap.to(elements, {
+            autoAlpha: 1,
+            y: 0,
+            duration: reduceMotion ? 0.25 : 0.5,
+            stagger: reduceMotion ? 0.02 : 0.08,
+            ease: "power2.out",
+            overwrite: true
+          })
+        });
+        turismoCardTriggers.push(...batchTriggers);
+        setTimeout(() => {
+          cards.forEach((card) => { if (getComputedStyle(card).opacity === "0") gsap.set(card, { autoAlpha: 1, y: 0 }); });
+        }, 1300);
+      }
+
+      function bindTurismoAnimations() {
+        if (typeof gsap === "undefined") return;
+        killTurismoAnimations();
+        const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        if (typeof ScrollTrigger !== "undefined") gsap.registerPlugin(ScrollTrigger);
+
+        // Hero de Turismo: entrada simple al cargar (fade+leve subida), sin
+        // split de palabras ni blur - ese efecto queda reservado para el
+        // Home, que es la primera impresión.
+        const heroContent = document.querySelector(".turismo-hero-content");
+        if (heroContent) {
+          const heroIntro = gsap.timeline({ defaults: { ease: "power2.out" } })
+            .from(heroContent.children, {
+              autoAlpha: 0,
+              y: reduceMotion ? 0 : 16,
+              duration: reduceMotion ? 0.3 : 0.6,
+              stagger: reduceMotion ? 0.03 : 0.08
+            });
+          setTimeout(() => { if (heroIntro.progress() < 1) heroIntro.progress(1); }, 1200);
+        }
+
+        if (typeof ScrollTrigger === "undefined") return;
+
+        // Encabezados de sección (Buscá por destino, Opciones disponibles, Te
+        // ayudamos a elegir): fade-up simple al entrar en viewport.
+        gsap.utils.toArray("[data-reveal-light]").forEach((el) => {
+          if (el === heroContent) return;
+          const tween = gsap.from(el, {
+            autoAlpha: 0,
+            y: reduceMotion ? 0 : 18,
+            duration: reduceMotion ? 0.3 : 0.5,
+            ease: "power2.out",
+            scrollTrigger: { trigger: el, start: "top 88%", toggleActions: "play none none reverse", onEnter: () => turismoAntiBlankFallback(tween) }
+          });
+          if (tween.scrollTrigger) turismoScrollTriggers.push(tween.scrollTrigger);
+        });
+
+        bindTurismoCardReveal();
       }
 
       function bindTurismoIntentions() {
@@ -583,27 +857,29 @@
                 <span></span>
                 <span></span>
               </div>
-              <div class="turismo-hero-content">
+              <div class="turismo-hero-content" data-reveal-light>
                 <p class="turismo-kicker">Turismo nacional e internacional</p>
-                <h1>Elegí tu próximo viaje con alguien que te acompañe</h1>
-                <p>Opciones nacionales e internacionales para viajar en familia, pareja o grupo, con una consulta clara antes de reservar.</p>
+                <h1>Tu próximo viaje, planificado y acompañado</h1>
+                <p>Escapadas en familia, en pareja o en grupo, con asesoramiento claro antes de reservar y alguien que responde en cada paso.</p>
                 <div class="turismo-proof-list" aria-label="Beneficios principales">
-                  <span>Opciones nacionales e internacionales</span>
-                  <span>Consulta directa por WhatsApp</span>
-                  <span>Fechas y pagos a confirmar</span>
+                  <span>Destinos nacionales e internacionales</span>
+                  <span>Asesoramiento directo</span>
+                  <span>Pagos y fechas a confirmar</span>
                 </div>
                 <div class="turismo-hero-actions">
                   <a href="#turismo-catalogo">Ver viajes</a>
-                  <a href="${whatsappLink("Hola, quiero que me asesoren para elegir un viaje turístico con El Ángel Azul.")}" target="_blank" rel="noopener">Pedir asesoramiento</a>
+                  <a class="btn-icon-pair" href="${whatsappLink("Hola, quiero que me asesoren para elegir un viaje turístico con El Ángel Azul.")}" target="_blank" rel="noopener">
+                    <span>Pedir asesoramiento</span>
+                    <span class="btn-icon-circle" aria-hidden="true"><span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">chat</span></span>
+                  </a>
                 </div>
               </div>
             </section>
 
             <section class="turismo-intention-section">
-              <div class="catalog-heading">
-                <p class="section-kicker">Encontrá una opción</p>
+              <div class="catalog-heading" data-reveal-light>
                 <h2>Buscá por destino o tipo de experiencia</h2>
-                <p>Usá los filtros para ordenar las opciones disponibles. La consulta final siempre se confirma con asesoramiento personalizado.</p>
+                <p>Filtrá las opciones disponibles. La reserva final siempre se confirma con asesoramiento personalizado.</p>
               </div>
               <label class="turismo-search" for="turismo-search">
                 <span>Buscar destino</span>
@@ -617,8 +893,7 @@
             </section>
 
             <section class="catalog-section" id="turismo-catalogo">
-              <div class="catalog-heading">
-                <p class="section-kicker">Viajes destacados</p>
+              <div class="catalog-heading" data-reveal-light>
                 <h2>Opciones disponibles</h2>
                 <p>Compará destino, duración, precio de referencia e incluidos. Fechas, cupos y condiciones se confirman por WhatsApp.</p>
                 <strong class="turismo-results-count" data-turismo-results-count>${packages.length} opciones encontradas</strong>
@@ -629,7 +904,7 @@
             </section>
 
             <section class="turismo-trust">
-              <div class="catalog-heading">
+              <div class="catalog-heading" data-reveal-light>
                 <p class="section-kicker">Antes de viajar</p>
                 <h2>Te ayudamos a elegir sin vueltas</h2>
                 <p>Si no encontrás el viaje exacto, te orientamos con fechas, cantidad de personas y presupuesto aproximado.</p>
@@ -663,6 +938,7 @@
         });
         bindTurismoIntentions();
         bindTurismoCardCarousels();
+        bindTurismoAnimations();
       }
 
       function renderPackageDetail(packageItem) {
@@ -1105,9 +1381,6 @@
         }));
       }
 
-      function adminTurismoPhotosToLines(value) {
-        return normalizeAdminTurismoPhotos(value).map((photo) => photo.url).join("\n");
-      }
 
       function adminTurismoPhotos(trip) {
         return normalizeAdminTurismoPhotos(trip?.fotos || []);
@@ -1187,11 +1460,6 @@
         ];
       }
 
-      function validateAdminTurismoTrip(trip) {
-        return adminTurismoPublicationChecklist(trip)
-          .filter((item) => !item.ok)
-          .map((item) => item.label);
-      }
 
       function adminTurismoReadiness(trip) {
         const normalizedTrip = normalizeAdminTurismoTrip(trip);
@@ -1293,24 +1561,6 @@
         `;
       }
 
-      function renderAdminTurismoCompactStatus(trip) {
-        const readiness = adminTurismoReadiness(trip);
-        const visibleMissing = readiness.missing.slice(0, 5);
-        const remainingMissing = Math.max(readiness.missing.length - visibleMissing.length, 0);
-        return `
-          <section class="admin-turismo-side-card admin-turismo-side-card--status">
-            <p>Estado del viaje</p>
-            <span class="admin-turismo-publication-badge is-${readiness.key}">${escapeHtml(readiness.label)}</span>
-            <strong>${readiness.missing.length ? `${readiness.missing.length} faltante${readiness.missing.length === 1 ? "" : "s"}` : "Checklist completo"}</strong>
-            <div class="admin-turismo-compact-missing">
-              ${visibleMissing.length
-                ? visibleMissing.map((item) => `<span>${escapeHtml(item.label)}</span>`).join("")
-                : `<span class="is-ok">Listo para publicar</span>`}
-              ${remainingMissing ? `<span>+ ${remainingMissing} más</span>` : ""}
-            </div>
-          </section>
-        `;
-      }
 
       function renderAdminTurismoPrimaryActions(trip) {
         const readiness = adminTurismoReadiness(trip);
@@ -1411,35 +1661,6 @@
         `;
       }
 
-      function renderAdminTurismoCompactPreview(trip = {}) {
-        const normalizedTrip = normalizeAdminTurismoTrip(trip);
-        const previewPackage = adminTurismoPreviewPackage(normalizedTrip);
-        const whatsappText = `Hola, quiero consultar por ${normalizedTrip.titulo || normalizedTrip.destino || "este viaje"} (${normalizedTrip.duracion || "duración a confirmar"}).`;
-        return `
-          <section class="admin-turismo-side-card admin-turismo-side-card--preview" data-admin-preview-section>
-            <div class="admin-turismo-side-card-head">
-              <div>
-                <p>Preview corta</p>
-                <h3>Card pública</h3>
-              </div>
-              <span>#/turismo/${escapeHtml(normalizedTrip.slug || adminTurismoSlug(normalizedTrip.titulo || normalizedTrip.destino))}</span>
-            </div>
-            <div class="admin-turismo-real-card-preview">
-              ${renderTurismoPackageCard(previewPackage)}
-            </div>
-            <button type="button" class="admin-preview-detail-button" data-admin-open-detail-preview>Ver detalle completo</button>
-          </section>
-          <section class="admin-turismo-side-card admin-turismo-side-card--whatsapp">
-            <div class="admin-turismo-side-card-head">
-              <div>
-                <p>Mensaje WhatsApp generado</p>
-                <h3>Texto contextual</h3>
-              </div>
-            </div>
-            <div class="admin-turismo-whatsapp-copy">${escapeHtml(whatsappText)}</div>
-          </section>
-        `;
-      }
 
       function renderAdminTurismoDetailModal(trip = {}) {
         const normalizedTrip = normalizeAdminTurismoTrip(trip);
@@ -1505,15 +1726,6 @@
         `;
       }
 
-      function adminTurismoStatusLabel(status) {
-        const labels = {
-          activo: "Activo",
-          borrador: "Borrador",
-          revision: "En revisión",
-          inactivo: "Inactivo"
-        };
-        return labels[status] || "Borrador";
-      }
 
       function renderAdminTurismoTripRows() {
         if (!adminTurismoTrips.length) {
@@ -1716,146 +1928,7 @@
         `;
       }
 
-      function renderAdminTurismoActionPanel(trip) {
-        const readiness = adminTurismoReadiness(trip);
-        const activePreview = isTurismoPublicPreviewMode();
-        const esBorrador = !trip.estado || trip.estado === "borrador";
-        const esActivo = trip.estado === "activo";
 
-        return `
-          <section class="admin-turismo-action-panel">
-
-            <!-- Guardar -->
-            <div class="admin-turismo-action-group">
-              <div>
-                <p>Edición</p>
-                <h3>Guardar trabajo</h3>
-                <span>Guarda el viaje aunque esté incompleto.</span>
-              </div>
-              <div class="admin-turismo-action-buttons">
-                <button type="submit" class="admin-action-primary">Guardar viaje</button>
-                <button type="button" data-admin-new>Crear nuevo viaje</button>
-                <button type="button" data-admin-duplicate ${trip.id ? "" : "disabled"}>Duplicar</button>
-              </div>
-            </div>
-
-            <!-- Estado: visible y destacado -->
-            <div class="admin-turismo-action-group admin-turismo-action-group--estado">
-              <div>
-                <p>Estado del viaje</p>
-                <h3>${esActivo ? "✅ Activo — listo para publicar" : esBorrador ? "⚠️ Borrador — no visible en la web" : "Estado: " + (trip.estado || "borrador")}</h3>
-                <span>${esActivo
-                  ? "Este viaje está activo. Podés publicarlo en la web."
-                  : "Cambiá el estado a <strong>Activo</strong> para habilitar la publicación."
-                }</span>
-              </div>
-              <div class="admin-turismo-action-buttons">
-                <label class="admin-turismo-estado-selector">
-                  <span>Estado</span>
-                  <select data-admin-turismo-estado-quick name="estado_quick">
-                    ${[["borrador","Borrador"],["revision","En revisión"],["activo","Activo"],["inactivo","Inactivo"]]
-                      .map(([val, label]) => `<option value="${val}" ${(trip.estado || "borrador") === val ? "selected" : ""}>${label}</option>`)
-                      .join("")}
-                  </select>
-                </label>
-                <button type="button" class="admin-action-primary" data-admin-turismo-apply-estado>
-                  Aplicar estado
-                </button>
-              </div>
-            </div>
-
-            <!-- Checklist resumido -->
-            ${!readiness.canPublish ? `
-              <div class="admin-turismo-action-group admin-turismo-missing-alert">
-                <div>
-                  <p>Checklist</p>
-                  <h3>${readiness.missing.length} ${readiness.missing.length === 1 ? "campo faltante" : "campos faltantes"} para publicar</h3>
-                  <ul class="admin-turismo-missing-list">
-                    ${readiness.missing.map(item => `<li>${escapeHtml(item.label)}</li>`).join("")}
-                  </ul>
-                </div>
-                <div class="admin-turismo-action-buttons">
-                  <button type="button" data-admin-scroll-checklist>Ver checklist completo</button>
-                </div>
-              </div>
-            ` : ""}
-
-            <!-- Publicación -->
-            <div class="admin-turismo-action-group admin-turismo-action-group--publish">
-              <div>
-                <p>Publicación</p>
-                <h3>${readiness.canPublish ? "Listo para publicar" : "Completá los campos faltantes"}</h3>
-                <span>${readiness.canPublish
-                  ? "El viaje está completo y activo. Podés publicarlo en la web."
-                  : "Completá todos los campos requeridos y cambiá el estado a Activo."
-                }</span>
-              </div>
-              <div class="admin-turismo-action-buttons">
-                <button type="button" data-admin-scroll-preview>Vista previa</button>
-                <button type="button" class="admin-action-publish" data-admin-publish ${readiness.canPublish ? "" : "disabled"}>Publicar en la web</button>
-                <button type="button" data-admin-export>Exportar JSON</button>
-                <button type="button" class="admin-action-publish" data-admin-preview-public ${readiness.canPublish ? "" : "disabled"}>${activePreview ? "Actualizar prueba" : "Ver en prueba"}</button>
-                <button type="button" data-admin-deactivate ${trip.id && trip.estado !== "inactivo" ? "" : "disabled"}>Desactivar viaje</button>
-              </div>
-            </div>
-
-          </section>
-        `;
-      }
-
-      function renderAdminTurismoPreview(trip = {}) {
-        const normalizedTrip = normalizeAdminTurismoTrip(trip);
-        const previewPackage = {
-          slug: normalizedTrip.slug,
-          destino: normalizedTrip.destino || "Destino",
-          duracion: normalizedTrip.duracion || "Duración",
-          temporada: normalizedTrip.temporada || "Temporada",
-          precioDesde: normalizedTrip.precioDesde || "Consultar",
-          categoria: normalizedTrip.categorias[0] || "turismo",
-          tipo: normalizedTrip.categorias.join(" · ") || "Turismo",
-          resumen: normalizedTrip.descripcionCorta || "Descripción corta del viaje.",
-          incluye: normalizedTrip.incluye.slice(0, 3),
-          image: adminTurismoCoverPhoto(normalizedTrip)?.url || "",
-          gallery: normalizedTrip.fotos.map((photo) => photo.url),
-          intenciones: normalizedTrip.categorias
-        };
-        const photos = adminTurismoPhotos(trip);
-        const cover = adminTurismoCoverPhoto(trip);
-        const whatsappText = `Hola, quiero consultar por ${normalizedTrip.titulo || normalizedTrip.destino || "este viaje"} (${normalizedTrip.duracion || "duración a confirmar"}).`;
-        return `
-          <div class="admin-turismo-preview-grid">
-            <div class="admin-turismo-real-card-preview">
-              ${renderTurismoPackageCard(previewPackage)}
-            </div>
-
-            <article class="admin-turismo-detail-preview">
-              <div class="admin-turismo-detail-hero">
-                ${cover ? `<img src="${escapeHtml(cover.url)}" alt="${escapeHtml(cover.alt || normalizedTrip.destino)}">` : ""}
-                <div>
-                  <p>${escapeHtml(normalizedTrip.categorias.join(" · ") || "Turismo")} · ${escapeHtml(normalizedTrip.temporada || "Temporada")}</p>
-                  <h3>${escapeHtml(normalizedTrip.titulo || normalizedTrip.destino || "Título comercial")}</h3>
-                  <span>${escapeHtml(normalizedTrip.precioDesde || "Consultar")} · ${escapeHtml(normalizedTrip.duracion || "Duración")}</span>
-                </div>
-              </div>
-              <div class="admin-turismo-gallery-strip">
-                ${photos.map((photo) => `<img src="${escapeHtml(photo.url)}" alt="${escapeHtml(photo.alt || normalizedTrip.destino)}">`).join("")}
-              </div>
-              <p>${escapeHtml(normalizedTrip.descripcionLarga || "Descripción larga para la página detalle básica.")}</p>
-              <div class="admin-turismo-detail-columns">
-                <div>
-                  <h4>Incluye</h4>
-                  <ul>${(normalizedTrip.incluye.length ? normalizedTrip.incluye : ["Item demo"]).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
-                </div>
-                <div>
-                  <h4>No incluye</h4>
-                  <ul>${(normalizedTrip.noIncluye.length ? normalizedTrip.noIncluye : ["Item demo"]).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
-                </div>
-              </div>
-              <div class="admin-turismo-whatsapp">WhatsApp contextual: ${escapeHtml(whatsappText)}</div>
-            </article>
-          </div>
-        `;
-      }
 
       const adminModules = [
         {
@@ -1897,9 +1970,6 @@
         }
       ];
 
-      function adminModuleLabel(moduleId) {
-        return adminModules.find((module) => module.id === moduleId)?.label || "Panel interno";
-      }
 
       function adminVisibleModules() {
         const role = String(adminSession?.role || "admin").toLowerCase();
@@ -2082,15 +2152,6 @@
         });
       }
 
-      function renderAdminComingSoon(moduleId) {
-        return `
-          <section class="admin-turismo-panel admin-coming-soon">
-            <p>En preparación</p>
-            <h2>${escapeHtml(adminModuleLabel(moduleId))}</h2>
-            <span>Este módulo queda reservado para la próxima etapa. Todavía no tiene datos, login ni conexión real.</span>
-          </section>
-        `;
-      }
 
       function renderAdminHome() {
         const fichas = loadFichasAdhesionDemo();
@@ -2295,9 +2356,6 @@
         return Math.max(0, 1 - (distance / maxLength));
       }
 
-      function groupCursoDivisionLabel(group = {}) {
-        return `${group.curso || ""} ${group.division || ""}`.trim();
-      }
 
       function isInscripcionContractActive(contract = {}) {
         const estado = normalizeInscripcionMatch(contract.estado || "");
@@ -2669,84 +2727,7 @@
       const ADMIN_PASAJEROS_STORAGE_KEY = "angelAzulAdminPasajerosDemoV4";
       const CONTRATOS_STORAGE_KEY = "angelAzulContratosV2";
       const FICHA_ADHESION_STORAGE_KEY = "angelAzulFichaAdhesionDemoV1";
-      const adminPasajerosSeedPassengers = [
-        { nombre: "Juan Pérez", dni: "43555111", nacimiento: "2008-04-12", telefono: "3794111111", responsable: "María Gómez", responsableDni: "29555111", responsableTelefono: "3794222222", vinculo: "Madre", responsableCuilCuit: "20-29555111-3", fichaMedica: "Cargada", pago: "Al día", documentacion: "Completa", estado: "Activo", observaciones: "" },
-        { nombre: "Sofía Ramírez", dni: "44222111", nacimiento: "2008-08-03", telefono: "3794333333", responsable: "Laura Díaz", responsableDni: "30222111", responsableTelefono: "3794444444", vinculo: "Madre", responsableCuilCuit: "Pendiente", fichaMedica: "Pendiente", pago: "Pendiente", documentacion: "Pendiente", estado: "Activo", observaciones: "" },
-        { nombre: "Mateo Torres", dni: "43999888", nacimiento: "2008-01-19", telefono: "3794555555", responsable: "Carlos Torres", responsableDni: "28999888", responsableTelefono: "3794666666", vinculo: "Padre", responsableCuilCuit: "Pendiente", fichaMedica: "Observada", pago: "Vencido", documentacion: "Completa", estado: "Activo", observaciones: "" },
-        { nombre: "Valentina Núñez", dni: "44777123", nacimiento: "2008-11-22", telefono: "3794777777", responsable: "Ana Núñez", responsableDni: "31777123", responsableTelefono: "3794888888", vinculo: "Madre", responsableCuilCuit: "20-29555111-3", fichaMedica: "Cargada", pago: "Al día", documentacion: "Rechazada", estado: "Activo", observaciones: "" },
-        { nombre: "Lucas Fernández", dni: "43123456", nacimiento: "2008-05-29", telefono: "3794999999", responsable: "Paula Ríos", responsableDni: "29123456", responsableTelefono: "3794000000", vinculo: "Tutora", responsableCuilCuit: "Pendiente", fichaMedica: "Pendiente", pago: "Pendiente", documentacion: "Pendiente", estado: "Baja", observaciones: "" }
-      ];
 
-      const adminPasajerosDemoSeed = [
-        {
-          id: "san-martin-5a-bariloche-2026",
-          nombre: "San Martín - 5to A - Bariloche 2026",
-          nivel: "Secundaria",
-          viaje: "Bariloche 2026",
-          colegio: "Colegio San Martín",
-          curso: "5to",
-          division: "A",
-          pasajerosEsperados: 28,
-          pasajeros: [
-            { nombre: "Juan Pérez", dni: "43555111", nacimiento: "2008-04-12", telefono: "3794111111", responsable: "María Gómez", responsableDni: "29555111", responsableTelefono: "3794222222", vinculo: "Madre", responsableCuilCuit: "20-29555111-3", fichaMedica: "Cargada", pago: "Al día", documentacion: "Completa", estado: "Activo", observaciones: "" },
-            { nombre: "Sofía Ramírez", dni: "44222111", nacimiento: "2008-08-03", telefono: "3794333333", responsable: "Laura Díaz", responsableDni: "30222111", responsableTelefono: "3794444444", vinculo: "Madre", responsableCuilCuit: "Pendiente", fichaMedica: "Pendiente", pago: "Pendiente", documentacion: "Pendiente", estado: "Activo", observaciones: "" },
-            { nombre: "Mateo Torres", dni: "43999888", nacimiento: "2008-01-19", telefono: "3794555555", responsable: "Carlos Torres", responsableDni: "28999888", responsableTelefono: "3794666666", vinculo: "Padre", responsableCuilCuit: "Pendiente", fichaMedica: "Observada", pago: "Vencido", documentacion: "Completa", estado: "Activo", observaciones: "" },
-            { nombre: "Valentina Núñez", dni: "44777123", nacimiento: "2008-11-22", telefono: "3794777777", responsable: "Ana Núñez", responsableDni: "31777123", responsableTelefono: "3794888888", vinculo: "Madre", responsableCuilCuit: "20-29555111-3", fichaMedica: "Cargada", pago: "Al día", documentacion: "Rechazada", estado: "Activo", observaciones: "" },
-            { nombre: "Lucas Fernández", dni: "43123456", nacimiento: "2008-05-29", telefono: "3794999999", responsable: "Paula Ríos", responsableDni: "29123456", responsableTelefono: "3794000000", vinculo: "Tutora", responsableCuilCuit: "Pendiente", fichaMedica: "Pendiente", pago: "Pendiente", documentacion: "Pendiente", estado: "Baja", observaciones: "" }
-          ]
-        },
-        {
-          id: "san-martin-5b-bariloche-2026",
-          nombre: "San Martín - 5to B - Bariloche 2026",
-          nivel: "Secundaria",
-          viaje: "Bariloche 2026",
-          colegio: "Colegio San Martín",
-          curso: "5to",
-          division: "B",
-          pasajerosEsperados: 24,
-          pasajeros: [
-            { nombre: "Camila Acosta", dni: "44111222", nacimiento: "2008-02-14", telefono: "3794111222", responsable: "Mónica Acosta", responsableDni: "30111222", responsableTelefono: "3794211222", vinculo: "Madre", responsableCuilCuit: "20-29555111-3", fichaMedica: "Cargada", pago: "Al día", documentacion: "Completa", estado: "Activo", observaciones: "" },
-            { nombre: "Tomás Medina", dni: "43888999", nacimiento: "2008-06-09", telefono: "3794388999", responsable: "Jorge Medina", responsableDni: "28888999", responsableTelefono: "3794288999", vinculo: "Padre", responsableCuilCuit: "Pendiente", fichaMedica: "Pendiente", pago: "Pendiente", documentacion: "Pendiente", estado: "Activo", observaciones: "" },
-            { nombre: "Martina Silva", dni: "44555666", nacimiento: "2008-03-25", telefono: "3794455666", responsable: "Romina Silva", responsableDni: "31555666", responsableTelefono: "3794255666", vinculo: "Madre", responsableCuilCuit: "20-29555111-3", fichaMedica: "Cargada", pago: "Al día", documentacion: "Completa", estado: "Activo", observaciones: "" },
-            { nombre: "Benjamín López", dni: "43666111", nacimiento: "2008-09-11", telefono: "3794366111", responsable: "Diego López", responsableDni: "28666111", responsableTelefono: "3794266111", vinculo: "Padre", responsableCuilCuit: "20-29555111-3", fichaMedica: "Cargada", pago: "Al día", documentacion: "Rechazada", estado: "Activo", observaciones: "" },
-            { nombre: "Emma González", dni: "44999123", nacimiento: "2008-12-05", telefono: "3794499123", responsable: "Carolina Gómez", responsableDni: "31999123", responsableTelefono: "3794299123", vinculo: "Madre", responsableCuilCuit: "Pendiente", fichaMedica: "Observada", pago: "Vencido", documentacion: "Pendiente", estado: "Activo", observaciones: "" }
-          ]
-        },
-        {
-          id: "san-jose-6-carlos-paz-2026",
-          nombre: "San José - 6to grado - Carlos Paz 2026",
-          nivel: "Primaria",
-          viaje: "Carlos Paz 2026",
-          colegio: "Colegio San José",
-          curso: "6to grado",
-          division: "Única",
-          pasajerosEsperados: 20,
-          pasajeros: [
-            { nombre: "Pedro Molina", dni: "46999111", nacimiento: "2014-07-12", telefono: "3794699111", responsable: "Natalia Molina", responsableDni: "32999111", responsableTelefono: "3794299111", vinculo: "Madre", responsableCuilCuit: "20-29555111-3", fichaMedica: "Cargada", pago: "Al día", documentacion: "Completa", estado: "Activo", observaciones: "" },
-            { nombre: "Abril Benítez", dni: "46888222", nacimiento: "2014-01-20", telefono: "3794688222", responsable: "Sergio Benítez", responsableDni: "31888222", responsableTelefono: "3794288222", vinculo: "Padre", responsableCuilCuit: "Pendiente", fichaMedica: "Pendiente", pago: "Pendiente", documentacion: "Pendiente", estado: "Activo", observaciones: "" },
-            { nombre: "Joaquín Vera", dni: "46777333", nacimiento: "2014-10-02", telefono: "3794677333", responsable: "Patricia Vera", responsableDni: "32777333", responsableTelefono: "3794277333", vinculo: "Madre", responsableCuilCuit: "20-29555111-3", fichaMedica: "Cargada", pago: "Al día", documentacion: "Completa", estado: "Activo", observaciones: "" },
-            { nombre: "Olivia Castro", dni: "46666444", nacimiento: "2014-03-17", telefono: "3794666444", responsable: "Marcos Castro", responsableDni: "31666444", responsableTelefono: "3794266444", vinculo: "Padre", responsableCuilCuit: "20-29555111-3", fichaMedica: "Cargada", pago: "Al día", documentacion: "Completa", estado: "Activo", observaciones: "" },
-            { nombre: "Felipe Arias", dni: "46555555", nacimiento: "2014-05-31", telefono: "3794655555", responsable: "Lorena Arias", responsableDni: "32555555", responsableTelefono: "3794255555", vinculo: "Madre", responsableCuilCuit: "Pendiente", fichaMedica: "Observada", pago: "Vencido", documentacion: "Completa", estado: "Activo", observaciones: "" }
-          ]
-        },
-        {
-          id: "belgrano-5a-bariloche-2026",
-          nombre: "Belgrano - 5to A - Bariloche 2026",
-          nivel: "Secundaria",
-          viaje: "Bariloche 2026",
-          colegio: "Colegio Belgrano",
-          curso: "5to",
-          division: "A",
-          pasajerosEsperados: 26,
-          pasajeros: [
-            { nombre: "Agustina Romero", dni: "44333111", nacimiento: "2008-04-02", telefono: "3794433111", responsable: "Claudia Romero", responsableDni: "31333111", responsableTelefono: "3794233111", vinculo: "Madre", responsableCuilCuit: "Pendiente", fichaMedica: "Pendiente", pago: "Pendiente", documentacion: "Pendiente", estado: "Activo", observaciones: "" },
-            { nombre: "Nicolás Sosa", dni: "43222999", nacimiento: "2008-08-18", telefono: "3794322999", responsable: "Miguel Sosa", responsableDni: "28222999", responsableTelefono: "3794222999", vinculo: "Padre", responsableCuilCuit: "20-29555111-3", fichaMedica: "Cargada", pago: "Al día", documentacion: "Completa", estado: "Activo", observaciones: "" },
-            { nombre: "Renata Falcón", dni: "44555123", nacimiento: "2008-10-27", telefono: "3794455123", responsable: "Silvina Falcón", responsableDni: "31555123", responsableTelefono: "3794255123", vinculo: "Madre", responsableCuilCuit: "Pendiente", fichaMedica: "Observada", pago: "Vencido", documentacion: "Pendiente", estado: "Activo", observaciones: "" },
-            { nombre: "Thiago Cabrera", dni: "43777888", nacimiento: "2008-02-01", telefono: "3794377888", responsable: "Lucía Cabrera", responsableDni: "28777888", responsableTelefono: "3794277888", vinculo: "Madre", responsableCuilCuit: "20-29555111-3", fichaMedica: "Cargada", pago: "Al día", documentacion: "Rechazada", estado: "Activo", observaciones: "" },
-            { nombre: "Alma Peralta", dni: "44999777", nacimiento: "2008-06-15", telefono: "3794499777", responsable: "Daniel Peralta", responsableDni: "30999777", responsableTelefono: "3794299777", vinculo: "Padre", responsableCuilCuit: "Pendiente", fichaMedica: "Pendiente", pago: "Pendiente", documentacion: "Pendiente", estado: "Baja", observaciones: "" }
-          ]
-        }
-      ];
 
       function adminPasajerosGroupId(nivel, viaje, colegio, curso, division) {
         return window.ElAngelAzulGroups.groupId(nivel, viaje, colegio, curso, division);
@@ -4205,9 +4186,6 @@
         }).join("");
       }
 
-      function passengerFichaAdhesionStatus(passenger, group) {
-        return window.ElAngelAzulForms.fichaStatusForPassenger(passenger, group, loadFichasAdhesionDemo());
-      }
 
       function parseAdminMoney(value) {
         const normalized = String(value || "").replace(/[^\d.-]/g, "");
@@ -6029,6 +6007,13 @@
           <section class="admin-turismo-panel">
             <h1>Pagos y cuotas</h1>
             <p>Control de cobranza conectado a Pasajeros. Mantiene resumen, cuotas e historial preparado para registrar pagos reales más adelante.</p>
+            <div class="admin-demo-banner" role="note">
+              <span class="admin-demo-banner-icon material-symbols-outlined" aria-hidden="true">info</span>
+              <div>
+                <strong>Datos de ejemplo</strong>
+                <p>Los montos, cuotas, vencimientos y estados de pago que se ven acá son de muestra: <strong>no reflejan la cobranza real</strong>. Esta sección se conectará a los datos reales más adelante.</p>
+              </div>
+            </div>
             <div class="admin-payment-dashboard">
               <article>
                 <strong>${paymentRows.length}</strong>
@@ -7207,29 +7192,73 @@
       };
       const inscripcionAnios = ["2026", "2027", "2028"];
 
-      function inscripcionDemoGroups(nivel, destino, anio) {
-        const viaje = `${destino} ${anio}`;
-        const exactGroups = adminPasajerosDemo.filter((group) => group.nivel === nivel && group.viaje === viaje);
-        if (exactGroups.length) return exactGroups;
-        return adminPasajerosDemo.filter((group) => group.nivel === nivel);
+      // Animaciones de Inscripción: mismo criterio liviano que Turismo (fade-up
+      // simple, sin blur), pero corren UNA sola vez al cargar la página. El
+      // cambio de Paso 1 a Paso 2 (y de fieldset en fieldset en la Ficha de
+      // Adhesión) usa la lógica existente de mostrar/ocultar por atributo
+      // "hidden" - no se le agrega transición ahí a propósito, porque
+      // ScrollTrigger no puede medir bien un bloque que estuvo oculto.
+      let inscripcionScrollTriggers = [];
+
+      function killInscripcionAnimations() {
+        inscripcionScrollTriggers.forEach((trigger) => trigger.kill());
+        inscripcionScrollTriggers = [];
       }
 
-      function inscripcionCourseLabel(group) {
-        return `${group.curso} ${group.division}`;
+      function inscripcionAntiBlankFallback(animation) {
+        setTimeout(() => { if (animation.progress() < 1) animation.progress(1); }, 1200);
+      }
+
+      function bindInscripcionAnimations() {
+        if (typeof gsap === "undefined") return;
+        killInscripcionAnimations();
+        const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        if (typeof ScrollTrigger !== "undefined") gsap.registerPlugin(ScrollTrigger);
+
+        const heroContent = document.querySelector(".inscripcion-hero-copy-compact");
+        if (heroContent) {
+          const heroIntro = gsap.timeline({ defaults: { ease: "power2.out" } })
+            .from(heroContent.children, {
+              autoAlpha: 0,
+              y: reduceMotion ? 0 : 16,
+              duration: reduceMotion ? 0.3 : 0.6,
+              stagger: reduceMotion ? 0.03 : 0.08
+            });
+          setTimeout(() => { if (heroIntro.progress() < 1) heroIntro.progress(1); }, 1200);
+        }
+
+        if (typeof ScrollTrigger === "undefined") return;
+
+        gsap.utils.toArray("[data-reveal-light]").forEach((el) => {
+          if (el === heroContent) return;
+          const tween = gsap.from(el, {
+            autoAlpha: 0,
+            y: reduceMotion ? 0 : 18,
+            duration: reduceMotion ? 0.3 : 0.5,
+            ease: "power2.out",
+            scrollTrigger: { trigger: el, start: "top 88%", toggleActions: "play none none reverse", onEnter: () => inscripcionAntiBlankFallback(tween) }
+          });
+          if (tween.scrollTrigger) inscripcionScrollTriggers.push(tween.scrollTrigger);
+        });
       }
 
       function renderInscripcion() {
         document.getElementById("app").innerHTML = `
           <div class="layout portal-layout public-inscripcion-layout">
             <section class="inscripcion-page-hero inscripcion-page-hero--compact">
-              <div class="inscripcion-hero-copy-compact">
+              <div class="inscripcion-hero-copy-compact" data-reveal-light>
                 <span>Inscripción</span>
-                <h1>Completá tu ficha de viaje</h1>
-                <p>Elegí el viaje, cargá colegio y curso, y completá la ficha digital en el siguiente paso.</p>
+                <h1>Anotá a tu grupo en dos pasos simples</h1>
+                <p>Elegí el viaje, cargá colegio y curso, y completá la ficha digital. Te acompañamos en cada paso.</p>
+                <div class="inscripcion-hero-reassure" aria-label="Qué esperar de la inscripción">
+                  ${[["⏰", "Dos pasos, sin vueltas"], ["📋", "Podés continuar aunque tu colegio no aparezca"], ["🔒", "Tus datos quedan protegidos"]].map(([icon, label]) => `
+                    <span><span class="inscripcion-reassure-icon" aria-hidden="true">${icon}</span>${escapeHtml(label)}</span>
+                  `).join("")}
+                </div>
               </div>
             </section>
 
-            <section class="portal-empty public-inscripcion-card">
+            <section class="portal-empty public-inscripcion-card" data-reveal-light>
               <div class="inscripcion-section-heading">
                 <span>Inscripción oficial</span>
                 <h2>Buscar contrato activo</h2>
@@ -7295,7 +7324,7 @@
                 </div>
 
                 <div class="inscripcion-macro-step" data-macro-step="2" hidden>
-                  <div data-inscripcion-summary></div>
+                  <div class="inscripcion-summary-card" data-inscripcion-summary></div>
                 </div>
 
                 <aside data-inscripcion-context-summary class="inscripcion-context-summary"></aside>
@@ -7309,6 +7338,7 @@
           </div>
         `;
         bindInscripcion();
+        bindInscripcionAnimations();
       }
 
       function bindInscripcion() {
@@ -7771,6 +7801,54 @@
         `;
       }
 
+      // Mismo criterio que bindInscripcionAnimations: entrada liviana una sola
+      // vez al cargar la Ficha de Adhesión. Los 5 fieldsets están todos
+      // presentes en el DOM a la vez (no se ocultan por pasos), así que su
+      // scroll-reveal es seguro - no hay riesgo de medir un bloque oculto.
+      let fichaAdhesionScrollTriggers = [];
+
+      function killFichaAdhesionAnimations() {
+        fichaAdhesionScrollTriggers.forEach((trigger) => trigger.kill());
+        fichaAdhesionScrollTriggers = [];
+      }
+
+      function fichaAdhesionAntiBlankFallback(animation) {
+        setTimeout(() => { if (animation.progress() < 1) animation.progress(1); }, 1200);
+      }
+
+      function bindFichaAdhesionAnimations() {
+        if (typeof gsap === "undefined") return;
+        killFichaAdhesionAnimations();
+        const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        if (typeof ScrollTrigger !== "undefined") gsap.registerPlugin(ScrollTrigger);
+
+        const hero = document.querySelector("[data-ficha-hero]");
+        if (hero) {
+          const heroIntro = gsap.timeline({ defaults: { ease: "power2.out" } })
+            .from(hero.children, {
+              autoAlpha: 0,
+              y: reduceMotion ? 0 : 16,
+              duration: reduceMotion ? 0.3 : 0.6,
+              stagger: reduceMotion ? 0.03 : 0.08
+            });
+          setTimeout(() => { if (heroIntro.progress() < 1) heroIntro.progress(1); }, 1200);
+        }
+
+        if (typeof ScrollTrigger === "undefined") return;
+
+        gsap.utils.toArray("[data-reveal-light]").forEach((el) => {
+          if (el === hero) return;
+          const tween = gsap.from(el, {
+            autoAlpha: 0,
+            y: reduceMotion ? 0 : 18,
+            duration: reduceMotion ? 0.3 : 0.5,
+            ease: "power2.out",
+            scrollTrigger: { trigger: el, start: "top 88%", toggleActions: "play none none reverse", onEnter: () => fichaAdhesionAntiBlankFallback(tween) }
+          });
+          if (tween.scrollTrigger) fichaAdhesionScrollTriggers.push(tween.scrollTrigger);
+        });
+      }
+
       function renderFichaAdhesion(successMessage = "") {
         const contextParams = currentHashParams();
         const contextData = fichaAdhesionContextFromParams(contextParams);
@@ -7803,7 +7881,7 @@
         }
         document.getElementById("app").innerHTML = `
           <div class="layout ficha-adhesion-layout">
-            <section class="ficha-adhesion-hero">
+            <section class="ficha-adhesion-hero" data-ficha-hero>
               <p>Paso 2 de 2</p>
               <h1>Ficha y firma</h1>
               <p>Cargá los datos del alumno, del responsable legal y firmá la inscripción desde el celular.</p>
@@ -7817,12 +7895,12 @@
                 </div>
                 <i aria-hidden="true"></i>
               </div>
-              <div class="ficha-adhesion-context">
+              <div class="ficha-adhesion-context" data-reveal-light>
                 <span>Contexto del viaje</span>
                 <strong>${escapeHtml(fichaContext.nivel)} · ${escapeHtml(fichaContext.viaje)} · ${escapeHtml(fichaContext.colegio)} · ${escapeHtml(fichaContext.cursoDivision)}</strong>
                 <p>Contrato: <strong>${escapeHtml(fichaContext.codigoContrato || "se vincula manualmente")}</strong></p>
               </div>
-              <div class="ficha-adhesion-help">
+              <div class="ficha-adhesion-help" data-reveal-light>
                 <strong>Antes de empezar</strong>
                 <p>Te va a llevar unos minutos. Tené a mano el DNI del pasajero y del padre, madre o tutor responsable.</p>
               </div>
@@ -7838,7 +7916,7 @@
                 <input type="hidden" name="codigoContrato" value="${escapeHtml(fichaContext.codigoContrato)}">
                 <input type="hidden" name="numeroContrato" value="${escapeHtml(fichaContext.numeroContrato)}">
                 <input type="hidden" name="cursoDivision" value="${escapeHtml(fichaContext.cursoDivision)}">
-                <fieldset>
+                <fieldset data-reveal-light>
                   <legend>Datos del pasajero</legend>
                   <p class="ficha-fieldset-note">Información del alumno que viaja.</p>
                   <label>Apellido y nombres
@@ -7876,7 +7954,7 @@
                   </label>
                 </fieldset>
 
-                <fieldset>
+                <fieldset data-reveal-light>
                   <legend>Datos del padre / madre / tutor responsable</legend>
                   <p class="ficha-fieldset-note">Adulto responsable de la inscripción.</p>
                   <label>Apellido y nombres
@@ -7920,7 +7998,7 @@
                   </label>
                 </fieldset>
 
-                <fieldset>
+                <fieldset data-reveal-light>
                   <legend>Domicilio</legend>
                   <p class="ficha-fieldset-note">Datos de contacto y domicilio declarados.</p>
                   <label>Calle
@@ -7946,7 +8024,7 @@
                   </label>
                 </fieldset>
 
-                <fieldset>
+                <fieldset data-reveal-light>
                   <legend>Condiciones</legend>
                   <p class="ficha-fieldset-note">Confirmación previa al envío.</p>
                   <label class="ficha-adhesion-check">
@@ -7955,7 +8033,7 @@
                   </label>
                 </fieldset>
 
-                <fieldset>
+                <fieldset data-reveal-light>
                   <legend>Firma del responsable / tutor</legend>
                   <p class="ficha-fieldset-note">Firmá dentro del recuadro usando el dedo o lápiz óptico.</p>
                   <div class="ficha-adhesion-signature">
@@ -7972,6 +8050,7 @@
           </div>
         `;
         bindFichaAdhesion();
+        bindFichaAdhesionAnimations();
       }
 
       function bindFichaAdhesion() {
@@ -8372,7 +8451,31 @@
         footerBottom.appendChild(internalAccess);
       }
 
+      // Scroll suave global (Lenis) para el sitio público. Solo animaciones/
+      // sensación de scroll, no toca layout ni lógica. Se sincroniza con el
+      // ticker de GSAP para que ScrollTrigger (parallax del hero, reveals de
+      // sección) lea la posición real en vez de la nativa. Se salta a
+      // propósito en Admin (necesita scroll instantáneo en tablas/listas
+      // largas) y con "reducir movimiento" activado, dejando el scroll nativo
+      // del navegador intacto en ambos casos - nunca rompe el scroll en sí.
+      function initLenisSmoothScroll() {
+        if (document.body.dataset.appEntry === "admin") return;
+        if (typeof Lenis === "undefined") return;
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+        if (window.__lenisInstance) return;
+        const lenis = new Lenis({ duration: 1.05, smoothWheel: true });
+        window.__lenisInstance = lenis;
+        if (typeof gsap !== "undefined") {
+          lenis.on("scroll", () => { if (typeof ScrollTrigger !== "undefined") ScrollTrigger.update(); });
+          gsap.ticker.add((time) => lenis.raf(time * 1000));
+          gsap.ticker.lagSmoothing(0);
+        } else {
+          requestAnimationFrame(function raf(time) { lenis.raf(time); requestAnimationFrame(raf); });
+        }
+      }
+
       setupPublicInternalAccess();
+      initLenisSmoothScroll();
 
       const navToggle = document.querySelector(".nav-toggle");
       if (navToggle) {
