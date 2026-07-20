@@ -3080,22 +3080,51 @@
         if (!config.enabled || !config.endpoint) return false;
         if (googleSheetsHydrated && !force) return true;
         try {
-          // FIX seguridad: PASAJEROS y FICHAS_ADHESION ahora requieren sesión de
-          // admin en el servidor (contienen datos personales reales). Desde
-          // páginas públicas (Inscripción, Portal) esas dos van a devolver 401 -
-          // eso es esperado y correcto. Antes, un solo Promise.all sin catch
-          // individual hacía que CUALQUIER fetch fallido tirara abajo TODA la
-          // hidratación, incluyendo GRUPOS/CONTRATOS (que sí siguen públicas y
-          // que Inscripción necesita para encontrar el contrato). Ahora cada
-          // fetch tiene su propio catch, así un 401 esperado en una hoja no
-          // rompe las demás.
+          // FIX seguridad (previo): PASAJEROS/FICHAS_ADHESION exigen sesión de
+          // admin; en páginas públicas (Inscripción, Portal) van a devolver
+          // 401 - esperado. GRUPOS/CONTRATOS son siempre públicas y no
+          // deberían fallar nunca por auth.
+          // FIX pérdida de datos: un fetch que FALLA de verdad (Sheets caído,
+          // credenciales rotas) caía en el mismo catch(() => []) que una hoja
+          // realmente vacía o que el 401 esperado en público - las tres cosas
+          // quedaban indistinguibles. Dos problemas reales de esto:
+          // 1) Como cada sección del admin es un HTML separado (cualquier
+          //    navegación re-hidrata), un error transitorio de Sheets pisaba
+          //    pasajeros/contratos reales (ej. un pasajero recién aprobado
+          //    desde una ficha) con la base demo ficticia.
+          // 2) En Inscripción pública, Pasajeros SIEMPRE da 401 (no hay
+          //    sesión) - eso disparaba la rama de "no hay pasajeros" ANTES de
+          //    llegar a aplicar los Grupos/Contratos reales recién traídos,
+          //    así que el buscador de contrato activo nunca llegaba a usar
+          //    los datos reales de Sheets, solo la semilla ficticia.
+          // Ahora un fetch fallido devuelve null (no []) para distinguirlo de
+          // "la hoja está vacía de verdad", y Grupos/Contratos (siempre
+          // públicas) se aplican apenas se leen bien, sin depender de si
+          // Pasajeros/Fichas están disponibles en esta página.
           const [grupos, contratos, pasajeros, fichas, turismo] = await Promise.all([
-            window.ElAngelAzulPersistence.fetchGoogleSheetRows("GRUPOS").catch(() => []),
-            window.ElAngelAzulPersistence.fetchGoogleSheetRows("CONTRATOS").catch(() => []),
-            window.ElAngelAzulPersistence.fetchGoogleSheetRows("PASAJEROS").catch(() => []),
-            window.ElAngelAzulPersistence.fetchGoogleSheetRows("FICHAS_ADHESION").catch(() => []),
+            window.ElAngelAzulPersistence.fetchGoogleSheetRows("GRUPOS").catch(() => null),
+            window.ElAngelAzulPersistence.fetchGoogleSheetRows("CONTRATOS").catch(() => null),
+            window.ElAngelAzulPersistence.fetchGoogleSheetRows("PASAJEROS").catch(() => null),
+            window.ElAngelAzulPersistence.fetchGoogleSheetRows("FICHAS_ADHESION").catch(() => null),
             window.ElAngelAzulPersistence.fetchGoogleSheetRows("TURISMO").catch(() => [])
           ]);
+          if (grupos === null || contratos === null) {
+            googleSheetsSyncState = {
+              status: "error",
+              message: "No se pudo leer Grupos/Contratos desde Google Sheets. Se mantienen los datos guardados localmente."
+            };
+            return false;
+          }
+          // En el admin sí hay sesión: si Pasajeros/Fichas igual fallan, es un
+          // error real (no el 401 esperado de páginas públicas) - no pisar
+          // datos reales con la semilla ficticia ni con listas vacías.
+          if (isAdminEntry() && (pasajeros === null || fichas === null)) {
+            googleSheetsSyncState = {
+              status: "error",
+              message: "No se pudo leer Pasajeros/Fichas desde Google Sheets. Se mantienen los datos guardados localmente."
+            };
+            return false;
+          }
           // Hidratar viajes de turismo desde Sheets si hay datos
           if (Array.isArray(turismo) && turismo.length) {
             googleSheetsHydrating = true;
@@ -3103,7 +3132,13 @@
             localStorage.setItem(ADMIN_TURISMO_STORAGE_KEY, JSON.stringify(adminTurismoTrips, null, 2));
             googleSheetsHydrating = false;
           }
-          if (!pasajeros.length) {
+          // pasajeros/fichas null acá solo pasa en páginas públicas (401
+          // esperado, ya se descartó el caso admin arriba) - se tratan como
+          // "sin datos de pasajeros visibles", nunca como excusa para pisar
+          // lo que haya. Grupos/Contratos reales se aplican igual.
+          const pasajerosRows = pasajeros || [];
+          const fichasRows = fichas || [];
+          if (pasajeros !== null && !pasajeros.length) {
             googleSheetsHydrating = true;
             adminPasajerosDemo = createAdminPasajerosSeed();
             adminContratosDemo = createAdminContratosSeed(adminPasajerosDemo);
@@ -3117,11 +3152,11 @@
             };
             return true;
           }
-          applyGoogleSheetsRows({ grupos, contratos, pasajeros, fichas });
+          applyGoogleSheetsRows({ grupos, contratos, pasajeros: pasajerosRows, fichas: fichasRows });
           googleSheetsHydrated = true;
           googleSheetsSyncState = {
             status: "ok",
-            message: `Google Sheets activo: ${grupos.length} grupos, ${contratos.length} contratos, ${pasajeros.length} pasajeros y ${fichas.length} fichas.`
+            message: `Google Sheets activo: ${grupos.length} grupos, ${contratos.length} contratos, ${pasajerosRows.length} pasajeros y ${fichasRows.length} fichas.`
           };
           return true;
         } catch (error) {
@@ -7627,16 +7662,23 @@
             errorMessage.hidden = false;
             return;
           }
-          const codigoContrato = confirmedContrato?.codigoContrato || "";
+          // FIX: si hay un solo colegio compatible encontrado pero el usuario
+          // avanza con el botón genérico "Seguir con la ficha" en vez del botón
+          // inline "Completar ficha de adhesión" del resultado, confirmedContrato
+          // quedaba null y el match se perdía (la ficha se mandaba como si no
+          // hubiera contrato). Si hay un match único, se usa aunque no se haya
+          // confirmado con el botón inline.
+          const activeContrato = confirmedContrato || (matchState.status === "single" ? matchState.selected : null);
+          const codigoContrato = activeContrato?.codigoContrato || "";
           const params = new URLSearchParams({
             nivel: nivelField.value,
             viaje: `${destinoField.value} ${anioField.value}`,
             destino: destinoField.value,
             anio: anioField.value,
-            colegio: confirmedContrato?.colegioNombre || colegioField.value.trim(),
+            colegio: activeContrato?.colegioNombre || colegioField.value.trim(),
             colegioOriginal: colegioField.value.trim(),
-            grupoId: confirmedContrato?.grupoId || "",
-            contratoId: confirmedContrato?.contratoId || "",
+            grupoId: activeContrato?.grupoId || "",
+            contratoId: activeContrato?.contratoId || "",
             codigoContrato,
             numeroContrato: codigoContrato,
             cursoDivision: cursoField.value.trim()
@@ -8007,7 +8049,7 @@
                     <input type="hidden" name="responsableNacimiento" data-dob-hidden>
                   </label>
                   <label>Parentesco
-                    <input name="responsableParentesco" placeholder="Madre, padre, tutor">
+                    <input name="responsableParentesco" placeholder="Madre, padre, tutor" required>
                   </label>
                   <label>Correo electrónico
                     <input name="responsableEmail" type="email">
@@ -8265,6 +8307,11 @@
           if (!ficha.responsableNombre) return showError("El nombre del responsable es obligatorio.");
           if (!ficha.responsableNumeroDocumento) return showError("El documento del responsable es obligatorio.");
           if (!ficha.responsableCelular) return showError("El celular del responsable es obligatorio.");
+          // FIX: el admin exige "vínculo" para poder aprobar la ficha y crear el
+          // pasajero (fichaRequiredMissingFields) pero no hay forma de cargarlo
+          // desde el panel admin si falta - una ficha sin este dato quedaba
+          // bloqueada para siempre. Se exige acá, en el origen.
+          if (!ficha.responsableParentesco) return showError("El vínculo con el pasajero (madre, padre, tutor) es obligatorio.");
           // FIX: ya no se exige contrato resuelto para enviar la ficha - es el
           // mismo caso que se habilitó en el paso de selección (colegio no
           // encontrado). El admin ya maneja fichas sin grupo/contrato
