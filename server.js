@@ -3,6 +3,7 @@ const fs = require("fs");
 const http = require("http");
 const path = require("path");
 const { URL } = require("url");
+const db = require("./lib/db");
 
 const PORT = Number(process.env.PORT || 8080);
 const ROOT = __dirname;
@@ -520,7 +521,23 @@ async function handleSheets(req, res, url) {
         return json(res, 400, { ok: false, error: "Ficha incompleta o inválida" });
       }
       registerFichaSubmit(ip);
-      await appendSheetRows(sheet, rows);
+      // FIX: este flujo escribía a Google Sheets, que hoy no tiene
+      // credenciales configuradas en este entorno y siempre fallaba con
+      // "Credenciales de Google Sheets no configuradas" - la familia veía
+      // éxito en la UI (la promesa de escritura es fire-and-forget del
+      // lado del cliente) pero la ficha nunca se guardaba en ningún lado.
+      // Ahora este flujo público va directo a Supabase/Postgres (ver
+      // lib/db.js), en una transacción real (persona + viaje + inscripción
+      // + ficha). El resto de las hojas (GRUPOS/CONTRATOS/PASAJEROS/
+      // TURISMO) y la lectura/edición de fichas desde el admin siguen en
+      // Google Sheets sin tocar - eso es parte del adaptador completo que
+      // se está armando aparte, no de este fix puntual.
+      try {
+        await db.insertFichaPublica(rows[0]);
+      } catch (error) {
+        console.error("Error al guardar ficha de adhesión en Supabase:", error);
+        return json(res, 500, { ok: false, error: "No se pudo guardar la ficha. Intentá de nuevo en unos minutos o consultanos por WhatsApp." });
+      }
       return json(res, 200, { ok: true, sheet });
     }
 

@@ -32,6 +32,28 @@ GOOGLE_APPLICATION_CREDENTIALS=/ruta/local/google-sheets-service-account.json
 
 `GOOGLE_APPLICATION_CREDENTIALS` sirve solo para desarrollo local con archivo. En Railway usar `GOOGLE_SHEETS_CREDENTIALS` o `GOOGLE_SHEETS_SERVICE_ACCOUNT_JSON`.
 
+## Base de datos (Supabase/Postgres)
+
+El envío público de fichas de adhesión (`POST /api/google-sheets?sheet=FICHAS_ADHESION` sin sesión) guarda en Supabase/Postgres, no en Google Sheets. Requiere:
+
+```bash
+DATABASE_URL=postgres://usuario:password@host:puerto/basededatos
+```
+
+Cargarla en Railway como variable de entorno normal. **Nunca subir este valor a git ni pegarlo en un chat/PR** - es una credencial real.
+
+Para desarrollo local, crear un archivo `.env` (ya está en `.gitignore`, no se sube) con esa misma variable y correr:
+
+```bash
+node --env-file=.env server.js
+# o, solo para chequear la conexión:
+node --env-file=.env scripts/db-check.js
+```
+
+Sin `.env` ni `DATABASE_URL` en el entorno, `npm run db:check` avisa explícitamente qué falta en vez de fallar en silencio. El esquema completo (tablas, constraints, RLS) vive en `supabase/migrations/0001_init.sql` - correrlo una sola vez contra el proyecto Supabase antes de usar esta variable.
+
+El resto de las hojas (`GRUPOS`, `CONTRATOS`, `PASAJEROS`, `TURISMO`) y la lectura/edición de fichas desde el panel admin siguen usando Google Sheets por ahora - la migración completa está documentada en `contexto proyecto/plan-base-de-datos-el-angel-azul-v5.md`.
+
 ## Credenciales de Google Sheets
 
 En local, el servidor puede leer el archivo indicado por `GOOGLE_APPLICATION_CREDENTIALS`.

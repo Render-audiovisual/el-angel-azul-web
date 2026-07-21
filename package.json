@@ -5,10 +5,13 @@
   "description": "Web publica y panel admin de El Angel Azul.",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "db:check": "node scripts/db-check.js"
   },
   "engines": {
     "node": ">=20"
   },
-  "dependencies": {}
+  "dependencies": {
+    "pg": "^8.22.0"
+  }
 }
