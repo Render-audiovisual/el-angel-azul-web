@@ -1534,27 +1534,27 @@
         border: 0;
         color: #fff;
         margin: -18px -18px 0;
-        min-height: 72vh;
-        min-height: 72svh;
+        min-height: 66vh;
+        min-height: 66svh;
         overflow: hidden;
-        padding: 34px clamp(18px, 5vw, 72px);
+        padding: 28px clamp(18px, 5vw, 72px);
         position: relative;
       }
 
       .turismo-hero-content {
         display: grid;
-        gap: 20px;
+        gap: 14px;
         max-width: 760px;
-        min-height: calc(72vh - 68px);
-        min-height: calc(72svh - 68px);
+        min-height: calc(66vh - 56px);
+        min-height: calc(66svh - 56px);
         place-content: center;
         position: relative;
         z-index: 2;
       }
 
       .turismo-hero h1 {
-        font-size: clamp(2.4rem, 5.4vw, 4.4rem);
-        line-height: 1.05;
+        font-size: clamp(2.35rem, 5vw, 4.05rem);
+        line-height: 1;
         margin: 0;
         max-width: 16ch;
         text-shadow: 0 3px 28px rgba(12, 10, 8, 0.4);
@@ -1649,6 +1649,7 @@
         display: flex;
         flex-wrap: wrap;
         gap: 8px;
+        margin-top: 2px;
       }
 
       .turismo-proof-list span {
@@ -1666,6 +1667,7 @@
         display: flex;
         flex-wrap: wrap;
         gap: 8px;
+        margin-top: 2px;
       }
 
       .turismo-hero a,
@@ -3005,10 +3007,12 @@
       }
 
       .estudiantil-hero h1 {
+        color: #fff;
         font-size: clamp(2.55rem, 7vw, 5.25rem);
         line-height: 0.98;
         margin: 0;
         max-width: 900px;
+        text-shadow: 0 5px 30px rgba(2, 10, 22, 0.42);
         text-wrap: balance;
       }
 
@@ -4340,19 +4344,16 @@
         }
 
         .inscripcion-step-actions {
-	          background: rgba(255, 255, 255, 0.96);
-	          border: 1px solid #d9e7ef;
-	          border-radius: 16px 16px 0 0;
-	          bottom: 0;
-	          box-shadow: 0 -14px 32px rgba(16, 32, 43, 0.14);
+	          background: transparent;
+	          border: 0;
+	          border-radius: 0;
+	          box-shadow: none;
 	          display: grid;
 	          grid-template-columns: 0.8fr 1.2fr;
-	          left: 0;
-	          padding: 10px 12px max(10px, env(safe-area-inset-bottom));
-          position: sticky;
-          right: 0;
+	          padding: 4px 0 0;
+          position: static;
           order: 4;
-          z-index: 8;
+          z-index: auto;
         }
 
 	        .inscripcion-step-actions button {
@@ -8894,12 +8895,12 @@
 
         .turismo-hero {
           margin: -32px -32px 0;
-          padding: 64px 32px;
+          padding: 52px 32px;
         }
 
         .turismo-hero-content {
           margin-left: clamp(28px, 7vw, 116px);
-          transform: translateY(clamp(18px, 3vw, 30px));
+          transform: translateY(clamp(4px, 1.2vw, 14px));
         }
 
         .turismo-intention-section,
@@ -9451,11 +9452,11 @@
         }
 
         .turismo-hero {
-          height: 84svh;
+          height: auto;
           margin-top: -10px;
-          min-height: 82vh;
-          min-height: 84svh;
-          padding: 28px 16px 16px;
+          min-height: 76vh;
+          min-height: 76svh;
+          padding: 24px 16px 14px;
         }
 
         .turismo-hero::after {
@@ -9480,16 +9481,16 @@
 
         .turismo-hero-content {
           align-content: end;
-          gap: 12px;
-          min-height: calc(82vh - 44px);
-          min-height: calc(84svh - 44px);
+          gap: 10px;
+          min-height: calc(76vh - 38px);
+          min-height: calc(76svh - 38px);
           place-content: initial;
           transform: none;
         }
 
         .turismo-hero h1 {
           color: #fff;
-          font-size: clamp(2.06rem, 9.2vw, 2.84rem);
+          font-size: clamp(1.95rem, 8.5vw, 2.58rem);
           line-height: 0.98;
           max-width: 12.6ch;
           order: 2;
@@ -9523,7 +9524,7 @@
         .turismo-proof-list {
           display: grid;
           gap: 8px;
-          margin-top: 8px;
+          margin-top: 2px;
           order: 5;
         }
 
@@ -9545,6 +9546,7 @@
 
         .turismo-hero-actions {
           order: 4;
+          margin-top: 0;
         }
 
         .turismo-intention-section,
