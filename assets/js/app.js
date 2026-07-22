@@ -85,7 +85,7 @@
               <div class="hero-clean-overlay" aria-hidden="true"></div>
               <div class="hero-clean-content">
                 <p class="hero-clean-kicker">El Ángel Azul · Turismo estudiantil</p>
-                <h1 class="hero-clean-title" data-hero-title>El viaje que tu grupo va a <span class="ht-accent">recordar toda la vida</span></h1>
+                <h1 class="hero-clean-title" data-hero-title>El mejor viaje de <span class="ht-accent">tu vida</span></h1>
                 <p class="hero-clean-subtitle">Organizamos cada detalle y viajamos con el grupo. Las familias quedan tranquilas y los chicos vuelven con la historia de su vida.</p>
                 <div class="hero-clean-actions">
                   <a class="btn-whatsapp btn-icon-pair" href="${whatsappLink("Hola, quiero consultar por un viaje con El Ángel Azul.")}" target="_blank" rel="noopener">
