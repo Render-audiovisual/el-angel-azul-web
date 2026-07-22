@@ -106,6 +106,26 @@
         line-height: 1.1;
       }
 
+      /* Pedido del cliente: Bebas Neue solo en los títulos de Inicio, Turismo
+         e Inscripción (no Estudiantil, no admin, no el cuerpo de texto).
+         Reset de los ajustes propios de Newsreader (opsz/peso/tracking) que
+         no aplican a Bebas - es una fuente de un solo peso. */
+      body:not([data-app-entry="admin"]) .home-layout-v2 h1,
+      body:not([data-app-entry="admin"]) .home-layout-v2 h2,
+      body:not([data-app-entry="admin"]) .home-layout-v2 h3,
+      body:not([data-app-entry="admin"]) .turismo-layout h1,
+      body:not([data-app-entry="admin"]) .turismo-layout h2,
+      body:not([data-app-entry="admin"]) .turismo-layout h3,
+      body:not([data-app-entry="admin"]) .public-inscripcion-layout h1,
+      body:not([data-app-entry="admin"]) .public-inscripcion-layout h2,
+      body:not([data-app-entry="admin"]) .public-inscripcion-layout h3 {
+        font-family: "Bebas Neue", var(--font-display);
+        font-weight: 400;
+        font-optical-sizing: normal;
+        font-variation-settings: normal;
+        letter-spacing: 0.02em;
+      }
+
       .material-symbols-outlined {
         font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         display: inline-block;
