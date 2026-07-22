@@ -106,24 +106,37 @@
         line-height: 1.1;
       }
 
-      /* Pedido del cliente: Bebas Neue solo en los títulos de Inicio, Turismo
-         e Inscripción (no Estudiantil, no admin, no el cuerpo de texto).
-         Reset de los ajustes propios de Newsreader (opsz/peso/tracking) que
-         no aplican a Bebas - es una fuente de un solo peso. */
+      /* Pedido del cliente: Bebas Neue no cerraba (muy dura/angosta,
+         especialmente en Turismo) - se reemplaza por Barlow Condensed,
+         título fuerte pero más prolijo/legible. Ahora incluye Estudiantil
+         (antes excluido) y las sub-páginas de cada sección (detalle de
+         viaje estudiantil, paso de ficha de adhesión) para que el título
+         no cambie de tipografía a mitad de un mismo flujo. Sigue sin tocar
+         admin ni el cuerpo de texto. Reset de opsz/variation-settings de
+         Newsreader, que no aplican acá. */
       body:not([data-app-entry="admin"]) .home-layout-v2 h1,
       body:not([data-app-entry="admin"]) .home-layout-v2 h2,
       body:not([data-app-entry="admin"]) .home-layout-v2 h3,
       body:not([data-app-entry="admin"]) .turismo-layout h1,
       body:not([data-app-entry="admin"]) .turismo-layout h2,
       body:not([data-app-entry="admin"]) .turismo-layout h3,
+      body:not([data-app-entry="admin"]) .estudiantil-layout h1,
+      body:not([data-app-entry="admin"]) .estudiantil-layout h2,
+      body:not([data-app-entry="admin"]) .estudiantil-layout h3,
+      body:not([data-app-entry="admin"]) .student-detail-layout h1,
+      body:not([data-app-entry="admin"]) .student-detail-layout h2,
+      body:not([data-app-entry="admin"]) .student-detail-layout h3,
       body:not([data-app-entry="admin"]) .public-inscripcion-layout h1,
       body:not([data-app-entry="admin"]) .public-inscripcion-layout h2,
-      body:not([data-app-entry="admin"]) .public-inscripcion-layout h3 {
-        font-family: "Bebas Neue", var(--font-display);
-        font-weight: 400;
+      body:not([data-app-entry="admin"]) .public-inscripcion-layout h3,
+      body:not([data-app-entry="admin"]) .ficha-adhesion-layout h1,
+      body:not([data-app-entry="admin"]) .ficha-adhesion-layout h2,
+      body:not([data-app-entry="admin"]) .ficha-adhesion-layout h3 {
+        font-family: "Barlow Condensed", var(--font-display);
+        font-weight: 700;
         font-optical-sizing: normal;
         font-variation-settings: normal;
-        letter-spacing: 0.02em;
+        letter-spacing: -0.01em;
       }
 
       .material-symbols-outlined {
