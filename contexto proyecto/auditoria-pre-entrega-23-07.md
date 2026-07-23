@@ -2,6 +2,8 @@
 
 **Alcance de esta auditoría**: solo análisis e informe, ningún cambio de código. Incluye pruebas reales de lectura/escritura contra la base Supabase real (`db.gruwkiuswpnbzywcoftz.supabase.co`) y contra el servidor local con `.env` real cargado. No se pudo probar el panel admin logueado (no tengo la contraseña real, no está en el `.env` local) — esa parte es análisis de código, no prueba en vivo.
 
+**ACTUALIZACIÓN 23/07/2026 — correcciones aplicadas**: ver `## 8. Resolución de riesgos (segunda pasada)` al final de este documento. Commit `64ab588`, pusheado a `main`.
+
 ---
 
 ## 1. Estado general
@@ -104,3 +106,49 @@ El sitio público (Home/Turismo/Inscripción) está sólido y probado en los tre
 3. Entrar a la URL real de producción y confirmar que Turismo muestra los paquetes reales del cliente, no datos de ejemplo (por las dudas de que las credenciales de Sheets hayan vencido).
 
 Ninguno de estos tres puntos requiere tocar código para "arreglarse" antes de mañana — son cosas para **confirmar y comunicar**, no bugs que bloqueen usar el sitio tal cual está.
+
+---
+
+## 8. Resolución de riesgos (segunda pasada, 23/07/2026)
+
+Con autorización explícita para corregir, se aplicó lo siguiente. Commit `64ab588` (`fix: fichas de admin visibles desde Supabase + soporte 30 inscripciones simultaneas`), pusheado a `main`.
+
+### 8.1 — Corregido: fichas invisibles en el admin (hallazgo #3.1, crítico)
+`GET /api/google-sheets?sheet=FICHAS_ADHESION` con sesión de admin ahora combina Google Sheets + Supabase (no reemplaza ninguna fuente, así que fichas viejas reales que estén en la hoja siguen apareciendo). `POST` con sesión de admin separa las filas por forma de `id`: las UUID (nacidas en Supabase) se actualizan en Postgres, el resto sigue el camino de Sheets sin ningún cambio de comportamiento. Cada edición de una ficha de Supabase queda en `eventos_administrativos` (actor, acción, fecha) — antes no había ningún registro de quién hizo qué.
+
+**Probado en vivo** (sin necesitar la contraseña real de admin, llamando a las funciones del adaptador directo): ficha enviada por el formulario público → aparece inmediatamente vía `listFichasAdmin()` → se pudo marcar "revisada" y quedó registrada en la auditoría.
+
+**Limitación real, documentada a propósito, no resuelta**: `fichas_adhesion` tiene un CHECK legal (no se puede aprobar sin `acepta_condiciones = true`) que el formulario público todavía no cumple (no pide ese campo ni firma digital). Se decidió **no simular ese consentimiento** para que la aprobación "funcione" — eso hubiera sido peor que el bug original con datos de menores de edad de por medio. Hoy, intentar aprobar una ficha de Supabase devuelve un error 409 con un mensaje explicando por qué, en vez de romperse o mentir. Falta: agregar el checkbox de condiciones + captura de firma al formulario público (ya estaba anotado como Fase 5 pendiente en el plan v5) para poder aprobar de verdad.
+
+### 8.2 — Corregido: soporte real para 30 inscripciones simultáneas
+- Rate limit de fichas públicas: 10/hora/IP → **50/hora/IP** (una IP compartida, ej. la red de un colegio, ya no bloquea a la familia 11 en adelante).
+- Rate limit general de `/api/`: 240/15min/IP → **480/15min/IP** (30 personas cargando Inscripción a la vez hacen varias lecturas cada una antes de mandar la ficha).
+- Pool de conexiones a Postgres: antes usaba el default implícito de la librería; ahora es explícito (`max: 15`, con timeouts de conexión/inactividad) - el proyecto Supabase real tiene `max_connections = 60` con ~12 en uso por el propio Supabase, así que hay margen real de sobra.
+- **Prueba de carga real**: 30 envíos de ficha simultáneos (`Promise.all`, sin espaciarlos) → **30/30 exitosos en ~5.6 segundos**, confirmado en la base que las 30 quedaron guardadas correctamente y sin duplicar ninguna persona (la resolución de "persona existente por documento" no se rompió bajo concurrencia).
+
+### 8.3 — Seguridad: sin cambios nuevos que reportar
+No se tocó nada de RLS (ya estaba bien, confirmado en la auditoría anterior), no se agregó ninguna dependencia nueva, no quedó ningún secreto nuevo expuesto (verificado de nuevo después de los cambios). El único ítem de seguridad de la auditoría anterior que sigue **sin resolver** es la rotación de contraseñas de Railway (ver 8.4) — no es algo que se pueda arreglar escribiendo código.
+
+### 8.4 — Sobre la rotación de credenciales de Railway (respuesta directa a lo preguntado)
+
+**¿Se puede rotar desde el sistema actual?** No. Las variables de entorno (`EAA_ADMIN_PASSWORD`, `EAA_AGENCIA_PASSWORD`) viven en el dashboard de Railway, fuera de este repositorio — no hay ningún endpoint ni script en el proyecto que las pueda cambiar, y yo no tengo acceso a la cuenta de Railway. Esto lo tiene que hacer una persona con acceso al dashboard.
+
+**Pasos necesarios** (los tiene que hacer Franco o quien tenga acceso a Railway):
+1. Entrar a Railway → el proyecto → pestaña **Variables**.
+2. Editar `EAA_ADMIN_PASSWORD` y `EAA_AGENCIA_PASSWORD`, poniendo valores nuevos (fuertes, que no sean la contraseña vieja `aguselmejor1` ni ninguna variación obvia de esa).
+3. Guardar — Railway redeploya solo al cambiar una variable, no hace falta hacer push de código.
+4. Avisar a todos los que usan el admin que la contraseña cambió (van a quedar deslogueados igual, por el cambio de variable).
+
+**Riesgo de no rotarlas**: el repo es público en GitHub. La contraseña vieja `aguselmejor1` (que ya se sacó del código como fallback, pero sigue en el historial de commits para siempre) es un dato que cualquiera puede encontrar buscando en el repo. Si el valor real configurado hoy en Railway sigue siendo ese mismo string, cualquiera que lea el historial de git tiene acceso completo al panel admin — con datos personales de menores de edad (DNI, teléfono, nombres de responsables). Es la única vulnerabilidad de esta auditoría que sigue sin poder confirmarse ni corregirse desde acá.
+
+### Verificaciones finales realizadas
+- `node --check` en los 2 archivos tocados (`server.js`, `lib/db.js`): limpio.
+- Regresión: `node --check`, smoke test de Inscripción sin errores de consola después de los cambios de backend.
+- Toda la data de prueba generada durante esta auditoría (fichas de carga, personas, viajes huérfanos) fue borrada de la base real antes de terminar — la base queda en el mismo estado limpio que antes de auditar.
+
+## 9. Apto para producción y entrega: **SÍ**, con un solo punto pendiente fuera de mi alcance
+
+Con las correcciones de este commit, de los 3 puntos de la sección 7 original quedan:
+1. ~~Fichas invisibles en el admin~~ → **resuelto**.
+2. ~~Soportar 30 inscripciones simultáneas~~ → **resuelto y probado en vivo**.
+3. **Rotación de contraseñas en Railway** → sigue pendiente, requiere acceso humano al dashboard (ver 8.4). Es lo único que recomendaría confirmar antes de entregar acceso al panel admin a terceros.
