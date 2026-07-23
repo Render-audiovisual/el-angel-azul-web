@@ -8895,9 +8895,14 @@
           justify-content: space-between;
         }
 
-        .turismo-hero {
+        /* .turismo-layout antepuesto: "section:first-child" (elemento +
+           pseudo-clase) le ganaba en especificidad al padding-top de acá
+           con solo ".turismo-hero" (una clase) - quedaba en 0 pese a este
+           valor. Padding subido de 52px a 72px: el kicker quedaba muy
+           pegado al header/navbar. */
+        .turismo-layout .turismo-hero {
           margin: -32px -32px 0;
-          padding: 52px 32px;
+          padding: 72px 32px;
         }
 
         .turismo-hero-content {
