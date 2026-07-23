@@ -9453,12 +9453,23 @@
           font-size: 26px;
         }
 
-        .turismo-hero {
+        /* Rediseño leve pedido por el cliente: el kicker "Turismo nacional e
+           internacional" se cortaba arriba porque el bloque de contenido
+           (anclado abajo, overflow:hidden) no entraba en el alto disponible
+           con todo lo que había apilado. Se saca .turismo-proof-list de acá
+           (esa info de "destinos"/"asesoramiento" ya está en los chips de
+           filtro de abajo) para liberar aire real, y el padding queda
+           simétrico arriba/abajo en vez de 24px/14px. */
+        /* .turismo-layout antepuesto a propósito: hay una regla global
+           "section:first-child { padding-top: 0 }" (specificity de
+           elemento+pseudo-clase) que le ganaba al padding-top de acá si
+           el selector era solo ".turismo-hero" (specificity de 1 clase). */
+        .turismo-layout .turismo-hero {
           height: auto;
           margin-top: -10px;
-          min-height: 76vh;
-          min-height: 76svh;
-          padding: 24px 16px 14px;
+          min-height: 70vh;
+          min-height: 70svh;
+          padding: 32px 16px;
         }
 
         .turismo-hero::after {
@@ -9481,12 +9492,14 @@
           display: none;
         }
 
+        /* place-content:initial ya no va acá - pisaba el align-content:end
+           de arriba (mismo shorthand, misma regla, ganaba el último) y
+           dejaba el contenido pegado arriba en vez de anclado abajo. */
         .turismo-hero-content {
           align-content: end;
-          gap: 10px;
-          min-height: calc(76vh - 38px);
-          min-height: calc(76svh - 38px);
-          place-content: initial;
+          gap: 14px;
+          min-height: calc(70vh - 64px);
+          min-height: calc(70svh - 64px);
           transform: none;
         }
 
@@ -9523,26 +9536,10 @@
           padding: 7px 10px;
         }
 
-        .turismo-proof-list {
-          display: grid;
-          gap: 8px;
-          margin-top: 2px;
-          order: 5;
-        }
-
-        .turismo-proof-list span {
-          -webkit-backdrop-filter: blur(18px);
-          backdrop-filter: blur(18px);
-          background: rgba(255, 255, 255, 0.88);
-          border: 1px solid rgba(255, 255, 255, 0.7);
-          border-radius: 12px;
-          color: #10202b;
-          font-size: 0.76rem;
-          padding: 9px 10px;
-          text-shadow: none;
-        }
-
-        .turismo-proof-list span:nth-child(3) {
+        /* Se saca del hero de Turismo en mobile (pedido del cliente: hero
+           muy cargado). La misma info de destinos/asesoramiento ya está en
+           los chips de filtro de .turismo-intention-section, justo abajo. */
+        .turismo-hero .turismo-proof-list {
           display: none;
         }
 
@@ -9690,6 +9687,15 @@
         .turismo-hero a {
           min-height: 44px;
           width: 100%;
+        }
+
+        /* Pedido del cliente: "Pedir asesoramiento" un poco más chico que
+           "Ver viajes" - es la acción secundaria (WhatsApp), no hace falta
+           que compita en tamaño con la primaria. */
+        .turismo-hero-actions a:nth-child(2) {
+          font-size: 0.92rem;
+          min-height: 40px;
+          padding: 10px 18px;
         }
 
         .turismo-cta a {
