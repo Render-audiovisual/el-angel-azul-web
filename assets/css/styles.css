@@ -1886,15 +1886,14 @@
          Pensado para comparar - destino, duración, precio e incluye se leen
          de un vistazo sin necesidad de abrir cada card, como un catálogo de
          agencia real en vez de una vidriera de e-commerce. */
-      /* Antes quedaba centrado (margin: 0 auto) con un ancho distinto al de
-         .catalog-heading (que arranca flush-left) - se veía indentado
-         respecto al título "Opciones disponibles" de arriba. Se saca el
-         centrado para que ambos arranquen alineados a la izquierda. */
+      /* Centrado a propósito (el cliente prefiere las cards más finas y
+         centradas por sobre alinearlas al título de arriba). */
       .package-grid {
         display: grid;
         gap: clamp(16px, 2.2vw, 22px);
         grid-template-columns: 1fr;
         max-width: 980px;
+        margin: 0 auto;
       }
 
       .turismo-empty-state {
