@@ -52,7 +52,28 @@ node --env-file=.env scripts/db-check.js
 
 Sin `.env` ni `DATABASE_URL` en el entorno, `npm run db:check` avisa explícitamente qué falta en vez de fallar en silencio. El esquema completo (tablas, constraints, RLS) vive en `supabase/migrations/0001_init.sql` - correrlo una sola vez contra el proyecto Supabase antes de usar esta variable.
 
-El resto de las hojas (`GRUPOS`, `CONTRATOS`, `PASAJEROS`, `TURISMO`) y la lectura/edición de fichas desde el panel admin siguen usando Google Sheets por ahora - la migración completa está documentada en `contexto proyecto/plan-base-de-datos-el-angel-azul-v5.md`.
+El resto de las hojas (`GRUPOS`, `CONTRATOS`, `PASAJEROS`, `TURISMO`) siguen usando Google Sheets por ahora - la migración completa está documentada en `contexto proyecto/plan-base-de-datos-el-angel-azul-v5.md`.
+
+### Fichas de adhesión: lectura/edición desde el admin (23/07/2026)
+
+Corregido un hallazgo crítico de la auditoría pre-entrega: antes, el panel admin leía **solo** Google Sheets para `FICHAS_ADHESION`, así que una ficha enviada por el formulario público (que ya guardaba en Supabase) nunca aparecía en la bandeja del admin.
+
+Ahora:
+
+- `GET /api/google-sheets?sheet=FICHAS_ADHESION` **con sesión de admin** combina Sheets + Supabase (no reemplaza una fuente por la otra, por si hay fichas reales viejas en la hoja).
+- `POST /api/google-sheets?sheet=FICHAS_ADHESION` **con sesión de admin** separa las filas por forma de `id`: las que tienen forma de UUID (nacidas en Supabase) se actualizan en Postgres; el resto sigue el camino de Sheets de siempre, sin cambios.
+- Cada actualización de una ficha de Supabase queda registrada en `eventos_administrativos` (quién, qué acción, cuándo) - antes no había ningún registro de auditoría de estas ediciones.
+
+**Limitación conocida y a propósito**: `fichas_adhesion` tiene un CHECK legal real (no se puede marcar `aprobada` sin `acepta_condiciones = true`). El formulario público actual todavía no pide aceptar condiciones ni firma digital como paso separado (funcionalidad pendiente, ver Fase 5 del plan v5). Si un admin intenta aprobar una ficha que vino de Supabase, la base lo rechaza con un mensaje explicando por qué (no se simula un consentimiento que la familia nunca dio). Mientras tanto se puede marcar `revisada`/`observada`/`rechazada` sin problema - solo `aprobada` queda bloqueada hasta que se implemente esa captura de consentimiento.
+
+### Límites de envío (rate limiting)
+
+Pensados para soportar picos reales (ej. varias familias de un mismo colegio completando el formulario desde la misma red/IP compartida a la vez):
+
+- Fichas públicas: 50 por hora por IP (antes 10).
+- Llamadas a `/api/` en general: 480 cada 15 minutos por IP (antes 240).
+
+Probado en vivo: 30 envíos simultáneos de ficha completaron sin errores ni rechazos por límite, en ~5.6 segundos, todos guardados correctamente y sin duplicar personas.
 
 ## Credenciales de Google Sheets
 

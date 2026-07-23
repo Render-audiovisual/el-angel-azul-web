@@ -57,11 +57,18 @@ const loginAttempts = new Map();
 // mandar una misma IP sin loguearse, para que no se pueda saturar el
 // sistema (ni Sheets, ni la bandeja del admin) con envíos automatizados,
 // aunque cada uno individualmente pase la validación de una sola fila.
-const FICHA_SUBMIT_LIMIT = 10;
+// Auditoría 23/07: subido de 10 a 50/hora - el sistema tiene que soportar
+// ~30 inscripciones llegando junto (ej. un colegio entero cargando la
+// ficha desde la misma red/IP compartida), y 10/hora las bloqueaba.
+const FICHA_SUBMIT_LIMIT = 50;
 const FICHA_SUBMIT_WINDOW_MS = 60 * 60 * 1000;
 const fichaSubmitAttempts = new Map();
 
-const GENERAL_API_LIMIT = 240;
+// Auditoría 23/07: subido de 240 a 480/15min por el mismo motivo - 30
+// personas cargando Inscripción a la vez desde una IP compartida hacen
+// varias lecturas (GRUPOS/CONTRATOS/TURISMO) cada una antes de llegar a
+// mandar la ficha.
+const GENERAL_API_LIMIT = 480;
 const GENERAL_API_WINDOW_MS = 15 * 60 * 1000;
 const apiAttempts = new Map();
 
@@ -477,8 +484,21 @@ async function handleSheets(req, res, url) {
   if (req.method === "GET") {
     const sheet = String(url.searchParams.get("sheet") || "");
     if (!SCHEMA[sheet]) return json(res, 400, { ok: false, error: "Hoja no permitida" });
-    if (!PUBLIC_READ_SHEETS.has(sheet) && !currentAdminSession(req)) {
+    const adminSession = currentAdminSession(req);
+    if (!PUBLIC_READ_SHEETS.has(sheet) && !adminSession) {
       return json(res, 401, { ok: false, error: "Necesitás iniciar sesión para ver esta información" });
+    }
+    // Auditoría 23/07: las fichas que entran por el formulario público
+    // quedan en Supabase (más abajo, POST sin sesión), pero el admin acá
+    // solo leía Sheets - una ficha nueva nunca aparecía en su bandeja. Se
+    // combinan las dos fuentes (no se reemplaza Sheets, por si hay fichas
+    // reales viejas cargadas ahí). Si CUALQUIERA de las dos falla, se deja
+    // que el error se propague (mismo criterio que ya usa el admin en
+    // app.js para no confundir "fetch falló" con "no hay datos") en vez de
+    // devolver una lista silenciosamente incompleta.
+    if (sheet === "FICHAS_ADHESION" && adminSession) {
+      const [sheetsRows, postgresRows] = await Promise.all([readSheet(sheet), db.listFichasAdmin()]);
+      return json(res, 200, { ok: true, sheet, rows: [...postgresRows, ...sheetsRows] });
     }
     return json(res, 200, { ok: true, sheet, rows: await readSheet(sheet) });
   }
@@ -489,7 +509,8 @@ async function handleSheets(req, res, url) {
     if (!SCHEMA[sheet]) return json(res, 400, { ok: false, error: "Hoja no permitida" });
     if (!WRITE_ALLOWED.has(sheet)) return json(res, 403, { ok: false, error: "Escritura no habilitada para esta hoja" });
 
-    const isAdmin = Boolean(currentAdminSession(req));
+    const adminSession = currentAdminSession(req);
+    const isAdmin = Boolean(adminSession);
     if (!PUBLIC_WRITE_SHEETS.has(sheet) && !isAdmin) {
       return json(res, 401, { ok: false, error: "Necesitás iniciar sesión para modificar esta información" });
     }
@@ -543,6 +564,24 @@ async function handleSheets(req, res, url) {
 
     rows = sanitizeRows(rows, SCHEMA[sheet]);
     deleteIds = sanitizeDeleteIds(deleteIds);
+
+    // Auditoría 23/07: la edición/aprobación de fichas desde el admin
+    // manda TODAS las fichas conocidas por el navegador en un solo POST
+    // (mezcla de las que ya vivían en Sheets con las que ahora vienen de
+    // Supabase, ver GET de arriba). Se separan por forma de id: las UUID
+    // son de Supabase, el resto sigue el camino de Sheets de siempre sin
+    // ningún cambio de comportamiento para esas.
+    if (sheet === "FICHAS_ADHESION" && isAdmin) {
+      const postgresRows = rows.filter((row) => db.isFichaPostgresId(row.id));
+      const sheetsRows = rows.filter((row) => !db.isFichaPostgresId(row.id));
+      const sheetsDeleteIds = deleteIds.filter((id) => !db.isFichaPostgresId(id));
+      if (postgresRows.length) {
+        await db.updateFichasAdmin(postgresRows, adminSession?.user);
+      }
+      await writeSheet(sheet, sheetsRows, sheetsDeleteIds);
+      return json(res, 200, { ok: true, sheet });
+    }
+
     await writeSheet(sheet, rows, deleteIds);
     return json(res, 200, { ok: true, sheet });
   }
