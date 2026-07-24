@@ -162,12 +162,24 @@ const WRITE_ALLOWED = new Set(["GRUPOS", "CONTRATOS", "PASAJEROS", "FICHAS_ADHES
 // (admin) pasan de Google Sheets a Postgres, mismo principio que ya se usó
 // para FICHAS_ADHESION - se preserva el contrato HTTP exacto
 // (GET/POST /api/google-sheets?sheet=X, fila plana) así que assets/js/app.js
-// no necesita ningún cambio de lógica. Sin backfill (decisión del cliente):
-// las 4 tablas arrancan vacías en Postgres, el equipo vuelve a cargar los
-// datos desde el admin ya conectado. Pagos/Cuotas quedan fuera (nunca se
-// persistieron de verdad, WRITE_ALLOWED nunca las incluyó) y el export
-// manual de Turismo a JSON sigue igual, sin tocar.
-const POSTGRES_SHEETS = new Set(["GRUPOS", "CONTRATOS", "PASAJEROS", "TURISMO"]);
+// no necesita ningún cambio de lógica. La activación se hace recién después
+// de respaldar y migrar/verificar los datos reales existentes. Pagos/Cuotas
+// quedan fuera (nunca se persistieron de verdad, WRITE_ALLOWED nunca las
+// incluyó) y el export manual de Turismo a JSON sigue igual, sin tocar.
+// El cambio de fuente se activa explícitamente. Esto permite desplegar y
+// probar el código sin cortar producción antes de cargar DATABASE_URL y
+// migrar/verificar los datos que todavía viven en Sheets.
+const POSTGRES_MIGRATION_REQUESTED = process.env.EAA_POSTGRES_MIGRATION_ENABLED === "true";
+const POSTGRES_MIGRATION_ENABLED = POSTGRES_MIGRATION_REQUESTED && Boolean(process.env.DATABASE_URL);
+if (POSTGRES_MIGRATION_REQUESTED && !process.env.DATABASE_URL) {
+  console.error(
+    "EAA_POSTGRES_MIGRATION_ENABLED=true pero DATABASE_URL no está configurada. " +
+    "Se mantiene Google Sheets para evitar cortar producción."
+  );
+}
+const POSTGRES_SHEETS = new Set(
+  POSTGRES_MIGRATION_ENABLED ? ["GRUPOS", "CONTRATOS", "PASAJEROS", "TURISMO"] : []
+);
 const POSTGRES_LIST_FN = {
   GRUPOS: db.listGruposAdmin,
   CONTRATOS: db.listContratosAdmin,

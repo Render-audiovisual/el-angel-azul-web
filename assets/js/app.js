@@ -3106,7 +3106,7 @@
             window.ElAngelAzulPersistence.fetchGoogleSheetRows("CONTRATOS").catch(() => null),
             window.ElAngelAzulPersistence.fetchGoogleSheetRows("PASAJEROS").catch(() => null),
             window.ElAngelAzulPersistence.fetchGoogleSheetRows("FICHAS_ADHESION").catch(() => null),
-            window.ElAngelAzulPersistence.fetchGoogleSheetRows("TURISMO").catch(() => [])
+            window.ElAngelAzulPersistence.fetchGoogleSheetRows("TURISMO").catch(() => null)
           ]);
           if (grupos === null || contratos === null) {
             googleSheetsSyncState = {
@@ -3118,15 +3118,18 @@
           // En el admin sí hay sesión: si Pasajeros/Fichas igual fallan, es un
           // error real (no el 401 esperado de páginas públicas) - no pisar
           // datos reales con la semilla ficticia ni con listas vacías.
-          if (isAdminEntry() && (pasajeros === null || fichas === null)) {
+          if (isAdminEntry() && (pasajeros === null || fichas === null || turismo === null)) {
             googleSheetsSyncState = {
               status: "error",
-              message: "No se pudo leer Pasajeros/Fichas desde la base de datos. Se mantienen los datos guardados localmente."
+              message: "No se pudo leer Pasajeros/Fichas/Turismo desde la base de datos. Se mantienen los datos guardados localmente."
             };
             return false;
           }
-          // Hidratar viajes de turismo desde Sheets si hay datos
-          if (Array.isArray(turismo) && turismo.length) {
+          // Una respuesta válida vacía también debe aplicarse. Antes se
+          // ignoraba y quedaban viajes viejos en localStorage; el siguiente
+          // guardado podía volver a sembrarlos en una base realmente vacía.
+          // Un error de red llega como null y conserva el estado local.
+          if (Array.isArray(turismo)) {
             googleSheetsHydrating = true;
             adminTurismoTrips = turismo.map(turismoRowToTrip);
             localStorage.setItem(ADMIN_TURISMO_STORAGE_KEY, JSON.stringify(adminTurismoTrips, null, 2));
