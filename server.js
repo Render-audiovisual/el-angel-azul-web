@@ -575,10 +575,21 @@ async function handleSheets(req, res, url) {
       const postgresRows = rows.filter((row) => db.isFichaPostgresId(row.id));
       const sheetsRows = rows.filter((row) => !db.isFichaPostgresId(row.id));
       const sheetsDeleteIds = deleteIds.filter((id) => !db.isFichaPostgresId(id));
-      if (postgresRows.length) {
-        await db.updateFichasAdmin(postgresRows, adminSession?.user);
-      }
+      // updateFichasAdmin ya no lanza excepción por una ficha con problema
+      // (ver lib/db.js) - devuelve {updated, failed} para que una falla
+      // puntual (ej. intentar aprobar sin consentimiento) no bloquee la
+      // escritura a Sheets del resto del lote.
+      const result = postgresRows.length
+        ? await db.updateFichasAdmin(postgresRows, adminSession?.user)
+        : { updated: 0, failed: [] };
       await writeSheet(sheet, sheetsRows, sheetsDeleteIds);
+      if (result.failed.length) {
+        return json(res, 200, {
+          ok: false,
+          sheet,
+          error: `${result.updated} ficha(s) guardadas. ${result.failed.length} con error: ${result.failed.map((f) => f.error).join(" | ")}`
+        });
+      }
       return json(res, 200, { ok: true, sheet });
     }
 
@@ -644,7 +655,12 @@ function staticFile(req, res, url) {
   }
   const cleanPath = decodeURIComponent(url.pathname === "/" ? "/index.html" : url.pathname);
   const filePath = path.normalize(path.join(ROOT, cleanPath));
-  if (!filePath.startsWith(ROOT)) {
+  // Auditoría 23/07: "filePath.startsWith(ROOT)" por sí solo deja pasar un
+  // caso borde (si existiera un directorio hermano cuyo nombre empieza
+  // igual que ROOT, ej. ROOT + "-algo", también "empieza con ROOT" sin
+  // estar realmente adentro). Exigir el separador de carpeta después cierra
+  // ese caso sin cambiar el comportamiento para pedidos legítimos.
+  if (filePath !== ROOT && !filePath.startsWith(ROOT + path.sep)) {
     res.writeHead(403);
     return res.end("Forbidden");
   }
@@ -672,6 +688,31 @@ function staticFile(req, res, url) {
   });
   fs.createReadStream(target).pipe(res);
 }
+
+// Auditoría 23/07: loginAttempts/fichaSubmitAttempts/apiAttempts solo se
+// limpian de forma perezosa (cuando esa misma IP vuelve a pedir algo
+// después de vencida su ventana). Una IP que visita una sola vez y nunca
+// vuelve queda para siempre en el Map. En un sitio público con tráfico
+// real, sostenido durante semanas, esto es una fuga de memoria lenta
+// pero real. adminSessions tiene el mismo problema si alguien cierra el
+// navegador sin desloguearse. Barrido simple cada 15 minutos: no cambia
+// ningún comportamiento visible, solo libera lo que ya venció.
+function sweepExpiredEntries() {
+  const now = Date.now();
+  for (const [key, record] of loginAttempts) {
+    if (now - record.firstAttemptAt > LOGIN_ATTEMPT_WINDOW_MS) loginAttempts.delete(key);
+  }
+  for (const [key, record] of fichaSubmitAttempts) {
+    if (now - record.firstAttemptAt > FICHA_SUBMIT_WINDOW_MS) fichaSubmitAttempts.delete(key);
+  }
+  for (const [key, record] of apiAttempts) {
+    if (now - record.firstAttemptAt > GENERAL_API_WINDOW_MS) apiAttempts.delete(key);
+  }
+  for (const [token, session] of adminSessions) {
+    if (session.expiresAt <= now) adminSessions.delete(token);
+  }
+}
+setInterval(sweepExpiredEntries, 15 * 60 * 1000).unref();
 
 http.createServer(async (req, res) => {
   res.req = req;
