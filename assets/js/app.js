@@ -1205,16 +1205,16 @@
         localStorage.setItem(ADMIN_TURISMO_STORAGE_KEY, JSON.stringify(adminTurismoTrips.map(normalizeAdminTurismoTrip), null, 2));
         const config = window.ElAngelAzulPersistence.readGoogleSheetsConfig();
         if (!config.enabled || !config.endpoint) {
-          adminTurismoSaveFeedback = { ok: false, message: "Guardado solo en este navegador. Google Sheets no está conectado." };
+          adminTurismoSaveFeedback = { ok: false, message: "Guardado solo en este navegador. La base de datos no está conectada." };
           return;
         }
         try {
           const rows = googleSheetsTurismoRows(new Date().toISOString());
           await window.ElAngelAzulPersistence.writeGoogleSheetRows("TURISMO", rows, deleteIds);
-          adminTurismoSaveFeedback = { ok: true, message: `Guardado en Google Sheets: ${rows.length} ${rows.length === 1 ? "viaje" : "viajes"}.` };
+          adminTurismoSaveFeedback = { ok: true, message: `Guardado en la base de datos: ${rows.length} ${rows.length === 1 ? "viaje" : "viajes"}.` };
           turismoPublicPackagesCache = null;
         } catch (error) {
-          adminTurismoSaveFeedback = { ok: false, message: `No se pudo guardar en Google Sheets: ${error.message || "error desconocido"}.` };
+          adminTurismoSaveFeedback = { ok: false, message: `No se pudo guardar en la base de datos: ${error.message || "error desconocido"}.` };
         }
       }
 
@@ -2263,7 +2263,7 @@
           division: group.division || "",
           estado: "Activo",
           fecha_creacion: now ? now.slice(0, 10) : "",
-          observaciones: "Contrato base generado para preparar la estructura. Editar/validar en Google Sheets.",
+          observaciones: "Contrato base generado para preparar la estructura. Editar/validar desde el panel de Contratos.",
           created_at: now,
           updated_at: now
         };
@@ -2875,7 +2875,7 @@
       let googleSheetsWriteQueue = Promise.resolve();
       let googleSheetsSyncState = {
         status: "local",
-        message: "Todavía no se sincronizó con Google Sheets."
+        message: "Todavía no se sincronizó con la base de datos."
       };
 
       function loadAdminPasajerosDemo() {
@@ -3111,7 +3111,7 @@
           if (grupos === null || contratos === null) {
             googleSheetsSyncState = {
               status: "error",
-              message: "No se pudo leer Grupos/Contratos desde Google Sheets. Se mantienen los datos guardados localmente."
+              message: "No se pudo leer Grupos/Contratos desde la base de datos. Se mantienen los datos guardados localmente."
             };
             return false;
           }
@@ -3121,7 +3121,7 @@
           if (isAdminEntry() && (pasajeros === null || fichas === null)) {
             googleSheetsSyncState = {
               status: "error",
-              message: "No se pudo leer Pasajeros/Fichas desde Google Sheets. Se mantienen los datos guardados localmente."
+              message: "No se pudo leer Pasajeros/Fichas desde la base de datos. Se mantienen los datos guardados localmente."
             };
             return false;
           }
@@ -3138,31 +3138,24 @@
           // lo que haya. Grupos/Contratos reales se aplican igual.
           const pasajerosRows = pasajeros || [];
           const fichasRows = fichas || [];
-          if (pasajeros !== null && !pasajeros.length) {
-            googleSheetsHydrating = true;
-            adminPasajerosDemo = createAdminPasajerosSeed();
-            adminContratosDemo = createAdminContratosSeed(adminPasajerosDemo);
-            adminPasajerosCollection.save(adminPasajerosDemo);
-            contratosCollection.save(adminContratosDemo);
-            googleSheetsHydrating = false;
-            googleSheetsHydrated = true;
-            googleSheetsSyncState = {
-              status: "local",
-              message: `Google Sheets no tiene pasajeros cargados. Mostrando base ficticia: ${adminPasajerosRows().length} pasajeros de ejemplo.`
-            };
-            return true;
-          }
+          // Migración a Supabase (24/07): antes, una respuesta real pero
+          // vacía de Pasajeros (tabla real sin filas todavía, no un error de
+          // red) disparaba una siembra de pasajeros/contratos FICTICIOS y los
+          // guardaba como si fueran reales. Con las tablas arrancando vacías
+          // sin backfill, eso habría contaminado el admin real el día del
+          // corte. Una hoja/tabla real vacía se trata igual que cualquier
+          // otro conteo: se aplica tal cual, sin inventar datos.
           applyGoogleSheetsRows({ grupos, contratos, pasajeros: pasajerosRows, fichas: fichasRows });
           googleSheetsHydrated = true;
           googleSheetsSyncState = {
             status: "ok",
-            message: `Google Sheets activo: ${grupos.length} grupos, ${contratos.length} contratos, ${pasajerosRows.length} pasajeros y ${fichasRows.length} fichas.`
+            message: `Base de datos activa: ${grupos.length} grupos, ${contratos.length} contratos, ${pasajerosRows.length} pasajeros y ${fichasRows.length} fichas.`
           };
           return true;
         } catch (error) {
           googleSheetsSyncState = {
             status: "error",
-            message: `No se pudo sincronizar Google Sheets: ${error.message || "error desconocido"}.`
+            message: `No se pudo sincronizar con la base de datos: ${error.message || "error desconocido"}.`
           };
           return false;
         }
@@ -3173,7 +3166,7 @@
         if (!config.enabled || !config.endpoint) {
           googleSheetsSyncState = {
             status: "local",
-            message: "Guardado local. Google Sheets no está conectado."
+            message: "Guardado local. La base de datos no está conectada."
           };
           return Promise.resolve(false);
         }
@@ -3192,25 +3185,25 @@
           }
           googleSheetsSyncState = {
             status: "ok",
-            message: "Cambios guardados en Google Sheets."
+            message: "Cambios guardados en la base de datos."
           };
           return true;
         }).catch((error) => {
           googleSheetsSyncState = {
             status: "error",
-            message: `No se pudo guardar en Google Sheets: ${error.message || "error desconocido"}.`
+            message: `No se pudo guardar en la base de datos: ${error.message || "error desconocido"}.`
           };
           return false;
         });
         return googleSheetsWriteQueue;
       }
 
-      function adminFichasSaveMessage(ok, successText = "Guardado en Google Sheets.") {
+      function adminFichasSaveMessage(ok, successText = "Guardado en la base de datos.") {
         adminFichasMessage = ok
           ? successText
           : googleSheetsSyncState.status === "local"
             ? googleSheetsSyncState.message
-            : "Error al guardar en Google Sheets.";
+            : "Error al guardar en la base de datos.";
       }
 
       async function updateFichaAdhesionStatus(id, estado, patch = {}, successText = "") {
@@ -3219,7 +3212,7 @@
           ficha.id === id ? { ...ficha, ...patch, estadoRevision: estado, updatedAt: now } : ficha
         ));
         const saved = await saveFichasAdhesionDemo(fichas);
-        adminFichasSaveMessage(saved, successText || "Guardado en Google Sheets.");
+        adminFichasSaveMessage(saved, successText || "Guardado en la base de datos.");
         renderAdminFichasRecibidas();
       }
 
@@ -3235,7 +3228,7 @@
         adminFichasRejectError = "";
         adminFichasFilter = "rechazadas";
         adminFichasSelectedId = id;
-        await updateFichaAdhesionStatus(id, "rechazada", { motivoRechazo }, "Guardado en Google Sheets. Ficha rechazada.");
+        await updateFichaAdhesionStatus(id, "rechazada", { motivoRechazo }, "Guardado en la base de datos. Ficha rechazada.");
       }
 
       async function markFichaAdhesionStatus(id, estado, message) {
@@ -3298,7 +3291,7 @@
           };
         });
         const saved = await saveFichasAdhesionDemo(fichas);
-        adminFichasSaveMessage(saved, "Guardado en Google Sheets. Asignación actualizada.");
+        adminFichasSaveMessage(saved, "Guardado en la base de datos. Asignación actualizada.");
         renderAdminFichasRecibidas();
       }
 
@@ -3760,7 +3753,7 @@
         adminPasajerosGrupoId = group.id;
         adminFichasFilter = "aprobadas";
         adminFichasSelectedId = id;
-        adminFichasSaveMessage(saved, "Guardado en Google Sheets. Ficha aprobada y pasajero creado.");
+        adminFichasSaveMessage(saved, "Guardado en la base de datos. Ficha aprobada y pasajero creado.");
         renderAdminFichasRecibidas();
       }
 
@@ -4165,7 +4158,7 @@
         adminFichasSelectedId = id;
         if ((ficha.estadoRevision || "pendiente") === "pendiente") {
           adminFichasFilter = "revision";
-          await updateFichaAdhesionStatus(id, "revisada", {}, "Guardado en Google Sheets. Ficha marcada en revisión.");
+          await updateFichaAdhesionStatus(id, "revisada", {}, "Guardado en la base de datos. Ficha marcada en revisión.");
           return;
         }
         renderAdminFichasRecibidas();
@@ -5197,7 +5190,7 @@
         adminContratosEditError = "";
         googleSheetsSyncState = {
           status: "pending",
-          message: "Guardando contrato en Google Sheets..."
+          message: "Guardando contrato en la base de datos..."
         };
         saveAdminContratosDemo().then(() => {
           if (currentPath() === "/admin/contratos") renderAdminContratos();
@@ -5514,7 +5507,7 @@
             <div class="admin-pasajeros-table-head">
               <div>
                 <h2>Grupos cargados</h2>
-                <p>${filteredRows.length} grupos visibles de ${groups.length} cargados en Google Sheets.</p>
+                <p>${filteredRows.length} grupos visibles de ${groups.length} cargados en la base de datos.</p>
               </div>
               <strong>${groupsWithoutContract === 0 ? "Todos vinculados" : "Revisar contratos"}</strong>
             </div>
@@ -5598,7 +5591,7 @@
           adminGruposCreateError = "";
           googleSheetsSyncState = {
             status: "pending",
-            message: "Guardando grupo en Google Sheets..."
+            message: "Guardando grupo en la base de datos..."
           };
           saveAdminGruposDemo().then(() => {
             if (currentPath() === "/admin/grupos") renderAdminGrupos();
@@ -5959,12 +5952,12 @@
         });
         document.querySelectorAll("[data-ficha-observar]").forEach((button) => {
           button.addEventListener("click", () => {
-            markFichaAdhesionStatus(button.dataset.fichaObservar, "observada", "Guardado en Google Sheets. Ficha marcada como observada.");
+            markFichaAdhesionStatus(button.dataset.fichaObservar, "observada", "Guardado en la base de datos. Ficha marcada como observada.");
           });
         });
         document.querySelectorAll("[data-ficha-duplicada]").forEach((button) => {
           button.addEventListener("click", () => {
-            markFichaAdhesionStatus(button.dataset.fichaDuplicada, "duplicada", "Guardado en Google Sheets. Ficha marcada como duplicada.");
+            markFichaAdhesionStatus(button.dataset.fichaDuplicada, "duplicada", "Guardado en la base de datos. Ficha marcada como duplicada.");
           });
         });
         document.querySelectorAll("[data-ficha-revisar]").forEach((button) => {
@@ -6287,10 +6280,9 @@
             const tripId = button.dataset.adminDelete;
             const trip = adminTurismoTrips.find((item) => item.id === tripId);
             const tripName = trip?.titulo || trip?.destino || "este viaje";
-            // El backend reemplaza la hoja TURISMO entera en cada escritura (clear + put),
-            // por eso usamos la versión CON feedback: si falla la sync, el operador tiene
-            // que saberlo explícitamente, no asumir en silencio que se borró en Sheets.
-            if (!window.confirm(`¿Eliminar ${tripName}?\n\nEsta acción borra el viaje de este administrador y actualiza Google Sheets.`)) return;
+            // Usamos la versión CON feedback: si falla la sync, el operador tiene que
+            // saberlo explícitamente, no asumir en silencio que se borró en la base.
+            if (!window.confirm(`¿Eliminar ${tripName}?\n\nEsta acción borra el viaje de este administrador y actualiza la base de datos.`)) return;
             adminTurismoTrips = adminTurismoTrips.filter((item) => item.id !== tripId);
             if (adminTurismoEditingId === tripId) {
               adminTurismoEditingId = adminTurismoTrips[0]?.id || null;

@@ -157,6 +157,29 @@ const SCHEMA = {
 };
 
 const WRITE_ALLOWED = new Set(["GRUPOS", "CONTRATOS", "PASAJEROS", "FICHAS_ADHESION", "TURISMO"]);
+
+// Migración a Supabase (24/07): Grupos, Contratos, Pasajeros y Turismo
+// (admin) pasan de Google Sheets a Postgres, mismo principio que ya se usó
+// para FICHAS_ADHESION - se preserva el contrato HTTP exacto
+// (GET/POST /api/google-sheets?sheet=X, fila plana) así que assets/js/app.js
+// no necesita ningún cambio de lógica. Sin backfill (decisión del cliente):
+// las 4 tablas arrancan vacías en Postgres, el equipo vuelve a cargar los
+// datos desde el admin ya conectado. Pagos/Cuotas quedan fuera (nunca se
+// persistieron de verdad, WRITE_ALLOWED nunca las incluyó) y el export
+// manual de Turismo a JSON sigue igual, sin tocar.
+const POSTGRES_SHEETS = new Set(["GRUPOS", "CONTRATOS", "PASAJEROS", "TURISMO"]);
+const POSTGRES_LIST_FN = {
+  GRUPOS: db.listGruposAdmin,
+  CONTRATOS: db.listContratosAdmin,
+  PASAJEROS: db.listPasajerosAdmin,
+  TURISMO: db.listTurismoAdmin
+};
+const POSTGRES_SAVE_FN = {
+  GRUPOS: db.saveGruposAdmin,
+  CONTRATOS: db.saveContratosAdmin,
+  PASAJEROS: db.savePasajerosAdmin,
+  TURISMO: db.saveTurismoAdmin
+};
 let cachedToken = null;
 
 function parseCookies(req) {
@@ -500,6 +523,9 @@ async function handleSheets(req, res, url) {
       const [sheetsRows, postgresRows] = await Promise.all([readSheet(sheet), db.listFichasAdmin()]);
       return json(res, 200, { ok: true, sheet, rows: [...postgresRows, ...sheetsRows] });
     }
+    if (POSTGRES_SHEETS.has(sheet)) {
+      return json(res, 200, { ok: true, sheet, rows: await POSTGRES_LIST_FN[sheet]() });
+    }
     return json(res, 200, { ok: true, sheet, rows: await readSheet(sheet) });
   }
   if (req.method === "POST") {
@@ -588,6 +614,18 @@ async function handleSheets(req, res, url) {
           ok: false,
           sheet,
           error: `${result.updated} ficha(s) guardadas. ${result.failed.length} con error: ${result.failed.map((f) => f.error).join(" | ")}`
+        });
+      }
+      return json(res, 200, { ok: true, sheet });
+    }
+
+    if (POSTGRES_SHEETS.has(sheet)) {
+      const result = await POSTGRES_SAVE_FN[sheet](rows, deleteIds, adminSession?.user);
+      if (result.failed.length) {
+        return json(res, 200, {
+          ok: false,
+          sheet,
+          error: `${result.updated} fila(s) guardada(s). ${result.failed.length} con error: ${result.failed.map((f) => f.error).join(" | ")}`
         });
       }
       return json(res, 200, { ok: true, sheet });
