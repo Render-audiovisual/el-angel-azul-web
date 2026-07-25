@@ -558,7 +558,18 @@ async function handleSheets(req, res, url) {
     // que el error se propague (mismo criterio que ya usa el admin en
     // app.js para no confundir "fetch falló" con "no hay datos") en vez de
     // devolver una lista silenciosamente incompleta.
+    // Corrección (24/07): con POSTGRES_MIGRATION_ENABLED activo se decidió
+    // no usar Google Sheets para nada, sin credenciales configuradas a
+    // propósito - el merge de abajo (pensado para no perder fichas viejas
+    // reales que quedaran en Sheets) llamaba a readSheet() igual, y sin
+    // credenciales eso tira "Credenciales de Google Sheets no
+    // configuradas" y devuelve 500 en vez de la lista de Postgres, que es
+    // la única fuente real en este despliegue. Encontrado en el smoke test
+    // de Hostinger antes de tocar ningún dato real.
     if (sheet === "FICHAS_ADHESION" && adminSession) {
+      if (POSTGRES_MIGRATION_ENABLED) {
+        return json(res, 200, { ok: true, sheet, rows: await db.listFichasAdmin() });
+      }
       const [sheetsRows, postgresRows] = await Promise.all([readSheet(sheet), db.listFichasAdmin()]);
       return json(res, 200, { ok: true, sheet, rows: [...postgresRows, ...sheetsRows] });
     }
@@ -647,7 +658,14 @@ async function handleSheets(req, res, url) {
       const result = postgresRows.length
         ? await db.updateFichasAdmin(postgresRows, adminSession?.user)
         : { updated: 0, failed: [] };
-      await writeSheet(sheet, sheetsRows, sheetsDeleteIds);
+      // Mismo motivo que en el GET de arriba: con la migración activa no
+      // hay Sheets al que escribir (ni credenciales para intentarlo). Las
+      // filas con id "viejo" (sheetsRows) en este despliegue son restos de
+      // caché local sin nada real detrás - se ignoran en vez de intentar
+      // escribirlas a una hoja que no se va a usar nunca.
+      if (!POSTGRES_MIGRATION_ENABLED) {
+        await writeSheet(sheet, sheetsRows, sheetsDeleteIds);
+      }
       if (result.failed.length) {
         return json(res, 200, {
           ok: false,
