@@ -12,25 +12,27 @@ El servidor escucha en `PORT` o, si no esta definido, en `8080`.
 
 ## Variables de entorno
 
-Configurar estas variables en Railway:
+Configurar estas variables en el hosting (24/07: se migró de Railway a Hostinger, ver `EAA_POSTGRES_MIGRATION_ENABLED` mas abajo - Google Sheets ya no hace falta para nada, la migración a Postgres esta activa):
 
 ```bash
+DATABASE_URL=postgresql://...   # conexion a Supabase
+EAA_POSTGRES_MIGRATION_ENABLED=true
 EAA_ADMIN_PASSWORD=...
-EAA_AGENCIA_PASSWORD=...
+EAA_AGENTE1_PASSWORD=...
+EAA_AGENTE2_PASSWORD=...
+EAA_AGENTE3_PASSWORD=...
+EAA_AGENTE4_PASSWORD=...
+EAA_AGENTE5_PASSWORD=...
+```
+
+El host define `PORT` automaticamente. No hace falta cargarlo manualmente salvo que se quiera forzar un puerto en local.
+
+Variables de Google Sheets (ya no se usan - el codigo queda para poder revertir rapido si hiciera falta, ver Paso 6 de la migracion en `contexto proyecto/`):
+
+```bash
 GOOGLE_SHEETS_SPREADSHEET_ID=17MlFV1VB32PUXm-J7wSocBRDxmepcsmbwRwJa2cGDnI
 GOOGLE_SHEETS_CREDENTIALS='{"type":"service_account",...}'
 ```
-
-Railway define `PORT` automaticamente. No hace falta cargarlo manualmente salvo que se quiera forzar un puerto en local.
-
-Variables opcionales:
-
-```bash
-PORT=8080
-GOOGLE_APPLICATION_CREDENTIALS=/ruta/local/google-sheets-service-account.json
-```
-
-`GOOGLE_APPLICATION_CREDENTIALS` sirve solo para desarrollo local con archivo. En Railway usar `GOOGLE_SHEETS_CREDENTIALS` o `GOOGLE_SHEETS_SERVICE_ACCOUNT_JSON`.
 
 ## Base de datos (Supabase/Postgres)
 
@@ -107,9 +109,13 @@ apps/el-angel-azul-web-v0
 
 ```text
 EAA_ADMIN_PASSWORD
-EAA_AGENCIA_PASSWORD
-GOOGLE_SHEETS_SPREADSHEET_ID
-GOOGLE_SHEETS_CREDENTIALS
+EAA_AGENTE1_PASSWORD
+EAA_AGENTE2_PASSWORD
+EAA_AGENTE3_PASSWORD
+EAA_AGENTE4_PASSWORD
+EAA_AGENTE5_PASSWORD
+DATABASE_URL
+EAA_POSTGRES_MIGRATION_ENABLED=true
 ```
 
 8. Railway detecta `package.json` y ejecuta:
@@ -129,15 +135,17 @@ npm start
 
 ## Usuarios admin actuales
 
-El servidor usa estos usuarios:
+El servidor usa estos usuarios (24/07: se retiró la cuenta compartida `agencia`, ahora cada agente tiene la suya - sin esto no se podía saber quién hizo qué cambio):
 
-- `admin` con la password de `EAA_ADMIN_PASSWORD`
-- `agencia` con la password de `EAA_AGENCIA_PASSWORD`
+- `admin` con la password de `EAA_ADMIN_PASSWORD` (rol `admin`, único con acceso a Configuración)
+- `agente1` a `agente5` con la password de `EAA_AGENTE1_PASSWORD` a `EAA_AGENTE5_PASSWORD` (rol `agencia`)
+
+Cada cuenta que no tenga su variable de entorno configurada queda deshabilitada (nunca hay contraseña por defecto).
 
 ## Importante
 
 - No subir `google-sheets-service-account.json`.
 - No subir archivos `.env`.
 - No subir `node_modules`.
-- No definir contraseñas por defecto en scripts versionados. `start-public.sh` falla si no recibe `EAA_ADMIN_PASSWORD` y `EAA_AGENCIA_PASSWORD` desde el entorno.
+- No definir contraseñas por defecto en scripts versionados. `start-public.sh` falla si no recibe `EAA_ADMIN_PASSWORD` desde el entorno.
 - `/api/google-sheets` deja públicas solo las hojas necesarias para la web/inscripción (`TURISMO`, `CONFIG`, `GRUPOS`, `CONTRATOS`). Las hojas con datos personales y las escrituras internas requieren sesión admin.

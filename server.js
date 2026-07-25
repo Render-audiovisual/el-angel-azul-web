@@ -30,16 +30,43 @@ const MAX_FIELD_LENGTH = 1000;
 // Ahora: si la variable de entorno no está configurada, esa cuenta
 // queda deshabilitada (password null = nunca hace match) en vez de
 // caer a un valor por defecto inseguro.
+// 1 admin general + 5 agentes con cuenta propia (24/07) - antes "agencia"
+// era una sola cuenta compartida entre todos los agentes: no se podía saber
+// quién hizo qué cambio (actor_username quedaba "agencia" para los 5) ni
+// dar de baja a uno solo sin cambiarle la contraseña a los demás. Mismo
+// patrón de siempre (agregar una cuenta = agregar una variable de entorno,
+// sin fallback inseguro), nada de Supabase Auth ni sesiones nuevas - el
+// login/sesión es exactamente el mismo de antes, solo con más cuentas.
 const ADMIN_USERS = {
   admin: {
     password: process.env.EAA_ADMIN_PASSWORD || null,
     role: "admin",
     label: "Admin"
   },
-  agencia: {
-    password: process.env.EAA_AGENCIA_PASSWORD || null,
+  agente1: {
+    password: process.env.EAA_AGENTE1_PASSWORD || null,
     role: "agencia",
-    label: "Agencia"
+    label: "Agente 1"
+  },
+  agente2: {
+    password: process.env.EAA_AGENTE2_PASSWORD || null,
+    role: "agencia",
+    label: "Agente 2"
+  },
+  agente3: {
+    password: process.env.EAA_AGENTE3_PASSWORD || null,
+    role: "agencia",
+    label: "Agente 3"
+  },
+  agente4: {
+    password: process.env.EAA_AGENTE4_PASSWORD || null,
+    role: "agencia",
+    label: "Agente 4"
+  },
+  agente5: {
+    password: process.env.EAA_AGENTE5_PASSWORD || null,
+    role: "agencia",
+    label: "Agente 5"
   }
 };
 const adminSessions = new Map();
