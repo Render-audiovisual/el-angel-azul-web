@@ -335,10 +335,18 @@ function isStateChangingMethod(method) {
   return ["POST", "PUT", "PATCH", "DELETE"].includes(String(method || "").toUpperCase());
 }
 
+// Auditoría 25/07 - hallazgo real: "sin Origin -> permitir" dejaba pasar
+// cualquier POST de estado (login, logout, guardar datos) que no mandara el
+// header Origin - un navegador real SIEMPRE lo manda en fetch/XHR para
+// métodos de estado (GET no cuenta, y acá solo se llama para esos), sea
+// mismo origen o no. Solo clientes sin navegador (curl, scripts, un CSRF
+// vía <form> clásico en vez de fetch) podían omitirlo, justo el caso que
+// esta función existe para bloquear. Ahora "sin Origin" se trata como
+// origen no permitido, no como caso especial permitido.
 function sameOriginRequest(req) {
   if (!req || !req.headers) return false;
   const origin = req.headers.origin;
-  if (!origin) return true;
+  if (!origin) return false;
   const host = req.headers["x-forwarded-host"] || req.headers.host || "";
   const protocol = req.headers["x-forwarded-proto"] || (req.socket.encrypted ? "https" : "http");
   try {
