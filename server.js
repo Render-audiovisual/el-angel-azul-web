@@ -837,7 +837,11 @@ function createAppServer() {
   });
 }
 
-if (require.main === module) {
+// Algunos hosts cargan el Entry file mediante un wrapper en vez de ejecutar
+// `node server.js` directamente. En producción se debe escuchar siempre;
+// solo se evita el auto-listen cuando la suite importa el módulo con
+// NODE_ENV=test para levantar un puerto efímero controlado.
+if (process.env.NODE_ENV !== "test" || require.main === module) {
   createAppServer().listen(PORT, "0.0.0.0", () => {
     console.log(`El Ángel Azul server listening on ${PORT}`);
   });
