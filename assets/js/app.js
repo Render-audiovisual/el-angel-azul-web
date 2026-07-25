@@ -2269,9 +2269,18 @@
         };
       }
 
+      // Corrección (25/07): esto era todo o nada - con 0 contratos reales
+      // mostraba 101 contratos "base" generados; apenas se guardaba UNO real,
+      // los otros 100 desaparecían de la lista (adminContratosDemo.length ya
+      // no era 0). Ahora arma un placeholder solo para los grupos que
+      // TODAVÍA no tienen contrato real, y lo mezcla con los reales - la
+      // lista siempre tiene un renglón por grupo, sea real o para crear.
       function adminContratosRows(now = new Date().toISOString()) {
-        if (adminContratosDemo.length) return adminContratosDemo;
-        return adminPasajerosDemo.map((group) => adminContratoFromGroup(group, now));
+        const gruposConContrato = new Set(adminContratosDemo.map((c) => c.grupo_id || c.grupoId));
+        const placeholders = adminPasajerosDemo
+          .filter((group) => !gruposConContrato.has(group.id))
+          .map((group) => adminContratoFromGroup(group, now));
+        return [...adminContratosDemo, ...placeholders];
       }
 
       function adminContratoOptionsForGroup(groupId) {
@@ -2516,8 +2525,17 @@
         }));
       }
 
+      // Corrección (25/07): esto usaba adminContratosRows(), que desde el
+      // fix de arriba también incluye los placeholders "borrador" de los
+      // grupos sin contrato real todavía (necesarios para mostrar/editar
+      // en pantalla). Pero PARA GUARDAR hay que mandar solo lo que
+      // realmente es un contrato - si no, guardar UN contrato de verdad
+      // manda de arrastre TODOS los placeholders del resto de los grupos y
+      // los persiste como si fueran reales (confirmado: pasó en vivo,
+      // convirtió 0 contratos reales en 101 de golpe). adminContratosDemo
+      // es la fuente real, sin placeholders.
       function googleSheetsContratoRows(now = new Date().toISOString()) {
-        return adminContratosRows(now).map((contract) => ({
+        return adminContratosDemo.map((contract) => ({
           id: contract.id || "",
           codigo_contrato: contract.codigo_contrato || contract.codigoContrato || "",
           colegio_id: contract.colegio_id || contract.colegioId || "",
@@ -5149,7 +5167,19 @@
         `;
       }
 
+      // Corrección (25/07): "Editar" en un contrato "base" (todavía no
+      // guardado de verdad) no hacía nada - ni error, ni modal, nada. El
+      // modal y el guardado buscan estrictamente en adminContratosDemo, y
+      // estos placeholders solo existen en adminContratosRows(), nunca se
+      // empujaban ahí. El propio texto del contrato prometía "editar/
+      // validar desde el panel de Contratos" y no era cierto. Acá se
+      // materializa recién al abrir la edición - así "Guardar" sí lo
+      // persiste como contrato real por primera vez.
       function openAdminContratoEdit(contractId) {
+        if (!adminContratosDemo.some((item) => item.id === contractId)) {
+          const draft = adminContratosRows().find((item) => item.id === contractId);
+          if (draft) adminContratosDemo.push({ ...draft });
+        }
         adminContratosEditId = contractId;
         adminContratosEditError = "";
         renderAdminContratos();
