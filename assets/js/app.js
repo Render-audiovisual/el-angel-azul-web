@@ -2284,10 +2284,12 @@
       }
 
       function adminContratoOptionsForGroup(groupId) {
-        const contracts = adminContratosDemo.filter((contract) => contract.grupo_id === groupId || contract.grupoId === groupId);
-        if (contracts.length) return contracts;
-        const group = adminPasajerosDemo.find((item) => item.id === groupId);
-        return group ? [adminContratoFromGroup(group)] : [];
+        // Los contratos "base" existen únicamente como borradores editables
+        // dentro de la pantalla Contratos. Pasajeros solo puede asociarse a
+        // filas que ya fueron persistidas realmente en PostgreSQL.
+        return adminContratosDemo.filter(
+          (contract) => contract.grupo_id === groupId || contract.grupoId === groupId
+        );
       }
 
       function passengerContratoId(passenger = {}) {
@@ -3072,13 +3074,21 @@
         };
       }
 
-      function applyGoogleSheetsRows({ grupos = [], contratos = [], pasajeros = [], fichas = [] }) {
+      function applyGoogleSheetsRows({
+        grupos = [],
+        contratos = [],
+        pasajeros = [],
+        fichas = [],
+        includePrivate = true
+      }) {
         const groupsById = new Map(grupos.map((row) => [row.id, sheetGroupFromRow(row)]));
-        pasajeros.forEach((row) => {
-          const groupId = row.grupo_id || "";
-          if (!groupsById.has(groupId)) return;
-          groupsById.get(groupId).pasajeros.push(sheetPassengerFromRow(row));
-        });
+        if (includePrivate) {
+          pasajeros.forEach((row) => {
+            const groupId = row.grupo_id || "";
+            if (!groupsById.has(groupId)) return;
+            groupsById.get(groupId).pasajeros.push(sheetPassengerFromRow(row));
+          });
+        }
         googleSheetsHydrating = true;
         adminPasajerosDemo = [...groupsById.values()];
         adminContratosDemo = contratos.map((contract) => ({
@@ -3087,9 +3097,11 @@
           codigo_contrato: String(contract.codigo_contrato || "").trim(),
           grupo_id: String(contract.grupo_id || "").trim()
         }));
-        adminPasajerosCollection.save(adminPasajerosDemo);
+        if (includePrivate) {
+          adminPasajerosCollection.save(adminPasajerosDemo);
+          fichaAdhesionCollection.save(fichas.map(sheetFichaFromRow));
+        }
         saveAdminContratosDemo();
-        fichaAdhesionCollection.save(fichas.map(sheetFichaFromRow));
         googleSheetsHydrating = false;
       }
 
@@ -3098,10 +3110,11 @@
         if (!config.enabled || !config.endpoint) return false;
         if (googleSheetsHydrated && !force) return true;
         try {
-          // FIX seguridad (previo): PASAJEROS/FICHAS_ADHESION exigen sesión de
-          // admin; en páginas públicas (Inscripción, Portal) van a devolver
-          // 401 - esperado. GRUPOS/CONTRATOS son siempre públicas y no
-          // deberían fallar nunca por auth.
+          const adminEntry = isAdminEntry();
+          // Las páginas públicas solo necesitan GRUPOS/CONTRATOS para el
+          // matching de inscripción. PASAJEROS, FICHAS_ADHESION y TURISMO
+          // admin son privados: no se solicitan fuera del panel, evitando
+          // 401 esperados y evitando tocar sus caches locales.
           // FIX pérdida de datos: un fetch que FALLA de verdad (Sheets caído,
           // credenciales rotas) caía en el mismo catch(() => []) que una hoja
           // realmente vacía o que el 401 esperado en público - las tres cosas
@@ -3122,9 +3135,15 @@
           const [grupos, contratos, pasajeros, fichas, turismo] = await Promise.all([
             window.ElAngelAzulPersistence.fetchGoogleSheetRows("GRUPOS").catch(() => null),
             window.ElAngelAzulPersistence.fetchGoogleSheetRows("CONTRATOS").catch(() => null),
-            window.ElAngelAzulPersistence.fetchGoogleSheetRows("PASAJEROS").catch(() => null),
-            window.ElAngelAzulPersistence.fetchGoogleSheetRows("FICHAS_ADHESION").catch(() => null),
-            window.ElAngelAzulPersistence.fetchGoogleSheetRows("TURISMO").catch(() => null)
+            adminEntry
+              ? window.ElAngelAzulPersistence.fetchGoogleSheetRows("PASAJEROS").catch(() => null)
+              : Promise.resolve(null),
+            adminEntry
+              ? window.ElAngelAzulPersistence.fetchGoogleSheetRows("FICHAS_ADHESION").catch(() => null)
+              : Promise.resolve(null),
+            adminEntry
+              ? window.ElAngelAzulPersistence.fetchGoogleSheetRows("TURISMO").catch(() => null)
+              : Promise.resolve(null)
           ]);
           if (grupos === null || contratos === null) {
             googleSheetsSyncState = {
@@ -3136,7 +3155,7 @@
           // En el admin sí hay sesión: si Pasajeros/Fichas igual fallan, es un
           // error real (no el 401 esperado de páginas públicas) - no pisar
           // datos reales con la semilla ficticia ni con listas vacías.
-          if (isAdminEntry() && (pasajeros === null || fichas === null || turismo === null)) {
+          if (adminEntry && (pasajeros === null || fichas === null || turismo === null)) {
             googleSheetsSyncState = {
               status: "error",
               message: "No se pudo leer Pasajeros/Fichas/Turismo desde la base de datos. Se mantienen los datos guardados localmente."
@@ -3157,8 +3176,8 @@
           // esperado, ya se descartó el caso admin arriba) - se tratan como
           // "sin datos de pasajeros visibles", nunca como excusa para pisar
           // lo que haya. Grupos/Contratos reales se aplican igual.
-          const pasajerosRows = pasajeros || [];
-          const fichasRows = fichas || [];
+          const pasajerosRows = adminEntry ? (pasajeros || []) : [];
+          const fichasRows = adminEntry ? (fichas || []) : [];
           // Migración a Supabase (24/07): antes, una respuesta real pero
           // vacía de Pasajeros (tabla real sin filas todavía, no un error de
           // red) disparaba una siembra de pasajeros/contratos FICTICIOS y los
@@ -3166,11 +3185,19 @@
           // sin backfill, eso habría contaminado el admin real el día del
           // corte. Una hoja/tabla real vacía se trata igual que cualquier
           // otro conteo: se aplica tal cual, sin inventar datos.
-          applyGoogleSheetsRows({ grupos, contratos, pasajeros: pasajerosRows, fichas: fichasRows });
+          applyGoogleSheetsRows({
+            grupos,
+            contratos,
+            pasajeros: pasajerosRows,
+            fichas: fichasRows,
+            includePrivate: adminEntry
+          });
           googleSheetsHydrated = true;
           googleSheetsSyncState = {
             status: "ok",
-            message: `Base de datos activa: ${grupos.length} grupos, ${contratos.length} contratos, ${pasajerosRows.length} pasajeros y ${fichasRows.length} fichas.`
+            message: adminEntry
+              ? `Base de datos activa: ${grupos.length} grupos, ${contratos.length} contratos, ${pasajerosRows.length} pasajeros y ${fichasRows.length} fichas.`
+              : `Base de datos activa: ${grupos.length} grupos y ${contratos.length} contratos.`
           };
           return true;
         } catch (error) {

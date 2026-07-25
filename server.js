@@ -817,22 +817,37 @@ function sweepExpiredEntries() {
 }
 setInterval(sweepExpiredEntries, 15 * 60 * 1000).unref();
 
-http.createServer(async (req, res) => {
-  res.req = req;
-  const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
-  try {
-    if (url.pathname.startsWith("/api/") && apiRateLimited(req, url)) {
-      return json(res, 429, { ok: false, error: "Demasiadas solicitudes. Probá de nuevo más tarde." });
+function createAppServer() {
+  return http.createServer(async (req, res) => {
+    res.req = req;
+    const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
+    try {
+      if (url.pathname.startsWith("/api/") && apiRateLimited(req, url)) {
+        return json(res, 429, { ok: false, error: "Demasiadas solicitudes. Probá de nuevo más tarde." });
+      }
+      if (url.pathname.startsWith("/api/admin/")) return await handleAdminAuth(req, res, url);
+      if (url.pathname === "/api/google-sheets") return await handleSheets(req, res, url);
+      return staticFile(req, res, url);
+    } catch (error) {
+      const status = Number(error.statusCode || 500);
+      const message = status >= 500 ? "Error interno" : (error.message || "Solicitud inválida");
+      if (status >= 500) console.error(error);
+      return json(res, status, { ok: false, error: message });
     }
-    if (url.pathname.startsWith("/api/admin/")) return await handleAdminAuth(req, res, url);
-    if (url.pathname === "/api/google-sheets") return await handleSheets(req, res, url);
-    return staticFile(req, res, url);
-  } catch (error) {
-    const status = Number(error.statusCode || 500);
-    const message = status >= 500 ? "Error interno" : (error.message || "Solicitud inválida");
-    if (status >= 500) console.error(error);
-    return json(res, status, { ok: false, error: message });
+  });
+}
+
+if (require.main === module) {
+  createAppServer().listen(PORT, "0.0.0.0", () => {
+    console.log(`El Ángel Azul server listening on ${PORT}`);
+  });
+}
+
+module.exports = {
+  createAppServer,
+  __test: {
+    isHttpsRequest,
+    sameOriginRequest,
+    sessionCookie
   }
-}).listen(PORT, "0.0.0.0", () => {
-  console.log(`El Ángel Azul server listening on ${PORT}`);
-});
+};

@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node server.js",
     "db:check": "node scripts/db-check.js",
-    "test": "node --test scripts/db-adapter.test.js"
+    "test": "node --test scripts/*.test.js"
   },
   "engines": {
     "node": ">=20"
