@@ -4247,18 +4247,8 @@
         gap: 10px;
         justify-content: flex-end;
         order: 3;
-      }
-
-      @media (min-width: 821px) {
-        .inscripcion-step-actions {
-          align-items: center;
-          background: linear-gradient(180deg, rgba(255, 255, 255, 0), #fff 28%);
-          bottom: 0;
-          padding: 20px 0 2px;
-          position: sticky;
-          width: 100%;
-          z-index: 8;
-        }
+        position: static;
+        width: 100%;
       }
 
 	      .inscripcion-step-actions button {

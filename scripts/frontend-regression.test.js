@@ -210,25 +210,13 @@ test("los CTA internos desplazan a secciones reales sin romper las rutas hash", 
   assert.match(appSource, /bindInternalSectionLinks\(\);\s*initLenisSmoothScroll\(\);/);
 });
 
-test("Inscripción mantiene el CTA dentro del formulario y visible durante el scroll", () => {
-  const desktopRule = stylesSource.match(
-    /@media \(min-width:\s*821px\)\s*\{[\s\S]*?\.inscripcion-step-actions\s*\{([\s\S]*?)\n\s*\}/
-  )?.[1] || "";
-  assert.match(
-    desktopRule,
-    /position:\s*sticky;/
-  );
-  assert.match(
-    desktopRule,
-    /bottom:\s*0;/
-  );
-  assert.match(desktopRule, /width:\s*100%;/);
-  assert.doesNotMatch(desktopRule, /position:\s*fixed;/);
-  assert.doesNotMatch(desktopRule, /right:/);
-  assert.doesNotMatch(desktopRule, /border-radius:/);
-  assert.match(
-    stylesSource,
-    /\.inscripcion-step-actions\s*\{[^}]*position:\s*static;/
-  );
+test("Inscripción mantiene las acciones estáticas al final del formulario", () => {
+  const actionRules = [...stylesSource.matchAll(/\.inscripcion-step-actions\s*\{([^}]*)\}/g)]
+    .map((match) => match[1])
+    .join("\n");
+  assert.match(actionRules, /position:\s*static;/);
+  assert.match(actionRules, /width:\s*100%;/);
+  assert.doesNotMatch(actionRules, /position:\s*(?:fixed|sticky);/);
+  assert.doesNotMatch(actionRules, /(?:bottom|right|left):/);
   assert.doesNotMatch(appSource, /class="portal-empty public-inscripcion-card" data-reveal-light/);
 });
