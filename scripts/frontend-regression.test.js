@@ -75,3 +75,32 @@ test("las fichas preservan y vuelven a mostrar todos los datos del formulario", 
   assert.match(detailSource, /fichaSignatureDataUrl/);
   assert.match(detailSource, /firmaRegistrada/);
 });
+
+test("abrir una ficha no cambia su estado ni la mueve de bandeja", () => {
+  const source = functionSource("viewFichaAdhesionDetail", "startFichaAdhesionReview");
+  assert.match(source, /adminFichasSelectedId = id/);
+  assert.doesNotMatch(source, /updateFichaAdhesionStatus/);
+  assert.doesNotMatch(source, /adminFichasFilter = "revision"/);
+});
+
+test("la búsqueda de fichas conserva foco, cursor y scroll", () => {
+  const source = functionSource("bindAdminFichasRecibidas", "renderAdminPagos");
+  assert.match(source, /selectionStart/);
+  assert.match(source, /focus\(\{ preventScroll: true \}\)/);
+  assert.match(source, /setSelectionRange/);
+  assert.match(source, /window\.scrollTo\(scrollX, scrollY\)/);
+});
+
+test("la búsqueda es global y cada fila permite abrir o descargar su propia ficha", () => {
+  const renderSource = functionSource("renderAdminFichasRecibidas", "renderAdminPasajeros");
+  const rowsSource = functionSource("fichaAdhesionDemoRows", "parseAdminMoney");
+  assert.match(renderSource, /adminFichasSearch\s*\?\s*fichas/);
+  assert.doesNotMatch(renderSource, /selectedFichaCandidate \|\| visibleFichas\[0\]/);
+  assert.match(rowsSource, /data-ficha-select/);
+  assert.match(rowsSource, /data-ficha-pdf/);
+});
+
+test("la plantilla PDF usa una ruta absoluta válida desde cualquier entrada admin", () => {
+  const source = functionSource("createFichaAdhesionPdfBlob", "downloadFichaAdhesionPdf");
+  assert.match(source, /loadPdfImage\(\"\/assets\/pdf\/ficha-adhesion-template\.png\"\)/);
+});

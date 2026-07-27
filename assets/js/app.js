@@ -3642,7 +3642,7 @@
         if (estadoRevision === "rechazada") {
           return `
             <div class="admin-fichas-actions">
-              <button type="button" data-ficha-revisar="${escapeHtml(ficha.id)}">Revisar</button>
+              <button type="button" data-ficha-start-review="${escapeHtml(ficha.id)}">Reabrir revisión</button>
             </div>
           `;
         }
@@ -3659,7 +3659,7 @@
         }
         return `
           <div class="admin-fichas-actions">
-            <button type="button" data-ficha-revisar="${escapeHtml(ficha.id)}">Revisar</button>
+            <button type="button" data-ficha-start-review="${escapeHtml(ficha.id)}">Marcar en revisión</button>
           </div>
         `;
       }
@@ -4141,7 +4141,7 @@
         canvas.width = 1240;
         canvas.height = 1754;
         const context = canvas.getContext("2d");
-        const templateImage = await loadPdfImage("assets/pdf/ficha-adhesion-template.png");
+        const templateImage = await loadPdfImage("/assets/pdf/ficha-adhesion-template.png");
         const signatureImage = await loadPdfImage(ficha.firma);
 
         context.fillStyle = "#ffffff";
@@ -4254,8 +4254,8 @@
         drawValue(ficha.domicilioDepartamento, fields.domicilioDepartamento);
         drawValue(ficha.domicilioLocalidad, fields.domicilioLocalidad);
         drawValue(ficha.domicilioProvincia, fields.domicilioProvincia);
-        drawValue(ficha.domicilioTelefono, fields.domicilioTelefono);
-        drawValue(ficha.domicilioCelular, fields.domicilioCelular);
+        drawValue(ficha.domicilioTelefono || ficha.responsableTelefono, fields.domicilioTelefono);
+        drawValue(ficha.domicilioCelular || ficha.responsableCelular, fields.domicilioCelular);
         drawValue(ficha.domicilioCodigoPostal, fields.domicilioCodigoPostal);
 
         const fechaInscripcionParts = fichaPdfDateParts(ficha.createdAt);
@@ -4307,12 +4307,14 @@
         if (!ficha) return;
         adminFichasManuallyClosed = false;
         adminFichasSelectedId = id;
-        if ((ficha.estadoRevision || "pendiente") === "pendiente") {
-          adminFichasFilter = "revision";
-          await updateFichaAdhesionStatus(id, "revisada", {}, "Guardado en la base de datos. Ficha marcada en revisión.");
-          return;
-        }
         renderAdminFichasRecibidas();
+      }
+
+      async function startFichaAdhesionReview(id) {
+        adminFichasManuallyClosed = false;
+        adminFichasSelectedId = id;
+        adminFichasFilter = "revision";
+        await updateFichaAdhesionStatus(id, "revisada", {}, "Guardado en la base de datos. Ficha marcada en revisión.");
       }
 
       function fichaAdhesionDemoRows(fichas = loadFichasAdhesionDemo()) {
@@ -4358,8 +4360,8 @@
             <td><span class="admin-pasajeros-status ${estadoClass}">${escapeHtml(estadoRevision)}</span></td>
             <td>
               <div class="admin-pasajeros-row-actions admin-fichas-row-actions">
-                <button type="button" data-ficha-ver="${escapeHtml(ficha.id)}">Revisar</button>
-                <button type="button" data-ficha-select="${escapeHtml(ficha.id)}">Abrir</button>
+                <button type="button" data-ficha-select="${escapeHtml(ficha.id)}">Ver ficha</button>
+                <button type="button" data-ficha-pdf="${escapeHtml(ficha.id)}">PDF</button>
               </div>
             </td>
           </tr>
@@ -4846,7 +4848,9 @@
           rechazadas: { label: "Rechazadas", states: ["rechazada"] }
         };
         const activeFilter = filterMap[adminFichasFilter] ? adminFichasFilter : "nuevas";
-        const stateFichas = fichas.filter((ficha) => filterMap[activeFilter].states.includes(ficha.estadoRevision || "pendiente"));
+        const stateFichas = adminFichasSearch
+          ? fichas
+          : fichas.filter((ficha) => filterMap[activeFilter].states.includes(ficha.estadoRevision || "pendiente"));
         const colegios = uniqueValues(fichas.map((ficha) => ({ value: fichaFilterValue(ficha, "colegio") })), "value");
         const viajes = uniqueValues(fichas.map((ficha) => ({ value: fichaFilterValue(ficha, "viaje") })), "value");
         if (adminFichasFilterColegio && !colegios.includes(adminFichasFilterColegio)) adminFichasFilterColegio = "";
@@ -4857,7 +4861,7 @@
           (!adminFichasFilterViaje || fichaFilterValue(ficha, "viaje") === adminFichasFilterViaje)
         ));
         const selectedFichaCandidate = visibleFichas.find((ficha) => ficha.id === adminFichasSelectedId);
-        const selectedFicha = adminFichasManuallyClosed ? null : selectedFichaCandidate || visibleFichas[0] || null;
+        const selectedFicha = adminFichasManuallyClosed ? null : selectedFichaCandidate || null;
         adminFichasSelectedId = selectedFicha?.id || "";
         document.getElementById("app").innerHTML = renderAdminShell("fichas", `
           <section class="admin-turismo-panel">
@@ -4898,7 +4902,7 @@
               }).join("")}
             </div>
             ${renderAdminFichasFilters(colegios, viajes)}
-            ${renderAdminFichaDetail(selectedFicha)}
+            ${adminFichasSearch ? `<p class="admin-fichas-search-note">La búsqueda revisa fichas de todos los estados.</p>` : ""}
             <div class="admin-pasajeros-table-wrap">
               <table class="admin-pasajeros-table admin-fichas-table">
                 <thead>
@@ -4913,6 +4917,7 @@
                 <tbody>${fichaAdhesionDemoRows(visibleFichas)}</tbody>
               </table>
             </div>
+            ${renderAdminFichaDetail(selectedFicha)}
           </section>
           ${renderAdminFichasRejectModal()}
         `);
@@ -6054,9 +6059,21 @@
           });
         });
         document.querySelector("[data-admin-fichas-search]")?.addEventListener("input", (event) => {
-          adminFichasSearch = event.currentTarget.value;
+          const input = event.currentTarget;
+          const selectionStart = input.selectionStart;
+          const selectionEnd = input.selectionEnd;
+          const scrollX = window.scrollX;
+          const scrollY = window.scrollY;
+          adminFichasSearch = input.value;
           adminFichasSelectedId = "";
           renderAdminFichasRecibidas();
+          window.requestAnimationFrame(() => {
+            const nextInput = document.querySelector("[data-admin-fichas-search]");
+            if (!nextInput) return;
+            nextInput.focus({ preventScroll: true });
+            nextInput.setSelectionRange(selectionStart, selectionEnd);
+            window.scrollTo(scrollX, scrollY);
+          });
         });
         document.querySelector("[data-admin-fichas-filter-colegio]")?.addEventListener("change", (event) => {
           adminFichasFilterColegio = event.currentTarget.value;
@@ -6067,9 +6084,6 @@
           adminFichasFilterViaje = event.currentTarget.value;
           adminFichasSelectedId = "";
           renderAdminFichasRecibidas();
-        });
-        document.querySelectorAll("[data-ficha-ver]").forEach((button) => {
-          button.addEventListener("click", () => viewFichaAdhesionDetail(button.dataset.fichaVer));
         });
         document.querySelectorAll("[data-ficha-select]").forEach((button) => {
           button.addEventListener("click", () => {
@@ -6120,8 +6134,8 @@
             markFichaAdhesionStatus(button.dataset.fichaDuplicada, "duplicada", "Guardado en la base de datos. Ficha marcada como duplicada.");
           });
         });
-        document.querySelectorAll("[data-ficha-revisar]").forEach((button) => {
-          button.addEventListener("click", () => viewFichaAdhesionDetail(button.dataset.fichaRevisar));
+        document.querySelectorAll("[data-ficha-start-review]").forEach((button) => {
+          button.addEventListener("click", () => startFichaAdhesionReview(button.dataset.fichaStartReview));
         });
         document.querySelectorAll("[data-ficha-assign]").forEach((field) => {
           field.addEventListener("change", () => {
