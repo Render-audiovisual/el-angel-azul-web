@@ -122,6 +122,19 @@ test("los buscadores de Grupos y Contratos ignoran mayúsculas y conservan el fo
   }
 });
 
+test("el editor de contratos usa un modal legible y responsive", () => {
+  const source = functionSource("renderAdminContratoEditModal", "openAdminContratoEdit");
+  assert.match(source, /admin-contrato-modal-backdrop/);
+  assert.match(source, /role="dialog"/);
+  assert.match(source, /aria-modal="true"/);
+  assert.match(source, /admin-contrato-reference/);
+  assert.match(source, /admin-contrato-form-observaciones/);
+  assert.match(source, /Guardar cambios/);
+  assert.match(stylesSource, /\.admin-contrato-modal\s*\{[\s\S]*?max-width:\s*760px;/);
+  assert.match(stylesSource, /\.admin-contrato-form\s*\{[\s\S]*?grid-template-columns:/);
+  assert.match(stylesSource, /@media \(max-width:\s*620px\)[\s\S]*?\.admin-contrato-reference,[\s\S]*?\.admin-contrato-form\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0,\s*1fr\)/);
+});
+
 test("el buscador de Pasajeros ignora mayúsculas y acentos", () => {
   const source = functionSource("adminPasajerosFilteredRows", "adminPasajerosSelectedRecord");
   assert.match(source, /normalizeText:\s*normalizeFichaSearchText/);

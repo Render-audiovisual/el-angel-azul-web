@@ -5341,35 +5341,52 @@
         const group = adminPasajerosDemo.find((item) => item.id === contract.grupo_id);
         const grupoCurso = `${contract.curso || group?.curso || ""} ${contract.division || group?.division || ""}`.trim();
         const estados = ["Activo", "Borrador", "Inactivo"];
+        const estadoActual = contract.estado || "Borrador";
         return `
-          <div class="admin-pasajeros-modal-backdrop" data-admin-contrato-edit-backdrop>
-            <section class="admin-pasajeros-modal" aria-label="Editar contrato">
-              <div class="admin-pasajeros-modal-head">
+          <div class="admin-contrato-modal-backdrop" data-admin-contrato-edit-backdrop>
+            <section class="admin-contrato-modal" role="dialog" aria-modal="true" aria-label="Editar contrato">
+              <div class="admin-contrato-modal-head">
                 <div>
-                  <p>Edición de contrato</p>
+                  <span class="admin-contrato-modal-eyebrow">Edición de contrato</span>
                   <h2>${escapeHtml(contract.colegio_nombre || "Contrato sin colegio")}</h2>
+                  <p>Actualizá los datos operativos del contrato sin modificar la información del grupo.</p>
                 </div>
-                <button type="button" class="admin-secondary-action" data-admin-contrato-edit-cancel>Cerrar</button>
+                <button type="button" class="admin-contrato-modal-close" data-admin-contrato-edit-cancel aria-label="Cerrar editor">×</button>
               </div>
-              <div class="admin-fichas-message">
-                Referencia: ${escapeHtml(contract.nivel || "Sin nivel")} · ${escapeHtml(contract.viaje || "Sin viaje")} · ${escapeHtml(grupoCurso || "Curso pendiente")}. Estos datos vienen desde Grupos y son solo lectura.
+              <div class="admin-contrato-reference" aria-label="Datos del grupo, solo lectura">
+                <div>
+                  <span>Nivel</span>
+                  <strong>${escapeHtml(contract.nivel || "Sin nivel")}</strong>
+                </div>
+                <div>
+                  <span>Viaje</span>
+                  <strong>${escapeHtml(contract.viaje || "Sin viaje")}</strong>
+                </div>
+                <div>
+                  <span>Curso</span>
+                  <strong>${escapeHtml(grupoCurso || "Curso pendiente")}</strong>
+                </div>
+                <p>Información vinculada al grupo · Solo lectura</p>
               </div>
               ${adminContratosEditError ? `<p class="admin-pasajeros-modal-error">${escapeHtml(adminContratosEditError)}</p>` : ""}
-              <form class="admin-pasajeros-modal-form" data-admin-contrato-edit-form>
-                <label>Código de contrato
+              <form class="admin-contrato-form" data-admin-contrato-edit-form>
+                <label>
+                  <span>Código de contrato</span>
                   <input name="codigo_contrato" value="${escapeHtml(contract.codigo_contrato || "")}" placeholder="Ej: EAA-2026-001" required>
                 </label>
-                <label>Estado
+                <label>
+                  <span>Estado</span>
                   <select name="estado" required>
-                    ${estados.map((estado) => `<option value="${escapeHtml(estado)}" ${estado === (contract.estado || "Borrador") ? "selected" : ""}>${escapeHtml(estado)}</option>`).join("")}
+                    ${estados.map((estado) => `<option value="${escapeHtml(estado)}" ${estado === estadoActual ? "selected" : ""}>${escapeHtml(estado)}</option>`).join("")}
                   </select>
                 </label>
-                <label>Observaciones
+                <label class="admin-contrato-form-observaciones">
+                  <span>Observaciones internas</span>
                   <textarea name="observaciones" rows="4" placeholder="Observaciones internas">${escapeHtml(contract.observaciones || "")}</textarea>
                 </label>
-                <div class="admin-pasajeros-modal-actions">
+                <div class="admin-contrato-modal-actions">
                   <button type="button" class="admin-secondary-action" data-admin-contrato-edit-cancel>Cancelar</button>
-                  <button type="submit">Guardar</button>
+                  <button type="submit">Guardar cambios</button>
                 </div>
               </form>
             </section>
