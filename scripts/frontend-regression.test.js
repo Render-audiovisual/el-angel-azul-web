@@ -210,18 +210,22 @@ test("los CTA internos desplazan a secciones reales sin romper las rutas hash", 
   assert.match(appSource, /bindInternalSectionLinks\(\);\s*initLenisSmoothScroll\(\);/);
 });
 
-test("Inscripción mantiene el CTA visible en escritorio y normal en móvil", () => {
+test("Inscripción mantiene el CTA dentro del formulario y visible durante el scroll", () => {
   const desktopRule = stylesSource.match(
     /@media \(min-width:\s*821px\)\s*\{[\s\S]*?\.inscripcion-step-actions\s*\{([\s\S]*?)\n\s*\}/
   )?.[1] || "";
   assert.match(
     desktopRule,
-    /position:\s*fixed;/
+    /position:\s*sticky;/
   );
   assert.match(
     desktopRule,
-    /bottom:\s*24px;/
+    /bottom:\s*0;/
   );
+  assert.match(desktopRule, /width:\s*100%;/);
+  assert.doesNotMatch(desktopRule, /position:\s*fixed;/);
+  assert.doesNotMatch(desktopRule, /right:/);
+  assert.doesNotMatch(desktopRule, /border-radius:/);
   assert.match(
     stylesSource,
     /\.inscripcion-step-actions\s*\{[^}]*position:\s*static;/
