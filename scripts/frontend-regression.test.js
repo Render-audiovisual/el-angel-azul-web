@@ -7,6 +7,10 @@ const appSource = fs.readFileSync(
   path.join(__dirname, "..", "assets", "js", "app.js"),
   "utf8"
 );
+const stylesSource = fs.readFileSync(
+  path.join(__dirname, "..", "assets", "css", "styles.css"),
+  "utf8"
+);
 
 function functionSource(name, nextName) {
   const start = appSource.indexOf(`function ${name}(`);
@@ -103,4 +107,9 @@ test("la búsqueda es global y cada fila permite abrir o descargar su propia fic
 test("la plantilla PDF usa una ruta absoluta válida desde cualquier entrada admin", () => {
   const source = functionSource("createFichaAdhesionPdfBlob", "downloadFichaAdhesionPdf");
   assert.match(source, /loadPdfImage\(\"\/assets\/pdf\/ficha-adhesion-template\.png\"\)/);
+});
+
+test("el ícono de validación no comprime la etiqueta Estado sugerido", () => {
+  assert.match(stylesSource, /\.admin-fichas-approval-checklist li > span\s*\{/);
+  assert.doesNotMatch(stylesSource, /\.admin-fichas-approval-checklist span\s*\{/);
 });
