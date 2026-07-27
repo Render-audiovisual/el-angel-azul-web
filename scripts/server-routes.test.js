@@ -29,9 +29,11 @@ test.after(async () => {
   });
 });
 
-function request({ method = "GET", path = "/", headers = {}, body }) {
+function request({ method = "GET", path = "/", headers = {}, body, rawBody }) {
   return new Promise((resolve, reject) => {
-    const payload = body === undefined ? null : JSON.stringify(body);
+    const payload = rawBody === undefined
+      ? (body === undefined ? null : JSON.stringify(body))
+      : rawBody;
     const req = http.request({
       hostname: "127.0.0.1",
       port,
@@ -72,6 +74,50 @@ test("login sin Origin se rechaza antes de autenticar", async () => {
   });
   assert.equal(response.status, 403);
   assert.equal(response.json?.error, "Origen no permitido");
+});
+
+test("una ficha pública con firma falsa se rechaza antes de tocar la base", async () => {
+  const origin = `http://127.0.0.1:${port}`;
+  const response = await request({
+    method: "POST",
+    path: "/api/google-sheets",
+    headers: { origin },
+    body: {
+      sheet: "FICHAS_ADHESION",
+      rows: [{
+        pasajero_dni: "99000999",
+        pasajero_nombre: "PRUEBA SEGURIDAD",
+        responsable_nombre: "RESPONSABLE SEGURIDAD",
+        responsable_telefono: "3794000000",
+        colegio: "Colegio QA",
+        curso_division: "5 A",
+        acepta_condiciones: "TRUE",
+        firma_data_url: `data:image/png;base64,${Buffer.from("<svg></svg>").toString("base64")}`
+      }]
+    }
+  });
+  assert.equal(response.status, 400);
+  assert.match(response.json?.error || "", /PNG válida/);
+});
+
+test("los métodos equivocados devuelven 405 en endpoints conocidos", async () => {
+  for (const path of ["/api/admin/me", "/api/admin/login", "/api/admin/logout"]) {
+    const response = await request({ method: path.endsWith("/me") ? "POST" : "GET", path });
+    assert.equal(response.status, 405);
+    assert.equal(response.json?.error, "Método no permitido");
+  }
+});
+
+test("un body mayor al límite devuelve 413 sin resetear la conexión", async () => {
+  const origin = `http://127.0.0.1:${port}`;
+  const response = await request({
+    method: "POST",
+    path: "/api/google-sheets",
+    headers: { origin, "content-type": "application/json" },
+    rawBody: "a".repeat(1_000_001)
+  });
+  assert.equal(response.status, 413);
+  assert.equal(response.json?.error, "Payload demasiado grande");
 });
 
 test("login, sesión, ruta privada y logout funcionan con mismo origen", async () => {

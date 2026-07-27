@@ -170,6 +170,40 @@ test("Turismo usa tarjetas visuales y una sola acción para crear viajes", () =>
   assert.match(stylesSource, /\.admin-turismo-row-actions button:first-child\s*\{[\s\S]*?background:\s*#0d69a1;/);
 });
 
+test("el catálogo de Turismo escapa texto y URLs antes de usar innerHTML", () => {
+  const escapeSource = functionSource("escapeHtml", "safeMediaUrl");
+  const safeUrlSource = functionSource("safeMediaUrl", "loadAdminTurismoTrips");
+  const renderSource = functionSource("renderTurismoPackageCard", "bindTurismoCardCarousels");
+  const render = new Function(`
+    ${escapeSource}
+    ${safeUrlSource}
+    function turismoWhatsappForPackage() { return "#"; }
+    ${renderSource}
+    return renderTurismoPackageCard;
+  `)();
+  const payload = `<img src=x onerror="window.__eaaXss=1">`;
+  const html = render({
+    gallery: [`x" onerror="window.__eaaXss=2`],
+    destino: payload,
+    categoria: payload,
+    intenciones: [payload],
+    tipo: payload,
+    temporada: payload,
+    duracion: payload,
+    resumen: payload,
+    precioDesde: payload,
+    incluye: [payload],
+    slug: payload
+  });
+  assert.doesNotMatch(html, /<img src=x onerror=/);
+  assert.doesNotMatch(html, /window\.__eaaXss=2/);
+  assert.match(html, /&lt;img src=x onerror=/);
+
+  const previewSource = functionSource("bindAdminTurismo", "renderEstudiantil");
+  assert.match(previewSource, /preview\.replaceChildren\(\)/);
+  assert.doesNotMatch(previewSource, /preview\.innerHTML = `<img src="\$\{url\}/);
+});
+
 test("los selectores de Turismo conservan inputs nativos con una interfaz propia", () => {
   const formSource = functionSource("renderAdminTurismoForm", "adminIconSvg");
   assert.match(formSource, /type="radio" name="fotoPrincipal"/);

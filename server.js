@@ -316,14 +316,21 @@ function jsonWithHeaders(req, res, status, payload, headers) {
 function readBody(req, limitBytes = MAX_BODY_BYTES) {
   return new Promise((resolve, reject) => {
     let body = "";
+    let exceeded = false;
     req.on("data", (chunk) => {
+      if (exceeded) return;
       body += chunk;
       if (Buffer.byteLength(body, "utf8") > limitBytes) {
-        reject(new Error("Payload demasiado grande"));
-        req.destroy();
+        exceeded = true;
+        body = "";
+        const error = new Error("Payload demasiado grande");
+        error.statusCode = 413;
+        reject(error);
       }
     });
-    req.on("end", () => resolve(body));
+    req.on("end", () => {
+      if (!exceeded) resolve(body);
+    });
     req.on("error", reject);
   });
 }
@@ -557,7 +564,9 @@ function validPublicFicha(row) {
   const hasTripContext = Boolean(
     String(row.codigo_contrato || row.contrato_id || row.grupo_asignado_id || row.colegio || row.curso_division || "").trim()
   );
-  return hasPassenger && hasResponsible && hasTripContext;
+  const acceptedConditions = row.acepta_condiciones === true ||
+    String(row.acepta_condiciones || "").trim().toUpperCase() === "TRUE";
+  return hasPassenger && hasResponsible && hasTripContext && acceptedConditions && Boolean(row.firma_data_url);
 }
 
 async function handleSheets(req, res, url) {
@@ -627,10 +636,19 @@ async function handleSheets(req, res, url) {
       // servidor genera su propio id (ignora el que mande el cliente) para
       // que nadie pueda pisar la ficha de otra familia mandando un id que
       // ya exista, y se acotan los campos a un largo razonable.
-      rows = rows.slice(0, 1).map((row) => ({
-        ...sanitizeRow(row, SCHEMA.FICHAS_ADHESION),
+      const publicRow = rows.slice(0, 1)[0];
+      if (!publicRow) {
+        return json(res, 400, { ok: false, error: "Ficha incompleta o inválida" });
+      }
+      try {
+        publicRow.firma_data_url = db.normalizeSignatureDataUrl(publicRow.firma_data_url);
+      } catch (error) {
+        return json(res, 400, { ok: false, error: error.friendlyMessage || error.message || "Firma inválida" });
+      }
+      rows = [{
+        ...sanitizeRow(publicRow, SCHEMA.FICHAS_ADHESION),
         id: `ficha-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`
-      }));
+      }];
       deleteIds = [];
       if (!rows.length || !validPublicFicha(rows[0])) {
         return json(res, 400, { ok: false, error: "Ficha incompleta o inválida" });
@@ -751,6 +769,9 @@ async function handleAdminAuth(req, res, url) {
     return jsonWithHeaders(req, res, 200, { ok: true, authenticated: false }, {
       "Set-Cookie": sessionCookie("", 0, isHttpsRequest(req))
     });
+  }
+  if (["/api/admin/me", "/api/admin/login", "/api/admin/logout"].includes(url.pathname)) {
+    return json(res, 405, { ok: false, error: "Método no permitido" });
   }
   json(res, 404, { ok: false, error: "Endpoint no encontrado" });
 }

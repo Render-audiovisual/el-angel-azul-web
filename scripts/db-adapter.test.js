@@ -45,10 +45,29 @@ test("los arrays JSON inválidos no borran datos en silencio", () => {
 });
 
 test("la firma pública solo admite PNG base64", () => {
+  const validPng = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
   assert.equal(normalizeSignatureDataUrl(""), null);
-  assert.equal(
-    normalizeSignatureDataUrl("data:image/png;base64,iVBORw0KGgo="),
-    "data:image/png;base64,iVBORw0KGgo="
-  );
+  assert.equal(normalizeSignatureDataUrl(validPng), validPng);
   assert.throws(() => normalizeSignatureDataUrl("javascript:alert(1)"), /formato PNG válido/);
+  assert.throws(
+    () => normalizeSignatureDataUrl(`data:image/png;base64,${Buffer.from("<svg></svg>").toString("base64")}`),
+    /imagen PNG válida/
+  );
+  assert.throws(
+    () => normalizeSignatureDataUrl(`data:image/png;base64,${"A".repeat(250000)}`),
+    /límite máximo/
+  );
+});
+
+test("el admin no puede reescribir consentimiento ni firma legal", () => {
+  const fs = require("node:fs");
+  const path = require("node:path");
+  const source = fs.readFileSync(path.join(__dirname, "..", "lib", "db.js"), "utf8");
+  const start = source.indexOf("async function updateFichasAdmin");
+  const end = source.indexOf("// ============ GRUPOS", start);
+  const updateSource = source.slice(start, end);
+  assert.doesNotMatch(updateSource, /acepta_condiciones\s*=/);
+  assert.doesNotMatch(updateSource, /firma_storage_path\s*=/);
+  assert.doesNotMatch(updateSource, /row\.acepta_condiciones/);
+  assert.doesNotMatch(updateSource, /row\.firma_data_url/);
 });

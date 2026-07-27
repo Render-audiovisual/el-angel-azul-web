@@ -631,48 +631,50 @@
         const gallery = packageItem.gallery?.length ? packageItem.gallery.slice(0, 3) : [packageItem.image];
         const priceText = packageItem.precioDesde && packageItem.precioDesde !== "Consultar" ? packageItem.precioDesde : "Consultar";
         const includeItems = Array.isArray(packageItem.incluye) ? packageItem.incluye.slice(0, 3) : [];
+        const destination = escapeHtml(packageItem.destino);
+        const category = escapeHtml(packageItem.categoria);
         return `
           <article class="package-card turismo-package-card">
             <div class="package-image-wrap package-card-carousel" data-card-carousel data-carousel-index="0">
               <div class="package-carousel-track">
                 ${gallery.map((image, index) => `
-                  <img class="${index === 0 ? "active" : ""}" src="${image}" alt="${packageItem.destino} ${index + 1}" data-carousel-slide>
+                  <img class="${index === 0 ? "active" : ""}" src="${escapeHtml(safeMediaUrl(image))}" alt="${destination} ${index + 1}" data-carousel-slide>
                 `).join("")}
               </div>
-              <span data-categoria="${((packageItem.intenciones && packageItem.intenciones[0]) || "").toLowerCase()}">${packageItem.categoria}</span>
-              <button class="package-carousel-arrow package-carousel-prev" type="button" aria-label="Foto anterior de ${packageItem.destino}" data-carousel-prev>‹</button>
-              <button class="package-carousel-arrow package-carousel-next" type="button" aria-label="Foto siguiente de ${packageItem.destino}" data-carousel-next>›</button>
+              <span data-categoria="${escapeHtml(((packageItem.intenciones && packageItem.intenciones[0]) || "").toLowerCase())}">${category}</span>
+              <button class="package-carousel-arrow package-carousel-prev" type="button" aria-label="Foto anterior de ${destination}" data-carousel-prev>‹</button>
+              <button class="package-carousel-arrow package-carousel-next" type="button" aria-label="Foto siguiente de ${destination}" data-carousel-next>›</button>
               <div class="package-carousel-count" aria-hidden="true">1/${gallery.length}</div>
             </div>
             <div class="package-card-body">
               <div class="package-card-head">
-                <p class="package-meta">${packageItem.tipo} · ${packageItem.temporada}</p>
-                <h3>${packageItem.destino}</h3>
+                <p class="package-meta">${escapeHtml(packageItem.tipo)} · ${escapeHtml(packageItem.temporada)}</p>
+                <h3>${destination}</h3>
               </div>
               <div class="package-quick-info">
-                <span>${packageItem.duracion}</span>
-                <span>${packageItem.categoria}</span>
+                <span>${escapeHtml(packageItem.duracion)}</span>
+                <span>${category}</span>
               </div>
               ${packageItem.fechaSalida ? `
                 <p class="package-fecha-salida">
-                  ${packageItem.fechaSalida}${packageItem.fechaRegreso ? ` al ${packageItem.fechaRegreso}` : ""}
+                  ${escapeHtml(packageItem.fechaSalida)}${packageItem.fechaRegreso ? ` al ${escapeHtml(packageItem.fechaRegreso)}` : ""}
                   ${packageItem.salidaGarantizada ? `<span class="package-badge-garantizada">Salida garantizada</span>` : ""}
                 </p>
               ` : ""}
-              <p class="package-summary">${packageItem.resumen}</p>
-              <div class="package-price" aria-label="Precio desde ${priceText}">
+              <p class="package-summary">${escapeHtml(packageItem.resumen)}</p>
+              <div class="package-price" aria-label="Precio desde ${escapeHtml(priceText)}">
                 <span>Precio de referencia</span>
-                <strong>${priceText}</strong>
+                <strong>${escapeHtml(priceText)}</strong>
               </div>
               ${includeItems.length ? `<div class="package-includes" aria-label="Incluye">
                 <strong>Incluye</strong>
                 <div>
-                  ${includeItems.map((item) => `<span>${item}</span>`).join("")}
+                  ${includeItems.map((item) => `<span>${escapeHtml(item)}</span>`).join("")}
                 </div>
               </div>` : ""}
               <div class="package-actions">
-                <a href="#/turismo/${packageItem.slug}">Ver detalles</a>
-                <a class="package-whatsapp" href="${turismoWhatsappForPackage(packageItem)}" target="_blank" rel="noopener">WhatsApp</a>
+                <a href="#/turismo/${encodeURIComponent(String(packageItem.slug || ""))}">Ver detalles</a>
+                <a class="package-whatsapp" href="${escapeHtml(turismoWhatsappForPackage(packageItem))}" target="_blank" rel="noopener">WhatsApp</a>
               </div>
             </div>
           </article>
@@ -1028,10 +1030,10 @@
                   <p class="section-kicker">Fotos del destino</p>
                   <h2>Un vistazo al viaje</h2>
                 </div>
-                <img class="package-gallery-main" src="${gallery[0]}" alt="${escapeHtml(packageItem.destino)}">
+                <img class="package-gallery-main" src="${escapeHtml(safeMediaUrl(gallery[0]))}" alt="${escapeHtml(packageItem.destino)}">
                 <div class="package-gallery-strip">
                   ${gallery.slice(1).map((image, index) => `
-                    <img src="${image}" alt="${escapeHtml(packageItem.destino)} ${index + 2}">
+                    <img src="${escapeHtml(safeMediaUrl(image))}" alt="${escapeHtml(packageItem.destino)} ${index + 2}">
                   `).join("")}
                 </div>
               </section>
@@ -1199,6 +1201,18 @@
           .replace(/>/g, "&gt;")
           .replace(/"/g, "&quot;")
           .replace(/'/g, "&#039;");
+      }
+
+      function safeMediaUrl(value = "") {
+        const candidate = String(value || "").trim();
+        if (!candidate) return "";
+        if (/^(\/(?!\/)|assets\/)/i.test(candidate)) return candidate;
+        try {
+          const parsed = new URL(candidate);
+          return ["http:", "https:"].includes(parsed.protocol) ? parsed.href : "";
+        } catch (error) {
+          return "";
+        }
       }
 
       function loadAdminTurismoTrips() {
@@ -6702,11 +6716,26 @@
           const url = event.target.value.trim();
           const preview = document.getElementById("new-foto-preview");
           if (!preview) return;
-          if (url) {
-            preview.innerHTML = `<img src="${url}" alt="Preview" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class='admin-turismo-foto-error' style='display:none'>URL inválida</div>`;
-          } else {
-            preview.innerHTML = `<span>Preview</span>`;
+          preview.replaceChildren();
+          const safeUrl = safeMediaUrl(url);
+          if (!safeUrl) {
+            const message = document.createElement("span");
+            message.textContent = url ? "URL inválida" : "Preview";
+            preview.append(message);
+            return;
           }
+          const image = document.createElement("img");
+          image.src = safeUrl;
+          image.alt = "Preview";
+          const error = document.createElement("div");
+          error.className = "admin-turismo-foto-error";
+          error.textContent = "URL inválida";
+          error.style.display = "none";
+          image.addEventListener("error", () => {
+            image.style.display = "none";
+            error.style.display = "flex";
+          });
+          preview.append(image, error);
         });
 
         // --- Agregar foto ---
@@ -6714,7 +6743,7 @@
           const urlInput = document.getElementById("new-foto-url");
           const altInput = document.getElementById("new-foto-alt");
           if (!urlInput) return;
-          const url = urlInput.value.trim();
+          const url = safeMediaUrl(urlInput.value);
           if (!url) { urlInput.focus(); return; }
           const trip = normalizeAdminTurismoTrip(adminTurismoCurrentTrip());
           const newFoto = { url, alt: altInput?.value?.trim() || "", principal: trip.fotos.length === 0 };
