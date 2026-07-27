@@ -4071,8 +4071,7 @@
         align-self: start;
         background: #fbfdfe;
         order: 2;
-        position: sticky;
-        top: 88px;
+        position: static;
       }
 
 	      .inscripcion-context-summary ul {

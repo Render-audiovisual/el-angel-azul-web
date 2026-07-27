@@ -214,9 +214,14 @@ test("Inscripción mantiene las acciones estáticas al final del formulario", ()
   const actionRules = [...stylesSource.matchAll(/\.inscripcion-step-actions\s*\{([^}]*)\}/g)]
     .map((match) => match[1])
     .join("\n");
+  const summaryRules = [...stylesSource.matchAll(/\.inscripcion-context-summary\s*\{([^}]*)\}/g)]
+    .map((match) => match[1])
+    .join("\n");
   assert.match(actionRules, /position:\s*static;/);
   assert.match(actionRules, /width:\s*100%;/);
   assert.doesNotMatch(actionRules, /position:\s*(?:fixed|sticky);/);
   assert.doesNotMatch(actionRules, /(?:bottom|right|left):/);
+  assert.match(summaryRules, /position:\s*static;/);
+  assert.doesNotMatch(summaryRules, /position:\s*sticky;/);
   assert.doesNotMatch(appSource, /class="portal-empty public-inscripcion-card" data-reveal-light/);
 });
