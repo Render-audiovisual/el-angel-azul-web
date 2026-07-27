@@ -5741,7 +5741,12 @@
       .admin-fichas-assignment-grid {
         display: grid;
         column-gap: 12px;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-template-columns:
+          minmax(0, 0.82fr)
+          minmax(0, 1.45fr)
+          minmax(0, 1.08fr)
+          minmax(0, 0.95fr)
+          minmax(0, 1.1fr);
         row-gap: 10px;
       }
 

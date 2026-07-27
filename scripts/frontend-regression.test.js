@@ -126,4 +126,5 @@ test("el ícono de validación no comprime la etiqueta Estado sugerido", () => {
 test("los selectores de asignación respetan el ancho de su columna", () => {
   assert.match(stylesSource, /\.admin-fichas-assignment-grid label\s*\{[\s\S]*?min-width:\s*0;/);
   assert.match(stylesSource, /\.admin-fichas-assignment-grid select\s*\{[\s\S]*?min-width:\s*0;[\s\S]*?width:\s*100%;/);
+  assert.match(stylesSource, /grid-template-columns:\s*[\s\S]*?minmax\(0,\s*0\.82fr\)[\s\S]*?minmax\(0,\s*1\.45fr\)/);
 });
