@@ -6408,14 +6408,22 @@
                   <h1>Turismo web</h1>
                   <span>Administrá los destinos que se muestran en la web sin salir del panel.</span>
                 </div>
-                <button type="button" data-admin-new>Nuevo viaje</button>
               </div>
               <div class="admin-turismo-hero-stats">
-                <article><strong>${summary.total}</strong><span>Viajes cargados</span></article>
+                <article><strong>${summary.total}</strong><span>Cargados</span></article>
                 <article><strong>${summary.activos}</strong><span>Activos</span></article>
-                <article><strong>${summary.listo || 0}</strong><span>Listos para publicar</span></article>
-                <article><strong>${summary.publicado || 0}</strong><span>Publicados</span></article>
+                <article><strong>${summary.listo || 0}</strong><span>Listos</span></article>
+                <article><strong>${summary.activos}</strong><span>Visibles en web</span></article>
               </div>
+            </section>
+
+            <section class="admin-turismo-panel admin-turismo-create-panel">
+              <div>
+                <p>Nuevo contenido</p>
+                <h2>Crear un nuevo viaje</h2>
+                <span>Cargá el destino, sus fechas, precio y fotos. Podés guardarlo como borrador antes de activarlo en la web.</span>
+              </div>
+              <button type="button" data-admin-new>Nuevo viaje</button>
             </section>
 
             <section class="admin-turismo-panel admin-turismo-list-panel">

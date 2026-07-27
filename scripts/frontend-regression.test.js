@@ -137,7 +137,12 @@ test("Turismo usa tarjetas visuales y una sola acción para crear viajes", () =>
   assert.match(rowsSource, /data-admin-edit/);
   assert.match(rowsSource, /data-admin-delete/);
   assert.equal((contentSource.match(/data-admin-new/g) || []).length, 1);
+  assert.match(contentSource, /admin-turismo-create-panel/);
+  assert.match(contentSource, /\$\{summary\.activos\}<\/strong><span>Visibles en web/);
+  assert.doesNotMatch(contentSource, /\$\{summary\.publicado/);
   assert.doesNotMatch(contentSource, /admin-turismo-list-head/);
   assert.match(stylesSource, /\.admin-turismo-list\s*\{[\s\S]*?grid-template-columns:\s*repeat\(2,/);
   assert.match(stylesSource, /@media \(max-width:\s*760px\)[\s\S]*?\.admin-turismo-list\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0,\s*1fr\)/);
+  assert.match(stylesSource, /\.admin-turismo-create-panel > button\s*\{[\s\S]*?background:\s*#0d69a1;/);
+  assert.match(stylesSource, /\.admin-turismo-row-actions button:first-child\s*\{[\s\S]*?background:\s*#0d69a1;/);
 });

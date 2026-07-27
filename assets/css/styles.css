@@ -5364,7 +5364,8 @@
         gap: 5px;
         min-width: 0;
         min-height: 76px;
-        padding: 13px 14px;
+        overflow: hidden;
+        padding: 12px 8px;
       }
 
       .admin-turismo-hero-stats strong {
@@ -5380,19 +5381,22 @@
          palabras, no dentro de una. */
       .admin-turismo-hero-stats span {
         color: #4f6472;
-        font-size: 0.66rem;
+        font-size: 0.62rem;
         font-weight: 800;
         letter-spacing: 0.04em;
         line-height: 1.25;
         margin: 0;
-        overflow-wrap: normal;
+        max-width: 100%;
+        min-width: 0;
+        overflow-wrap: break-word;
         text-transform: uppercase;
+        width: 100%;
       }
 
-      .admin-turismo-hero-head > button {
+      .admin-turismo-create-panel > button {
         align-items: center;
-        background: linear-gradient(135deg, #0d69a1, #eb3e8f);
-        border-color: rgba(235, 62, 143, 0.88);
+        background: #0d69a1;
+        border-color: #0d69a1;
         color: #fff;
         display: inline-flex;
         font-weight: 800;
@@ -5403,6 +5407,47 @@
         padding-inline: 18px;
         text-align: center;
         white-space: nowrap;
+      }
+
+      .admin-turismo-create-panel {
+        align-items: center;
+        background: #f4f9fc;
+        border-color: #d6e6ef;
+        display: flex;
+        gap: 24px;
+        justify-content: space-between;
+        padding-block: 20px;
+      }
+
+      .admin-turismo-create-panel > div {
+        display: grid;
+        gap: 5px;
+        max-width: 62ch;
+        min-width: 0;
+      }
+
+      .admin-turismo-create-panel p,
+      .admin-turismo-create-panel h2 {
+        margin: 0;
+      }
+
+      .admin-turismo-create-panel p {
+        color: #0d69a1;
+        font-size: 0.7rem;
+        font-weight: 900;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .admin-turismo-create-panel h2 {
+        color: #10202b;
+        font-size: 1.08rem;
+      }
+
+      .admin-turismo-create-panel span {
+        color: #4f6472;
+        font-size: 0.84rem;
+        line-height: 1.45;
       }
 
       .admin-turismo-panel {
@@ -7783,12 +7828,23 @@
         flex: 1 1 130px;
       }
 
+      .admin-turismo-row-actions button:first-child {
+        background: #0d69a1;
+        border-color: #0d69a1;
+        color: #fff;
+      }
+
       @media (max-width: 760px) {
         .admin-turismo-hero-head {
           display: grid;
         }
 
-        .admin-turismo-hero-head > button {
+        .admin-turismo-create-panel {
+          align-items: stretch;
+          display: grid;
+        }
+
+        .admin-turismo-create-panel > button {
           justify-self: stretch;
           width: 100%;
         }
@@ -8240,8 +8296,8 @@
       .admin-turismo-row-actions button,
       .admin-turismo-action-buttons button {
         align-items: center;
-        background: linear-gradient(135deg, #0d69a1, #eb3e8f);
-        border-color: rgba(235, 62, 143, 0.9);
+        background: #0d69a1;
+        border-color: #0d69a1;
         color: #fff;
         display: inline-flex;
         font-weight: 800;
