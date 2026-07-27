@@ -176,7 +176,16 @@ const SCHEMA = {
   GRUPOS: ["id", "nivel", "viaje", "colegio", "curso", "division", "pasajeros_esperados", "estado", "created_at", "updated_at"],
   CONTRATOS: ["id", "codigo_contrato", "colegio_id", "colegio_nombre", "grupo_id", "nivel", "viaje", "curso", "division", "estado", "fecha_creacion", "observaciones", "created_at", "updated_at"],
   PASAJEROS: ["id", "grupo_id", "contrato_id", "codigo_contrato", "nombre", "dni", "nacimiento", "telefono", "responsable_nombre", "responsable_dni", "responsable_telefono", "vinculo", "responsable_cuil_cuit", "estado", "documentacion_estado", "ficha_medica_estado", "pago_estado", "observaciones", "created_at", "updated_at"],
-  FICHAS_ADHESION: ["id", "pasajero_dni", "pasajero_nombre", "responsable_nombre", "responsable_telefono", "nivel", "viaje", "colegio", "curso_division", "grupo_solicitado", "grupo_asignado_id", "contrato_id", "codigo_contrato", "estado_revision", "documentacion_estado", "ficha_medica_estado", "autorizacion_estado", "observaciones", "created_at", "updated_at"],
+  FICHAS_ADHESION: [
+    "id", "pasajero_dni", "pasajero_nombre", "pasajero_tipo_documento", "pasajero_nacimiento", "pasajero_sexo",
+    "responsable_nombre", "responsable_tipo_documento", "responsable_numero_documento", "responsable_nacimiento",
+    "responsable_parentesco", "responsable_email", "responsable_telefono", "responsable_celular", "responsable_cuil_cuit",
+    "domicilio_calle", "domicilio_numero", "domicilio_piso", "domicilio_departamento", "domicilio_localidad",
+    "domicilio_provincia", "domicilio_codigo_postal", "acepta_condiciones", "firma_data_url",
+    "nivel", "viaje", "colegio", "curso_division", "grupo_solicitado", "grupo_asignado_id", "contrato_id",
+    "codigo_contrato", "estado_revision", "documentacion_estado", "ficha_medica_estado", "autorizacion_estado",
+    "observaciones", "created_at", "updated_at"
+  ],
   PAGOS: ["id", "pasajero_id", "pasajero_dni", "contrato_codigo", "fecha", "monto", "medio", "estado", "cuota_id", "comprobante_url", "observaciones", "created_at"],
   CUOTAS: ["id", "pasajero_id", "pasajero_dni", "contrato_codigo", "numero", "nombre", "monto", "vencimiento", "estado", "created_at", "updated_at"],
   CONFIG: ["clave", "valor", "descripcion", "updated_at"],
@@ -512,7 +521,8 @@ const LONG_FIELD_LIMITS = {
   itinerario: 20000,
   fotos: 10000,
   descripcion_larga: 5000,
-  observaciones: 3000
+  observaciones: 3000,
+  firma_data_url: 250000
 };
 
 function fieldLimitFor(column) {

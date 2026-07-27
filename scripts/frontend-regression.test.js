@@ -47,3 +47,31 @@ test("Configuración queda bloqueada para cuentas de agente incluso por URL dire
   assert.match(source, /=== "admin"/);
   assert.match(appSource, /if \(!adminCanAccessPath\(path\)\)/);
 });
+
+test("las fichas preservan y vuelven a mostrar todos los datos del formulario", () => {
+  const encodeSource = functionSource("googleSheetsFichaRows", "downloadGoogleSheetSchemaCsv");
+  const decodeSource = functionSource("sheetFichaFromRow", "applyGoogleSheetsRows");
+  const detailSource = functionSource("renderAdminFichaDetail", "approveFichaAdhesionAndCreatePassenger");
+
+  for (const field of [
+    "pasajeroNacimiento",
+    "pasajeroSexo",
+    "responsableNumeroDocumento",
+    "responsableNacimiento",
+    "responsableParentesco",
+    "responsableEmail",
+    "responsableCuilCuit",
+    "domicilioCalle",
+    "domicilioLocalidad",
+    "domicilioProvincia",
+    "domicilioCodigoPostal",
+    "aceptaCondiciones"
+  ]) {
+    assert.match(encodeSource, new RegExp(field));
+    assert.match(detailSource, new RegExp(field));
+  }
+  assert.match(encodeSource, /firma_data_url/);
+  assert.match(decodeSource, /firma_data_url/);
+  assert.match(detailSource, /fichaSignatureDataUrl/);
+  assert.match(detailSource, /firmaRegistrada/);
+});

@@ -7,7 +7,8 @@ const {
   parseNumeric,
   parseDate,
   parseBool,
-  safeJsonArray
+  safeJsonArray,
+  normalizeSignatureDataUrl
 } = db.__test;
 
 test("los enums desconocidos fallan y los vacíos usan el default", () => {
@@ -41,4 +42,13 @@ test("los arrays JSON inválidos no borran datos en silencio", () => {
   assert.deepEqual(safeJsonArray("[1,2]", "fotos"), [1, 2]);
   assert.throws(() => safeJsonArray("{\"a\":1}", "fotos"), /lista JSON/);
   assert.throws(() => safeJsonArray("[", "fotos"), /JSON inválido/);
+});
+
+test("la firma pública solo admite PNG base64", () => {
+  assert.equal(normalizeSignatureDataUrl(""), null);
+  assert.equal(
+    normalizeSignatureDataUrl("data:image/png;base64,iVBORw0KGgo="),
+    "data:image/png;base64,iVBORw0KGgo="
+  );
+  assert.throws(() => normalizeSignatureDataUrl("javascript:alert(1)"), /formato PNG válido/);
 });

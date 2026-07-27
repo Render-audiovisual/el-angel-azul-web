@@ -2670,7 +2670,26 @@
           estado_revision: ficha.estadoRevision || ficha.estado || "pendiente",
           documentacion_estado: ficha.documentacionEstado || "Pendiente",
           ficha_medica_estado: ficha.fichaMedicaEstado || "Pendiente",
-          autorizacion_estado: ficha.autorizacionEstado || "Pendiente",
+          autorizacion_estado: ficha.firma ? "Sí" : (ficha.autorizacionEstado || "Pendiente"),
+          pasajero_tipo_documento: ficha.pasajeroTipoDocumento || "DNI",
+          pasajero_nacimiento: ficha.pasajeroNacimiento || "",
+          pasajero_sexo: ficha.pasajeroSexo || "",
+          responsable_tipo_documento: ficha.responsableTipoDocumento || "DNI",
+          responsable_numero_documento: ficha.responsableNumeroDocumento || ficha.responsableDni || "",
+          responsable_nacimiento: ficha.responsableNacimiento || "",
+          responsable_parentesco: ficha.responsableParentesco || ficha.vinculo || "",
+          responsable_email: ficha.responsableEmail || "",
+          responsable_celular: ficha.responsableCelular || ficha.domicilioCelular || "",
+          responsable_cuil_cuit: ficha.responsableCuilCuit || "",
+          domicilio_calle: ficha.domicilioCalle || "",
+          domicilio_numero: ficha.domicilioNumero || "",
+          domicilio_piso: ficha.domicilioPiso || "",
+          domicilio_departamento: ficha.domicilioDepartamento || "",
+          domicilio_localidad: ficha.domicilioLocalidad || "",
+          domicilio_provincia: ficha.domicilioProvincia || "",
+          domicilio_codigo_postal: ficha.domicilioCodigoPostal || "",
+          acepta_condiciones: ficha.aceptaCondiciones ? "true" : "false",
+          firma_data_url: ficha.firma || ficha.firmaDataUrl || "",
           observaciones: ficha.observaciones || "",
           created_at: ficha.createdAt || now,
           updated_at: ficha.updatedAt || ficha.createdAt || now
@@ -3088,6 +3107,26 @@
           documentacionEstado: row.documentacion_estado || "Pendiente",
           fichaMedicaEstado: row.ficha_medica_estado || "Pendiente",
           autorizacionEstado: row.autorizacion_estado || "Pendiente",
+          pasajeroTipoDocumento: row.pasajero_tipo_documento || "DNI",
+          pasajeroNacimiento: row.pasajero_nacimiento || "",
+          pasajeroSexo: row.pasajero_sexo || "",
+          responsableTipoDocumento: row.responsable_tipo_documento || "DNI",
+          responsableNumeroDocumento: row.responsable_numero_documento || "",
+          responsableNacimiento: row.responsable_nacimiento || "",
+          responsableParentesco: row.responsable_parentesco || "",
+          responsableEmail: row.responsable_email || "",
+          responsableCelular: row.responsable_celular || "",
+          responsableCuilCuit: row.responsable_cuil_cuit || "",
+          domicilioCalle: row.domicilio_calle || "",
+          domicilioNumero: row.domicilio_numero || "",
+          domicilioPiso: row.domicilio_piso || "",
+          domicilioDepartamento: row.domicilio_departamento || "",
+          domicilioLocalidad: row.domicilio_localidad || "",
+          domicilioProvincia: row.domicilio_provincia || "",
+          domicilioCodigoPostal: row.domicilio_codigo_postal || "",
+          aceptaCondiciones: String(row.acepta_condiciones || "").toLowerCase() === "true",
+          firma: row.firma_data_url || "",
+          firmaRegistrada: Boolean(row.firma_data_url),
           observaciones: row.observaciones || "",
           contratoId: row.contrato_id || "",
           codigoContrato: row.codigo_contrato || "",
@@ -3397,6 +3436,11 @@
         `;
       }
 
+      function fichaSignatureDataUrl(ficha = {}) {
+        const value = String(ficha.firma || ficha.firmaDataUrl || "");
+        return /^data:image\/png;base64,[a-z0-9+/=]+$/i.test(value) ? value : "";
+      }
+
       function renderFichaAssignmentControls(ficha) {
         const context = fichaAssignmentContext(ficha);
         const levelOptions = uniqueValues(adminPasajerosDemo, "nivel");
@@ -3652,7 +3696,8 @@
         const pasajeroNombre = ficha.pasajeroNombre || "";
         const responsableNombre = ficha.responsableNombre || "";
         const fichaMedica = normalizeYesNoStatus(ficha.fichaMedicaEstado || ficha.fichaMedica || ficha.documentacionEstado);
-        const fichaAdhesion = normalizeYesNoStatus(ficha.autorizacionEstado || ficha.firma || ficha.documentacionEstado || "Sí");
+        const fichaAdhesion = normalizeYesNoStatus(ficha.firma || ficha.autorizacionEstado || ficha.documentacionEstado || "Sí");
+        const signatureDataUrl = fichaSignatureDataUrl(ficha);
         const estadoRevision = ficha.estadoRevision || "pendiente";
         const estadoClass = estadoRevision === "aprobada" ? "is-ok" : ["rechazada", "duplicada"].includes(estadoRevision) ? "is-alert" : "is-pending";
         const assignmentColumn = estadoRevision === "aprobada" ? renderFichaApprovedColumn(ficha) : `
@@ -3690,8 +3735,10 @@
                 <dl>
                   ${renderFichaValue("Nombre", fichaStudentFirstName(pasajeroNombre))}
                   ${renderFichaValue("Apellido", fichaStudentLastName(pasajeroNombre))}
+                  ${renderFichaValue("Tipo de documento", ficha.pasajeroTipoDocumento)}
                   ${renderFichaValue("DNI", ficha.pasajeroNumeroDocumento || ficha.pasajeroDni)}
                   ${renderFichaValue("Nacimiento", ficha.pasajeroNacimiento)}
+                  ${renderFichaValue("Sexo", ficha.pasajeroSexo)}
                   ${renderFichaValue("Colegio", group.colegio || ficha.colegio)}
                   ${renderFichaValue("Curso", group.curso || ficha.curso)}
                   ${renderFichaValue("División", group.division || ficha.division)}
@@ -3704,14 +3751,42 @@
                 <dl>
                   ${renderFichaValue("Nombre", fichaStudentFirstName(responsableNombre))}
                   ${renderFichaValue("Apellido", fichaStudentLastName(responsableNombre))}
-                  ${renderFichaValue("Teléfono", ficha.responsableCelular || ficha.domicilioCelular || ficha.responsableTelefono || ficha.domicilioTelefono)}
+                  ${renderFichaValue("Tipo de documento", ficha.responsableTipoDocumento)}
+                  ${renderFichaValue("DNI", ficha.responsableNumeroDocumento || ficha.responsableDni)}
+                  ${renderFichaValue("Nacimiento", ficha.responsableNacimiento)}
+                  ${renderFichaValue("Parentesco", ficha.responsableParentesco || ficha.vinculo)}
+                  ${renderFichaValue("Correo", ficha.responsableEmail)}
+                  ${renderFichaValue("Teléfono", ficha.responsableTelefono || ficha.domicilioTelefono)}
+                  ${renderFichaValue("Celular", ficha.responsableCelular || ficha.domicilioCelular)}
+                  ${renderFichaValue("CUIL/CUIT", ficha.responsableCuilCuit)}
                 </dl>
                 <h3>Documentación</h3>
                 <dl class="admin-fichas-doc-grid">
                   ${renderFichaValue("Ficha médica", fichaMedica)}
                   ${renderFichaValue("Ficha de adhesión", fichaAdhesion)}
+                  ${renderFichaValue("Condiciones aceptadas", ficha.aceptaCondiciones ? "Sí" : "")}
+                  ${renderFichaValue("Firma registrada", ficha.firmaRegistrada || ficha.firma ? "Sí" : "")}
                 </dl>
+                ${signatureDataUrl ? `
+                  <div class="admin-fichas-signature-preview">
+                    <span>Firma del responsable</span>
+                    <img src="${escapeHtml(signatureDataUrl)}" alt="Firma registrada del responsable">
+                  </div>
+                ` : ""}
                 ${ficha.motivoRechazo ? `<p class="admin-fichas-reject-note"><strong>Motivo rechazo:</strong> ${escapeHtml(ficha.motivoRechazo)}</p>` : ""}
+              </article>
+
+              <article class="admin-fichas-detail-card">
+                <h3>Domicilio declarado</h3>
+                <dl>
+                  ${renderFichaValue("Calle", ficha.domicilioCalle)}
+                  ${renderFichaValue("Número", ficha.domicilioNumero)}
+                  ${renderFichaValue("Piso", ficha.domicilioPiso)}
+                  ${renderFichaValue("Departamento", ficha.domicilioDepartamento)}
+                  ${renderFichaValue("Localidad", ficha.domicilioLocalidad)}
+                  ${renderFichaValue("Provincia", ficha.domicilioProvincia)}
+                  ${renderFichaValue("Código postal", ficha.domicilioCodigoPostal)}
+                </dl>
               </article>
 
               ${assignmentColumn}
