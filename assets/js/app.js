@@ -1927,7 +1927,14 @@
                       <input class="admin-turismo-foto-url" name="foto_url_${index}" value="${escapeHtml(photo.url)}" placeholder="https://... URL de la imagen" data-foto-index="${index}">
                       <input name="foto_alt_${index}" value="${escapeHtml(photo.alt || "")}" placeholder="Descripción de la foto (opcional)">
                       <label class="admin-turismo-foto-principal">
-                        <input type="radio" name="fotoPrincipal" value="${index}" ${photo.principal ? "checked" : ""}> Principal
+                        <input type="radio" name="fotoPrincipal" value="${index}" ${photo.principal ? "checked" : ""}>
+                        <span class="admin-turismo-selection-icon" aria-hidden="true">
+                          <svg viewBox="0 0 24 24"><path d="m9.2 16.4-4.1-4.1 1.5-1.5 2.6 2.6 8.2-8.2 1.5 1.5-9.7 9.7Z"/></svg>
+                        </span>
+                        <span class="admin-turismo-selection-copy">
+                          <strong>Foto principal</strong>
+                          <small>Usar como portada del viaje</small>
+                        </span>
                       </label>
                     </div>
                     <button type="button" class="admin-turismo-foto-remove" data-remove-foto="${index}" aria-label="Quitar foto">×</button>
@@ -1986,9 +1993,12 @@
                 <legend>Categorías</legend>
                 <div class="admin-turismo-category-grid">
                   ${adminTurismoCategories.map(([value, label]) => `
-                    <label class="admin-turismo-check">
+                    <label class="admin-turismo-category-option">
                       <input name="categorias" type="checkbox" value="${value}" ${selectedCategories.includes(value) ? "checked" : ""}>
-                      <span>${label}</span>
+                      <span class="admin-turismo-selection-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="m9.2 16.4-4.1-4.1 1.5-1.5 2.6 2.6 8.2-8.2 1.5 1.5-9.7 9.7Z"/></svg>
+                      </span>
+                      <span class="admin-turismo-category-label">${label}</span>
                     </label>
                   `).join("")}
                 </div>

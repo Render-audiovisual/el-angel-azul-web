@@ -146,3 +146,15 @@ test("Turismo usa tarjetas visuales y una sola acción para crear viajes", () =>
   assert.match(stylesSource, /\.admin-turismo-create-panel > button\s*\{[\s\S]*?background:\s*#0d69a1;/);
   assert.match(stylesSource, /\.admin-turismo-row-actions button:first-child\s*\{[\s\S]*?background:\s*#0d69a1;/);
 });
+
+test("los selectores de Turismo conservan inputs nativos con una interfaz propia", () => {
+  const formSource = functionSource("renderAdminTurismoForm", "adminIconSvg");
+  assert.match(formSource, /type="radio" name="fotoPrincipal"/);
+  assert.match(formSource, /admin-turismo-foto-principal/);
+  assert.match(formSource, /name="categorias" type="checkbox"/);
+  assert.match(formSource, /admin-turismo-category-option/);
+  assert.match(formSource, /admin-turismo-selection-icon/);
+  assert.match(stylesSource, /\.admin-turismo-category-option:has\(input:checked\)/);
+  assert.match(stylesSource, /\.admin-turismo-form \.admin-turismo-foto-principal:has\(input:checked\)/);
+  assert.match(stylesSource, /\.admin-turismo-category-option input,[\s\S]*?\.admin-turismo-foto-principal input\s*\{[\s\S]*?position:\s*absolute;/);
+});
