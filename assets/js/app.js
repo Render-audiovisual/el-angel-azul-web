@@ -498,6 +498,20 @@
         return adminTurismoCategories.find(([value]) => value === category)?.[1] || "Turismo";
       }
 
+      function turismoDisplayPrice(value, currency = "ARS") {
+        const raw = String(value || "").trim();
+        if (!raw) return "";
+        if (/[A-Za-z$]/.test(raw)) return raw;
+        const numeric = Number(raw);
+        if (!Number.isFinite(numeric)) return raw;
+        const formatted = new Intl.NumberFormat("es-AR", {
+          maximumFractionDigits: Number.isInteger(numeric) ? 0 : 2
+        }).format(numeric);
+        if (currency === "ARS") return `$${formatted}`;
+        if (currency === "USD") return `USD ${formatted}`;
+        return formatted;
+      }
+
       function adminTripToPublicPackage(adminTrip) {
         if (!adminTrip || adminTrip.estado !== "activo") return null;
         if (!adminTrip.slug || !adminTrip.destino) return null;
@@ -508,6 +522,7 @@
         const firstCategory = categories[0] || "turismo";
         const title = adminTrip.titulo || adminTrip.destino || "Viaje";
         const image = principalPhoto?.url || turismoFallbackPackages()[0]?.image;
+        const visiblePrice = turismoDisplayPrice(adminTrip.precioDesde, adminTrip.moneda);
         return {
           id: adminTrip.id,
           slug: adminTrip.slug,
@@ -527,8 +542,8 @@
           noIncluye: Array.isArray(adminTrip.noIncluye) ? adminTrip.noIncluye : [],
           formasPago: Array.isArray(adminTrip.formasPago) && adminTrip.formasPago.length ? adminTrip.formasPago : ["Efectivo / transferencia", "Financiacion a consultar", "Reserva sujeta a disponibilidad"],
           itinerario: Array.isArray(adminTrip.itinerario) ? adminTrip.itinerario : [],
-          precio: adminTrip.precioDesde || "Consultar disponibilidad",
-          precioDesde: adminTrip.precioDesde || "Consultar",
+          precio: visiblePrice || "Consultar disponibilidad",
+          precioDesde: visiblePrice || "Consultar",
           precioValor: adminTrip.precioValor,
           precioBaseDoble: adminTrip.precioBaseDoble || "",
           suplementoSingle: adminTrip.suplementoSingle || "",
@@ -1206,15 +1221,53 @@
         const config = window.ElAngelAzulPersistence.readGoogleSheetsConfig();
         if (!config.enabled || !config.endpoint) {
           adminTurismoSaveFeedback = { ok: false, message: "Guardado solo en este navegador. La base de datos no está conectada." };
-          return;
+          return false;
         }
         try {
           const rows = googleSheetsTurismoRows(new Date().toISOString());
           await window.ElAngelAzulPersistence.writeGoogleSheetRows("TURISMO", rows, deleteIds);
           adminTurismoSaveFeedback = { ok: true, message: `Guardado en la base de datos: ${rows.length} ${rows.length === 1 ? "viaje" : "viajes"}.` };
           turismoPublicPackagesCache = null;
+          return true;
         } catch (error) {
           adminTurismoSaveFeedback = { ok: false, message: `No se pudo guardar en la base de datos: ${error.message || "error desconocido"}.` };
+          return false;
+        }
+      }
+
+      async function importAdminTurismoPublicDefaults() {
+        if (adminTurismoTrips.length) {
+          window.alert("La importación inicial solo está disponible cuando Turismo está vacío.");
+          return;
+        }
+        const previousTrips = adminTurismoTrips;
+        try {
+          const response = await fetch(`/${TURISMO_PUBLIC_JSON_URL}`, { cache: "no-store" });
+          if (!response.ok) throw new Error("No se pudieron leer los viajes públicos actuales.");
+          const sourceTrips = await response.json();
+          const activeTrips = Array.isArray(sourceTrips)
+            ? sourceTrips.filter((trip) => trip?.estado === "activo")
+            : [];
+          if (activeTrips.length !== 2 || !activeTrips.some((trip) => trip.destino === "Bariloche") || !activeTrips.some((trip) => trip.destino === "Brasil")) {
+            throw new Error("La fuente pública no contiene exactamente Bariloche y Brasil activos.");
+          }
+          adminTurismoTrips = activeTrips.map((trip) => normalizeAdminTurismoTrip({
+            ...trip,
+            precioDesde: trip.precioValor == null ? "" : String(trip.precioValor)
+          }));
+          adminTurismoEditingId = adminTurismoTrips[0]?.id || null;
+          adminTurismoEditorOpen = false;
+          const saved = await saveAdminTurismoTripsWithFeedback();
+          if (!saved) throw new Error(adminTurismoSaveFeedback?.message || "No se pudo guardar la importación.");
+          renderAdminTurismo();
+          window.alert("Bariloche y Brasil se importaron correctamente a la base de Turismo.");
+        } catch (error) {
+          adminTurismoTrips = previousTrips;
+          adminTurismoEditingId = null;
+          adminTurismoEditorOpen = false;
+          localStorage.setItem(ADMIN_TURISMO_STORAGE_KEY, JSON.stringify(previousTrips, null, 2));
+          renderAdminTurismo();
+          window.alert(error.message || "No se pudo completar la importación.");
         }
       }
 
@@ -1735,6 +1788,9 @@
                 <strong>Todavía no hay viajes cargados</strong>
                 <span>Creá un viaje nuevo para empezar la carga.</span>
               </div>
+              <button type="button" class="admin-turismo-primary-button" data-admin-import-public-trips>
+                Importar Bariloche y Brasil
+              </button>
             </article>
           `;
         }
@@ -6327,6 +6383,10 @@
       }
 
       function bindAdminTurismo() {
+        document.querySelector("[data-admin-import-public-trips]")?.addEventListener("click", () => {
+          importAdminTurismoPublicDefaults();
+        });
+
         document.querySelectorAll("[data-admin-edit], [data-admin-preview]").forEach((button) => {
           button.addEventListener("click", () => {
             adminTurismoEditingId = button.dataset.adminEdit || button.dataset.adminPreview;
