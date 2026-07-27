@@ -3922,8 +3922,15 @@
         return String(value || "").trim();
       }
 
+      function normalizeFichaSearchText(value) {
+        return normalizeText(value)
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toLowerCase();
+      }
+
       function fichaMatchesText(ficha, search) {
-        const needle = normalizeText(search);
+        const needle = normalizeFichaSearchText(search);
         if (!needle) return true;
         return [
           ficha.pasajeroNombre,
@@ -3932,7 +3939,7 @@
           ficha.responsableNombre,
           ficha.responsableTelefono,
           ficha.responsableCelular
-        ].some((value) => normalizeText(value).includes(needle));
+        ].some((value) => normalizeFichaSearchText(value).includes(needle));
       }
 
       function fichaFilterValue(ficha, field) {

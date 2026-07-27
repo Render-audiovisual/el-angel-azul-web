@@ -95,6 +95,15 @@ test("la búsqueda de fichas conserva foco, cursor y scroll", () => {
   assert.match(source, /window\.scrollTo\(scrollX, scrollY\)/);
 });
 
+test("la búsqueda de fichas ignora mayúsculas y acentos", () => {
+  const normalizeSource = functionSource("normalizeFichaSearchText", "fichaMatchesText");
+  const matchSource = functionSource("fichaMatchesText", "fichaFilterValue");
+  assert.match(normalizeSource, /\.normalize\("NFD"\)/);
+  assert.match(normalizeSource, /\.toLowerCase\(\)/);
+  assert.match(matchSource, /normalizeFichaSearchText\(search\)/);
+  assert.match(matchSource, /normalizeFichaSearchText\(value\)\.includes\(needle\)/);
+});
+
 test("la búsqueda es global y cada fila permite abrir o descargar su propia ficha", () => {
   const renderSource = functionSource("renderAdminFichasRecibidas", "renderAdminPasajeros");
   const rowsSource = functionSource("fichaAdhesionDemoRows", "parseAdminMoney");
@@ -112,4 +121,9 @@ test("la plantilla PDF usa una ruta absoluta válida desde cualquier entrada adm
 test("el ícono de validación no comprime la etiqueta Estado sugerido", () => {
   assert.match(stylesSource, /\.admin-fichas-approval-checklist li > span\s*\{/);
   assert.doesNotMatch(stylesSource, /\.admin-fichas-approval-checklist span\s*\{/);
+});
+
+test("los selectores de asignación respetan el ancho de su columna", () => {
+  assert.match(stylesSource, /\.admin-fichas-assignment-grid label\s*\{[\s\S]*?min-width:\s*0;/);
+  assert.match(stylesSource, /\.admin-fichas-assignment-grid select\s*\{[\s\S]*?min-width:\s*0;[\s\S]*?width:\s*100%;/);
 });
