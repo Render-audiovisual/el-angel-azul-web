@@ -104,6 +104,29 @@ test("la búsqueda de fichas ignora mayúsculas y acentos", () => {
   assert.match(matchSource, /normalizeFichaSearchText\(value\)\.includes\(needle\)/);
 });
 
+test("los buscadores de Grupos y Contratos ignoran mayúsculas y conservan el foco", () => {
+  const contractsFilterSource = functionSource("adminContratosFilteredRows", "renderAdminContratosRows");
+  const contractsBindSource = functionSource("bindAdminContratos", "adminGruposFilteredRows");
+  const groupsFilterSource = functionSource("adminGruposFilteredRows", "renderAdminGruposRows");
+  const groupsBindSource = functionSource("bindAdminGrupos", "bindAdminPasajeros");
+
+  for (const source of [contractsFilterSource, groupsFilterSource]) {
+    assert.match(source, /normalizeFichaSearchText/);
+    assert.doesNotMatch(source, /const search = normalizeText/);
+  }
+  for (const source of [contractsBindSource, groupsBindSource]) {
+    assert.match(source, /selectionStart/);
+    assert.match(source, /focus\(\{ preventScroll: true \}\)/);
+    assert.match(source, /setSelectionRange/);
+    assert.match(source, /window\.scrollTo\(scrollX, scrollY\)/);
+  }
+});
+
+test("el buscador de Pasajeros ignora mayúsculas y acentos", () => {
+  const source = functionSource("adminPasajerosFilteredRows", "adminPasajerosSelectedRecord");
+  assert.match(source, /normalizeText:\s*normalizeFichaSearchText/);
+});
+
 test("la búsqueda es global y cada fila permite abrir o descargar su propia ficha", () => {
   const renderSource = functionSource("renderAdminFichasRecibidas", "renderAdminPasajeros");
   const rowsSource = functionSource("fichaAdhesionDemoRows", "parseAdminMoney");

@@ -4525,7 +4525,7 @@
           colegio: adminPasajerosFilterColegio,
           curso: adminPasajerosFilterCurso,
           estado: adminPasajerosFilterEstado,
-          normalizeText
+          normalizeText: normalizeFichaSearchText
         });
       }
 
@@ -5255,13 +5255,13 @@
       }
 
       function adminContratosFilteredRows() {
-        const search = normalizeText(adminContratosSearch);
+        const search = normalizeFichaSearchText(adminContratosSearch);
         return adminContratosRows().filter((contract) => {
           const matchesNivel = !adminContratosFilterNivel || contract.nivel === adminContratosFilterNivel;
           const matchesViaje = !adminContratosFilterViaje || contract.viaje === adminContratosFilterViaje;
           const matchesColegio = !adminContratosFilterColegio || contract.colegio_nombre === adminContratosFilterColegio;
           const matchesEstado = !adminContratosFilterEstado || contract.estado === adminContratosFilterEstado;
-          const haystack = normalizeText([
+          const haystack = normalizeFichaSearchText([
             contract.codigo_contrato,
             contract.id,
             contract.colegio_nombre,
@@ -5541,7 +5541,23 @@
           renderAdminContratos();
         };
         filters.querySelectorAll("select").forEach((field) => field.addEventListener("change", handleFilter));
-        filters.querySelector("input[name='search']")?.addEventListener("input", handleFilter);
+        filters.querySelector("input[name='search']")?.addEventListener("input", (event) => {
+          const input = event.currentTarget;
+          const selectionStart = input.selectionStart;
+          const selectionEnd = input.selectionEnd;
+          const scrollX = window.scrollX;
+          const scrollY = window.scrollY;
+          handleFilter();
+          requestAnimationFrame(() => {
+            const nextInput = document.querySelector("[data-admin-contratos-filters] input[name='search']");
+            if (!nextInput) return;
+            nextInput.focus({ preventScroll: true });
+            if (selectionStart !== null && selectionEnd !== null) {
+              nextInput.setSelectionRange(selectionStart, selectionEnd);
+            }
+            window.scrollTo(scrollX, scrollY);
+          });
+        });
         document.querySelectorAll("[data-admin-contrato-edit]").forEach((button) => {
           button.addEventListener("click", () => openAdminContratoEdit(button.dataset.adminContratoEdit || ""));
         });
@@ -5558,12 +5574,12 @@
       }
 
       function adminGruposFilteredRows() {
-        const search = normalizeText(adminGruposSearch);
+        const search = normalizeFichaSearchText(adminGruposSearch);
         return adminPasajerosDemo.filter((group) => {
           const matchesNivel = !adminGruposFilterNivel || group.nivel === adminGruposFilterNivel;
           const matchesViaje = !adminGruposFilterViaje || group.viaje === adminGruposFilterViaje;
           const matchesColegio = !adminGruposFilterColegio || group.colegio === adminGruposFilterColegio;
-          const haystack = normalizeText([
+          const haystack = normalizeFichaSearchText([
             group.id,
             group.nivel,
             group.viaje,
@@ -5849,7 +5865,23 @@
           renderAdminGrupos();
         };
         filters.querySelectorAll("select").forEach((field) => field.addEventListener("change", handleFilter));
-        filters.querySelector("input[name='search']")?.addEventListener("input", handleFilter);
+        filters.querySelector("input[name='search']")?.addEventListener("input", (event) => {
+          const input = event.currentTarget;
+          const selectionStart = input.selectionStart;
+          const selectionEnd = input.selectionEnd;
+          const scrollX = window.scrollX;
+          const scrollY = window.scrollY;
+          handleFilter();
+          requestAnimationFrame(() => {
+            const nextInput = document.querySelector("[data-admin-grupos-filters] input[name='search']");
+            if (!nextInput) return;
+            nextInput.focus({ preventScroll: true });
+            if (selectionStart !== null && selectionEnd !== null) {
+              nextInput.setSelectionRange(selectionStart, selectionEnd);
+            }
+            window.scrollTo(scrollX, scrollY);
+          });
+        });
       }
 
       function bindAdminPasajeros() {
