@@ -128,3 +128,16 @@ test("los selectores de asignación respetan el ancho de su columna", () => {
   assert.match(stylesSource, /\.admin-fichas-assignment-grid select\s*\{[\s\S]*?min-width:\s*0;[\s\S]*?width:\s*100%;/);
   assert.match(stylesSource, /grid-template-columns:\s*[\s\S]*?minmax\(0,\s*0\.82fr\)[\s\S]*?minmax\(0,\s*1\.45fr\)/);
 });
+
+test("Turismo usa tarjetas visuales y una sola acción para crear viajes", () => {
+  const rowsSource = functionSource("renderAdminTurismoTripRows", "renderAdminTurismoForm");
+  const contentSource = functionSource("renderAdminTurismoContent", "renderAdminTurismo");
+  assert.match(rowsSource, /admin-turismo-trip-cover/);
+  assert.match(rowsSource, /adminTurismoCoverPhoto/);
+  assert.match(rowsSource, /data-admin-edit/);
+  assert.match(rowsSource, /data-admin-delete/);
+  assert.equal((contentSource.match(/data-admin-new/g) || []).length, 1);
+  assert.doesNotMatch(contentSource, /admin-turismo-list-head/);
+  assert.match(stylesSource, /\.admin-turismo-list\s*\{[\s\S]*?grid-template-columns:\s*repeat\(2,/);
+  assert.match(stylesSource, /@media \(max-width:\s*760px\)[\s\S]*?\.admin-turismo-list\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0,\s*1fr\)/);
+});

@@ -1800,17 +1800,34 @@
           `;
         }
         return adminTurismoTrips.slice().sort((a, b) => a.orden - b.orden).map((trip) => {
-          const readiness = adminTurismoReadiness(trip);
+          const normalizedTrip = normalizeAdminTurismoTrip(trip);
+          const readiness = adminTurismoReadiness(normalizedTrip);
+          const cover = adminTurismoCoverPhoto(normalizedTrip);
+          const metadata = [
+            normalizedTrip.duracion,
+            normalizedTrip.temporada,
+            normalizedTrip.precioDesde
+          ].filter(Boolean);
           return `
-          <article class="admin-turismo-row${trip.id === adminTurismoEditingId ? " selected" : ""}">
-            <div>
-              <strong>${escapeHtml(trip.destino || "Sin destino")}</strong>
-              <span>${escapeHtml(trip.titulo || "Sin título comercial")}</span>
+          <article class="admin-turismo-row admin-turismo-trip-card${trip.id === adminTurismoEditingId ? " selected" : ""}">
+            <div class="admin-turismo-trip-cover">
+              ${cover
+                ? `<img src="${escapeHtml(cover.url)}" alt="${escapeHtml(cover.alt || normalizedTrip.destino || normalizedTrip.titulo)}">`
+                : `<div class="admin-turismo-trip-cover-placeholder" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" role="img"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5L21 16Z"/></svg>
+                  </div>`}
+              <span class="admin-turismo-status ${escapeHtml(readiness.key)}">${escapeHtml(readiness.label)}</span>
             </div>
-            <span class="admin-turismo-status ${escapeHtml(readiness.key)}">${escapeHtml(readiness.label)}</span>
-            <div class="admin-turismo-row-actions">
-              <button type="button" data-admin-edit="${trip.id}">Editar</button>
-              <button type="button" data-admin-delete="${trip.id}">Eliminar</button>
+            <div class="admin-turismo-trip-body">
+              <div class="admin-turismo-trip-copy">
+                <p>${escapeHtml(normalizedTrip.destino || "Destino pendiente")}</p>
+                <h3>${escapeHtml(normalizedTrip.titulo || "Sin título comercial")}</h3>
+                <span>${escapeHtml(metadata.join(" · ") || "Completá duración, temporada y precio")}</span>
+              </div>
+              <div class="admin-turismo-row-actions">
+                <button type="button" data-admin-edit="${trip.id}">Editar viaje</button>
+                <button type="button" data-admin-delete="${trip.id}">Eliminar</button>
+              </div>
             </div>
           </article>
         `;
@@ -6381,21 +6398,17 @@
 
             ${renderAdminTurismoPrimaryActions(trip)}
             ${renderAdminTurismoSidePanel(trip)}
-        ` : `
-            <section class="admin-turismo-panel admin-turismo-empty-editor">
-              <div>
-                <p>Editor</p>
-                <h2>Seleccioná un viaje o creá uno nuevo</h2>
-                <span>La lista queda primero para operar rápido. El formulario aparece solo en modo edición.</span>
-              </div>
-              <button type="button" data-admin-new>Crear nuevo viaje</button>
-            </section>
-        `;
+        ` : "";
         return `
           <div class="admin-turismo-layout">
             <section class="admin-turismo-hero">
-              <div>
-                <h1>Admin Turismo</h1>
+              <div class="admin-turismo-hero-head">
+                <div class="admin-turismo-hero-copy">
+                  <p>Contenido público</p>
+                  <h1>Turismo web</h1>
+                  <span>Administrá los destinos que se muestran en la web sin salir del panel.</span>
+                </div>
+                <button type="button" data-admin-new>Nuevo viaje</button>
               </div>
               <div class="admin-turismo-hero-stats">
                 <article><strong>${summary.total}</strong><span>Viajes cargados</span></article>
@@ -6403,23 +6416,17 @@
                 <article><strong>${summary.listo || 0}</strong><span>Listos para publicar</span></article>
                 <article><strong>${summary.publicado || 0}</strong><span>Publicados</span></article>
               </div>
-              <button type="button" data-admin-new>Crear nuevo viaje</button>
             </section>
 
             <section class="admin-turismo-panel admin-turismo-list-panel">
               <div class="admin-turismo-section-head">
                 <div>
-                  <p>Lista de viajes</p>
-                  <h2>Viajes cargados</h2>
+                  <p>Biblioteca de viajes</p>
+                  <h2>Destinos cargados</h2>
                 </div>
-                <button type="button" data-admin-new>Crear nuevo</button>
+                <span class="admin-turismo-list-count"><strong>${summary.total}</strong> viaje${summary.total === 1 ? "" : "s"}</span>
               </div>
               <div class="admin-turismo-list">
-                <div class="admin-turismo-list-head">
-                  <span>Viaje</span>
-                  <span>Estado</span>
-                  <span>Acciones</span>
-                </div>
                 ${renderAdminTurismoTripRows()}
               </div>
             </section>

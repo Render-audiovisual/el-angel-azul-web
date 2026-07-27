@@ -5271,9 +5271,9 @@
       .admin-turismo-layout {
         color: #10202b;
         display: grid;
-        gap: 44px;
+        gap: 22px;
         margin-inline: auto;
-        max-width: 960px;
+        max-width: 1080px;
         width: 100%;
       }
 
@@ -5282,13 +5282,7 @@
       }
 
       .admin-turismo-layout > .admin-turismo-panel::before {
-        background: #d9e7ef;
-        content: "";
-        height: 1px;
-        left: 24px;
-        position: absolute;
-        right: 24px;
-        top: -22px;
+        display: none;
       }
 
       .admin-turismo-layout > .admin-turismo-panel:first-of-type::before {
@@ -5297,14 +5291,17 @@
 
       .admin-turismo-hero {
         align-items: start;
-        background: #ffffff;
-        border: 1px solid #e2ebef;
-        border-radius: 16px;
-        box-shadow: none;
+        background:
+          radial-gradient(circle at 88% 18%, rgba(235, 62, 143, 0.11), transparent 28%),
+          linear-gradient(145deg, #f7fbfe 0%, #ffffff 58%, #fff8fc 100%);
+        border: 1px solid #dce8ef;
+        border-radius: 20px;
+        box-shadow: 0 14px 34px rgba(34, 57, 78, 0.06);
         color: #10202b;
         display: grid;
-        gap: 22px;
-        padding: 26px;
+        gap: 20px;
+        overflow: hidden;
+        padding: 24px;
       }
 
       .admin-turismo-layout > .admin-turismo-hero:first-child {
@@ -5322,6 +5319,26 @@
         line-height: 1.08;
       }
 
+      .admin-turismo-hero-head {
+        align-items: start;
+        display: flex;
+        gap: 24px;
+        justify-content: space-between;
+      }
+
+      .admin-turismo-hero-copy {
+        display: grid;
+        gap: 7px;
+      }
+
+      .admin-turismo-hero-copy > p {
+        color: #0d69a1;
+        font-size: 0.72rem;
+        font-weight: 900;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+      }
+
       .admin-turismo-hero span {
         color: #4f6472;
         display: block;
@@ -5334,22 +5351,20 @@
       .admin-turismo-hero-stats {
         align-items: stretch;
         display: grid;
-        gap: 12px;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
       }
 
       .admin-turismo-hero-stats article {
         align-content: center;
-        background: linear-gradient(180deg, #ffffff, #f5fafe);
-        border: 1px solid #dce7ec;
-        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.86);
+        border: 1px solid #dbe7ed;
+        border-radius: 13px;
         display: grid;
-        gap: 6px;
-        justify-items: center;
+        gap: 5px;
         min-width: 0;
-        min-height: 88px;
-        padding: 16px 12px;
-        text-align: center;
+        min-height: 76px;
+        padding: 13px 14px;
       }
 
       .admin-turismo-hero-stats strong {
@@ -5374,17 +5389,20 @@
         text-transform: uppercase;
       }
 
-      .admin-turismo-hero > button {
+      .admin-turismo-hero-head > button {
+        align-items: center;
         background: linear-gradient(135deg, #0d69a1, #eb3e8f);
         border-color: rgba(235, 62, 143, 0.88);
         color: #fff;
+        display: inline-flex;
         font-weight: 800;
+        justify-content: center;
         justify-self: start;
         line-height: 1.25;
         min-height: 46px;
         padding-inline: 18px;
         text-align: center;
-        white-space: normal;
+        white-space: nowrap;
       }
 
       .admin-turismo-panel {
@@ -7632,70 +7650,156 @@
 
       .admin-turismo-list {
         display: grid;
-        gap: 0;
-        border-top: 1px solid #e4ecef;
+        gap: 16px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
-      .admin-turismo-list-head,
-      .admin-turismo-row {
-        display: grid;
-        gap: 14px;
-        grid-template-columns: minmax(0, 1fr) auto minmax(130px, 0.28fr);
-      }
-
-      .admin-turismo-list-head {
-        color: #4f6472;
-        font-size: 0.75rem;
-        font-weight: 800;
-        line-height: 1.2;
-        padding: 0 0 10px;
-        text-transform: uppercase;
-      }
-
-      .admin-turismo-row {
+      .admin-turismo-list-count {
         align-items: center;
-        background: transparent;
-        border: 0;
-        border-bottom: 1px solid #e4ecef;
-        border-radius: 0;
-        padding: 18px 0;
+        background: #edf6fb;
+        border: 1px solid #d6e7f0;
+        border-radius: 999px;
+        color: #426172;
+        display: inline-flex;
+        font-size: 0.78rem;
+        font-weight: 800;
+        gap: 5px;
+        padding: 8px 11px;
+      }
+
+      .admin-turismo-list-count strong {
+        color: #0d69a1;
+        font-size: 0.92rem;
+      }
+
+      .admin-turismo-row {
+        background: #fff;
+        border: 1px solid #dce7ed;
+        border-radius: 17px;
+        box-shadow: 0 9px 24px rgba(34, 57, 78, 0.06);
+        display: grid;
+        gap: 0;
+        min-width: 0;
+        overflow: hidden;
       }
 
       .admin-turismo-empty-row {
         grid-template-columns: minmax(0, 1fr);
         min-height: 82px;
+        padding: 18px;
       }
 
       .admin-turismo-row.selected {
-        background: transparent;
-        border-color: #bfd8e7;
+        border-color: #0d69a1;
+        box-shadow: 0 0 0 3px rgba(13, 105, 161, 0.1), 0 12px 28px rgba(34, 57, 78, 0.08);
       }
 
-      .admin-turismo-row div:first-child {
+      .admin-turismo-trip-cover {
+        aspect-ratio: 16 / 7;
+        background: linear-gradient(145deg, #eaf5fb, #f9e8f1);
+        overflow: hidden;
+        position: relative;
+      }
+
+      .admin-turismo-trip-cover img {
+        height: 100%;
+        object-fit: cover;
+        transition: transform 180ms ease;
+        width: 100%;
+      }
+
+      .admin-turismo-trip-card:hover .admin-turismo-trip-cover img {
+        transform: scale(1.025);
+      }
+
+      .admin-turismo-trip-cover-placeholder {
+        align-items: center;
+        display: flex;
+        height: 100%;
+        justify-content: center;
+      }
+
+      .admin-turismo-trip-cover-placeholder svg {
+        fill: #0d69a1;
+        height: 38px;
+        opacity: 0.7;
+        width: 38px;
+      }
+
+      .admin-turismo-trip-cover > .admin-turismo-status {
+        backdrop-filter: blur(8px);
+        background: rgba(255, 255, 255, 0.92);
+        box-shadow: 0 5px 14px rgba(34, 57, 78, 0.12);
+        position: absolute;
+        right: 12px;
+        top: 12px;
+      }
+
+      .admin-turismo-trip-body {
         display: grid;
-        gap: 6px;
-        max-width: 52ch;
+        gap: 17px;
+        padding: 18px;
+      }
+
+      .admin-turismo-trip-copy {
+        display: grid;
+        gap: 5px;
         min-width: 0;
       }
 
-      .admin-turismo-row span {
+      .admin-turismo-trip-copy p,
+      .admin-turismo-trip-copy h3 {
+        margin: 0;
+      }
+
+      .admin-turismo-trip-copy p {
+        color: #0d69a1;
+        font-size: 0.7rem;
+        font-weight: 900;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .admin-turismo-trip-copy h3 {
+        color: #10202b;
+        font-size: 1.18rem;
+        line-height: 1.22;
+      }
+
+      .admin-turismo-trip-copy span {
         color: #4f6472;
-        line-height: 1.45;
+        font-size: 0.84rem;
+        line-height: 1.4;
         overflow-wrap: anywhere;
       }
 
       .admin-turismo-row-actions {
         display: flex;
         flex-wrap: wrap;
-        gap: 10px;
-      }
-
-      .admin-turismo-row-actions {
-        justify-content: end;
+        gap: 8px;
       }
 
       .admin-turismo-row-actions button {
-        flex: 0 1 120px;
+        flex: 1 1 130px;
+      }
+
+      @media (max-width: 760px) {
+        .admin-turismo-hero-head {
+          display: grid;
+        }
+
+        .admin-turismo-hero-head > button {
+          justify-self: stretch;
+          width: 100%;
+        }
+
+        .admin-turismo-hero-stats {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .admin-turismo-list {
+          grid-template-columns: minmax(0, 1fr);
+        }
       }
 
       .admin-turismo-status {
@@ -8775,7 +8879,7 @@
         }
 
         .admin-turismo-layout {
-          gap: 34px;
+          gap: 18px;
         }
 
         .admin-turismo-layout > .admin-turismo-panel::before {
@@ -8818,7 +8922,7 @@
 
         .admin-turismo-row {
           grid-template-columns: minmax(0, 1fr);
-          gap: 12px;
+          gap: 0;
         }
 
         .admin-turismo-row-actions {
