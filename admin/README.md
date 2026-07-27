@@ -1,32 +1,24 @@
-# Panel Interno protegido
+# Panel interno protegido
 
-El panel interno ahora tiene entrada real bajo `/admin/`.
+El panel interno funciona como SPA y requiere una sesión válida del servidor.
 
 ## Rutas
 
-- Web publica: `/`
-- Turismo publico: `/#/turismo`
-- Portal de pasajeros publico: `/#/portal-pasajeros`
-- Panel interno: `/admin/`
-- Turismo admin: `/admin/turismo/`
-- Pasajeros admin: `/admin/pasajeros/`
-- Pagos admin: `/admin/pagos/`
-- Configuracion admin: `/admin/configuracion/`
-- Compatibilidad temporal: `/admin-turismo/`
+- Panel: `/admin/` o `/#/admin`
+- Inscripciones: `/admin/fichas/`
+- Grupos y contratos: `/admin/grupos/`
+- Pasajeros: `/admin/pasajeros/`
+- Pagos: `/admin/pagos/`
+- Turismo: `/admin/turismo/`
+- Configuración: `/admin/configuracion/`
 
-## Proteccion pendiente en hosting
+## Protección
 
-Proteger por servidor o hosting todo lo que cuelga de:
+El servidor usa cookie `HttpOnly`, sesión de 8 horas, validación de mismo origen
+y contraseñas definidas únicamente como variables privadas de Hostinger.
 
-- `/admin/`
-- `/admin-turismo/` si se mantiene la compatibilidad temporal
+El rol `admin` puede entrar a Configuración. Las cuentas `agente1` a `agente5`
+no ven esa sección y tampoco pueden abrirla escribiendo la URL directa.
 
-No guardar usuario ni password en archivos frontend. Las credenciales deben vivir en el hosting, servidor, Cloudflare Access, Basic Auth, Nginx, Hostinger o mecanismo equivalente.
-
-Usuario inicial previsto:
-
-- Agus / Render
-
-## Nota sobre rutas antiguas
-
-Las rutas antiguas con hash, como `/#/admin` y `/#/admin/turismo`, redirigen a la entrada real correspondiente. Esto evita que el panel dependa de rutas hash para el acceso.
+Las rutas con hash se reconocen como entradas privadas, cargan las colecciones
+autenticadas y ocultan la navegación pública.

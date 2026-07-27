@@ -785,8 +785,12 @@ function staticFile(req, res, url) {
     ".jpeg": "image/jpeg",
     ".webp": "image/webp"
   };
+  const cacheControl = [".html", ".css", ".js", ".json"].includes(ext)
+    ? "no-cache, no-store, must-revalidate"
+    : "public, max-age=86400";
   res.writeHead(200, {
     "Content-Type": types[ext] || "application/octet-stream",
+    "Cache-Control": cacheControl,
     ...securityHeaders(req)
   });
   fs.createReadStream(target).pipe(res);

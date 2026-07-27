@@ -34,3 +34,16 @@ test("las páginas públicas no solicitan Pasajeros, Fichas ni Turismo admin", (
   }
   assert.match(source, /includePrivate: adminEntry/);
 });
+
+test("las rutas admin con hash se reconocen como entrada privada", () => {
+  const source = functionSource("isAdminEntry", "adminPathFromLocation");
+  assert.match(source, /hashPath === "\/admin"/);
+  assert.match(source, /hashPath\.startsWith\("\/admin\/"\)/);
+});
+
+test("Configuración queda bloqueada para cuentas de agente incluso por URL directa", () => {
+  const source = functionSource("adminCanAccessPath", "fetchAdminSession");
+  assert.match(source, /path !== "\/admin\/configuracion"/);
+  assert.match(source, /=== "admin"/);
+  assert.match(appSource, /if \(!adminCanAccessPath\(path\)\)/);
+});

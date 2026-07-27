@@ -145,3 +145,11 @@ test("el proxy HTTPS produce una cookie Secure", async () => {
   assert.equal(login.json?.role, "agencia");
   assert.match(login.headers["set-cookie"][0], /;\s*Secure;/);
 });
+
+test("HTML, CSS y JavaScript se revalidan para evitar versiones viejas", async () => {
+  for (const path of ["/", "/assets/css/styles.css", "/assets/js/app.js"]) {
+    const response = await request({ path });
+    assert.equal(response.status, 200);
+    assert.equal(response.headers["cache-control"], "no-cache, no-store, must-revalidate");
+  }
+});

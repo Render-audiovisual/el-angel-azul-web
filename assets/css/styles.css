@@ -9860,3 +9860,343 @@
         color: #6b7280;
         font-size: 0.7rem;
       }
+
+      /* Panel interno: navegación y estado operativo simplificados. */
+      body[data-app-entry="admin"] {
+        background: #f4f7fb;
+      }
+
+      body[data-app-entry="admin"] > .site-header,
+      body[data-app-entry="admin"] > .site-footer,
+      body[data-app-entry="admin"] > .whatsapp-fab {
+        display: none !important;
+      }
+
+      body[data-app-entry="admin"] > #app {
+        min-height: 100svh;
+      }
+
+      body[data-app-entry="admin"] .admin-layout {
+        gap: 16px;
+        margin: 0 auto;
+        max-width: 1240px;
+        padding: 20px;
+        width: 100%;
+      }
+
+      body[data-app-entry="admin"] .admin-shell-header {
+        background: #073f66;
+        border: 0;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(7, 63, 102, 0.16);
+        display: flex;
+        justify-content: space-between;
+        padding: 14px 18px;
+      }
+
+      body[data-app-entry="admin"] .admin-shell-brand {
+        align-items: center;
+        display: flex;
+        gap: 11px;
+        text-decoration: none;
+      }
+
+      body[data-app-entry="admin"] .admin-shell-brand img {
+        height: 38px;
+        width: 38px;
+      }
+
+      body[data-app-entry="admin"] .admin-shell-brand > span {
+        display: grid;
+        gap: 2px;
+      }
+
+      body[data-app-entry="admin"] .admin-shell-brand strong,
+      body[data-app-entry="admin"] .admin-shell-brand small {
+        color: #fff;
+      }
+
+      body[data-app-entry="admin"] .admin-shell-brand strong {
+        font-size: 0.98rem;
+        font-weight: 850;
+      }
+
+      body[data-app-entry="admin"] .admin-shell-brand small {
+        font-size: 0.66rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        opacity: 0.7;
+        text-transform: uppercase;
+      }
+
+      body[data-app-entry="admin"] .admin-shell-session {
+        align-items: center;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 12px;
+        display: flex;
+        gap: 9px;
+        margin: 0;
+        min-width: 0;
+        padding: 7px 8px 7px 11px;
+      }
+
+      body[data-app-entry="admin"] .admin-shell-session > span {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 1.25rem;
+      }
+
+      body[data-app-entry="admin"] .admin-shell-session strong {
+        font-size: 0.9rem;
+        white-space: nowrap;
+      }
+
+      body[data-app-entry="admin"] .admin-shell-session button {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 9px;
+        min-height: 34px;
+        padding: 7px 10px;
+      }
+
+      body[data-app-entry="admin"] .admin-shell {
+        gap: 16px;
+        grid-template-columns: 210px minmax(0, 1fr);
+        max-width: none;
+        width: 100%;
+      }
+
+      body[data-app-entry="admin"] .admin-sidebar {
+        border: 1px solid #dde6ef;
+        border-radius: 15px;
+        box-shadow: 0 8px 24px rgba(34, 57, 78, 0.05);
+        padding: 8px;
+        top: 16px;
+      }
+
+      body[data-app-entry="admin"] .admin-sidebar nav {
+        gap: 4px;
+      }
+
+      body[data-app-entry="admin"] .admin-sidebar a {
+        align-items: center;
+        background: transparent;
+        border: 0;
+        border-radius: 10px;
+        display: grid;
+        gap: 10px;
+        grid-template-columns: 24px minmax(0, 1fr);
+        min-height: 46px;
+        padding: 10px 11px;
+      }
+
+      body[data-app-entry="admin"] .admin-sidebar a > .material-symbols-outlined {
+        color: #617486;
+        font-size: 20px;
+        font-weight: 500;
+      }
+
+      body[data-app-entry="admin"] .admin-sidebar a > span:last-child {
+        font-size: 0.88rem;
+        font-weight: 800;
+      }
+
+      body[data-app-entry="admin"] .admin-sidebar a.active,
+      body[data-app-entry="admin"] .admin-sidebar a:hover {
+        background: #edf6fb;
+        border: 0;
+        box-shadow: none;
+        color: #075884;
+      }
+
+      body[data-app-entry="admin"] .admin-sidebar a.active > .material-symbols-outlined {
+        color: #eb3e8f;
+      }
+
+      body[data-app-entry="admin"] .admin-main {
+        gap: 16px;
+      }
+
+      body[data-app-entry="admin"] .admin-turismo-panel {
+        border-color: #dde6ef;
+        border-radius: 16px;
+        box-shadow: 0 8px 24px rgba(34, 57, 78, 0.04);
+      }
+
+      .admin-settings-overview {
+        gap: 22px;
+      }
+
+      .admin-system-badge {
+        align-items: center;
+        background: #ebf8f0;
+        border: 1px solid #bfe3cc;
+        border-radius: 999px;
+        color: #17663a;
+        display: inline-flex;
+        font-size: 0.78rem;
+        font-weight: 850;
+        gap: 8px;
+        padding: 8px 11px;
+        white-space: nowrap;
+      }
+
+      .admin-system-badge i {
+        background: #25a55b;
+        border-radius: 999px;
+        height: 8px;
+        width: 8px;
+      }
+
+      .admin-settings-grid {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .admin-settings-grid article {
+        background: #f8fbfd;
+        border: 1px solid #e0e8ee;
+        border-radius: 13px;
+        display: grid;
+        gap: 5px;
+        min-width: 0;
+        padding: 16px;
+      }
+
+      .admin-settings-grid .material-symbols-outlined {
+        color: #0d69a1;
+        font-size: 23px;
+        margin-bottom: 6px;
+      }
+
+      .admin-settings-grid small {
+        color: #6b7c89;
+        font-size: 0.72rem;
+        font-weight: 850;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+
+      .admin-settings-grid strong {
+        color: #10202b;
+        font-size: 1.05rem;
+      }
+
+      .admin-settings-grid p {
+        color: #62717d;
+        font-size: 0.82rem;
+        line-height: 1.4;
+        margin: 0;
+      }
+
+      .admin-settings-counts {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        margin-top: 18px;
+      }
+
+      .admin-settings-counts span {
+        background: #f8fbfd;
+        border: 1px solid #e0e8ee;
+        border-radius: 11px;
+        color: #62717d;
+        display: grid;
+        font-size: 0.75rem;
+        font-weight: 750;
+        gap: 4px;
+        padding: 13px;
+      }
+
+      .admin-settings-counts strong {
+        color: #10202b;
+        font-size: 1.45rem;
+        line-height: 1;
+      }
+
+      .admin-settings-notice {
+        align-items: start;
+        background: #fff9ed;
+        border-color: #efdba8 !important;
+        display: grid;
+        gap: 12px;
+        grid-template-columns: auto minmax(0, 1fr);
+      }
+
+      .admin-settings-notice > .material-symbols-outlined {
+        color: #a36a00;
+      }
+
+      .admin-settings-notice h2,
+      .admin-settings-notice p {
+        margin: 0;
+      }
+
+      .admin-settings-notice h2 {
+        font-size: 1rem;
+        margin-bottom: 4px;
+      }
+
+      .admin-settings-notice p {
+        color: #715a2f;
+        line-height: 1.45;
+      }
+
+      @media (max-width: 1040px) {
+        body[data-app-entry="admin"] .admin-shell {
+          grid-template-columns: minmax(0, 1fr);
+        }
+
+        body[data-app-entry="admin"] .admin-sidebar {
+          position: static;
+        }
+
+        body[data-app-entry="admin"] .admin-sidebar nav {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .admin-settings-grid,
+        .admin-settings-counts {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 620px) {
+        body[data-app-entry="admin"] .admin-layout {
+          padding: 10px;
+        }
+
+        body[data-app-entry="admin"] .admin-shell-header {
+          align-items: stretch;
+          display: grid;
+          gap: 12px;
+        }
+
+        body[data-app-entry="admin"] .admin-shell-session {
+          justify-content: space-between;
+        }
+
+        body[data-app-entry="admin"] .admin-sidebar nav {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        body[data-app-entry="admin"] .admin-sidebar a {
+          gap: 7px;
+          grid-template-columns: 20px minmax(0, 1fr);
+          padding: 9px;
+        }
+
+        body[data-app-entry="admin"] .admin-sidebar a > span:last-child {
+          font-size: 0.78rem;
+        }
+
+        .admin-settings-grid,
+        .admin-settings-counts {
+          grid-template-columns: minmax(0, 1fr);
+        }
+
+        .admin-system-badge {
+          justify-self: start;
+        }
+      }

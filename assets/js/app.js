@@ -1,5 +1,10 @@
       function isAdminEntry() {
-        return document.body?.dataset.appEntry === "admin";
+        const pathname = location.pathname.replace(/\/+$/, "") || "/";
+        const hashPath = location.hash.replace("#", "").split("?")[0];
+        return document.body?.dataset.appEntry === "admin" ||
+          pathname.includes("/admin") ||
+          hashPath === "/admin" ||
+          hashPath.startsWith("/admin/");
       }
 
       function adminPathFromLocation() {
@@ -1988,40 +1993,46 @@
 
       const adminModules = [
         {
+          id: "home",
+          label: "Resumen",
+          path: "/admin",
+          icon: "space_dashboard"
+        },
+        {
           id: "fichas",
           label: "Inscripciones",
           path: "/admin/fichas",
-          status: "Bandeja"
+          icon: "assignment"
         },
         {
           id: "grupos",
-          label: "Contratos",
+          label: "Grupos y contratos",
           path: "/admin/grupos",
-          status: "Contratos"
+          icon: "groups"
         },
         {
           id: "pasajeros",
           label: "Pasajeros",
           path: "/admin/pasajeros",
-          status: "Operativo"
+          icon: "person"
         },
         {
           id: "pagos",
           label: "Pagos",
           path: "/admin/pagos",
-          status: "Cuotas"
+          icon: "payments"
         },
         {
           id: "turismo",
           label: "Turismo web",
           path: "/admin/turismo",
-          status: "Publicación"
+          icon: "flight"
         },
         {
           id: "configuracion",
           label: "Configuración",
           path: "/admin/configuracion",
-          status: "Admin",
+          icon: "settings",
           adminOnly: true
         }
       ];
@@ -2030,6 +2041,11 @@
       function adminVisibleModules() {
         const role = String(adminSession?.role || "admin").toLowerCase();
         return adminModules.filter((module) => !module.adminOnly || role === "admin");
+      }
+
+      function adminCanAccessPath(path) {
+        if (path !== "/admin/configuracion") return true;
+        return String(adminSession?.role || "").toLowerCase() === "admin";
       }
 
       let adminSession = null;
@@ -2162,12 +2178,15 @@
         return `
           <div class="layout admin-layout">
             <section class="admin-shell-header">
-              <div class="admin-shell-brand">
-                <strong>El Ángel Azul</strong>
-                <span>Panel Interno</span>
-              </div>
+              <a class="admin-shell-brand" href="${adminRouteHref("/admin")}">
+                <img src="assets/img/favicon-esfera-blanca.svg" alt="">
+                <span>
+                  <strong>El Ángel Azul</strong>
+                  <small>Panel interno</small>
+                </span>
+              </a>
               <div class="admin-shell-session">
-                <span>Usuario activo</span>
+                <span class="material-symbols-outlined" aria-hidden="true">account_circle</span>
                 <strong>${escapeHtml(adminSession?.label || adminSession?.user || "Admin")}</strong>
                 <button type="button" data-admin-logout>Cerrar sesión</button>
               </div>
@@ -2178,8 +2197,8 @@
                 <nav>
                   ${adminVisibleModules().map((module) => `
                     <a class="${module.id === moduleId ? "active" : ""}" href="${adminRouteHref(module.path)}">
+                      <span class="material-symbols-outlined" aria-hidden="true">${module.icon}</span>
                       <span>${module.label}</span>
-                      <small>${module.status}</small>
                     </a>
                   `).join("")}
                 </nav>
@@ -2228,7 +2247,7 @@
                 <h1>Tablero operativo</h1>
                 <span>Entrada rápida para revisar inscripciones, pasajeros, pagos y grupos activos.</span>
               </div>
-              <a class="admin-secondary-action" href="${adminRouteHref("/admin/fichas")}">Ver inscripciones</a>
+              <a class="admin-secondary-action" href="${adminRouteHref("/admin/fichas")}">Revisar inscripciones</a>
             </div>
             <div class="admin-dashboard-grid">
               <a class="admin-dashboard-card is-attention" href="${adminRouteHref("/admin/fichas")}">
@@ -2251,14 +2270,6 @@
                 <strong>${gruposActivos}</strong>
                 <small>Colegios/cursos operativos</small>
               </a>
-            </div>
-            <div class="admin-next-actions">
-              <h2>Próximos pasos</h2>
-              <div>
-                <a href="${adminRouteHref("/admin/fichas")}">Revisar nuevas fichas</a>
-                <a href="${adminRouteHref("/admin/pasajeros")}">Buscar o cargar pasajero</a>
-                <a href="${adminRouteHref("/admin/grupos")}">Validar grupos y contratos</a>
-              </div>
             </div>
           </section>
         `);
@@ -2670,134 +2681,80 @@
       }
 
       function renderAdminConfiguracion() {
-        const persistence = window.ElAngelAzulPersistence.architecture();
-        const sheetsStatus = persistence.googleSheetsStatus;
-        const sheetsConfig = persistence.googleSheetsConfig || {};
-        const providers = persistence.providers.map((provider) => `
-          <article class="admin-demo-card">
-            <h3>${escapeHtml(provider.label)}</h3>
-            <p><strong>ID:</strong> ${escapeHtml(provider.id)}</p>
-            <p><strong>Estado:</strong> ${escapeHtml(provider.status)}</p>
-          </article>
-        `).join("");
-        const sheetTabs = persistence.sheet.requiredTabs.map((tab) => `
-          <article class="admin-demo-card">
-            <h3>${escapeHtml(tab.id)}</h3>
-            <p>${escapeHtml(tab.label)}</p>
-            <p><strong>Columnas:</strong> ${tab.columns.length}</p>
-            <p class="admin-config-columns">${tab.columns.map(escapeHtml).join(" · ")}</p>
-          </article>
-        `).join("");
-        const collectionRows = persistence.collections.map((collection) => `
-          <tr>
-            <td>${escapeHtml(collection.key)}</td>
-            <td>${escapeHtml(collection.sheet)}</td>
-            <td>${escapeHtml(collection.note)}</td>
-          </tr>
-        `).join("");
+        const passengerCount = adminPasajerosRows().length;
+        const groupCount = adminPasajerosDemo.length;
+        const contractCount = adminContratosDemo.length;
+        const fichaCount = loadFichasAdhesionDemo().length;
+        const tourismCount = adminTurismoTrips.length;
 
         document.getElementById("app").innerHTML = renderAdminShell("configuracion", `
-          <section class="admin-turismo-panel admin-overview">
-            <p>Arquitectura de datos</p>
-            <h2>Persistencia preparada</h2>
-            <div class="admin-pasajeros-breadcrumb">
-              <span>Provider activo: ${escapeHtml(persistence.active)}</span>
-              <span>Base destino: ${escapeHtml(persistence.sheet.title)}</span>
-              <span>Conexión: ${escapeHtml(sheetsStatus.label)}</span>
-              <span>Sync: ${escapeHtml(googleSheetsSyncState.message)}</span>
-              <span>Pasajeros: ${adminPasajerosRows().length}</span>
-              <span>Fichas: ${loadFichasAdhesionDemo().length}</span>
+          <section class="admin-turismo-panel admin-overview admin-settings-overview">
+            <div class="admin-dashboard-head">
+              <div>
+                <p>Configuración</p>
+                <h1>Estado del sistema</h1>
+                <span>Información operativa. Las credenciales se administran de forma privada en el servidor.</span>
+              </div>
+              <span class="admin-system-badge is-online">
+                <i aria-hidden="true"></i>
+                Sistema operativo
+              </span>
             </div>
-            <p>${escapeHtml(persistence.note)}</p>
-            <div class="admin-actions-row">
-              <a class="admin-secondary-action" href="${escapeHtml(persistence.sheet.url)}" target="_blank" rel="noopener">Abrir Google Sheets</a>
-              <button type="button" class="admin-secondary-action" data-admin-download-sheet-schema>Descargar encabezados CSV</button>
-              <button type="button" class="admin-secondary-action" data-admin-download-sheet-data>Descargar datos actuales CSV</button>
-              <button type="button" class="admin-secondary-action" data-admin-download-apps-script>Descargar Apps Script</button>
+            <div class="admin-settings-grid">
+              <article>
+                <span class="material-symbols-outlined" aria-hidden="true">database</span>
+                <small>Base de datos</small>
+                <strong>PostgreSQL</strong>
+                <p>Fuente única de datos en producción.</p>
+              </article>
+              <article>
+                <span class="material-symbols-outlined" aria-hidden="true">cloud_done</span>
+                <small>Alojamiento</small>
+                <strong>Hostinger</strong>
+                <p>Aplicación web activa y protegida.</p>
+              </article>
+              <article>
+                <span class="material-symbols-outlined" aria-hidden="true">shield_lock</span>
+                <small>Sesión</small>
+                <strong>8 horas</strong>
+                <p>Cierre automático por seguridad.</p>
+              </article>
+              <article>
+                <span class="material-symbols-outlined" aria-hidden="true">manage_accounts</span>
+                <small>Accesos</small>
+                <strong>1 admin + 5 agentes</strong>
+                <p>Configuración disponible solo para Admin.</p>
+              </article>
             </div>
           </section>
 
-          <section class="admin-turismo-panel">
+          <section class="admin-turismo-panel admin-settings-data">
             <div class="admin-pasajeros-table-head">
               <div>
-                <h2>Conexión Google Sheets</h2>
-                <p>${escapeHtml(sheetsStatus.detail)}</p>
+                <h2>Datos disponibles</h2>
+                <p>Conteos cargados desde la base activa.</p>
               </div>
-              <strong>${escapeHtml(sheetsStatus.label)}</strong>
+              <button type="button" class="admin-secondary-action" data-admin-download-sheet-data>Descargar respaldo CSV</button>
             </div>
-            <form class="admin-pasajeros-form" data-google-sheets-config-form>
-              <fieldset>
-                <legend>Endpoint de datos</legend>
-                <label>URL del Web App
-                  <input name="endpoint" value="${escapeHtml(sheetsConfig.endpoint || "/api/google-sheets")}" placeholder="/api/google-sheets">
-                </label>
-                <label>Token opcional
-                  <input name="token" value="${escapeHtml(sheetsConfig.token || "")}" placeholder="EAA_CHANGE_ME">
-                </label>
-              </fieldset>
-              <p class="admin-pasajeros-modal-note">El endpoint local usa la cuenta de servicio del servidor. Esto no activa pagos, permisos ni documentación avanzada.</p>
-              <div class="admin-pasajeros-form-actions">
-                <button type="submit" class="admin-pasajeros-primary-button">Guardar conexión</button>
-              </div>
-            </form>
+            <div class="admin-settings-counts">
+              <span><strong>${groupCount}</strong> Grupos</span>
+              <span><strong>${contractCount}</strong> Contratos</span>
+              <span><strong>${passengerCount}</strong> Pasajeros</span>
+              <span><strong>${fichaCount}</strong> Inscripciones</span>
+              <span><strong>${tourismCount}</strong> Viajes de turismo</span>
+            </div>
           </section>
 
-          <section class="admin-turismo-panel">
-            <div class="admin-pasajeros-table-head">
-              <div>
-                <h2>Providers disponibles</h2>
-                <p>El panel ya consume una capa intermedia. El próximo cambio será reemplazar el provider, no reescribir pantallas.</p>
-              </div>
-            </div>
-            <div class="admin-demo-grid">${providers}</div>
-          </section>
-
-          <section class="admin-turismo-panel">
-            <div class="admin-pasajeros-table-head">
-              <div>
-                <h2>Google Sheets base</h2>
-                <p>Documento definido para migrar datos reales. Hoy el archivo tiene ${escapeHtml(persistence.sheet.currentTabs.join(", "))}; estas son las pestañas prolijas que debe tener antes de activar lectura/escritura real.</p>
-              </div>
-            </div>
-            <div class="admin-demo-grid">${sheetTabs}</div>
-          </section>
-
-          <section class="admin-turismo-panel">
-            <div class="admin-pasajeros-table-head">
-              <div>
-                <h2>Mapa de migración</h2>
-                <p>Relación entre las colecciones actuales del panel y las pestañas definitivas del Sheet.</p>
-              </div>
-            </div>
-            <div class="admin-pasajeros-table-wrap">
-              <table class="admin-pasajeros-table admin-pasajeros-table--compact">
-                <thead>
-                  <tr>
-                    <th>Colección actual</th>
-                    <th>Pestaña destino</th>
-                    <th>Uso</th>
-                  </tr>
-                </thead>
-                <tbody>${collectionRows}</tbody>
-              </table>
+          <section class="admin-turismo-panel admin-settings-notice">
+            <span class="material-symbols-outlined" aria-hidden="true">info</span>
+            <div>
+              <h2>Importante</h2>
+              <p>Pagos continúa como módulo de demostración hasta conectar la cobranza real. Los cambios de contraseñas y servidor no se realizan desde este panel.</p>
             </div>
           </section>
         `);
         bindAdminShell();
-        document.querySelector("[data-admin-download-sheet-schema]")?.addEventListener("click", downloadGoogleSheetSchemaCsv);
         document.querySelector("[data-admin-download-sheet-data]")?.addEventListener("click", downloadGoogleSheetDataCsv);
-        document.querySelector("[data-admin-download-apps-script]")?.addEventListener("click", downloadGoogleSheetAppsScript);
-        document.querySelector("[data-google-sheets-config-form]")?.addEventListener("submit", (event) => {
-          event.preventDefault();
-          const formData = new FormData(event.currentTarget);
-          window.ElAngelAzulPersistence.writeGoogleSheetsConfig({
-            endpoint: formData.get("endpoint"),
-            token: formData.get("token"),
-            enabled: Boolean(formData.get("endpoint"))
-          });
-          googleSheetsHydrated = false;
-          renderAdminConfiguracion();
-        });
       }
 
       const ADMIN_PASAJEROS_STORAGE_KEY = "angelAzulAdminPasajerosDemoV4";
@@ -4767,7 +4724,7 @@
                     <input name="pasajerosEsperados" type="number" min="0" value="${escapeHtml(String(selectedGroup.pasajerosEsperados || 0))}" placeholder="Ej: 28">
                   </label>
                 </fieldset>
-                <p class="admin-pasajeros-modal-note">El grupo se guarda localmente por ahora y queda listo para migrar después a Google Sheets, Supabase o Firebase.</p>
+                <p class="admin-pasajeros-modal-note">Al confirmar, el grupo se guarda en la base de datos activa.</p>
                 <div class="admin-pasajeros-form-actions">
                   <button type="submit" class="admin-pasajeros-primary-button">${escapeHtml(actionLabel)}</button>
                   <button type="button" class="admin-pasajeros-secondary-button" data-admin-pasajeros-close-group-modal>Cancelar</button>
@@ -4827,7 +4784,6 @@
             </div>
             <div class="admin-sync-status is-${escapeHtml(googleSheetsSyncState.status)}">
               <span>${escapeHtml(googleSheetsSyncState.message)}</span>
-              <a href="${escapeHtml(window.ElAngelAzulPersistence.googleSheet.url)}" target="_blank" rel="noreferrer">Abrir Sheet</a>
             </div>
             ${adminFichasMessage ? `<div class="admin-fichas-message">${escapeHtml(adminFichasMessage)}</div>` : ""}
           </section>
@@ -5167,7 +5123,7 @@
           return `
             <tr>
               <td colspan="7">
-                <span>No hay contratos con ese criterio. Si el Sheet fue editado recién, revisá que la hoja CONTRATOS tenga datos y refrescá.</span>
+                <span>No hay contratos con ese criterio. Limpiá los filtros o actualizá la página si la carga fue reciente.</span>
               </td>
             </tr>
           `;
@@ -5350,7 +5306,6 @@
                 <h2>Filtros</h2>
                 <p>Revisá rápidamente contratos por colegio, viaje, nivel o código.</p>
               </div>
-              <a class="admin-secondary-action" href="${escapeHtml(window.ElAngelAzulPersistence.googleSheet.url)}" target="_blank" rel="noopener">Abrir Sheet</a>
             </div>
             <div class="admin-pasajeros-filters" data-admin-contratos-filters>
               <label>Buscar
@@ -5570,7 +5525,7 @@
         document.getElementById("app").innerHTML = renderAdminShell("grupos", `
           <section class="admin-turismo-panel admin-overview">
             <p>Base operativa</p>
-            <h2>Contratos</h2>
+            <h2>Grupos y contratos</h2>
             <div class="admin-pasajeros-breadcrumb">
               <span>Grupos: ${groups.length}</span>
               <span>Colegios únicos: ${uniqueSchools}</span>
@@ -5578,10 +5533,9 @@
               <span>Sin contrato: ${groupsWithoutContract}</span>
               <span>${escapeHtml(googleSheetsSyncState.message)}</span>
             </div>
-            <p>Esta vista valida la estructura colegio, viaje, curso y división que alimenta contratos y pasajeros.</p>
+            <p>Organizá la estructura de colegio, viaje, curso y división que alimenta contratos y pasajeros.</p>
             <div class="admin-actions-row admin-grupos-primary-actions">
               <button type="button" class="admin-pasajeros-primary-button" data-admin-grupos-open-create>Crear grupo nuevo</button>
-              <a class="admin-secondary-action" href="${escapeHtml(window.ElAngelAzulPersistence.googleSheet.url)}" target="_blank" rel="noopener">Abrir Sheet</a>
             </div>
           </section>
 
@@ -8548,9 +8502,14 @@
           return;
         }
         if (isAdminPath(path)) {
+          document.body?.setAttribute("data-app-entry", "admin");
           const session = await fetchAdminSession();
           if (!session) {
             renderAdminLogin();
+            return;
+          }
+          if (!adminCanAccessPath(path)) {
+            location.replace(adminRouteHref("/admin"));
             return;
           }
           await hydrateGoogleSheetsData();
