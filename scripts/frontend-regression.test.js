@@ -154,7 +154,18 @@ test("los selectores de Turismo conservan inputs nativos con una interfaz propia
   assert.match(formSource, /name="categorias" type="checkbox"/);
   assert.match(formSource, /admin-turismo-category-option/);
   assert.match(formSource, /admin-turismo-selection-icon/);
-  assert.match(stylesSource, /\.admin-turismo-category-option:has\(input:checked\)/);
+  assert.match(stylesSource, /\.admin-turismo-form \.admin-turismo-category-option:has\(input:checked\)/);
   assert.match(stylesSource, /\.admin-turismo-form \.admin-turismo-foto-principal:has\(input:checked\)/);
-  assert.match(stylesSource, /\.admin-turismo-category-option input,[\s\S]*?\.admin-turismo-foto-principal input\s*\{[\s\S]*?position:\s*absolute;/);
+  assert.match(stylesSource, /\.admin-turismo-form \.admin-turismo-category-option input,[\s\S]*?\.admin-turismo-form \.admin-turismo-foto-principal input\s*\{[\s\S]*?position:\s*absolute;/);
+});
+
+test("el estado operativo de Turismo aparece primero y Configuración queda como Catálogo", () => {
+  const formSource = functionSource("renderAdminTurismoForm", "adminIconSvg");
+  assert.ok(formSource.indexOf("admin-turismo-quick-status") < formSource.indexOf('block("Información básica"'));
+  assert.match(formSource, /name="estado" type="radio"/);
+  assert.doesNotMatch(formSource, /<select name="estado">/);
+  assert.match(formSource, /block\("Catálogo"/);
+  assert.match(stylesSource, /\.admin-turismo-status-options\s*\{[\s\S]*?grid-template-columns:\s*repeat\(4,/);
+  assert.match(stylesSource, /\.admin-turismo-form \.admin-turismo-status-option:has\(input:checked\)/);
+  assert.match(stylesSource, /\.admin-turismo-form \.admin-turismo-check--featured:has\(input:checked\)/);
 });

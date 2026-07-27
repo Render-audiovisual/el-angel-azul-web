@@ -1874,6 +1874,33 @@
 
         return `
           <form class="admin-turismo-form" id="admin-turismo-form" data-admin-turismo-form>
+            <section class="admin-turismo-quick-status" aria-labelledby="admin-turismo-status-title">
+              <div class="admin-turismo-quick-status-head">
+                <span>
+                  <span class="admin-turismo-eyebrow">Disponibilidad</span>
+                  <h3 id="admin-turismo-status-title">Estado del viaje</h3>
+                  <p>Definí rápidamente si el viaje se muestra en la web.</p>
+                </span>
+                <small>El cambio se aplica al guardar.</small>
+              </div>
+              <div class="admin-turismo-status-options">
+                ${[
+                  ["borrador", "Borrador", "Solo interno"],
+                  ["revision", "En revisión", "Pendiente de validar"],
+                  ["activo", "Activo", "Visible en la web"],
+                  ["inactivo", "Inactivo", "Oculto temporalmente"]
+                ].map(([value, label, description]) => `
+                  <label class="admin-turismo-status-option admin-turismo-status-option--${value}">
+                    <input name="estado" type="radio" value="${value}" ${(trip.estado || "borrador") === value ? "checked" : ""}>
+                    <span class="admin-turismo-status-indicator" aria-hidden="true"></span>
+                    <span class="admin-turismo-status-copy">
+                      <strong>${label}</strong>
+                      <small>${description}</small>
+                    </span>
+                  </label>
+                `).join("")}
+              </div>
+            </section>
 
             ${block("Información básica", "Destino, título y descripción para el catálogo.", `
               <div class="admin-turismo-form-grid">
@@ -1893,7 +1920,10 @@
               </div>
               <label class="admin-turismo-check admin-turismo-check--featured">
                 <input name="salidaGarantizada" type="checkbox" ${trip.salidaGarantizada ? "checked" : ""}>
-                <span>
+                <span class="admin-turismo-selection-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><path d="m9.2 16.4-4.1-4.1 1.5-1.5 2.6 2.6 8.2-8.2 1.5 1.5-9.7 9.7Z"/></svg>
+                </span>
+                <span class="admin-turismo-selection-copy">
                   <strong>Salida garantizada</strong>
                   <small>Muestra el badge "Salida garantizada" en el flyer y la card.</small>
                 </span>
@@ -1979,15 +2009,10 @@
               </div>
             `, statusBadge(itinerarioComplete, true))}
 
-            ${block("Configuración", "Ajustes internos de publicación.", `
+            ${block("Catálogo", "URL, orden, categorías y prioridad comercial.", `
               <div class="admin-turismo-form-grid admin-turismo-form-grid--compact">
                 ${field("URL interna", `<input name="slug" value="${escapeHtml(trip.slug || adminTurismoSlug(trip.titulo || trip.destino))}" placeholder="cancun-ano-nuevo-2026">`, "Sin espacios ni acentos. Se genera automático.")}
                 ${field("Orden en catálogo", `<input name="orden" type="number" min="1" step="1" value="${escapeHtml(String(trip.orden ?? 999))}">`, "Menor número = aparece antes.")}
-                ${field("Estado", `
-                  <select name="estado">
-                    ${[["borrador", "Borrador"], ["revision", "En revisión"], ["activo", "Activo"], ["inactivo", "Inactivo"]].map(([val, label]) => `<option value="${val}" ${trip.estado === val ? "selected" : ""}>${label}</option>`).join("")}
-                  </select>
-                `)}
               </div>
               <fieldset class="admin-turismo-category-field">
                 <legend>Categorías</legend>
@@ -2005,7 +2030,10 @@
               </fieldset>
               <label class="admin-turismo-check admin-turismo-check--featured">
                 <input name="destacado" type="checkbox" ${trip.destacado ? "checked" : ""}>
-                <span>
+                <span class="admin-turismo-selection-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><path d="m9.2 16.4-4.1-4.1 1.5-1.5 2.6 2.6 8.2-8.2 1.5 1.5-9.7 9.7Z"/></svg>
+                </span>
+                <span class="admin-turismo-selection-copy">
                   <strong>Destacado</strong>
                   <small>Prioriza este viaje en el catálogo.</small>
                 </span>

@@ -7874,6 +7874,19 @@
           grid-template-columns: repeat(2, minmax(0, 1fr));
         }
 
+        .admin-turismo-status-options {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .admin-turismo-quick-status-head {
+          align-items: start;
+          display: grid;
+        }
+
+        .admin-turismo-form .admin-turismo-check--featured {
+          max-width: none;
+        }
+
         .admin-turismo-list {
           grid-template-columns: minmax(0, 1fr);
         }
@@ -8056,6 +8069,138 @@
         min-width: 0;
       }
 
+      .admin-turismo-quick-status {
+        background: linear-gradient(135deg, #f7fbfe 0%, #eef7fc 100%);
+        border: 1px solid #cfe1eb;
+        border-radius: 16px;
+        box-shadow: 0 8px 24px rgba(20, 70, 96, 0.06);
+        display: grid;
+        gap: 16px;
+        padding: 18px;
+      }
+
+      .admin-turismo-quick-status-head {
+        align-items: end;
+        display: flex;
+        gap: 16px;
+        justify-content: space-between;
+      }
+
+      .admin-turismo-quick-status-head h3,
+      .admin-turismo-quick-status-head p {
+        margin: 0;
+      }
+
+      .admin-turismo-quick-status-head h3 {
+        color: #10202b;
+        font-size: 1.12rem;
+        margin-top: 3px;
+      }
+
+      .admin-turismo-quick-status-head p,
+      .admin-turismo-quick-status-head > small {
+        color: #627986;
+        font-size: 0.76rem;
+        font-weight: 700;
+      }
+
+      .admin-turismo-eyebrow {
+        color: #0d69a1;
+        font-size: 0.68rem;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .admin-turismo-status-options {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .admin-turismo-form .admin-turismo-status-option {
+        align-items: center;
+        background: #fff;
+        border: 1px solid #d3e0e7;
+        border-radius: 12px;
+        cursor: pointer;
+        display: flex;
+        gap: 10px;
+        min-height: 66px;
+        padding: 11px 12px;
+        transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+      }
+
+      .admin-turismo-form .admin-turismo-status-option:hover {
+        border-color: #8ebbd3;
+        transform: translateY(-1px);
+      }
+
+      .admin-turismo-form .admin-turismo-status-option:focus-within {
+        box-shadow: 0 0 0 3px rgba(13, 105, 161, 0.13);
+      }
+
+      .admin-turismo-status-option input {
+        height: 1px !important;
+        margin: 0 !important;
+        min-height: 0 !important;
+        opacity: 0;
+        overflow: hidden;
+        padding: 0 !important;
+        position: absolute;
+        width: 1px !important;
+      }
+
+      .admin-turismo-status-indicator {
+        background: #fff;
+        border: 2px solid #b8c9d2;
+        border-radius: 999px;
+        box-shadow: inset 0 0 0 4px #fff;
+        flex: 0 0 auto;
+        height: 18px;
+        width: 18px;
+      }
+
+      .admin-turismo-status-copy {
+        display: grid;
+        gap: 2px;
+        min-width: 0;
+      }
+
+      .admin-turismo-status-copy strong {
+        color: #173544;
+        font-size: 0.82rem;
+        line-height: 1.2;
+      }
+
+      .admin-turismo-status-copy small {
+        color: #6b7f8a;
+        font-size: 0.68rem;
+        font-weight: 700;
+        line-height: 1.25;
+      }
+
+      .admin-turismo-form .admin-turismo-status-option:has(input:checked) {
+        background: #eaf5fb;
+        border-color: #0d69a1;
+        box-shadow: inset 0 0 0 1px rgba(13, 105, 161, 0.08);
+      }
+
+      .admin-turismo-status-option:has(input:checked) .admin-turismo-status-indicator {
+        background: #0d69a1;
+        border-color: #0d69a1;
+      }
+
+      .admin-turismo-form .admin-turismo-status-option--activo:has(input:checked) {
+        background: #edf9f2;
+        border-color: #238657;
+      }
+
+      .admin-turismo-status-option--activo:has(input:checked) .admin-turismo-status-indicator {
+        background: #238657;
+        border-color: #238657;
+      }
+
       .admin-field-label {
         color: #10202b;
         font-size: 0.9rem;
@@ -8099,18 +8244,6 @@
         outline: none;
       }
 
-      .admin-turismo-form select[name="estado"] {
-        appearance: none;
-        background-color: #f7fbfe;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%230d69a1' d='m7 9 5 5 5-5z'/%3E%3C/svg%3E");
-        background-position: right 14px center;
-        background-repeat: no-repeat;
-        background-size: 20px;
-        border-color: #b9d5e4;
-        font-weight: 850;
-        padding-right: 44px;
-      }
-
       .admin-turismo-form textarea {
         line-height: 1.55;
         min-height: 132px;
@@ -8141,7 +8274,7 @@
         gap: 9px;
       }
 
-      .admin-turismo-category-option {
+      .admin-turismo-form .admin-turismo-category-option {
         align-items: center;
         background: #f8fbfd;
         border: 1px solid #d5e1e8;
@@ -8156,25 +8289,25 @@
         width: auto;
       }
 
-      .admin-turismo-category-option:hover {
+      .admin-turismo-form .admin-turismo-category-option:hover {
         border-color: #91bed6;
         color: #0d5c8b;
         transform: translateY(-1px);
       }
 
-      .admin-turismo-category-option:focus-within {
+      .admin-turismo-form .admin-turismo-category-option:focus-within {
         box-shadow: 0 0 0 3px rgba(13, 105, 161, 0.13);
       }
 
-      .admin-turismo-category-option:has(input:checked) {
+      .admin-turismo-form .admin-turismo-category-option:has(input:checked) {
         background: #eaf5fb;
         border-color: #0d69a1;
         box-shadow: inset 0 0 0 1px rgba(13, 105, 161, 0.08);
         color: #084d75;
       }
 
-      .admin-turismo-category-option input,
-      .admin-turismo-foto-principal input {
+      .admin-turismo-form .admin-turismo-category-option input,
+      .admin-turismo-form .admin-turismo-foto-principal input {
         height: 1px !important;
         margin: 0 !important;
         min-height: 0 !important;
@@ -8206,8 +8339,9 @@
         width: 15px;
       }
 
-      .admin-turismo-category-option:has(input:checked) .admin-turismo-selection-icon,
-      .admin-turismo-foto-principal:has(input:checked) .admin-turismo-selection-icon {
+      .admin-turismo-form .admin-turismo-category-option:has(input:checked) .admin-turismo-selection-icon,
+      .admin-turismo-form .admin-turismo-foto-principal:has(input:checked) .admin-turismo-selection-icon,
+      .admin-turismo-form .admin-turismo-check--featured:has(input:checked) .admin-turismo-selection-icon {
         background: #0d69a1;
         border-color: #0d69a1;
         color: #fff;
@@ -8274,36 +8408,41 @@
       }
 
       /* --- Destacado: estilo separado más claro --- */
-      .admin-turismo-check--featured {
+      .admin-turismo-form .admin-turismo-check--featured {
         align-items: center;
-        background: #fffbea;
-        border: 1px solid #f0d060;
-        border-radius: 10px;
+        background: #f8fbfd;
+        border: 1px solid #d5e1e8;
+        border-radius: 12px;
         display: flex;
         flex-direction: row;
         gap: 10px;
-        padding: 12px 14px;
-        width: fit-content;
+        max-width: 420px;
+        padding: 12px;
+        width: 100%;
       }
 
-      .admin-turismo-check--featured:has(input:checked) {
-        background: #fff8d6;
-        border-color: #c9a800;
+      .admin-turismo-form .admin-turismo-check--featured:hover {
+        border-color: #91bed6;
       }
 
-      .admin-turismo-check--featured span {
-        display: grid;
-        gap: 2px;
+      .admin-turismo-form .admin-turismo-check--featured:focus-within {
+        box-shadow: 0 0 0 3px rgba(13, 105, 161, 0.13);
       }
 
-      .admin-turismo-check--featured strong {
-        color: #10202b;
-        font-size: 0.9rem;
+      .admin-turismo-form .admin-turismo-check--featured:has(input:checked) {
+        background: #eaf5fb;
+        border-color: #0d69a1;
       }
 
-      .admin-turismo-check--featured small {
-        color: #6b5500;
-        font-size: 0.78rem;
+      .admin-turismo-form .admin-turismo-check--featured input {
+        height: 1px !important;
+        margin: 0 !important;
+        min-height: 0 !important;
+        opacity: 0;
+        overflow: hidden;
+        padding: 0 !important;
+        position: absolute;
+        width: 1px !important;
       }
 
       .admin-turismo-validation {
