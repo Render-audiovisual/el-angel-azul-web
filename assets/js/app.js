@@ -887,7 +887,7 @@
                   <span>Pagos y fechas a confirmar</span>
                 </div>
                 <div class="turismo-hero-actions">
-                  <a href="#turismo-catalogo">Ver viajes</a>
+                  <a href="#/turismo" data-scroll-target="turismo-catalogo">Ver viajes</a>
                   <a class="btn-icon-pair" href="${whatsappLink("Hola, quiero que me asesoren para elegir un viaje turístico con El Ángel Azul.")}" target="_blank" rel="noopener">
                     <span>Pedir asesoramiento</span>
                     <span class="btn-icon-circle" aria-hidden="true"><span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">chat</span></span>
@@ -6896,7 +6896,7 @@
                 <h1>Información clara para elegir el viaje del curso</h1>
                 <p>Propuestas para primaria y secundaria con destinos separados, datos simples y acceso directo a inscripción cuando el grupo ya está decidido.</p>
                 <div class="estudiantil-hero-actions">
-                  <a href="#viajes-estudiantiles">Ver viajes</a>
+                  <a href="#/estudiantil" data-scroll-target="viajes-estudiantiles">Ver viajes</a>
                   <a href="#/inscripcion">Inscribirse</a>
                 </div>
               </div>
@@ -6983,7 +6983,7 @@
                 <p>Viaje pensado para que el grupo viva una experiencia segura, organizada y acompañada en Carlos Paz.</p>
                 <div class="student-detail-hero-actions">
                   <a href="#/inscripcion">Inscribirse</a>
-                  <a href="#detalles-del-viaje">Ver detalles</a>
+                  <a href="#/estudiantil/primaria-carlos-paz" data-scroll-target="detalles-del-viaje">Ver detalles</a>
                 </div>
               </div>
             </section>
@@ -7072,7 +7072,7 @@
                 <p>El viaje de egresados a Bariloche presentado con experiencias, actividades y consulta directa.</p>
                 <div class="student-detail-hero-actions">
                   <a href="#/inscripcion">Inscribirse</a>
-                  <a href="#experiencias-bariloche">Ver experiencias</a>
+                  <a href="#/estudiantil/secundaria-bariloche" data-scroll-target="experiencias-bariloche">Ver experiencias</a>
                 </div>
               </div>
             </section>
@@ -7105,7 +7105,7 @@
                 <p>Una propuesta estudiantil clara y cercana para grupos de secundaria que eligen Carlos Paz.</p>
                 <div class="student-detail-hero-actions">
                   <a href="#/inscripcion">Inscribirse</a>
-                  <a href="#detalles-del-viaje">Ver detalles</a>
+                  <a href="#/estudiantil/secundaria-carlos-paz" data-scroll-target="detalles-del-viaje">Ver detalles</a>
                 </div>
               </div>
             </section>
@@ -7580,7 +7580,7 @@
               </div>
             </section>
 
-            <section class="portal-empty public-inscripcion-card" data-reveal-light>
+            <section class="portal-empty public-inscripcion-card">
               <div class="inscripcion-section-heading">
                 <span>Inscripción oficial</span>
                 <h2>Buscar contrato activo</h2>
@@ -8813,7 +8813,24 @@
         }
       }
 
+      function bindInternalSectionLinks() {
+        document.addEventListener("click", (event) => {
+          const link = event.target.closest("[data-scroll-target]");
+          if (!link) return;
+          const targetId = String(link.dataset.scrollTarget || "").trim();
+          const target = targetId ? document.getElementById(targetId) : null;
+          if (!target) return;
+          event.preventDefault();
+          const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+          target.scrollIntoView({
+            behavior: reduceMotion ? "auto" : "smooth",
+            block: "start"
+          });
+        });
+      }
+
       setupPublicInternalAccess();
+      bindInternalSectionLinks();
       initLenisSmoothScroll();
 
       const navToggle = document.querySelector(".nav-toggle");

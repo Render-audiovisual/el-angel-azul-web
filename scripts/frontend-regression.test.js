@@ -192,3 +192,39 @@ test("el estado operativo de Turismo aparece primero y Configuración queda como
   assert.match(stylesSource, /\.admin-turismo-form \.admin-turismo-status-option:has\(input:checked\)/);
   assert.match(stylesSource, /\.admin-turismo-form \.admin-turismo-check--featured:has\(input:checked\)/);
 });
+
+test("los CTA internos desplazan a secciones reales sin romper las rutas hash", () => {
+  for (const [route, target] of [
+    ["/turismo", "turismo-catalogo"],
+    ["/estudiantil", "viajes-estudiantiles"],
+    ["/estudiantil/primaria-carlos-paz", "detalles-del-viaje"],
+    ["/estudiantil/secundaria-bariloche", "experiencias-bariloche"],
+    ["/estudiantil/secundaria-carlos-paz", "detalles-del-viaje"]
+  ]) {
+    assert.match(appSource, new RegExp(`href="#${route}" data-scroll-target="${target}"`));
+  }
+  assert.doesNotMatch(appSource, /href="#(?:turismo-catalogo|viajes-estudiantiles|detalles-del-viaje|experiencias-bariloche)"/);
+  assert.match(appSource, /function bindInternalSectionLinks\(\)[\s\S]*?event\.preventDefault\(\)/);
+  assert.match(appSource, /function bindInternalSectionLinks\(\)[\s\S]*?document\.getElementById\(targetId\)/);
+  assert.match(appSource, /function bindInternalSectionLinks\(\)[\s\S]*?scrollIntoView/);
+  assert.match(appSource, /bindInternalSectionLinks\(\);\s*initLenisSmoothScroll\(\);/);
+});
+
+test("Inscripción mantiene el CTA visible en escritorio y normal en móvil", () => {
+  const desktopRule = stylesSource.match(
+    /@media \(min-width:\s*821px\)\s*\{[\s\S]*?\.inscripcion-step-actions\s*\{([\s\S]*?)\n\s*\}/
+  )?.[1] || "";
+  assert.match(
+    desktopRule,
+    /position:\s*fixed;/
+  );
+  assert.match(
+    desktopRule,
+    /bottom:\s*24px;/
+  );
+  assert.match(
+    stylesSource,
+    /\.inscripcion-step-actions\s*\{[^}]*position:\s*static;/
+  );
+  assert.doesNotMatch(appSource, /class="portal-empty public-inscripcion-card" data-reveal-light/);
+});
