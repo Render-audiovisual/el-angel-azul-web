@@ -2037,6 +2037,21 @@
         }
       ];
 
+      function adminIconSvg(name, extraClass = "") {
+        const paths = {
+          space_dashboard: '<path d="M3 3h8v8H3V3Zm10 0h8v5h-8V3ZM3 13h8v8H3v-8Zm10-3h8v11h-8V10Z"/>',
+          assignment: '<path d="M9 5V3h6v2h3a2 2 0 0 1 2 2v14H4V7a2 2 0 0 1 2-2h3Zm2 0h2V4h-2v1Zm-3 5h8V8H8v2Zm0 4h8v-2H8v2Zm0 4h6v-2H8v2Z"/>',
+          groups: '<path d="M8 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm8-1a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM2 21v-3c0-3 2.7-5 6-5s6 2 6 5v3H2Zm13.5 0v-3c0-1.4-.5-2.7-1.4-3.8.6-.2 1.2-.2 1.9-.2 3.3 0 6 1.8 6 4.5V21h-6.5Z"/>',
+          person: '<path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm-9 9v-2c0-3.3 4-5 9-5s9 1.7 9 5v2H3Z"/>',
+          payments: '<path d="M3 6h18v12H3V6Zm2 2v8h14V8H5Zm7 7a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM6 10h2V9H6v1Zm10 5h2v-1h-2v1Z"/>',
+          flight: '<path d="m2 16 8-3V4.5a2 2 0 1 1 4 0V13l8 3v2l-8-1v3l2 1.5V23l-4-1-4 1v-1.5l2-1.5v-3l-8 1v-2Z"/>',
+          settings: '<path d="m19.4 13 .1-1-.1-1 2.1-1.6-2-3.4-2.6 1a8 8 0 0 0-1.7-1L15 3h-4l-.4 3a8 8 0 0 0-1.7 1L6.3 6 4.3 9.4 6.4 11l-.1 1 .1 1-2.1 1.6 2 3.4 2.6-1a8 8 0 0 0 1.7 1l.4 3h4l.4-3a8 8 0 0 0 1.7-1l2.6 1 2-3.4-2.3-1.6ZM13 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8Z"/>',
+          account_circle: '<path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7Zm0 13a8 8 0 0 1-6.3-3.1C7.1 15.7 9.3 15 12 15s4.9.7 6.3 1.9A8 8 0 0 1 12 20Z"/>'
+        };
+        const path = paths[name] || paths.space_dashboard;
+        return `<svg class="admin-inline-icon ${extraClass}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${path}</svg>`;
+      }
+
 
       function adminVisibleModules() {
         const role = String(adminSession?.role || "admin").toLowerCase();
@@ -2186,7 +2201,7 @@
                 </span>
               </a>
               <div class="admin-shell-session">
-                <span class="material-symbols-outlined" aria-hidden="true">account_circle</span>
+                ${adminIconSvg("account_circle", "admin-session-icon")}
                 <strong>${escapeHtml(adminSession?.label || adminSession?.user || "Admin")}</strong>
                 <button type="button" data-admin-logout>Cerrar sesión</button>
               </div>
@@ -2197,7 +2212,7 @@
                 <nav>
                   ${adminVisibleModules().map((module) => `
                     <a class="${module.id === moduleId ? "active" : ""}" href="${adminRouteHref(module.path)}">
-                      <span class="material-symbols-outlined" aria-hidden="true">${module.icon}</span>
+                      ${adminIconSvg(module.icon, "admin-nav-icon")}
                       <span>${module.label}</span>
                     </a>
                   `).join("")}

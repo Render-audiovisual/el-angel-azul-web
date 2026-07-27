@@ -9941,9 +9941,10 @@
         padding: 7px 8px 7px 11px;
       }
 
-      body[data-app-entry="admin"] .admin-shell-session > span {
+      body[data-app-entry="admin"] .admin-shell-session > .admin-session-icon {
         color: rgba(255, 255, 255, 0.8);
-        font-size: 1.25rem;
+        height: 21px;
+        width: 21px;
       }
 
       body[data-app-entry="admin"] .admin-shell-session strong {
@@ -9990,10 +9991,17 @@
         padding: 10px 11px;
       }
 
-      body[data-app-entry="admin"] .admin-sidebar a > .material-symbols-outlined {
+      body[data-app-entry="admin"] .admin-inline-icon {
+        display: block;
+        fill: currentColor;
+        flex: 0 0 auto;
+        overflow: visible;
+      }
+
+      body[data-app-entry="admin"] .admin-sidebar a > .admin-nav-icon {
         color: #617486;
-        font-size: 20px;
-        font-weight: 500;
+        height: 20px;
+        width: 20px;
       }
 
       body[data-app-entry="admin"] .admin-sidebar a > span:last-child {
@@ -10009,7 +10017,7 @@
         color: #075884;
       }
 
-      body[data-app-entry="admin"] .admin-sidebar a.active > .material-symbols-outlined {
+      body[data-app-entry="admin"] .admin-sidebar a.active > .admin-nav-icon {
         color: #eb3e8f;
       }
 
