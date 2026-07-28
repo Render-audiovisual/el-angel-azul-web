@@ -324,14 +324,20 @@
 
   // Excel en configuración regional en español (Argentina incluida) usa la
   // coma como separador decimal, así que interpreta un CSV separado por
-  // comas como una sola columna gigante - separador ";" + la línea mágica
-  // "sep=;" (que Excel lee para elegir el delimitador sin importar la
-  // configuración regional) son el fix estándar. El BOM inicial evita que
-  // los acentos (á, é, ñ) se vean como caracteres sueltos.
+  // comas como una sola columna gigante - separarlo con ";" es el fix
+  // estándar, y ese es también el separador de lista por defecto en esa
+  // configuración regional, así que Excel lo detecta solo al abrir el
+  // archivo con doble clic, sin hacer falta la línea "sep=;".
+  //
+  // OJO: se probó agregar la línea "sep=;" además del BOM (para forzar el
+  // separador sin depender de la configuración regional) y esa combinación
+  // rompía los acentos (á, é, ñ) - Excel respetaba el separador pero
+  // dejaba de decodificar el resto del archivo como UTF-8. Sacar "sep=;"
+  // y dejar solo BOM + ";" resuelve ambas cosas a la vez.
   function toCsv(columns = [], rows = []) {
     const header = columns.map(csvEscape).join(";");
     const body = rows.map((row) => columns.map((column) => csvEscape(row[column])).join(";")).join("\n");
-    return ["﻿sep=;", header, body].filter(Boolean).join("\n");
+    return ["﻿" + header, body].filter(Boolean).join("\n");
   }
 
   function blankCsvPackage() {
