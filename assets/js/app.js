@@ -2604,7 +2604,7 @@
         const cuotas = [];
         passengerRows.forEach(({ passenger }) => {
           const passengerId = `pasajero-${passenger.dni || sheetMigrationSlug(passenger.nombre || "sin-dni")}`;
-          paymentHistory(passenger).forEach((payment, index) => {
+          window.ElAngelAzulPayments.paymentHistory(passenger).forEach((payment, index) => {
             if (!payment.amount) return;
             pagos.push({
               id: `pago-${passenger.dni || "sin-dni"}-${index + 1}`,
