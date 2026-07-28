@@ -319,13 +319,19 @@
 
   function csvEscape(value) {
     const text = value === null || value === undefined ? "" : String(value);
-    return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+    return /["\;\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
   }
 
+  // Excel en configuración regional en español (Argentina incluida) usa la
+  // coma como separador decimal, así que interpreta un CSV separado por
+  // comas como una sola columna gigante - separador ";" + la línea mágica
+  // "sep=;" (que Excel lee para elegir el delimitador sin importar la
+  // configuración regional) son el fix estándar. El BOM inicial evita que
+  // los acentos (á, é, ñ) se vean como caracteres sueltos.
   function toCsv(columns = [], rows = []) {
-    const header = columns.map(csvEscape).join(",");
-    const body = rows.map((row) => columns.map((column) => csvEscape(row[column])).join(",")).join("\n");
-    return [header, body].filter(Boolean).join("\n");
+    const header = columns.map(csvEscape).join(";");
+    const body = rows.map((row) => columns.map((column) => csvEscape(row[column])).join(";")).join("\n");
+    return ["﻿sep=;", header, body].filter(Boolean).join("\n");
   }
 
   function blankCsvPackage() {
