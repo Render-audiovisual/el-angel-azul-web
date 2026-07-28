@@ -2798,11 +2798,30 @@
         });
       }
 
-      function downloadGoogleSheetDataCsv() {
-        const rowsByTab = buildGoogleSheetMigrationRows();
-        Object.entries(rowsByTab).forEach(([tab, rows]) => {
-          downloadCsvFile(`EAA_${tab}_datos_${sheetMigrationStamp()}.csv`, window.ElAngelAzulPersistence.toCsv(sheetTabColumns(tab), rows));
+      // Un CSV no puede guardar ancho de columna - Excel lo abre siempre con
+      // columnas angostas por defecto, por más que el separador y la
+      // codificación estén bien (confirmado con el usuario: eso seguía
+      // "apretado" incluso después de arreglar ambas cosas). El fix real es
+      // dejar de generar CSV y generar un .xlsx real, con las columnas ya
+      // ajustadas al contenido - xlsx.js ya está cargado en esta página
+      // (index.html) sin usarse en ningún lado del código.
+      function autoFitColumnWidths(rows, columns) {
+        return columns.map((column) => {
+          const maxLen = rows.reduce((max, row) => Math.max(max, String(row[column] ?? "").length), column.length);
+          return { wch: Math.min(Math.max(maxLen + 2, 10), 60) };
         });
+      }
+
+      function downloadGoogleSheetDataXlsx() {
+        const rowsByTab = buildGoogleSheetMigrationRows();
+        const workbook = XLSX.utils.book_new();
+        Object.entries(rowsByTab).forEach(([tab, rows]) => {
+          const columns = sheetTabColumns(tab);
+          const sheet = XLSX.utils.json_to_sheet(rows, { header: columns });
+          sheet["!cols"] = autoFitColumnWidths(rows, columns);
+          XLSX.utils.book_append_sheet(workbook, sheet, tab.slice(0, 31));
+        });
+        XLSX.writeFile(workbook, `EAA_respaldo_${sheetMigrationStamp()}.xlsx`);
       }
 
       function downloadGoogleSheetAppsScript() {
@@ -2863,7 +2882,7 @@
                 <h2>Datos disponibles</h2>
                 <p>Conteos cargados desde la base activa.</p>
               </div>
-              <button type="button" class="admin-secondary-action" data-admin-download-sheet-data>Descargar respaldo CSV</button>
+              <button type="button" class="admin-secondary-action" data-admin-download-sheet-data>Descargar respaldo Excel</button>
             </div>
             <div class="admin-settings-counts">
               <span><strong>${groupCount}</strong> Grupos</span>
@@ -2883,7 +2902,7 @@
           </section>
         `);
         bindAdminShell();
-        document.querySelector("[data-admin-download-sheet-data]")?.addEventListener("click", downloadGoogleSheetDataCsv);
+        document.querySelector("[data-admin-download-sheet-data]")?.addEventListener("click", downloadGoogleSheetDataXlsx);
       }
 
       const ADMIN_PASAJEROS_STORAGE_KEY = "angelAzulAdminPasajerosDemoV4";
