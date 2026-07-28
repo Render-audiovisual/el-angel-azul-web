@@ -327,17 +327,21 @@
   // comas como una sola columna gigante - separarlo con ";" es el fix
   // estándar, y ese es también el separador de lista por defecto en esa
   // configuración regional, así que Excel lo detecta solo al abrir el
-  // archivo con doble clic, sin hacer falta la línea "sep=;".
+  // archivo con doble clic.
   //
-  // OJO: se probó agregar la línea "sep=;" además del BOM (para forzar el
-  // separador sin depender de la configuración regional) y esa combinación
-  // rompía los acentos (á, é, ñ) - Excel respetaba el separador pero
-  // dejaba de decodificar el resto del archivo como UTF-8. Sacar "sep=;"
-  // y dejar solo BOM + ";" resuelve ambas cosas a la vez.
+  // OJO con los acentos: se probaron dos variantes de BOM+UTF-8 (con y sin
+  // línea "sep=;") y ninguna funcionó - Excel, al abrir un CSV con doble
+  // clic (a diferencia de "Datos > Desde texto/CSV"), en la práctica
+  // ignora el BOM y decodifica con la codificación de Windows del sistema,
+  // no UTF-8. Por eso esta función ya NO devuelve UTF-8 - devuelve texto
+  // JS normal (sin BOM) y quien arma el archivo para descargar
+  // (downloadCsvFile en app.js) lo codifica directo en Windows-1252, que
+  // es justo lo que Excel espera en este escenario y donde los acentos del
+  // español entran sin problema.
   function toCsv(columns = [], rows = []) {
     const header = columns.map(csvEscape).join(";");
     const body = rows.map((row) => columns.map((column) => csvEscape(row[column])).join(";")).join("\n");
-    return ["﻿" + header, body].filter(Boolean).join("\n");
+    return [header, body].filter(Boolean).join("\n");
   }
 
   function blankCsvPackage() {

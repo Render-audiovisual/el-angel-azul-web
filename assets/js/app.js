@@ -2360,8 +2360,7 @@
         bindAdminShell();
       }
 
-      function downloadTextFile(fileName, content, type = "text/csv;charset=utf-8") {
-        const blob = new Blob([content], { type });
+      function triggerBlobDownload(fileName, blob) {
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
@@ -2370,6 +2369,33 @@
         link.click();
         link.remove();
         URL.revokeObjectURL(url);
+      }
+
+      function downloadTextFile(fileName, content, type = "text/csv;charset=utf-8") {
+        triggerBlobDownload(fileName, new Blob([content], { type }));
+      }
+
+      // Excel, al abrir un CSV con doble clic (a diferencia de "Datos >
+      // Desde texto/CSV"), en la práctica ignora el BOM y decodifica con
+      // la codificación de Windows del sistema - Windows-1252 en una
+      // instalación en español. UTF-8 (con o sin BOM) rompe los acentos
+      // en ese flujo - confirmado probando ambas variantes. Codificar
+      // directo en Windows-1252 evita el problema en la raíz: comparte el
+      // mismo valor de byte que el código de punto Unicode en todo el
+      // rango 0x00-0xFF, que cubre á, é, í, ó, ú, ñ, ¿, ¡. Un carácter
+      // fuera de ese rango (muy improbable en nombres de colegios/viajes)
+      // cae a "?" en vez de romper el archivo entero.
+      function encodeWindows1252(text) {
+        const bytes = new Uint8Array(text.length);
+        for (let i = 0; i < text.length; i++) {
+          const code = text.charCodeAt(i);
+          bytes[i] = code <= 0xff ? code : 0x3f;
+        }
+        return bytes;
+      }
+
+      function downloadCsvFile(fileName, csvText) {
+        triggerBlobDownload(fileName, new Blob([encodeWindows1252(csvText)], { type: "text/csv;charset=windows-1252" }));
       }
 
       function sheetMigrationStamp() {
@@ -2768,14 +2794,14 @@
       function downloadGoogleSheetSchemaCsv() {
         const csvPackage = window.ElAngelAzulPersistence.blankCsvPackage();
         Object.entries(csvPackage).forEach(([tab, csv]) => {
-          downloadTextFile(`EAA_${tab}_encabezados_${sheetMigrationStamp()}.csv`, csv);
+          downloadCsvFile(`EAA_${tab}_encabezados_${sheetMigrationStamp()}.csv`, csv);
         });
       }
 
       function downloadGoogleSheetDataCsv() {
         const rowsByTab = buildGoogleSheetMigrationRows();
         Object.entries(rowsByTab).forEach(([tab, rows]) => {
-          downloadTextFile(`EAA_${tab}_datos_${sheetMigrationStamp()}.csv`, window.ElAngelAzulPersistence.toCsv(sheetTabColumns(tab), rows));
+          downloadCsvFile(`EAA_${tab}_datos_${sheetMigrationStamp()}.csv`, window.ElAngelAzulPersistence.toCsv(sheetTabColumns(tab), rows));
         });
       }
 
