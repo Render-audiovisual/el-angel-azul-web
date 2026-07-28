@@ -207,26 +207,6 @@ const WRITE_ALLOWED = new Set(["GRUPOS", "CONTRATOS", "PASAJEROS", "FICHAS_ADHES
 // migrar/verificar los datos que todavía viven en Sheets.
 const POSTGRES_MIGRATION_REQUESTED = process.env.EAA_POSTGRES_MIGRATION_ENABLED === "true";
 const POSTGRES_MIGRATION_ENABLED = POSTGRES_MIGRATION_REQUESTED && Boolean(process.env.DATABASE_URL);
-let qaCleanupStatus = { state: "not_started" };
-
-async function runQaCleanupMaintenance() {
-  if (process.env.NODE_ENV !== "production" || !POSTGRES_MIGRATION_ENABLED) {
-    qaCleanupStatus = { state: "skipped" };
-    return;
-  }
-  qaCleanupStatus = { state: "running" };
-  try {
-    qaCleanupStatus = await db.cleanupQaSmoketestOnce();
-    console.log("Limpieza QA finalizada:", JSON.stringify(qaCleanupStatus));
-  } catch (error) {
-    qaCleanupStatus = {
-      state: "aborted",
-      error: "precondition_failed",
-      reason: String(error?.message || "Validación desconocida").slice(0, 240)
-    };
-    console.error("Limpieza QA abortada sin cambios:", error);
-  }
-}
 if (POSTGRES_MIGRATION_REQUESTED && !process.env.DATABASE_URL) {
   console.error(
     "EAA_POSTGRES_MIGRATION_ENABLED=true pero DATABASE_URL no está configurada. " +
@@ -880,9 +860,6 @@ function createAppServer() {
       if (url.pathname.startsWith("/api/") && apiRateLimited(req, url)) {
         return json(res, 429, { ok: false, error: "Demasiadas solicitudes. Probá de nuevo más tarde." });
       }
-      if (url.pathname === "/api/qa-cleanup-status" && req.method === "GET") {
-        return json(res, 200, { ok: true, ...qaCleanupStatus });
-      }
       if (url.pathname.startsWith("/api/admin/")) return await handleAdminAuth(req, res, url);
       if (url.pathname === "/api/google-sheets") return await handleSheets(req, res, url);
       return staticFile(req, res, url);
@@ -902,7 +879,6 @@ function createAppServer() {
 if (process.env.NODE_ENV !== "test" || require.main === module) {
   createAppServer().listen(PORT, "0.0.0.0", () => {
     console.log(`El Ángel Azul server listening on ${PORT}`);
-    runQaCleanupMaintenance();
   });
 }
 
