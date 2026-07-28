@@ -219,7 +219,11 @@ async function runQaCleanupMaintenance() {
     qaCleanupStatus = await db.cleanupQaSmoketestOnce();
     console.log("Limpieza QA finalizada:", JSON.stringify(qaCleanupStatus));
   } catch (error) {
-    qaCleanupStatus = { state: "aborted", error: "precondition_failed" };
+    qaCleanupStatus = {
+      state: "aborted",
+      error: "precondition_failed",
+      reason: String(error?.message || "Validación desconocida").slice(0, 240)
+    };
     console.error("Limpieza QA abortada sin cambios:", error);
   }
 }
