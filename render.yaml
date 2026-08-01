@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: el-angel-azul-web
+    runtime: node
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: EAA_POSTGRES_MIGRATION_ENABLED
+        value: "true"
+      - key: EAA_ADMIN_PASSWORD
+        sync: false
+      - key: EAA_AGENTE1_PASSWORD
+        sync: false
+      - key: EAA_AGENTE2_PASSWORD
+        sync: false
+      - key: EAA_AGENTE3_PASSWORD
+        sync: false
+      - key: EAA_AGENTE4_PASSWORD
+        sync: false
+      - key: EAA_AGENTE5_PASSWORD
+        sync: false
