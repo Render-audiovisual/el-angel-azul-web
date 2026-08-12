@@ -45,6 +45,12 @@ test("las rutas admin con hash se reconocen como entrada privada", () => {
   assert.match(source, /hashPath\.startsWith\("\/admin\/"\)/);
 });
 
+test("la navegación interna del admin conserva rutas hash y no genera 404 físicos", () => {
+  const source = functionSource("adminRouteHref", "isAdminPath");
+  assert.match(source, /return `#\$\{path\}`/);
+  assert.doesNotMatch(source, /return `\$\{path\}\//);
+});
+
 test("Configuración queda bloqueada para cuentas de agente incluso por URL directa", () => {
   const source = functionSource("adminCanAccessPath", "fetchAdminSession");
   assert.match(source, /path !== "\/admin\/configuracion"/);

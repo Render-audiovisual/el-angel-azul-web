@@ -35,9 +35,11 @@
       }
 
       function adminRouteHref(path) {
-        if (!isAdminEntry()) return `#${path}`;
-        if (path === "/admin") return "/admin/";
-        return `${path}/`;
+        // El frontend es una SPA basada en hash. Las rutas físicas como
+        // /admin/fichas no existen en el servidor y, con una sesión activa,
+        // terminaban en 404. Mantener toda la navegación interna en hash
+        // funciona desde la portada y también desde la entrada /admin.
+        return `#${path}`;
       }
 
 
