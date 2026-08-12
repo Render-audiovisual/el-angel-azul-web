@@ -22,6 +22,7 @@ const MAX_BODY_BYTES = 1_000_000;
 const MAX_ADMIN_ROWS_PER_WRITE = 5000;
 const MAX_DELETE_IDS_PER_WRITE = 1000;
 const MAX_FIELD_LENGTH = 1000;
+const MAX_RATE_LIMIT_KEYS = 10_000;
 // SEGURIDAD: antes había una contraseña hardcodeada como fallback
 // directamente en el código fuente. Como este repo es PÚBLICO en GitHub,
 // ese valor quedaba visible para cualquiera,
@@ -110,6 +111,10 @@ function genericRateLimited(store, key, limit, windowMs) {
 }
 
 function registerGenericAttempt(store, key, windowMs) {
+  if (!store.has(key) && store.size >= MAX_RATE_LIMIT_KEYS) {
+    const oldestKey = store.keys().next().value;
+    if (oldestKey !== undefined) store.delete(oldestKey);
+  }
   const record = store.get(key);
   if (!record || Date.now() - record.firstAttemptAt > windowMs) {
     store.set(key, { count: 1, firstAttemptAt: Date.now() });
@@ -136,6 +141,10 @@ function fichaSubmitRateLimited(ip) {
 }
 
 function registerFichaSubmit(ip) {
+  if (!fichaSubmitAttempts.has(ip) && fichaSubmitAttempts.size >= MAX_RATE_LIMIT_KEYS) {
+    const oldestKey = fichaSubmitAttempts.keys().next().value;
+    if (oldestKey !== undefined) fichaSubmitAttempts.delete(oldestKey);
+  }
   const record = fichaSubmitAttempts.get(ip);
   if (!record || Date.now() - record.firstAttemptAt > FICHA_SUBMIT_WINDOW_MS) {
     fichaSubmitAttempts.set(ip, { count: 1, firstAttemptAt: Date.now() });
@@ -155,6 +164,10 @@ function loginRateLimited(ip) {
 }
 
 function registerFailedLogin(ip) {
+  if (!loginAttempts.has(ip) && loginAttempts.size >= MAX_RATE_LIMIT_KEYS) {
+    const oldestKey = loginAttempts.keys().next().value;
+    if (oldestKey !== undefined) loginAttempts.delete(oldestKey);
+  }
   const record = loginAttempts.get(ip);
   if (!record || Date.now() - record.firstAttemptAt > LOGIN_ATTEMPT_WINDOW_MS) {
     loginAttempts.set(ip, { count: 1, firstAttemptAt: Date.now() });
@@ -251,7 +264,20 @@ function parseCookies(req) {
 
 function sessionCookie(token, maxAgeSeconds, isSecureRequest = false) {
   const secureFlag = isSecureRequest ? " Secure;" : "";
-  return `${ADMIN_SESSION_COOKIE}=${encodeURIComponent(token)}; HttpOnly;${secureFlag} SameSite=Lax; Path=/; Max-Age=${maxAgeSeconds}`;
+  return `${ADMIN_SESSION_COOKIE}=${encodeURIComponent(token)}; HttpOnly;${secureFlag} SameSite=Strict; Path=/; Max-Age=${maxAgeSeconds}; Priority=High`;
+}
+
+function safePasswordEqual(expected, received) {
+  const expectedHash = crypto.createHash("sha256").update(String(expected || "")).digest();
+  const receivedHash = crypto.createHash("sha256").update(String(received || "")).digest();
+  return crypto.timingSafeEqual(expectedHash, receivedHash);
+}
+
+function safeErrorForLog(error) {
+  return {
+    name: String(error?.name || "Error").slice(0, 80),
+    code: String(error?.code || "INTERNAL_ERROR").slice(0, 80)
+  };
 }
 
 // Railway (y la mayoría de los hosts con proxy) terminan HTTPS en el borde y
@@ -294,14 +320,18 @@ function securityHeaders(req) {
   req = req && req.headers ? req : { headers: {}, socket: {} };
   const headers = {
     "X-Content-Type-Options": "nosniff",
-    "X-Frame-Options": "SAMEORIGIN",
-    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "X-Frame-Options": "DENY",
+    "X-Permitted-Cross-Domain-Policies": "none",
+    "Cross-Origin-Opener-Policy": "same-origin",
+    "Cross-Origin-Resource-Policy": "same-origin",
+    "Origin-Agent-Cluster": "?1",
+    "Referrer-Policy": "no-referrer",
     "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
     "Content-Security-Policy": [
       "default-src 'self'",
       "base-uri 'self'",
       "object-src 'none'",
-      "frame-ancestors 'self'",
+      "frame-ancestors 'none'",
       "form-action 'self'",
       "script-src 'self' https://cdn.jsdelivr.net",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net",
@@ -747,7 +777,7 @@ async function handleSheets(req, res, url) {
       try {
         await db.insertFichaPublica(rows[0]);
       } catch (error) {
-        console.error("Error al guardar ficha de adhesión en Supabase:", error);
+        console.error("Error al guardar ficha de adhesión en Supabase:", safeErrorForLog(error));
         return json(res, 500, { ok: false, error: "No se pudo guardar la ficha. Intentá de nuevo en unos minutos o consultanos por WhatsApp." });
       }
       return json(res, 200, { ok: true, sheet });
@@ -820,14 +850,20 @@ async function handleAdminAuth(req, res, url) {
       return json(res, 429, { ok: false, error: "Demasiados intentos fallidos. Esperá unos minutos antes de volver a intentar." });
     }
     const payload = await readJsonBody(req, 20_000);
-    const username = String(payload.username || "").trim().toLowerCase();
-    const password = String(payload.password || "");
+    const username = String(payload.username || "").trim().toLowerCase().slice(0, 100);
+    const password = String(payload.password || "").slice(0, 1000);
     const user = ADMIN_USERS[username];
-    if (!user || !user.password || user.password !== password) {
+    const configuredPassword = user?.password || "disabled-account-placeholder";
+    if (!user?.password || !safePasswordEqual(configuredPassword, password)) {
       registerFailedLogin(ip);
       return json(res, 401, { ok: false, error: "Usuario o contraseña incorrectos" });
     }
     clearLoginAttempts(ip);
+    // Una cuenta mantiene una sola sesión activa. Un nuevo ingreso invalida
+    // tokens anteriores (útil al rotar claves o cerrar una sesión olvidada).
+    for (const [existingToken, existingSession] of adminSessions) {
+      if (existingSession.user === username) adminSessions.delete(existingToken);
+    }
     const token = crypto.randomBytes(32).toString("base64url");
     const session = {
       user: username,
@@ -966,7 +1002,7 @@ function createAppServer() {
     } catch (error) {
       const status = Number(error.statusCode || 500);
       const message = status >= 500 ? "Error interno" : (error.message || "Solicitud inválida");
-      if (status >= 500) console.error(error);
+      if (status >= 500) console.error("Error interno de solicitud:", safeErrorForLog(error));
       return json(res, status, { ok: false, error: message });
     }
   });
@@ -988,6 +1024,8 @@ module.exports = {
     isHttpsRequest,
     sameOriginRequest,
     sessionCookie,
+    safePasswordEqual,
+    safeErrorForLog,
     publicInscripcionContext
   }
 };

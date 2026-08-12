@@ -135,7 +135,8 @@ test("login, sesión, ruta privada y logout funcionan con mismo origen", async (
   const cookie = String(login.headers["set-cookie"]?.[0] || "").split(";")[0];
   assert.ok(cookie.startsWith("eaa_admin_session="));
   assert.match(login.headers["set-cookie"][0], /HttpOnly/);
-  assert.match(login.headers["set-cookie"][0], /SameSite=Lax/);
+  assert.match(login.headers["set-cookie"][0], /SameSite=Strict/);
+  assert.match(login.headers["set-cookie"][0], /Priority=High/);
 
   const me = await request({
     path: "/api/admin/me",
@@ -193,6 +194,38 @@ test("el proxy HTTPS produce una cookie Secure", async () => {
   assert.equal(login.json?.role, "agencia");
   assert.match(login.headers["set-cookie"][0], /;\s*Secure;/);
   process.env.NODE_ENV = previousNodeEnv;
+});
+
+test("un nuevo login invalida la sesión anterior de la misma cuenta", async () => {
+  const origin = `http://127.0.0.1:${port}`;
+  const first = await request({
+    method: "POST",
+    path: "/api/admin/login",
+    headers: { origin },
+    body: { username: "admin", password: "test-admin-password" }
+  });
+  const firstCookie = String(first.headers["set-cookie"]?.[0] || "").split(";")[0];
+  const second = await request({
+    method: "POST",
+    path: "/api/admin/login",
+    headers: { origin },
+    body: { username: "admin", password: "test-admin-password" }
+  });
+  assert.equal(second.status, 200);
+  const oldSession = await request({ path: "/api/admin/me", headers: { cookie: firstCookie } });
+  assert.equal(oldSession.json?.authenticated, false);
+});
+
+test("comparación de claves y logs no exponen valores sensibles", () => {
+  assert.equal(__test.safePasswordEqual("clave-correcta", "clave-correcta"), true);
+  assert.equal(__test.safePasswordEqual("clave-correcta", "otra"), false);
+  const summary = __test.safeErrorForLog({
+    name: "DatabaseError",
+    code: "23505",
+    message: "DNI 12345678 y contraseña secreta",
+    detail: "teléfono privado"
+  });
+  assert.deepEqual(summary, { name: "DatabaseError", code: "23505" });
 });
 
 test("cabeceras forwarded falsificadas no permiten suplantar el origen", async () => {
@@ -255,5 +288,10 @@ test("HTML, CSS y JavaScript se revalidan para evitar versiones viejas", async (
     assert.equal(response.status, 200);
     assert.equal(response.headers["cache-control"], "no-cache, no-store, must-revalidate");
     assert.match(response.headers["content-security-policy"] || "", /default-src 'self'/);
+    assert.match(response.headers["content-security-policy"] || "", /frame-ancestors 'none'/);
+    assert.equal(response.headers["x-frame-options"], "DENY");
+    assert.equal(response.headers["referrer-policy"], "no-referrer");
+    assert.equal(response.headers["cross-origin-opener-policy"], "same-origin");
+    assert.equal(response.headers["cross-origin-resource-policy"], "same-origin");
   }
 });
