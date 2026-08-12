@@ -13,7 +13,7 @@ El servidor escucha en `PORT` o, si no está definido, en `8080`.
 
 ## Producción
 
-- Hosting: Hostinger Web App.
+- Hosting: Render (`el-angel-azul-web`).
 - Rama desplegada: `main`.
 - Entrada: `server.js` mediante `npm start`.
 - Base activa: PostgreSQL/Supabase.
@@ -34,7 +34,7 @@ EAA_AGENTE5_PASSWORD=...
 NODE_ENV=production
 ```
 
-Hostinger define `PORT` automáticamente. No configurar variables de Google
+Render define `PORT` automáticamente. No configurar variables de Google
 Sheets: el adaptador legado se conserva temporalmente como rollback, pero no es
 la fuente activa de producción.
 

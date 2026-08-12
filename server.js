@@ -214,13 +214,14 @@ if (POSTGRES_MIGRATION_REQUESTED && !process.env.DATABASE_URL) {
   );
 }
 const POSTGRES_SHEETS = new Set(
-  POSTGRES_MIGRATION_ENABLED ? ["GRUPOS", "CONTRATOS", "PASAJEROS", "TURISMO"] : []
+  POSTGRES_MIGRATION_ENABLED ? ["GRUPOS", "CONTRATOS", "PASAJEROS", "TURISMO", "CONFIG"] : []
 );
 const POSTGRES_LIST_FN = {
   GRUPOS: db.listGruposAdmin,
   CONTRATOS: db.listContratosAdmin,
   PASAJEROS: db.listPasajerosAdmin,
-  TURISMO: db.listTurismoAdmin
+  TURISMO: db.listTurismoAdmin,
+  CONFIG: db.listConfigAdmin
 };
 const POSTGRES_SAVE_FN = {
   GRUPOS: db.saveGruposAdmin,

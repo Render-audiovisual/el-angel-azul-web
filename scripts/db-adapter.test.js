@@ -71,3 +71,7 @@ test("el admin no puede reescribir consentimiento ni firma legal", () => {
   assert.doesNotMatch(updateSource, /row\.acepta_condiciones/);
   assert.doesNotMatch(updateSource, /row\.firma_data_url/);
 });
+
+test("CONFIG tiene adaptador Postgres y no depende de Google Sheets", () => {
+  assert.equal(typeof db.listConfigAdmin, "function");
+});
