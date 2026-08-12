@@ -47,6 +47,9 @@ Nunca subir a Git ni compartir por chat `DATABASE_URL`, contraseñas, archivos
 Para validación TLS completa, descargar el certificado CA desde Database >
 SSL Configuration en Supabase, cargarlo como `SUPABASE_DB_CA_CERT` en Render y
 recién entonces activar `EAA_POSTGRES_TLS_VERIFY_FULL=true`.
+El adaptador elimina automáticamente `sslmode`, `sslcert`, `sslkey` y
+`sslrootcert` de `DATABASE_URL` cuando la validación completa está activa para
+evitar que `node-postgres` reemplace el certificado configurado.
 
 ## Base de datos
 
