@@ -3314,8 +3314,8 @@
           // públicas) se aplican apenas se leen bien, sin depender de si
           // Pasajeros/Fichas están disponibles en esta página.
           const [grupos, contratos, pasajeros, fichas, turismo] = await Promise.all([
-            window.ElAngelAzulPersistence.fetchGoogleSheetRows("GRUPOS").catch(() => null),
-            window.ElAngelAzulPersistence.fetchGoogleSheetRows("CONTRATOS").catch(() => null),
+            adminEntry ? window.ElAngelAzulPersistence.fetchGoogleSheetRows("GRUPOS").catch(() => null) : Promise.resolve([]),
+            adminEntry ? window.ElAngelAzulPersistence.fetchGoogleSheetRows("CONTRATOS").catch(() => null) : Promise.resolve([]),
             adminEntry
               ? window.ElAngelAzulPersistence.fetchGoogleSheetRows("PASAJEROS").catch(() => null)
               : Promise.resolve(null),
@@ -7778,6 +7778,8 @@
         let currentStep = 1;
         let matchState = { status: "idle", candidates: [] };
         let confirmedContrato = null;
+        let publicContractRequest = 0;
+        let publicContractTimer = null;
         const requiredMessage = "Completá los campos obligatorios para continuar.";
         const noContractMessage = "No encontramos un contrato activo para ese colegio.";
 
@@ -7920,6 +7922,31 @@
           renderChoiceGroups();
         };
 
+        const refreshPublicContractContext = () => {
+          clearTimeout(publicContractTimer);
+          const colegio = colegioField.value.trim();
+          const cursoDivision = cursoField.value.trim();
+          if (colegio.length < 3 || !cursoDivision) return;
+          const requestId = ++publicContractRequest;
+          publicContractTimer = setTimeout(async () => {
+            const params = new URLSearchParams({
+              nivel: nivelField.value,
+              viaje: `${destinoField.value} ${anioField.value}`.trim(),
+              colegio,
+              cursoDivision
+            });
+            try {
+              const response = await fetch(`/api/public/inscripcion-context?${params}`, { cache: "no-store" });
+              const payload = await response.json();
+              if (!response.ok || !payload.ok || requestId !== publicContractRequest) return;
+              applyGoogleSheetsRows({ grupos: payload.grupos || [], contratos: payload.contratos || [], includePrivate: false });
+              update();
+            } catch (_) {
+              // La inscripción puede continuar con vinculación manual.
+            }
+          }, 300);
+        };
+
         // Ya NO se exige un contrato confirmado para avanzar: cualquier
         // colegio puede enviar su ficha, aunque no esté cargado en el
         // sistema todavía. El admin ya soporta fichas sin contrato
@@ -7967,11 +7994,11 @@
           form.requestSubmit();
         };
 
-        nivelField.addEventListener("change", () => update("nivel"));
-        destinoField.addEventListener("change", () => update("destino"));
-        anioField.addEventListener("change", () => update("anio"));
-        colegioField.addEventListener("input", () => update("colegio"));
-        cursoField.addEventListener("input", () => update("curso"));
+        nivelField.addEventListener("change", () => { update("nivel"); refreshPublicContractContext(); });
+        destinoField.addEventListener("change", () => { update("destino"); refreshPublicContractContext(); });
+        anioField.addEventListener("change", () => { update("anio"); refreshPublicContractContext(); });
+        colegioField.addEventListener("input", () => { update("colegio"); refreshPublicContractContext(); });
+        cursoField.addEventListener("input", () => { update("curso"); refreshPublicContractContext(); });
         form.addEventListener("click", (event) => {
           const optionButton = event.target.closest("[data-inscripcion-option]");
           const confirmButton = event.target.closest("[data-inscripcion-confirm-contract]");

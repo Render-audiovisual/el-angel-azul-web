@@ -168,8 +168,14 @@ function clearLoginAttempts(ip) {
 }
 
 function clientIp(req) {
-  const forwarded = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim();
-  return forwarded || req.socket.remoteAddress || "unknown";
+  const forwarded = String(req.headers["x-forwarded-for"] || "")
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+  // Render agrega la IP real al final de X-Forwarded-For. Tomar el primer
+  // valor permitía que el cliente eligiera su IP aparente y eludiera todos
+  // los límites. El último salto es el que agregó el proxy más cercano.
+  return forwarded.at(-1) || req.socket.remoteAddress || "unknown";
 }
 
 const SCHEMA = {
@@ -255,7 +261,10 @@ function sessionCookie(token, maxAgeSeconds, isSecureRequest = false) {
 // navegador ignoraría/bloquearía sobre HTTP de todos modos).
 function isHttpsRequest(req) {
   if (!req || !req.headers) return false;
-  return req.headers["x-forwarded-proto"] === "https";
+  // En producción Render siempre termina TLS antes de llegar al proceso.
+  // No depender de una cabecera que un cliente puede intentar falsificar.
+  if (process.env.NODE_ENV === "production") return true;
+  return Boolean(req.socket?.encrypted);
 }
 
 function currentAdminSession(req) {
@@ -287,7 +296,20 @@ function securityHeaders(req) {
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "SAMEORIGIN",
     "Referrer-Policy": "strict-origin-when-cross-origin",
-    "Permissions-Policy": "camera=(), microphone=(), geolocation=()"
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+    "Content-Security-Policy": [
+      "default-src 'self'",
+      "base-uri 'self'",
+      "object-src 'none'",
+      "frame-ancestors 'self'",
+      "form-action 'self'",
+      "script-src 'self' https://cdn.jsdelivr.net",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net",
+      "font-src 'self' data: https://fonts.gstatic.com",
+      "img-src 'self' data: blob: https:",
+      "connect-src 'self'",
+      "upgrade-insecure-requests"
+    ].join("; ")
   };
   if (isHttpsRequest(req)) {
     headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains";
@@ -364,13 +386,71 @@ function sameOriginRequest(req) {
   if (!req || !req.headers) return false;
   const origin = req.headers.origin;
   if (!origin) return false;
-  const host = req.headers["x-forwarded-host"] || req.headers.host || "";
-  const protocol = req.headers["x-forwarded-proto"] || (req.socket.encrypted ? "https" : "http");
+  const host = String(req.headers.host || "").trim().toLowerCase();
+  const protocol = isHttpsRequest(req) ? "https" : "http";
   try {
     return new URL(origin).origin === `${protocol}://${host}`;
   } catch (error) {
     return false;
   }
+}
+
+function normalizePublicMatch(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function publicMatchScore(input, candidate) {
+  if (!input || !candidate) return 0;
+  if (input === candidate) return 1;
+  if (input.length >= 4 && candidate.includes(input)) return 0.94;
+  if (candidate.length >= 4 && input.includes(candidate)) return 0.94;
+  const rows = Array.from({ length: input.length + 1 }, (_, index) => [index]);
+  for (let column = 0; column <= candidate.length; column += 1) rows[0][column] = column;
+  for (let row = 1; row <= input.length; row += 1) {
+    for (let column = 1; column <= candidate.length; column += 1) {
+      rows[row][column] = Math.min(
+        rows[row - 1][column] + 1,
+        rows[row][column - 1] + 1,
+        rows[row - 1][column - 1] + (input[row - 1] === candidate[column - 1] ? 0 : 1)
+      );
+    }
+  }
+  return Math.max(0, 1 - (rows[input.length][candidate.length] / Math.max(input.length, candidate.length, 1)));
+}
+
+function publicInscripcionContext(grupos, contratos, params) {
+  const nivel = normalizePublicMatch(params.get("nivel"));
+  const viaje = normalizePublicMatch(params.get("viaje"));
+  const colegio = normalizePublicMatch(params.get("colegio"));
+  const cursoDivision = normalizePublicMatch(params.get("cursoDivision"));
+  if (!nivel || !viaje || colegio.length < 3 || !cursoDivision) return { grupos: [], contratos: [] };
+
+  const groupsById = new Map(grupos.map((group) => [String(group.id || ""), group]));
+  const matches = contratos.map((contract) => {
+    const group = groupsById.get(String(contract.grupo_id || ""));
+    if (!group) return null;
+    const school = normalizePublicMatch(contract.colegio_nombre || group.colegio);
+    const course = normalizePublicMatch(`${contract.curso || group.curso || ""} ${contract.division || group.division || ""}`);
+    const active = ["activo", "activa"].includes(normalizePublicMatch(contract.estado));
+    const score = publicMatchScore(colegio, school);
+    const matches = active && normalizePublicMatch(contract.nivel) === nivel &&
+      normalizePublicMatch(contract.viaje) === viaje && course === cursoDivision && score >= 0.68;
+    return matches ? { contract, score } : null;
+  }).filter(Boolean).sort((a, b) => b.score - a.score).slice(0, 5).map(({ contract }) => contract);
+  const matchedGroupIds = new Set(matches.map((contract) => String(contract.grupo_id || "")));
+  return {
+    grupos: grupos
+      .filter((group) => matchedGroupIds.has(String(group.id || "")))
+      .map(({ id, nivel: groupNivel, viaje: groupViaje, colegio: groupSchool, curso, division }) =>
+        ({ id, nivel: groupNivel, viaje: groupViaje, colegio: groupSchool, curso, division })),
+    contratos: matches.map(({ id, codigo_contrato, colegio_nombre, grupo_id, nivel: contractNivel, viaje: contractViaje, curso, division, estado }) =>
+      ({ id, codigo_contrato, colegio_nombre, grupo_id, nivel: contractNivel, viaje: contractViaje, curso, division, estado }))
+  };
 }
 
 function requireSameOrigin(req, res) {
@@ -492,16 +572,14 @@ async function writeSheet(sheet, rows, deleteIds = []) {
   await sheetsRequest("PUT", `/values/${range}?valueInputOption=RAW`, { values });
 }
 
-// SEGURIDAD: TURISMO/CONFIG son públicas por diseño (catálogo web).
-// GRUPOS y CONTRATOS también quedan públicas a propósito: no tienen
-// datos personales (solo nivel/viaje/colegio/curso/estado), y la
-// Inscripción pública NECESITA leerlas sin login para encontrar el
-// contrato del colegio+curso que escribe la familia.
+// TURISMO/CONFIG son públicas por diseño (catálogo web). GRUPOS y CONTRATOS
+// ya no se entregan completos: la inscripción usa un endpoint de búsqueda
+// acotado que devuelve como máximo cinco coincidencias activas.
 // PASAJEROS, FICHAS_ADHESION, PAGOS y CUOTAS SÍ tienen datos
 // personales reales (DNI, teléfono, nombre de responsables, muchos
 // de menores de edad) - antes cualquiera podía leerlas sin
 // autenticarse, con solo saber la URL. Ahora exigen sesión de admin.
-const PUBLIC_READ_SHEETS = new Set(["TURISMO", "CONFIG", "GRUPOS", "CONTRATOS"]);
+const PUBLIC_READ_SHEETS = new Set(["TURISMO", "CONFIG"]);
 
 // SEGURIDAD: antes CUALQUIERA (sin login) podía escribir en /api/google-sheets
 // para CUALQUIER hoja permitida (GRUPOS, CONTRATOS, PASAJEROS, TURISMO,
@@ -778,6 +856,10 @@ async function handleAdminAuth(req, res, url) {
 }
 
 function staticFile(req, res, url) {
+  if (!["GET", "HEAD"].includes(req.method)) {
+    res.writeHead(405, { "Allow": "GET, HEAD", ...securityHeaders(req) });
+    return res.end("Method not allowed");
+  }
   if (url.pathname === "/admin" || url.pathname.startsWith("/admin/") || url.pathname === "/admin-turismo" || url.pathname.startsWith("/admin-turismo/")) {
     const session = currentAdminSession(req);
     if (!session) {
@@ -789,7 +871,19 @@ function staticFile(req, res, url) {
     }
   }
   const cleanPath = decodeURIComponent(url.pathname === "/" ? "/index.html" : url.pathname);
+  const publicPath = cleanPath.replace(/^\/+/, "");
+  const normalizedPublicPath = path.posix.normalize(publicPath);
+  const isPublicAsset = normalizedPublicPath.startsWith("assets/") && !normalizedPublicPath.includes("../");
+  const isPublicEntry = publicPath === "index.html" || publicPath === "admin/index.html" || publicPath === "admin-turismo/index.html";
+  if (!isPublicAsset && !isPublicEntry) {
+    res.writeHead(404, securityHeaders(req));
+    return res.end("Not found");
+  }
   const filePath = path.normalize(path.join(ROOT, cleanPath));
+  if (isPublicAsset && !filePath.startsWith(path.join(ROOT, "assets") + path.sep)) {
+    res.writeHead(404, securityHeaders(req));
+    return res.end("Not found");
+  }
   // Auditoría 23/07: "filePath.startsWith(ROOT)" por sí solo deja pasar un
   // caso borde (si existiera un directorio hermano cuyo nombre empieza
   // igual que ROOT, ej. ROOT + "-algo", también "empieza con ROOT" sin
@@ -825,6 +919,7 @@ function staticFile(req, res, url) {
     "Cache-Control": cacheControl,
     ...securityHeaders(req)
   });
+  if (req.method === "HEAD") return res.end();
   fs.createReadStream(target).pipe(res);
 }
 
@@ -862,6 +957,10 @@ function createAppServer() {
         return json(res, 429, { ok: false, error: "Demasiadas solicitudes. Probá de nuevo más tarde." });
       }
       if (url.pathname.startsWith("/api/admin/")) return await handleAdminAuth(req, res, url);
+      if (url.pathname === "/api/public/inscripcion-context" && req.method === "GET") {
+        const [grupos, contratos] = await Promise.all([db.listGruposAdmin(), db.listContratosAdmin()]);
+        return json(res, 200, { ok: true, ...publicInscripcionContext(grupos, contratos, url.searchParams) });
+      }
       if (url.pathname === "/api/google-sheets") return await handleSheets(req, res, url);
       return staticFile(req, res, url);
     } catch (error) {
@@ -888,6 +987,7 @@ module.exports = {
   __test: {
     isHttpsRequest,
     sameOriginRequest,
-    sessionCookie
+    sessionCookie,
+    publicInscripcionContext
   }
 };

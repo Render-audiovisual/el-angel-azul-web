@@ -32,6 +32,9 @@ EAA_AGENTE3_PASSWORD=...
 EAA_AGENTE4_PASSWORD=...
 EAA_AGENTE5_PASSWORD=...
 NODE_ENV=production
+# Activar juntos después de descargar el certificado CA desde Supabase:
+EAA_POSTGRES_TLS_VERIFY_FULL=true
+SUPABASE_DB_CA_CERT="-----BEGIN CERTIFICATE-----\\n...\\n-----END CERTIFICATE-----"
 ```
 
 Render define `PORT` automáticamente. No configurar variables de Google
@@ -40,6 +43,10 @@ la fuente activa de producción.
 
 Nunca subir a Git ni compartir por chat `DATABASE_URL`, contraseñas, archivos
 `.env` o credenciales de servicios.
+
+Para validación TLS completa, descargar el certificado CA desde Database >
+SSL Configuration en Supabase, cargarlo como `SUPABASE_DB_CA_CERT` en Render y
+recién entonces activar `EAA_POSTGRES_TLS_VERIFY_FULL=true`.
 
 ## Base de datos
 

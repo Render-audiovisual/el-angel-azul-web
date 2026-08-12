@@ -6,7 +6,7 @@ process.env.NODE_ENV = "test";
 process.env.EAA_ADMIN_PASSWORD = "test-admin-password";
 process.env.EAA_AGENTE1_PASSWORD = "test-agent-password";
 
-const { createAppServer } = require("../server");
+const { createAppServer, __test } = require("../server");
 
 let server;
 let port;
@@ -176,6 +176,8 @@ test("login, sesión, ruta privada y logout funcionan con mismo origen", async (
 });
 
 test("el proxy HTTPS produce una cookie Secure", async () => {
+  const previousNodeEnv = process.env.NODE_ENV;
+  process.env.NODE_ENV = "production";
   const login = await request({
     method: "POST",
     path: "/api/admin/login",
@@ -190,6 +192,61 @@ test("el proxy HTTPS produce una cookie Secure", async () => {
   assert.equal(login.status, 200);
   assert.equal(login.json?.role, "agencia");
   assert.match(login.headers["set-cookie"][0], /;\s*Secure;/);
+  process.env.NODE_ENV = previousNodeEnv;
+});
+
+test("cabeceras forwarded falsificadas no permiten suplantar el origen", async () => {
+  const response = await request({
+    method: "POST",
+    path: "/api/admin/login",
+    headers: {
+      host: `127.0.0.1:${port}`,
+      "x-forwarded-host": "evil.example",
+      "x-forwarded-proto": "https",
+      origin: "https://evil.example"
+    },
+    body: { username: "admin", password: "test-admin-password" }
+  });
+  assert.equal(response.status, 403);
+  assert.equal(response.json?.error, "Origen no permitido");
+});
+
+test("archivos internos no se publican desde la raíz del proyecto", async () => {
+  for (const path of ["/server.js", "/lib/db.js", "/package.json", "/.git/HEAD", "/supabase/migrations/0001_init.sql", "/assets/%2e%2e/server.js"]) {
+    const response = await request({ path });
+    assert.equal(response.status, 404, path);
+  }
+  assert.equal((await request({ path: "/assets/js/app.js" })).status, 200);
+});
+
+test("rutas estáticas rechazan métodos que no sean GET o HEAD", async () => {
+  const response = await request({ method: "DELETE", path: "/" });
+  assert.equal(response.status, 405);
+  assert.equal(response.headers.allow, "GET, HEAD");
+});
+
+test("Grupos y Contratos completos exigen sesión", async () => {
+  for (const sheet of ["GRUPOS", "CONTRATOS"]) {
+    const response = await request({ path: `/api/google-sheets?sheet=${sheet}` });
+    assert.equal(response.status, 401);
+  }
+});
+
+test("la búsqueda pública devuelve solo coincidencias activas y campos mínimos", () => {
+  const grupos = [
+    { id: "g1", nivel: "Secundaria", viaje: "Bariloche 2026", colegio: "Colegio San José", curso: "5to", division: "B", pasajeros_esperados: 30, created_at: "privado" },
+    { id: "g2", nivel: "Secundaria", viaje: "Bariloche 2026", colegio: "Otro Colegio", curso: "5to", division: "B" }
+  ];
+  const contratos = [
+    { id: "c1", codigo_contrato: "CON-1", colegio_nombre: "Colegio San José", grupo_id: "g1", nivel: "Secundaria", viaje: "Bariloche 2026", curso: "5to", division: "B", estado: "Activo", observaciones: "privado" },
+    { id: "c2", codigo_contrato: "CON-2", colegio_nombre: "Otro Colegio", grupo_id: "g2", nivel: "Secundaria", viaje: "Bariloche 2026", curso: "5to", division: "B", estado: "Inactivo" }
+  ];
+  const params = new URLSearchParams({ nivel: "Secundaria", viaje: "Bariloche 2026", colegio: "San Jose", cursoDivision: "5to B" });
+  const result = __test.publicInscripcionContext(grupos, contratos, params);
+  assert.equal(result.grupos.length, 1);
+  assert.equal(result.contratos.length, 1);
+  assert.equal(result.grupos[0].pasajeros_esperados, undefined);
+  assert.equal(result.contratos[0].observaciones, undefined);
 });
 
 test("HTML, CSS y JavaScript se revalidan para evitar versiones viejas", async () => {
@@ -197,5 +254,6 @@ test("HTML, CSS y JavaScript se revalidan para evitar versiones viejas", async (
     const response = await request({ path });
     assert.equal(response.status, 200);
     assert.equal(response.headers["cache-control"], "no-cache, no-store, must-revalidate");
+    assert.match(response.headers["content-security-policy"] || "", /default-src 'self'/);
   }
 });
