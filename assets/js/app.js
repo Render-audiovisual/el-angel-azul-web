@@ -8905,7 +8905,10 @@
 
         const internalAccess = document.createElement("a");
         internalAccess.className = "footer-internal-access";
-        internalAccess.href = "/admin/";
+        // Entrar al panel por la misma ruta hash que usa toda la SPA. Así el
+        // acceso desde la portada no depende de una ruta física ni de una
+        // redirección intermedia del servidor.
+        internalAccess.href = adminRouteHref("/admin");
         internalAccess.textContent = "Acceso interno";
         footerBottom.appendChild(internalAccess);
       }
