@@ -14,6 +14,8 @@ const REQUIRED_TABLES = [
   "pasajeros",
   "inscripciones",
   "fichas_adhesion",
+  "fichas_tutor",
+  "planes_pago",
   "documentos"
 ];
 
