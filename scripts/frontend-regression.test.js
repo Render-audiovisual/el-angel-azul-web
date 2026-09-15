@@ -284,3 +284,26 @@ test("Inscripción mantiene las acciones estáticas al final del formulario", ()
   assert.doesNotMatch(summaryRules, /position:\s*sticky;/);
   assert.doesNotMatch(appSource, /class="portal-empty public-inscripcion-card" data-reveal-light/);
 });
+
+test("la ficha pública espera la respuesta del servidor antes de mostrar éxito", () => {
+  const source = functionSource("bindFichaAdhesion", "render");
+  assert.match(source, /fetch\("\/api\/public\/fichas"/);
+  assert.match(source, /response\.status === 201/);
+  assert.doesNotMatch(source, /fichaAdhesionCollection\.save/);
+  assert.doesNotMatch(source, /queueGoogleSheetsWrite/);
+});
+
+test("la ficha pública pide nombre y apellido por separado", () => {
+  const source = functionSource("renderFichaAdhesion", "bindFichaAdhesion");
+  for (const name of ["pasajeroNombre", "pasajeroApellido", "responsableNombre", "responsableApellido", "responsableCuilCuit", "domicilioBarrio", "domicilioProvincia"]) {
+    assert.match(source, new RegExp(`name="${name}"`));
+  }
+  assert.match(source, /tal como figuran en el DNI/);
+});
+
+test("la inscripción ofrece elegir PAX o Tutor y usa la lista de colegios", () => {
+  const source = functionSource("bindInscripcion", "fichaAdhesionContextFromParams");
+  assert.match(source, /\/api\/public\/colegios/);
+  assert.match(source, /Mi colegio no está/);
+  assert.match(appSource, /#\/inscripcion\/tutor/);
+});

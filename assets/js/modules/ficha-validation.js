@@ -186,12 +186,6 @@
     if (!datos.division) error("division", "Completá la División.");
     else if (!/^[A-Z0-9]{1,3}$/.test(datos.division)) error("division", "División: hasta 3 letras o números (ej.: B).");
 
-    datos.planPagoId = limpiar(input.planPagoId);
-    if (planesDisponibles.length && !planesDisponibles.includes(datos.planPagoId)) {
-      error("planPagoId", "Elegí un plan de pago.");
-    }
-    if (!planesDisponibles.length) datos.planPagoId = "";
-
     val.nombre("pasajeroNombre");
     val.nombre("pasajeroApellido");
     val.documento("pasajeroTipoDocumento", "pasajeroNumeroDocumento");
@@ -222,6 +216,13 @@
     datos.domicilioCodigoPostal = cp;
     if (!cp) error("domicilioCodigoPostal", "Completá el Código postal.");
     else if (!/^(\d{4}|[A-Z]\d{4}[A-Z]{3})$/.test(cp)) error("domicilioCodigoPostal", "Código postal: 4 dígitos (ej.: 3400) o formato CPA (ej.: W3400ABC).");
+
+    // Mismo orden que el formulario: el resumen de faltantes se lee de arriba abajo.
+    datos.planPagoId = limpiar(input.planPagoId);
+    if (planesDisponibles.length && !planesDisponibles.includes(datos.planPagoId)) {
+      error("planPagoId", "Elegí un plan de pago.");
+    }
+    if (!planesDisponibles.length) datos.planPagoId = "";
 
     val.condiciones();
     datos.firma = String(input.firma || "");

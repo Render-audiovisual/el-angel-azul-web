@@ -7561,6 +7561,174 @@
         padding: 12px 14px;
       }
 
+      .ficha-adhesion-error ul {
+        margin: 6px 0 0;
+        padding-left: 18px;
+      }
+
+      /* Ficha v2: selector PAX/Tutor, errores por campo y bloques nuevos */
+      /* Los estilos de label/fieldset/form (display: grid) le ganaban al
+         atributo hidden y mostraban bloques que debían estar ocultos. */
+      .public-inscripcion-card [hidden],
+      .ficha-adhesion-panel [hidden] {
+        display: none !important;
+      }
+
+      .inscripcion-tipo-grid {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        margin: 18px 0 22px;
+      }
+
+      .inscripcion-tipo-grid button,
+      .inscripcion-tipo-grid a {
+        background: #fff;
+        border: 2px solid #d9e7ef;
+        border-radius: 18px;
+        color: #10202b;
+        cursor: pointer;
+        display: grid;
+        font: inherit;
+        gap: 6px;
+        padding: 20px;
+        text-align: left;
+        text-decoration: none;
+      }
+
+      .inscripcion-tipo-grid button:hover,
+      .inscripcion-tipo-grid a:hover,
+      .inscripcion-tipo-grid button:focus-visible,
+      .inscripcion-tipo-grid a:focus-visible {
+        border-color: var(--color-primary);
+      }
+
+      .inscripcion-tipo-grid .selected {
+        background: #eef6fb;
+        border-color: var(--color-primary);
+      }
+
+      .inscripcion-tipo-grid strong {
+        color: var(--color-primary-strong);
+        font-size: 1.15rem;
+      }
+
+      .inscripcion-tipo-grid span {
+        color: #44545f;
+        line-height: 1.4;
+      }
+
+      .public-inscripcion-colegio {
+        grid-column: 1 / -1;
+      }
+
+      .ficha-nombre-aviso {
+        background: #fff7e0;
+        border: 1px solid #f0d78c;
+        border-radius: 10px;
+        color: #4a3b00;
+        grid-column: 1 / -1;
+        line-height: 1.45;
+        margin: 0;
+        padding: 10px 12px;
+      }
+
+      .ficha-opcional {
+        color: #6b7b85;
+        font-weight: 500;
+      }
+
+      .ficha-campo-error {
+        color: #b42318;
+        font-size: 0.9rem;
+        font-weight: 600;
+      }
+
+      .ficha-campo-error.is-sugerencia {
+        color: var(--color-primary-strong);
+      }
+
+      .ficha-campo-error button {
+        background: none;
+        border: 0;
+        color: var(--color-primary);
+        cursor: pointer;
+        font: inherit;
+        font-weight: 800;
+        padding: 0 4px;
+        text-decoration: underline;
+      }
+
+      .ficha-adhesion-form [aria-invalid="true"] {
+        border-color: #b42318;
+        box-shadow: 0 0 0 3px rgba(180, 35, 24, 0.12);
+      }
+
+      /* Un fieldset tiene min-width: min-content por defecto: con dos
+         columnas adentro desbordaba la pantalla en celulares. */
+      .ficha-adhesion-form fieldset {
+        min-width: 0;
+      }
+
+      .ficha-fila-calle {
+        display: grid;
+        gap: 12px;
+        grid-column: 1 / -1;
+        grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+      }
+
+      /* Un select mide lo que su opción más larga ("Tierra del Fuego,
+         Antártida e Islas del Atlántico Sur") y ensanchaba toda la columna. */
+      .ficha-adhesion-form label,
+      .ficha-adhesion-form input,
+      .ficha-adhesion-form select {
+        min-width: 0;
+      }
+
+      .ficha-adhesion-form select,
+      .ficha-fila-calle input {
+        max-width: 100%;
+        width: 100%;
+      }
+
+      .ficha-planes-opciones {
+        display: grid;
+        gap: 10px;
+        grid-column: 1 / -1;
+      }
+
+      .ficha-adhesion-form .ficha-planes-opciones label {
+        align-items: center;
+        border: 1px solid #d9e7ef;
+        border-radius: 12px;
+        cursor: pointer;
+        display: flex;
+        font-weight: 600;
+        gap: 10px;
+        padding: 12px;
+      }
+
+      .ficha-planes-opciones input {
+        min-height: auto;
+      }
+
+      .ficha-planes-opciones small {
+        color: #5c6c76;
+        display: block;
+        font-weight: 500;
+      }
+
+      .ficha-adhesion-context-edit {
+        color: var(--color-primary);
+        font-weight: 700;
+      }
+
+      @media (max-width: 720px) {
+        .inscripcion-tipo-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
       .ficha-adhesion-success {
         background: #eaf7ef;
         border: 1px solid #b7dec5;
