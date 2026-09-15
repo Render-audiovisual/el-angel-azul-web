@@ -321,3 +321,22 @@ test("la bandeja hidrata fichas de tutor, colegios y planes", () => {
   const source = functionSource("hydrateGoogleSheetsData", "queueGoogleSheetsWrite");
   for (const hoja of ["FICHAS_TUTOR", "COLEGIOS", "PLANES_PAGO"]) assert.match(source, new RegExp(`"${hoja}"`));
 });
+
+test("los planes de pago se administran dentro del contrato con 1 a 18 cuotas", () => {
+  const source = functionSource("renderAdminContratoPlanes", "adminPasajeroNombreCompleto");
+  assert.match(source, /Planes de pago/);
+  assert.match(source, /min="1" max="18"/);
+  assert.match(functionSource("renderAdminContratoEditModal", "openAdminContratoEdit"), /renderAdminContratoPlanes\(contract\)/);
+});
+
+test("la tabla de pasajeros muestra colegio, grado, división, plan y tutor", () => {
+  const source = functionSource("renderAdminPasajerosTableRows", "bindAdminPasajerosProfileButtons");
+  for (const texto of ["planNombre", "responsableApellido", "group\.colegio", "group\.curso", "group\.division"]) {
+    assert.match(source, new RegExp(texto));
+  }
+});
+
+test("los grupos eligen el colegio de la lista", () => {
+  assert.match(functionSource("renderAdminGruposCreateForm", "renderAdminGrupos"), /renderAdminColegioSelect\(\)/);
+  assert.match(functionSource("renderAdminPasajerosGroupModal", "renderAdminPasajeros"), /renderAdminColegioSelect\(/);
+});

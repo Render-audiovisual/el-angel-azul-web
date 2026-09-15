@@ -24,6 +24,7 @@
       nivel,
       viaje,
       colegio,
+      colegioId: group.colegioId || "",
       curso,
       division,
       pasajerosEsperados: Number(group.pasajerosEsperados) || 0,

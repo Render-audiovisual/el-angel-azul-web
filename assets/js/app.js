@@ -2568,6 +2568,10 @@
           contrato_id: passenger.contratoId || passenger.contrato_id || "",
           codigo_contrato: passenger.codigoContrato || passenger.codigo_contrato || passenger.contratoCodigo || "",
           nombre: passenger.nombre || "",
+          apellido: passenger.apellido || "",
+          responsable_apellido: passenger.responsableApellido || "",
+          responsable_email: passenger.responsableEmail || "",
+          plan_pago_id: passenger.planPagoId || "",
           dni: passenger.dni || "",
           nacimiento: passenger.nacimiento || "",
           telefono: passenger.telefono || "",
@@ -2620,6 +2624,7 @@
           nivel: group.nivel || "",
           viaje: group.viaje || "",
           colegio: group.colegio || "",
+          colegio_id: group.colegioId || "",
           curso: group.curso || "",
           division: group.division || "",
           pasajeros_esperados: group.pasajerosEsperados || "",
@@ -2974,11 +2979,37 @@
         return Promise.resolve();
       }
 
-      function createAdminPasajerosGroup({ nivel, viaje, colegio, curso, division, pasajerosEsperados = 0 }) {
+      // Ficha v2: los grupos eligen el colegio de la lista administrada y el
+      // curso (Grado/Año) de la misma lista que usa la inscripción pública.
+      function renderAdminColegioSelect(seleccionadoId = "") {
+        const activos = adminColegios.filter((colegio) => colegio.activo === "TRUE");
+        if (!activos.length) {
+          return `<select name="colegio_id" required disabled><option value="">Todavía no hay colegios cargados</option></select>`;
+        }
+        return `<select name="colegio_id" required>
+          <option value="">Elegí un colegio</option>
+          ${activos.map((colegio) => `<option value="${escapeHtml(colegio.id)}" ${colegio.id === seleccionadoId ? "selected" : ""}>${escapeHtml(colegio.nombre)}${colegio.localidad ? ` — ${escapeHtml(colegio.localidad)}` : ""}</option>`).join("")}
+        </select>`;
+      }
+
+      function renderAdminGradoSelect(seleccionado = "") {
+        const grados = window.ElAngelAzulFichaValidation.GRADOS.Primaria;
+        return `<select name="curso" required>
+          <option value="">Elegí</option>
+          ${grados.map((grado) => `<option value="${escapeHtml(grado)}" ${grado === seleccionado ? "selected" : ""}>${escapeHtml(grado)}</option>`).join("")}
+        </select>`;
+      }
+
+      function adminColegioNombre(colegioId) {
+        return adminColegios.find((colegio) => colegio.id === colegioId)?.nombre || "";
+      }
+
+      function createAdminPasajerosGroup({ nivel, viaje, colegio, colegioId = "", curso, division, pasajerosEsperados = 0 }) {
         const group = normalizeAdminPasajerosGroup({
           nivel,
           viaje,
           colegio,
+          colegioId,
           curso,
           division,
           pasajerosEsperados,
@@ -3072,6 +3103,7 @@
           nivel: row.nivel,
           viaje: row.viaje,
           colegio: row.colegio,
+          colegioId: row.colegio_id || "",
           curso: row.curso,
           division: row.division,
           pasajerosEsperados: Number(row.pasajeros_esperados || 0),
@@ -3082,6 +3114,12 @@
       function sheetPassengerFromRow(row = {}) {
         return {
           nombre: row.nombre || "",
+          apellido: row.apellido || "",
+          responsableApellido: row.responsable_apellido || "",
+          responsableEmail: row.responsable_email || "",
+          planPagoId: row.plan_pago_id || "",
+          planNombre: row.plan_nombre || "",
+          planCuotas: row.plan_cuotas || "",
           dni: row.dni || "",
           contratoId: row.contrato_id || "",
           codigoContrato: row.codigo_contrato || "",
@@ -4335,19 +4373,20 @@
           return `
             <tr class="${isSelected ? "is-selected" : ""}">
               <td class="admin-pasajeros-passenger-cell">
-                <strong>${escapeHtml(passenger.nombre)}</strong>
+                <strong>${escapeHtml(adminPasajeroNombreCompleto(passenger))}</strong>
                 <span>DNI ${escapeHtml(passenger.dni || "Pendiente")}</span>
               </td>
               <td class="admin-pasajeros-contact-cell">
                 <strong>${escapeHtml(passenger.telefono || passenger.responsableTelefono || "Sin teléfono")}</strong>
                 <span>Resp. ${escapeHtml(passenger.responsableTelefono || "Pendiente")}</span>
               </td>
-              <td>${escapeHtml(passenger.responsable || "Pendiente")}</td>
+              <td>${escapeHtml(fichaNombreCompleto(passenger.responsableApellido, passenger.responsable) || "Pendiente")}</td>
               <td class="admin-pasajeros-group-cell">
-                <strong>${escapeHtml(group.viaje)}</strong>
-                <span>${escapeHtml(group.colegio)} · ${escapeHtml(group.curso)} ${escapeHtml(group.division)}</span>
+                <strong>${escapeHtml(group.colegio)}</strong>
+                <span>${escapeHtml(group.nivel)} · ${escapeHtml(group.curso)} ${escapeHtml(group.division)} · ${escapeHtml(group.viaje)}</span>
                 <span>Contrato: ${escapeHtml(passengerCodigoContrato(passenger) || "Pendiente")}</span>
               </td>
+              <td>${escapeHtml(fichaPlanTexto(passenger.planNombre, passenger.planCuotas) || "Pendiente")}</td>
               <td><span class="admin-pasajeros-status ${adminStatusClass(payment.estadoPago)}">${escapeHtml(payment.estadoPago)}</span></td>
               <td><span class="admin-pasajeros-status ${adminStatusClass(passenger.documentacion)}">${escapeHtml(passenger.documentacion)}</span></td>
               <td><span class="admin-pasajeros-status ${adminStatusClass(passenger.estado)}">${escapeHtml(passenger.estado)}</span></td>
@@ -4360,7 +4399,7 @@
           `;
         }).join("") : `
           <tr>
-            <td colspan="8">No hay pasajeros que coincidan con la búsqueda o los filtros aplicados.</td>
+            <td colspan="9">No hay pasajeros que coincidan con la búsqueda o los filtros aplicados.</td>
           </tr>
         `;
       }
@@ -4430,8 +4469,11 @@
 
                 <fieldset>
                   <legend>Datos del pasajero</legend>
-                  <label>Nombre y apellido <span class="admin-pasajeros-required">*</span>
+                  <label>Nombre/s <span class="admin-pasajeros-required">*</span>
                     <input name="nombre" value="${escapeHtml(passenger.nombre)}" required>
+                  </label>
+                  <label>Apellido/s <span class="admin-pasajeros-required">*</span>
+                    <input name="apellido" value="${escapeHtml(passenger.apellido || "")}" required>
                   </label>
                   <label>DNI <span class="admin-pasajeros-required">*</span>
                     <input name="dni" value="${escapeHtml(passenger.dni)}" required>
@@ -4472,6 +4514,12 @@
                     </select>
                   </label>
                   ${contractOptions.length === 0 ? `<p class="admin-pasajeros-modal-note">No hay contratos disponibles para este grupo. Creá uno primero en la sección Contratos.</p>` : ""}
+                  <label>Plan de pago
+                    <select name="planPagoId">
+                      <option value="">Pendiente</option>
+                      ${adminPlanesPago.filter((plan) => plan.contrato_id === passenger.contratoId && (plan.activo === "TRUE" || plan.id === passenger.planPagoId)).map((plan) => `<option value="${escapeHtml(plan.id)}" ${plan.id === passenger.planPagoId ? "selected" : ""}>${escapeHtml(fichaPlanTexto(plan.nombre, plan.cuotas))}</option>`).join("")}
+                    </select>
+                  </label>
                 </fieldset>
 
                 <fieldset>
@@ -4541,10 +4589,23 @@
               </div>
             </div>
 
+            <article class="admin-fichas-detail-card admin-pasajeros-pertenencia">
+              <h3>Pertenencia</h3>
+              <dl class="admin-fichas-pertenencia-grid">
+                ${renderFichaValue("Colegio", group.colegio)}
+                ${renderFichaValue("Curso", group.nivel)}
+                ${renderFichaValue("Grado/Año", group.curso)}
+                ${renderFichaValue("División", group.division)}
+                ${renderFichaValue("Plan", fichaPlanTexto(passenger.planNombre, passenger.planCuotas))}
+                ${renderFichaValue("Contrato", passengerCodigoContrato(passenger))}
+                ${renderFichaValue("Tutor", fichaNombreCompleto(passenger.responsableApellido, passenger.responsable))}
+              </dl>
+            </article>
+
             <div class="admin-pasajeros-profile-grid">
               <article>
                 <span>Datos personales</span>
-                <strong>${escapeHtml(passenger.nombre)}</strong>
+                <strong>${escapeHtml(adminPasajeroNombreCompleto(passenger))}</strong>
                 <dl>
                   <div><dt>DNI</dt><dd>${escapeHtml(passenger.dni || "Pendiente")}</dd></div>
                   <div><dt>Nacimiento</dt><dd>${escapeHtml(passenger.nacimiento || "Pendiente")}</dd></div>
@@ -4552,14 +4613,21 @@
                 </dl>
               </article>
               <article>
-                <span>Responsable</span>
-                <strong>${escapeHtml(passenger.responsable || "Pendiente")}</strong>
+                <span>Tutor principal</span>
+                <strong>${escapeHtml(fichaNombreCompleto(passenger.responsableApellido, passenger.responsable) || "Pendiente")}</strong>
                 <dl>
                   <div><dt>Vínculo</dt><dd>${escapeHtml(passenger.vinculo || "Pendiente")}</dd></div>
                   <div><dt>DNI</dt><dd>${escapeHtml(passenger.responsableDni || "Pendiente")}</dd></div>
-                  <div><dt>CUIL / CUIT</dt><dd>${escapeHtml(passenger.responsableCuilCuit || "Pendiente")}</dd></div>
+                  <div><dt>CUIL / CUIT</dt><dd>${escapeHtml(formatearCuil(passenger.responsableCuilCuit) || "Pendiente")}</dd></div>
                   <div><dt>Teléfono</dt><dd>${escapeHtml(passenger.responsableTelefono || "Pendiente")}</dd></div>
+                  <div><dt>Correo</dt><dd>${escapeHtml(passenger.responsableEmail || "Pendiente")}</dd></div>
                 </dl>
+              </article>
+              <article>
+                <span>Tutores adicionales</span>
+                ${fichaTutoresAdicionales(passenger.dni).length ? `<dl>${fichaTutoresAdicionales(passenger.dni).map((tutor) => `
+                  <div><dt>${escapeHtml(tutor.parentesco)}</dt><dd>${escapeHtml(fichaNombreCompleto(tutor.apellido, tutor.nombre))} · ${escapeHtml(tutor.celular)} · ${escapeHtml(tutor.email)}</dd></div>
+                `).join("")}</dl>` : "<p>Sin tutores adicionales registrados.</p>"}
               </article>
               <article>
                 <span>Viaje asignado</span>
@@ -4661,13 +4729,13 @@
                     <input name="viaje" value="${escapeHtml(adminPasajerosViaje || selectedGroup.viaje || "")}" placeholder="Ej: Bariloche 2026" required>
                   </label>
                   <label>Colegio
-                    <input name="colegio" value="${escapeHtml(showColegio ? "" : adminPasajerosColegio || selectedGroup.colegio || "")}" placeholder="Nombre del colegio" required>
+                    ${renderAdminColegioSelect(showColegio ? "" : selectedGroup.colegioId || "")}
                   </label>
-                  <label>Curso
-                    <input name="curso" value="${escapeHtml(showCurso ? "" : selectedGroup.curso || "")}" placeholder="Ej: 5to" required>
+                  <label>Grado/Año
+                    ${renderAdminGradoSelect(showCurso ? "" : selectedGroup.curso || "")}
                   </label>
                   <label>División
-                    <input name="division" value="" placeholder="Ej: A" required>
+                    <input name="division" value="" placeholder="Ej: A" maxlength="3" required>
                   </label>
                   <label>Cupo esperado
                     <input name="pasajerosEsperados" type="number" min="0" value="${escapeHtml(String(selectedGroup.pasajerosEsperados || 0))}" placeholder="Ej: 28">
@@ -4875,8 +4943,11 @@
 
               <fieldset>
                 <legend>Datos del pasajero</legend>
-                <label>Nombre y apellido <span class="admin-pasajeros-required">*</span>
-                  <input name="nombre" placeholder="Ej: Juan Pérez" autocomplete="off" required>
+                <label>Nombre/s <span class="admin-pasajeros-required">*</span>
+                  <input name="nombre" placeholder="Ej: Juan Ignacio" autocomplete="off" required>
+                </label>
+                <label>Apellido/s <span class="admin-pasajeros-required">*</span>
+                  <input name="apellido" placeholder="Ej: Pérez" autocomplete="off" required>
                 </label>
                 <label>DNI <span class="admin-pasajeros-required">*</span>
                   <input name="dni" placeholder="Ej: 44123456" autocomplete="off" required>
@@ -5035,10 +5106,11 @@
               <table class="admin-pasajeros-table admin-pasajeros-table--compact">
                 <thead>
                   <tr>
-                    <th>Pasajero</th>
+                    <th>Apellido y nombre</th>
                     <th>Contacto</th>
-                    <th>Responsable</th>
-                    <th>Viaje / grupo</th>
+                    <th>Tutor</th>
+                    <th>Colegio / curso</th>
+                    <th>Plan</th>
                     <th>Pago</th>
                     <th>Documentación</th>
                     <th>Estado</th>
@@ -5125,6 +5197,43 @@
         }).join("");
       }
 
+      // Ficha v2: planes de pago por contrato (1 a 18 cuotas). Se eligen en la
+      // ficha pública y quedan visibles en Fichas y Pasajeros.
+      function renderAdminContratoPlanes(contract) {
+        const planes = adminPlanesPago.filter((plan) => plan.contrato_id === contract.id);
+        return `
+          <section class="admin-contrato-planes" aria-label="Planes de pago">
+            <h3>Planes de pago</h3>
+            <p>Las familias eligen uno de los planes activos al completar la ficha.</p>
+            ${planes.length ? `
+              <ul>
+                ${planes.map((plan) => `
+                  <li>
+                    <div>
+                      <strong>${escapeHtml(plan.nombre)}</strong>
+                      <span>${escapeHtml(plan.cuotas)} ${plan.cuotas === "1" ? "cuota" : "cuotas"}${plan.descripcion ? ` · ${escapeHtml(plan.descripcion)}` : ""}</span>
+                    </div>
+                    <span class="admin-pasajeros-status ${plan.activo === "TRUE" ? "is-ok" : "is-pending"}">${plan.activo === "TRUE" ? "Activo" : "Inactivo"}</span>
+                    <button type="button" class="admin-secondary-action" data-plan-toggle="${escapeHtml(plan.id)}">${plan.activo === "TRUE" ? "Desactivar" : "Activar"}</button>
+                  </li>
+                `).join("")}
+              </ul>
+            ` : "<p>Este contrato todavía no tiene planes cargados.</p>"}
+            <div class="admin-contrato-plan-form">
+              <label><span>Nombre del plan</span><input data-plan-nombre maxlength="80" placeholder="Ej.: 12 cuotas sin interés"></label>
+              <label><span>Cuotas</span><input data-plan-cuotas type="number" min="1" max="18" step="1" placeholder="1 a 18"></label>
+              <label><span>Descripción (opcional)</span><input data-plan-descripcion maxlength="200"></label>
+              <button type="button" data-plan-agregar>Agregar plan</button>
+            </div>
+            <p class="admin-pasajeros-modal-error" data-plan-error hidden></p>
+          </section>
+        `;
+      }
+
+      function adminPasajeroNombreCompleto(passenger = {}) {
+        return fichaNombreCompleto(passenger.apellido, passenger.nombre) || passenger.nombre || "";
+      }
+
       function renderAdminContratoEditModal() {
         if (!adminContratosEditId) return "";
         const contract = adminContratosDemo.find((item) => item.id === adminContratosEditId);
@@ -5180,6 +5289,7 @@
                   <button type="submit">Guardar cambios</button>
                 </div>
               </form>
+              ${renderAdminContratoPlanes(contract)}
             </section>
           </div>
         `;
@@ -5351,6 +5461,34 @@
 
       function bindAdminContratos() {
         const filters = document.querySelector("[data-admin-contratos-filters]");
+        document.querySelector("[data-plan-agregar]")?.addEventListener("click", async () => {
+          const nombre = document.querySelector("[data-plan-nombre]")?.value.trim() || "";
+          const cuotas = Number(document.querySelector("[data-plan-cuotas]")?.value || 0);
+          const descripcion = document.querySelector("[data-plan-descripcion]")?.value.trim() || "";
+          const errorNode = document.querySelector("[data-plan-error]");
+          if (nombre.length < 2 || !Number.isInteger(cuotas) || cuotas < 1 || cuotas > 18) {
+            errorNode.textContent = "Cargá un nombre y una cantidad de cuotas entre 1 y 18.";
+            errorNode.hidden = false;
+            return;
+          }
+          const plan = { id: crypto.randomUUID(), contrato_id: adminContratosEditId, nombre, cuotas: String(cuotas), descripcion, activo: "TRUE", orden: "" };
+          adminPlanesPago = [...adminPlanesPago, plan];
+          const guardado = await queueGoogleSheetsWrite(["PLANES_PAGO"]);
+          if (!guardado) {
+            adminPlanesPago = adminPlanesPago.filter((item) => item.id !== plan.id);
+            adminContratosEditError = googleSheetsSyncState.message;
+          }
+          renderAdminContratos();
+        });
+        document.querySelectorAll("[data-plan-toggle]").forEach((button) => {
+          button.addEventListener("click", async () => {
+            const id = button.dataset.planToggle;
+            adminPlanesPago = adminPlanesPago.map((plan) => (plan.id === id ? { ...plan, activo: plan.activo === "TRUE" ? "FALSE" : "TRUE" } : plan));
+            const guardado = await queueGoogleSheetsWrite(["PLANES_PAGO"]);
+            if (!guardado) adminContratosEditError = googleSheetsSyncState.message;
+            renderAdminContratos();
+          });
+        });
         if (!filters) return;
         const handleFilter = () => {
           const formData = new FormData();
@@ -5481,13 +5619,13 @@
                   <input name="viaje" placeholder="Ej: Bariloche 2026" required>
                 </label>
                 <label>Colegio
-                  <input name="colegio" placeholder="Nombre del colegio" required>
+                  ${renderAdminColegioSelect()}
                 </label>
-                <label>Curso
-                  <input name="curso" placeholder="Ej: 5to" required>
+                <label>Grado/Año
+                  ${renderAdminGradoSelect()}
                 </label>
                 <label>División
-                  <input name="division" placeholder="Ej: A" required>
+                  <input name="division" placeholder="Ej: A" maxlength="3" required>
                 </label>
                 <label>Cupo esperado
                   <input name="pasajerosEsperados" type="number" min="0" placeholder="Ej: 28">
@@ -5613,16 +5751,18 @@
         document.querySelector("[data-admin-grupos-create-form]")?.addEventListener("submit", (event) => {
           event.preventDefault();
           const formData = new FormData(event.currentTarget);
+          const colegioId = String(formData.get("colegio_id") || "").trim();
           const payload = {
             nivel: String(formData.get("nivel") || "").trim(),
             viaje: String(formData.get("viaje") || "").trim(),
-            colegio: String(formData.get("colegio") || "").trim(),
+            colegioId,
+            colegio: adminColegioNombre(colegioId),
             curso: String(formData.get("curso") || "").trim(),
-            division: String(formData.get("division") || "").trim(),
+            division: String(formData.get("division") || "").trim().toUpperCase(),
             pasajerosEsperados: Number(formData.get("pasajerosEsperados") || 0)
           };
           if (!payload.nivel || !payload.viaje || !payload.colegio || !payload.curso || !payload.division) {
-            adminGruposCreateError = "Completá nivel, viaje, colegio, curso y división.";
+            adminGruposCreateError = "Completá nivel, viaje, colegio (de la lista), grado/año y división.";
             renderAdminGrupos();
             return;
           }
@@ -5726,6 +5866,7 @@
           const selectedContract = contractById(String(formData.get("contratoId") || "").trim(), selectedGroup.id);
           const passenger = {
             nombre: String(formData.get("nombre") || "").trim(),
+            apellido: String(formData.get("apellido") || "").trim(),
             dni: String(formData.get("dni") || "").trim(),
             contratoId: selectedContract?.id || "",
             codigoContrato: selectedContract?.codigo_contrato || "",
@@ -5805,16 +5946,18 @@
         document.querySelector("[data-admin-pasajeros-group-form]")?.addEventListener("submit", (event) => {
           event.preventDefault();
           const formData = new FormData(event.currentTarget);
+          const colegioId = String(formData.get("colegio_id") || "").trim();
           const payload = {
             nivel: String(formData.get("nivel") || "").trim(),
             viaje: String(formData.get("viaje") || "").trim(),
-            colegio: String(formData.get("colegio") || "").trim(),
+            colegioId,
+            colegio: adminColegioNombre(colegioId),
             curso: String(formData.get("curso") || "").trim(),
-            division: String(formData.get("division") || "").trim(),
+            division: String(formData.get("division") || "").trim().toUpperCase(),
             pasajerosEsperados: Number(formData.get("pasajerosEsperados") || 0)
           };
           if (!payload.nivel || !payload.viaje || !payload.colegio || !payload.curso || !payload.division) {
-            adminPasajerosGroupModal = { ...(adminPasajerosGroupModal || { type: "colegio" }), error: "Completá nivel, viaje, colegio, curso y división." };
+            adminPasajerosGroupModal = { ...(adminPasajerosGroupModal || { type: "colegio" }), error: "Completá nivel, viaje, colegio (de la lista), grado/año y división." };
             renderAdminPasajeros();
             return;
           }
@@ -5911,9 +6054,14 @@
             renderAdminPasajeros();
             return;
           }
+          const planElegido = adminPlanesPago.find((plan) => plan.id === String(formData.get("planPagoId") || ""));
           targetGroup.pasajeros[passengerIndex] = {
             ...targetGroup.pasajeros[passengerIndex],
             nombre,
+            apellido: String(formData.get("apellido") || "").trim(),
+            planPagoId: planElegido?.id || "",
+            planNombre: planElegido?.nombre || "",
+            planCuotas: planElegido?.cuotas || "",
             dni,
             nacimiento: String(formData.get("nacimiento") || "").trim(),
             telefono: String(formData.get("telefono") || "").trim(),
