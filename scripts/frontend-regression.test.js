@@ -161,11 +161,6 @@ test("la búsqueda es global y cada fila permite abrir o descargar su propia fic
   assert.match(rowsSource, /data-ficha-pdf/);
 });
 
-test("la plantilla PDF usa una ruta absoluta válida desde cualquier entrada admin", () => {
-  const source = functionSource("createFichaAdhesionPdfBlob", "downloadFichaAdhesionPdf");
-  assert.match(source, /loadPdfImage\(\"\/assets\/pdf\/ficha-adhesion-template\.png\"\)/);
-});
-
 test("el ícono de validación no comprime la etiqueta Estado sugerido", () => {
   assert.match(stylesSource, /\.admin-fichas-approval-checklist li > span\s*\{/);
   assert.doesNotMatch(stylesSource, /\.admin-fichas-approval-checklist span\s*\{/);
@@ -306,4 +301,23 @@ test("la inscripción ofrece elegir PAX o Tutor y usa la lista de colegios", () 
   assert.match(source, /\/api\/public\/colegios/);
   assert.match(source, /Mi colegio no está/);
   assert.match(appSource, /#\/inscripcion\/tutor/);
+});
+
+test("el PDF de la ficha se descarga desde el servidor", () => {
+  assert.match(appSource, /\/api\/admin\/fichas\/\$\{encodeURIComponent\(id\)\}\/pdf/);
+  assert.doesNotMatch(appSource, /function createFichaAdhesionPdfBlob/);
+  assert.doesNotMatch(appSource, /function createImagePdfBlob/);
+});
+
+test("el detalle de ficha muestra la pertenencia en orden", () => {
+  const source = functionSource("renderAdminFichaDetail", "approveFichaAdhesionAndCreatePassenger");
+  const orden = ["Colegio", "Curso", "Grado/Año", "División", "Plan", "Contrato"].map((label) => source.indexOf(`"${label}"`));
+  assert.ok(orden.every((i) => i > -1), "faltan etiquetas de pertenencia");
+  assert.deepEqual([...orden].sort((a, b) => a - b), orden);
+  assert.doesNotMatch(source, /fichaStudentFirstName/);
+});
+
+test("la bandeja hidrata fichas de tutor, colegios y planes", () => {
+  const source = functionSource("hydrateGoogleSheetsData", "queueGoogleSheetsWrite");
+  for (const hoja of ["FICHAS_TUTOR", "COLEGIOS", "PLANES_PAGO"]) assert.match(source, new RegExp(`"${hoja}"`));
 });

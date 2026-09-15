@@ -7220,6 +7220,63 @@
         gap: 8px;
       }
 
+      /* Ficha v2: tipo PAX/Tutor, pertenencia y vínculo de colegio */
+      .admin-fichas-tipo {
+        border-bottom: 1px solid #d9e7ef;
+        margin-bottom: 12px;
+        padding-bottom: 12px;
+      }
+
+      .admin-fichas-pertenencia-grid {
+        display: grid;
+        gap: 10px 18px;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      }
+
+      .admin-fichas-vincular-colegio {
+        background: #fff7e0;
+        border: 1px solid #f0d78c;
+        border-radius: 12px;
+        display: grid;
+        gap: 10px;
+        margin-top: 14px;
+        padding: 12px 14px;
+      }
+
+      .admin-fichas-vincular-colegio label {
+        display: grid;
+        gap: 6px;
+        font-weight: 700;
+      }
+
+      .admin-fichas-vincular-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .admin-fichas-tutores {
+        display: grid;
+        gap: 8px;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .admin-fichas-tutores li {
+        border: 1px solid #d9e7ef;
+        border-radius: 10px;
+        display: grid;
+        gap: 2px;
+        padding: 8px 10px;
+      }
+
+      .admin-fichas-sin-vincular {
+        align-items: center;
+        display: flex !important;
+        gap: 8px;
+      }
+
       .admin-fichas-tabs button {
         align-items: center;
         background: #f7fbfe;
