@@ -8362,7 +8362,7 @@
                       ${fichaCampoError("domicilioCalle")}
                     </label>
                     <label>Número
-                      <input name="domicilioNumero" inputmode="numeric" autocomplete="off" placeholder="1234 o S/N" maxlength="6" required>
+                      <input name="domicilioNumero" inputmode="numeric" autocomplete="off" placeholder="1234" maxlength="6" required>
                       ${fichaCampoError("domicilioNumero")}
                     </label>
                   </div>
