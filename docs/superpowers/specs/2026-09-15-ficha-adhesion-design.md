@@ -203,8 +203,10 @@ Al enviar con errores: resumen arriba con los campos faltantes, mensaje debajo d
 3. **Fase 3:** exportación a Excel y Supabase Storage.
 
 ## 9. Pendientes externos (no bloquean el desarrollo)
-- Confirmar el dominio real de la agencia (y corregir `contacto@elangelazul.com.ar` si no existe).
-- Cuenta de Resend, verificación DNS del dominio y `RESEND_API_KEY` en Render.
+- **Dominio `elangelazul.tur.ar`** (verificado en RDAP de NIC.ar el 15/09/2026): activo, vence 05/02/2027, delegado desde 2017 a nameservers de AWS Route 53 que **rechazan las consultas** (no hay zona activa). Hoy no resuelve web ni correo. Primero hay que definir el proveedor de DNS (recuperar la cuenta de AWS o delegar a uno propio, p. ej. Cloudflare) y, en esa misma sesión, cargar los registros de Render (web) y de Resend (correo). Cambiar de proveedor de DNS después obligaría a rehacer ambos.
+- Hasta entonces el sitio sigue en el subdominio de Render y el correo queda **implementado pero inactivo** (`email_estado = 'sin_configurar'`); activarlo es cargar `RESEND_API_KEY`, `EAA_EMAIL_FROM` y `EAA_EMAIL_COPIA` en Render, sin cambios de código.
+- Corregir el email de contacto del sitio: `contacto@elangelazul.com.ar` no existe (ese dominio no está registrado).
+- Cuenta de Resend y verificación DNS del dominio.
 - Definir los planes reales por contrato (se prueba con el cliente y se ajusta).
 
 ## 10. Fuera de alcance
