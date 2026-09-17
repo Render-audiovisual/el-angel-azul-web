@@ -133,6 +133,12 @@ node --check server.js
 node --check assets/js/app.js
 ```
 
+Para ejecutar localmente el mismo control que usa GitHub Actions:
+
+```bash
+npm run check
+```
+
 ## Caché
 
 HTML, CSS, JavaScript y JSON se sirven con revalidación obligatoria. Así, un
