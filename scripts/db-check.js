@@ -40,9 +40,24 @@ async function main() {
     return;
   }
 
+  const ca = String(process.env.SUPABASE_DB_CA_CERT || "").replace(/\\n/g, "\n").trim();
+  const verifyFull = process.env.EAA_POSTGRES_TLS_VERIFY_FULL === "true";
+  if (verifyFull && !ca) {
+    console.error("EAA_POSTGRES_TLS_VERIFY_FULL=true requiere SUPABASE_DB_CA_CERT.");
+    process.exitCode = 1;
+    return;
+  }
+
+  const connectionUrl = new URL(process.env.DATABASE_URL);
+  if (verifyFull) {
+    ["sslmode", "sslcert", "sslkey", "sslrootcert"].forEach((key) => connectionUrl.searchParams.delete(key));
+  }
+
   const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false }
+    connectionString: connectionUrl.toString(),
+    ssl: verifyFull
+      ? { rejectUnauthorized: true, ca }
+      : { rejectUnauthorized: false }
   });
 
   try {
