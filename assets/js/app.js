@@ -2485,126 +2485,6 @@
           null;
       }
 
-      function normalizeInscripcionRaw(value = "") {
-        return String(value || "")
-          .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "")
-          .toLowerCase()
-          .replace(/[^a-z0-9\s]+/g, " ")
-          .replace(/\s+/g, " ")
-          .trim();
-      }
-
-      function normalizeInscripcionMatch(value = "") {
-        return normalizeInscripcionRaw(value).replace(/\s+/g, "");
-      }
-
-      function normalizeInscripcionSchool(value = "") {
-        const genericWords = new Set(["colegio", "escuela", "instituto", "inst", "secundario", "secundaria", "primario", "primaria", "privado", "privada", "publico", "publica"]);
-        const cleaned = normalizeInscripcionRaw(value)
-          .split(" ")
-          .filter((word) => word && !genericWords.has(word))
-          .join(" ");
-        return {
-          spaced: cleaned,
-          compact: cleaned.replace(/\s+/g, "")
-        };
-      }
-
-      function levenshteinDistance(a = "", b = "") {
-        const left = String(a || "");
-        const right = String(b || "");
-        if (left === right) return 0;
-        if (!left.length) return right.length;
-        if (!right.length) return left.length;
-        const previous = Array.from({ length: right.length + 1 }, (_, index) => index);
-        const current = Array(right.length + 1).fill(0);
-        for (let i = 1; i <= left.length; i += 1) {
-          current[0] = i;
-          for (let j = 1; j <= right.length; j += 1) {
-            const cost = left[i - 1] === right[j - 1] ? 0 : 1;
-            current[j] = Math.min(
-              current[j - 1] + 1,
-              previous[j] + 1,
-              previous[j - 1] + cost
-            );
-          }
-          for (let j = 0; j <= right.length; j += 1) previous[j] = current[j];
-        }
-        return previous[right.length];
-      }
-
-      function schoolSimilarityScore(input = "", candidate = "") {
-        const typed = normalizeInscripcionSchool(input);
-        const real = normalizeInscripcionSchool(candidate);
-        if (!typed.compact || !real.compact) return 0;
-        if (typed.compact === real.compact) return 1;
-        if (typed.compact.length >= 4 && real.compact.includes(typed.compact)) return 0.94;
-        if (real.compact.length >= 4 && typed.compact.includes(real.compact)) return 0.94;
-        const distance = levenshteinDistance(typed.compact, real.compact);
-        const maxLength = Math.max(typed.compact.length, real.compact.length, 1);
-        return Math.max(0, 1 - (distance / maxLength));
-      }
-
-
-      function isInscripcionContractActive(contract = {}) {
-        const estado = normalizeInscripcionMatch(contract.estado || "");
-        return estado === "activo" || estado === "activa";
-      }
-
-      function contratoCursoDivisionLabel(contract = {}, group = null) {
-        return `${contract.curso || group?.curso || ""} ${contract.division || group?.division || ""}`.trim();
-      }
-
-      function inscripcionContractCandidate(contract = {}, colegio = "") {
-        const group = adminPasajerosDemo.find((item) => item.id === (contract.grupo_id || contract.grupoId || ""));
-        const colegioNombre = contract.colegio_nombre || group?.colegio || "";
-        const score = schoolSimilarityScore(colegio, colegioNombre);
-        return {
-          group,
-          contract,
-          colegioNombre,
-          cursoDivision: contratoCursoDivisionLabel(contract, group),
-          grupoId: contract.grupo_id || contract.grupoId || group?.id || "",
-          contratoId: contract.id || "",
-          codigoContrato: contract.codigo_contrato || contract.codigoContrato || "",
-          score
-        };
-      }
-
-      function resolveInscripcionContract({ nivel = "", viaje = "", colegio = "", cursoDivision = "" } = {}) {
-        const targetNivel = normalizeInscripcionMatch(nivel);
-        const targetViaje = normalizeInscripcionMatch(viaje);
-        const targetColegio = normalizeInscripcionSchool(colegio).compact;
-        const targetCursoDivision = normalizeInscripcionMatch(cursoDivision);
-        if (!targetNivel || !targetViaje || !targetColegio || !targetCursoDivision) return null;
-
-        const candidates = adminContratosRows()
-          .filter(isInscripcionContractActive)
-          .filter((contract) => normalizeInscripcionMatch(contract.nivel) === targetNivel)
-          .filter((contract) => normalizeInscripcionMatch(contract.viaje) === targetViaje)
-          .map((contract) => inscripcionContractCandidate(contract, colegio))
-          .filter((candidate) => normalizeInscripcionMatch(candidate.cursoDivision) === targetCursoDivision)
-          .filter((candidate) => candidate.score >= 0.68)
-          .sort((a, b) => b.score - a.score || a.colegioNombre.localeCompare(b.colegioNombre));
-        if (!candidates.length) return { status: "none", candidates: [] };
-
-        const exactMatches = candidates.filter((candidate) => normalizeInscripcionSchool(candidate.colegioNombre).compact === targetColegio);
-        if (exactMatches.length === 1) return { status: "single", selected: exactMatches[0], candidates };
-        if (exactMatches.length > 1) return { status: "multiple", candidates: candidates.slice(0, 5) };
-
-        const strongMatches = candidates.filter((candidate) => candidate.score >= 0.88);
-        const top = strongMatches[0] || candidates[0];
-        const second = strongMatches[1] || candidates[1];
-        if (candidates.length === 1 && candidates[0].score >= 0.8) return { status: "single", selected: candidates[0], candidates };
-        if (strongMatches.length === 1 && (!second || top.score - second.score >= 0.08 || second.score < 0.82)) {
-          return { status: "single", selected: top, candidates };
-        }
-        if (strongMatches.length > 1) return { status: "multiple", candidates: strongMatches.slice(0, 5) };
-        if (candidates.length > 1) return { status: "multiple", candidates: candidates.slice(0, 5) };
-        return { status: "none", candidates: [] };
-      }
-
       function sheetTabColumns(tabId) {
         const persistence = window.ElAngelAzulPersistence.architecture();
         return persistence.sheet.requiredTabs.find((tab) => tab.id === tabId)?.columns || [];
@@ -2688,6 +2568,10 @@
           contrato_id: passenger.contratoId || passenger.contrato_id || "",
           codigo_contrato: passenger.codigoContrato || passenger.codigo_contrato || passenger.contratoCodigo || "",
           nombre: passenger.nombre || "",
+          apellido: passenger.apellido || "",
+          responsable_apellido: passenger.responsableApellido || "",
+          responsable_email: passenger.responsableEmail || "",
+          plan_pago_id: passenger.planPagoId || "",
           dni: passenger.dni || "",
           nacimiento: passenger.nacimiento || "",
           telefono: passenger.telefono || "",
@@ -2740,6 +2624,7 @@
           nivel: group.nivel || "",
           viaje: group.viaje || "",
           colegio: group.colegio || "",
+          colegio_id: group.colegioId || "",
           curso: group.curso || "",
           division: group.division || "",
           pasajeros_esperados: group.pasajerosEsperados || "",
@@ -2752,41 +2637,49 @@
       function googleSheetsFichaRows(now = new Date().toISOString()) {
         return loadFichasAdhesionDemo().map((ficha) => ({
           id: ficha.id || "",
-          pasajero_dni: ficha.pasajeroNumeroDocumento || ficha.pasajeroDni || ficha.dni || "",
-          pasajero_nombre: ficha.pasajeroNombre || ficha.nombre || "",
-          responsable_nombre: ficha.responsableNombre || ficha.responsable || "",
-          responsable_telefono: ficha.responsableCelular || ficha.responsableTelefono || ficha.domicilioCelular || ficha.domicilioTelefono || ficha.telefono || "",
-          nivel: ficha.nivel || "",
-          viaje: ficha.viaje || "",
-          colegio: ficha.colegio || "",
-          curso_division: ficha.cursoDivision || ficha.curso || "",
-          grupo_solicitado: ficha.grupoSolicitado || "",
-          grupo_asignado_id: ficha.grupoAsignadoId || ficha.asignacionGrupo?.grupoId || "",
-          contrato_id: ficha.contratoId || ficha.contrato_id || ficha.asignacionGrupo?.contratoId || "",
-          codigo_contrato: ficha.codigoContrato || ficha.codigo_contrato || ficha.asignacionGrupo?.codigoContrato || ficha.numeroContrato || ficha.administracion?.contrato || "",
-          estado_revision: ficha.estadoRevision || ficha.estado || "pendiente",
-          documentacion_estado: ficha.documentacionEstado || "Pendiente",
-          ficha_medica_estado: ficha.fichaMedicaEstado || "Pendiente",
-          autorizacion_estado: ficha.firma ? "Sí" : (ficha.autorizacionEstado || "Pendiente"),
+          tipo: "pax",
+          pasajero_dni: ficha.pasajeroNumeroDocumento || ficha.pasajeroDni || "",
+          pasajero_nombre: ficha.pasajeroNombre || "",
+          pasajero_apellido: ficha.pasajeroApellido || "",
           pasajero_tipo_documento: ficha.pasajeroTipoDocumento || "DNI",
           pasajero_nacimiento: ficha.pasajeroNacimiento || "",
           pasajero_sexo: ficha.pasajeroSexo || "",
+          responsable_nombre: ficha.responsableNombre || "",
+          responsable_apellido: ficha.responsableApellido || "",
           responsable_tipo_documento: ficha.responsableTipoDocumento || "DNI",
-          responsable_numero_documento: ficha.responsableNumeroDocumento || ficha.responsableDni || "",
+          responsable_numero_documento: ficha.responsableNumeroDocumento || "",
           responsable_nacimiento: ficha.responsableNacimiento || "",
-          responsable_parentesco: ficha.responsableParentesco || ficha.vinculo || "",
+          responsable_parentesco: ficha.responsableParentesco || "",
           responsable_email: ficha.responsableEmail || "",
-          responsable_celular: ficha.responsableCelular || ficha.domicilioCelular || "",
+          responsable_telefono: ficha.responsableTelefono || "",
+          responsable_celular: ficha.responsableCelular || "",
           responsable_cuil_cuit: ficha.responsableCuilCuit || "",
           domicilio_calle: ficha.domicilioCalle || "",
           domicilio_numero: ficha.domicilioNumero || "",
           domicilio_piso: ficha.domicilioPiso || "",
           domicilio_departamento: ficha.domicilioDepartamento || "",
+          domicilio_barrio: ficha.domicilioBarrio || "",
           domicilio_localidad: ficha.domicilioLocalidad || "",
           domicilio_provincia: ficha.domicilioProvincia || "",
           domicilio_codigo_postal: ficha.domicilioCodigoPostal || "",
           acepta_condiciones: ficha.aceptaCondiciones ? "true" : "false",
-          firma_data_url: ficha.firma || ficha.firmaDataUrl || "",
+          firma_data_url: ficha.firma || "",
+          nivel: ficha.nivel || "",
+          viaje: ficha.viaje || "",
+          colegio_id: ficha.colegioId || "",
+          colegio: ficha.colegio || "",
+          colegio_texto: ficha.colegioTexto || "",
+          grado: ficha.grado || "",
+          division: ficha.division || "",
+          plan_pago_id: ficha.planPagoId || "",
+          grupo_asignado_id: ficha.grupoAsignadoId || ficha.asignacionGrupo?.grupoId || "",
+          contrato_id: ficha.contratoId || ficha.asignacionGrupo?.contratoId || "",
+          codigo_contrato: ficha.codigoContrato || ficha.asignacionGrupo?.codigoContrato || "",
+          estado_revision: ficha.estadoRevision || "pendiente",
+          documentacion_estado: ficha.documentacionEstado || "pendiente",
+          ficha_medica_estado: ficha.fichaMedicaEstado || "pendiente",
+          autorizacion_estado: ficha.autorizacionEstado || "pendiente",
+          motivo_rechazo: ficha.motivoRechazo || "",
           observaciones: ficha.observaciones || "",
           created_at: ficha.createdAt || now,
           updated_at: ficha.updatedAt || ficha.createdAt || now
@@ -3086,11 +2979,37 @@
         return Promise.resolve();
       }
 
-      function createAdminPasajerosGroup({ nivel, viaje, colegio, curso, division, pasajerosEsperados = 0 }) {
+      // Ficha v2: los grupos eligen el colegio de la lista administrada y el
+      // curso (Grado/Año) de la misma lista que usa la inscripción pública.
+      function renderAdminColegioSelect(seleccionadoId = "") {
+        const activos = adminColegios.filter((colegio) => colegio.activo === "TRUE");
+        if (!activos.length) {
+          return `<select name="colegio_id" required disabled><option value="">Todavía no hay colegios cargados</option></select>`;
+        }
+        return `<select name="colegio_id" required>
+          <option value="">Elegí un colegio</option>
+          ${activos.map((colegio) => `<option value="${escapeHtml(colegio.id)}" ${colegio.id === seleccionadoId ? "selected" : ""}>${escapeHtml(colegio.nombre)}${colegio.localidad ? ` — ${escapeHtml(colegio.localidad)}` : ""}</option>`).join("")}
+        </select>`;
+      }
+
+      function renderAdminGradoSelect(seleccionado = "") {
+        const grados = window.ElAngelAzulFichaValidation.GRADOS.Primaria;
+        return `<select name="curso" required>
+          <option value="">Elegí</option>
+          ${grados.map((grado) => `<option value="${escapeHtml(grado)}" ${grado === seleccionado ? "selected" : ""}>${escapeHtml(grado)}</option>`).join("")}
+        </select>`;
+      }
+
+      function adminColegioNombre(colegioId) {
+        return adminColegios.find((colegio) => colegio.id === colegioId)?.nombre || "";
+      }
+
+      function createAdminPasajerosGroup({ nivel, viaje, colegio, colegioId = "", curso, division, pasajerosEsperados = 0 }) {
         const group = normalizeAdminPasajerosGroup({
           nivel,
           viaje,
           colegio,
+          colegioId,
           curso,
           division,
           pasajerosEsperados,
@@ -3152,6 +3071,12 @@
       let adminContratosSearch = "";
       let adminContratosEditId = "";
       let adminContratosEditError = "";
+      // Ficha v2: filas planas tal cual llegan de /api/google-sheets.
+      let adminFichasTutor = [];
+      let adminColegios = [];
+      let adminPlanesPago = [];
+      let adminFichasTipo = "pax";
+      let adminFichasSinVincular = false;
       let adminFichasMessage = "";
       let adminFichasFilter = "nuevas";
       let adminFichasSelectedId = "";
@@ -3178,6 +3103,7 @@
           nivel: row.nivel,
           viaje: row.viaje,
           colegio: row.colegio,
+          colegioId: row.colegio_id || "",
           curso: row.curso,
           division: row.division,
           pasajerosEsperados: Number(row.pasajeros_esperados || 0),
@@ -3188,6 +3114,12 @@
       function sheetPassengerFromRow(row = {}) {
         return {
           nombre: row.nombre || "",
+          apellido: row.apellido || "",
+          responsableApellido: row.responsable_apellido || "",
+          responsableEmail: row.responsable_email || "",
+          planPagoId: row.plan_pago_id || "",
+          planNombre: row.plan_nombre || "",
+          planCuotas: row.plan_cuotas || "",
           dni: row.dni || "",
           contratoId: row.contrato_id || "",
           codigoContrato: row.codigo_contrato || "",
@@ -3208,42 +3140,57 @@
 
       function sheetFichaFromRow(row = {}) {
         return {
-          id: row.id || `ficha-${Date.now()}`,
+          id: row.id || "",
+          tipo: row.tipo || "pax",
           pasajeroDni: row.pasajero_dni || "",
           pasajeroNumeroDocumento: row.pasajero_dni || "",
           pasajeroNombre: row.pasajero_nombre || "",
-          responsableNombre: row.responsable_nombre || "",
-          responsableTelefono: row.responsable_telefono || "",
-          nivel: row.nivel || "",
-          viaje: row.viaje || "",
-          colegio: row.colegio || "",
-          cursoDivision: row.curso_division || "",
-          grupoSolicitado: row.grupo_solicitado || "",
-          estadoRevision: row.estado_revision || "pendiente",
-          documentacionEstado: row.documentacion_estado || "Pendiente",
-          fichaMedicaEstado: row.ficha_medica_estado || "Pendiente",
-          autorizacionEstado: row.autorizacion_estado || "Pendiente",
+          pasajeroApellido: row.pasajero_apellido || "",
           pasajeroTipoDocumento: row.pasajero_tipo_documento || "DNI",
           pasajeroNacimiento: row.pasajero_nacimiento || "",
           pasajeroSexo: row.pasajero_sexo || "",
+          responsableNombre: row.responsable_nombre || "",
+          responsableApellido: row.responsable_apellido || "",
           responsableTipoDocumento: row.responsable_tipo_documento || "DNI",
           responsableNumeroDocumento: row.responsable_numero_documento || "",
           responsableNacimiento: row.responsable_nacimiento || "",
           responsableParentesco: row.responsable_parentesco || "",
           responsableEmail: row.responsable_email || "",
+          responsableTelefono: row.responsable_telefono || "",
           responsableCelular: row.responsable_celular || "",
           responsableCuilCuit: row.responsable_cuil_cuit || "",
           domicilioCalle: row.domicilio_calle || "",
           domicilioNumero: row.domicilio_numero || "",
           domicilioPiso: row.domicilio_piso || "",
           domicilioDepartamento: row.domicilio_departamento || "",
+          domicilioBarrio: row.domicilio_barrio || "",
           domicilioLocalidad: row.domicilio_localidad || "",
           domicilioProvincia: row.domicilio_provincia || "",
           domicilioCodigoPostal: row.domicilio_codigo_postal || "",
           aceptaCondiciones: String(row.acepta_condiciones || "").toLowerCase() === "true",
           firma: row.firma_data_url || "",
           firmaRegistrada: Boolean(row.firma_data_url),
+          nivel: row.nivel || "",
+          viaje: row.viaje || "",
+          colegioId: row.colegio_id || "",
+          colegio: row.colegio || "",
+          colegioTexto: row.colegio_texto || "",
+          colegioVinculado: String(row.colegio_vinculado || "").toUpperCase() === "TRUE",
+          grado: row.grado || "",
+          division: row.division || "",
+          cursoDivision: row.curso_division || "",
+          planPagoId: row.plan_pago_id || "",
+          planNombre: row.plan_nombre || "",
+          planCuotas: row.plan_cuotas || "",
+          estadoRevision: row.estado_revision || "pendiente",
+          documentacionEstado: row.documentacion_estado || "pendiente",
+          fichaMedicaEstado: row.ficha_medica_estado || "pendiente",
+          autorizacionEstado: row.autorizacion_estado || "pendiente",
+          motivoRechazo: row.motivo_rechazo || "",
           observaciones: row.observaciones || "",
+          emailEstado: row.email_estado || "pendiente",
+          emailError: row.email_error || "",
+          emailEnviadoAt: row.email_enviado_at || "",
           contratoId: row.contrato_id || "",
           codigoContrato: row.codigo_contrato || "",
           grupoAsignadoId: row.grupo_asignado_id || "",
@@ -3315,7 +3262,7 @@
           // "la hoja está vacía de verdad", y Grupos/Contratos (siempre
           // públicas) se aplican apenas se leen bien, sin depender de si
           // Pasajeros/Fichas están disponibles en esta página.
-          const [grupos, contratos, pasajeros, fichas, turismo] = await Promise.all([
+          const [grupos, contratos, pasajeros, fichas, turismo, fichasTutor, colegios, planesPago] = await Promise.all([
             adminEntry ? window.ElAngelAzulPersistence.fetchGoogleSheetRows("GRUPOS").catch(() => null) : Promise.resolve([]),
             adminEntry ? window.ElAngelAzulPersistence.fetchGoogleSheetRows("CONTRATOS").catch(() => null) : Promise.resolve([]),
             adminEntry
@@ -3326,6 +3273,15 @@
               : Promise.resolve(null),
             adminEntry
               ? window.ElAngelAzulPersistence.fetchGoogleSheetRows("TURISMO").catch(() => null)
+              : Promise.resolve(null),
+            adminEntry
+              ? window.ElAngelAzulPersistence.fetchGoogleSheetRows("FICHAS_TUTOR").catch(() => null)
+              : Promise.resolve(null),
+            adminEntry
+              ? window.ElAngelAzulPersistence.fetchGoogleSheetRows("COLEGIOS").catch(() => null)
+              : Promise.resolve(null),
+            adminEntry
+              ? window.ElAngelAzulPersistence.fetchGoogleSheetRows("PLANES_PAGO").catch(() => null)
               : Promise.resolve(null)
           ]);
           if (grupos === null || contratos === null) {
@@ -3338,12 +3294,17 @@
           // En el admin sí hay sesión: si Pasajeros/Fichas igual fallan, es un
           // error real (no el 401 esperado de páginas públicas) - no pisar
           // datos reales con la semilla ficticia ni con listas vacías.
-          if (adminEntry && (pasajeros === null || fichas === null || turismo === null)) {
+          if (adminEntry && [pasajeros, fichas, turismo, fichasTutor, colegios, planesPago].some((rows) => rows === null)) {
             googleSheetsSyncState = {
               status: "error",
-              message: "No se pudo leer Pasajeros/Fichas/Turismo desde la base de datos. Se mantienen los datos guardados localmente."
+              message: "No se pudo leer Pasajeros/Fichas/Turismo/Colegios/Planes desde la base de datos. Se mantienen los datos guardados localmente."
             };
             return false;
+          }
+          if (adminEntry) {
+            adminFichasTutor = fichasTutor;
+            adminColegios = colegios;
+            adminPlanesPago = planesPago;
           }
           // Una respuesta válida vacía también debe aplicarse. Antes se
           // ignoraba y quedaban viajes viejos en localStorage; el siguiente
@@ -3410,8 +3371,11 @@
           if (uniqueSheets.includes("PASAJEROS")) rowsByTab.PASAJEROS = googleSheetsPassengerRows(now);
           if (uniqueSheets.includes("FICHAS_ADHESION")) rowsByTab.FICHAS_ADHESION = googleSheetsFichaRows(now);
           if (uniqueSheets.includes("TURISMO")) rowsByTab.TURISMO = googleSheetsTurismoRows(now);
+          if (uniqueSheets.includes("FICHAS_TUTOR")) rowsByTab.FICHAS_TUTOR = adminFichasTutor;
+          if (uniqueSheets.includes("COLEGIOS")) rowsByTab.COLEGIOS = adminColegios;
+          if (uniqueSheets.includes("PLANES_PAGO")) rowsByTab.PLANES_PAGO = adminPlanesPago;
           for (const sheet of uniqueSheets) {
-            if (!["GRUPOS", "CONTRATOS", "PASAJEROS", "FICHAS_ADHESION", "TURISMO"].includes(sheet)) continue;
+            if (!["GRUPOS", "CONTRATOS", "PASAJEROS", "FICHAS_ADHESION", "TURISMO", "FICHAS_TUTOR", "COLEGIOS", "PLANES_PAGO"].includes(sheet)) continue;
             await window.ElAngelAzulPersistence.writeGoogleSheetRows(sheet, rowsByTab[sheet] || [], deleteIdsBySheet[sheet] || []);
           }
           googleSheetsSyncState = {
@@ -3531,16 +3495,6 @@
         if (["si", "sí", "cargada", "completa", "aprobada", "ok"].some((token) => text.includes(token))) return "Sí";
         if (["no", "pendiente", "observada", "rechazada"].some((token) => text.includes(token))) return "No";
         return "No";
-      }
-
-      function fichaStudentLastName(fullName) {
-        const parts = String(fullName || "").trim().split(/\s+/).filter(Boolean);
-        return parts.length > 1 ? parts.slice(1).join(" ") : "";
-      }
-
-      function fichaStudentFirstName(fullName) {
-        const parts = String(fullName || "").trim().split(/\s+/).filter(Boolean);
-        return parts[0] || "";
       }
 
       function renderFichaValue(label, value) {
@@ -3805,17 +3759,78 @@
         `;
       }
 
+      function fichaNombreCompleto(apellido, nombre) {
+        return [String(apellido || "").trim(), String(nombre || "").trim()].filter(Boolean).join(", ");
+      }
+
+      function fichaTutoresAdicionales(dni) {
+        const documento = normalizeFichaDni(dni);
+        if (!documento) return [];
+        // Un mismo tutor puede registrarse más de una vez: se muestra una sola
+        // vez, con su registro más reciente (las filas llegan ordenadas así).
+        const vistos = new Set();
+        return adminFichasTutor.filter((tutor) => {
+          if (normalizeFichaDni(tutor.pasajero_dni) !== documento) return false;
+          const clave = normalizeFichaDni(tutor.numero_documento) || tutor.id;
+          if (vistos.has(clave)) return false;
+          vistos.add(clave);
+          return true;
+        });
+      }
+
+      function formatearCuil(valor) {
+        return String(valor || "").replace(/^(\d{2})(\d{8})(\d)$/, "$1-$2-$3");
+      }
+
+      function fichaPlanTexto(nombre, cuotas) {
+        if (!nombre) return "";
+        const cantidad = String(cuotas || "").trim();
+        if (!cantidad || new RegExp(`\\b${cantidad}\\b`).test(nombre)) return nombre;
+        return `${nombre} · ${cantidad} ${cantidad === "1" ? "cuota" : "cuotas"}`;
+      }
+
+      const FICHA_EMAIL_ESTADOS = {
+        enviado: { label: "Enviado", clase: "is-ok" },
+        error: { label: "Error", clase: "is-alert" },
+        sin_configurar: { label: "Sin configurar", clase: "is-pending" },
+        pendiente: { label: "Pendiente", clase: "is-pending" }
+      };
+
+      function renderFichaEmailBadge(ficha) {
+        const estado = FICHA_EMAIL_ESTADOS[ficha.emailEstado] || FICHA_EMAIL_ESTADOS.pendiente;
+        return `<span class="admin-pasajeros-status ${estado.clase}">${escapeHtml(estado.label)}</span>`;
+      }
+
+      function renderFichaVincularColegio(ficha) {
+        if (ficha.colegioVinculado) return "";
+        const activos = adminColegios.filter((colegio) => colegio.activo === "TRUE");
+        return `
+          <div class="admin-fichas-vincular-colegio">
+            <p><strong>Colegio sin vincular.</strong> La familia escribió: “${escapeHtml(ficha.colegioTexto || ficha.colegio)}”.</p>
+            <label>Vincular a un colegio de la lista
+              <select data-ficha-vincular-colegio>
+                <option value="">Elegí un colegio</option>
+                ${activos.map((colegio) => `<option value="${escapeHtml(colegio.id)}">${escapeHtml(colegio.nombre)}${colegio.localidad ? ` — ${escapeHtml(colegio.localidad)}` : ""}</option>`).join("")}
+              </select>
+            </label>
+            <div class="admin-fichas-vincular-actions">
+              <button type="button" class="admin-pasajeros-secondary-button" data-ficha-vincular-colegio-btn>Vincular</button>
+              <button type="button" class="admin-pasajeros-secondary-button" data-ficha-crear-colegio="${escapeHtml(ficha.colegioTexto || ficha.colegio)}">Crear colegio “${escapeHtml(ficha.colegioTexto || ficha.colegio)}”</button>
+            </div>
+          </div>
+        `;
+      }
+
       function renderAdminFichaDetail(ficha) {
         if (!ficha) return "";
         const context = fichaAssignmentContext(ficha);
-        const group = context.selectedGroup || {};
-        const pasajeroNombre = ficha.pasajeroNombre || "";
-        const responsableNombre = ficha.responsableNombre || "";
-        const fichaMedica = normalizeYesNoStatus(ficha.fichaMedicaEstado || ficha.fichaMedica || ficha.documentacionEstado);
+        const fichaMedica = normalizeYesNoStatus(ficha.fichaMedicaEstado || ficha.documentacionEstado);
         const fichaAdhesion = normalizeYesNoStatus(ficha.firma || ficha.autorizacionEstado || ficha.documentacionEstado || "Sí");
         const signatureDataUrl = fichaSignatureDataUrl(ficha);
         const estadoRevision = ficha.estadoRevision || "pendiente";
         const estadoClass = estadoRevision === "aprobada" ? "is-ok" : ["rechazada", "duplicada"].includes(estadoRevision) ? "is-alert" : "is-pending";
+        const tutoresAdicionales = fichaTutoresAdicionales(ficha.pasajeroNumeroDocumento);
+        const planTexto = fichaPlanTexto(ficha.planNombre, ficha.planCuotas);
         const assignmentColumn = estadoRevision === "aprobada" ? renderFichaApprovedColumn(ficha) : `
               <article class="admin-fichas-detail-card admin-fichas-detail-card--wide">
                 <h3>Asignar grupo y contrato</h3>
@@ -3836,7 +3851,7 @@
             <div class="admin-fichas-detail-head">
               <div>
                 <span class="admin-pasajeros-status ${estadoClass}">${escapeHtml(estadoRevision)}</span>
-                <h2>${escapeHtml(pasajeroNombre || "Ficha sin nombre")}</h2>
+                <h2>${escapeHtml(fichaNombreCompleto(ficha.pasajeroApellido, ficha.pasajeroNombre) || "Ficha sin nombre")}</h2>
                 <p>Preinscripción virtual lista para revisar, asignar y dar de alta oficialmente.</p>
               </div>
               <div class="admin-fichas-detail-head-actions">
@@ -3846,37 +3861,73 @@
             </div>
 
             <div class="admin-fichas-detail-layout">
+              <article class="admin-fichas-detail-card admin-fichas-detail-card--wide admin-fichas-pertenencia">
+                <h3>Pertenencia</h3>
+                <dl class="admin-fichas-pertenencia-grid">
+                  ${renderFichaValue("Colegio", ficha.colegio)}
+                  ${renderFichaValue("Curso", ficha.nivel)}
+                  ${renderFichaValue("Grado/Año", ficha.grado)}
+                  ${renderFichaValue("División", ficha.division)}
+                  ${renderFichaValue("Plan", planTexto)}
+                  ${renderFichaValue("Contrato", ficha.codigoContrato)}
+                  ${renderFichaValue("Viaje", ficha.viaje)}
+                </dl>
+                ${renderFichaVincularColegio(ficha)}
+              </article>
+
               <article class="admin-fichas-detail-card admin-fichas-student-card">
-                <h3>Datos del alumno</h3>
+                <h3>Datos del pasajero</h3>
                 <dl>
-                  ${renderFichaValue("Nombre", fichaStudentFirstName(pasajeroNombre))}
-                  ${renderFichaValue("Apellido", fichaStudentLastName(pasajeroNombre))}
+                  ${renderFichaValue("Nombre/s", ficha.pasajeroNombre)}
+                  ${renderFichaValue("Apellido/s", ficha.pasajeroApellido)}
                   ${renderFichaValue("Tipo de documento", ficha.pasajeroTipoDocumento)}
-                  ${renderFichaValue("DNI", ficha.pasajeroNumeroDocumento || ficha.pasajeroDni)}
+                  ${renderFichaValue("Documento", ficha.pasajeroNumeroDocumento)}
                   ${renderFichaValue("Nacimiento", ficha.pasajeroNacimiento)}
                   ${renderFichaValue("Sexo", ficha.pasajeroSexo)}
-                  ${renderFichaValue("Colegio", group.colegio || ficha.colegio)}
-                  ${renderFichaValue("Curso", group.curso || ficha.curso)}
-                  ${renderFichaValue("División", group.division || ficha.division)}
-                  ${renderFichaValue("Viaje elegido", group.viaje || ficha.viaje)}
                 </dl>
               </article>
 
               <article class="admin-fichas-detail-card">
-                <h3>Datos del responsable</h3>
+                <h3>Tutor principal</h3>
                 <dl>
-                  ${renderFichaValue("Nombre", fichaStudentFirstName(responsableNombre))}
-                  ${renderFichaValue("Apellido", fichaStudentLastName(responsableNombre))}
+                  ${renderFichaValue("Nombre/s", ficha.responsableNombre)}
+                  ${renderFichaValue("Apellido/s", ficha.responsableApellido)}
                   ${renderFichaValue("Tipo de documento", ficha.responsableTipoDocumento)}
-                  ${renderFichaValue("DNI", ficha.responsableNumeroDocumento || ficha.responsableDni)}
+                  ${renderFichaValue("Documento", ficha.responsableNumeroDocumento)}
                   ${renderFichaValue("Nacimiento", ficha.responsableNacimiento)}
-                  ${renderFichaValue("Parentesco", ficha.responsableParentesco || ficha.vinculo)}
+                  ${renderFichaValue("Parentesco", ficha.responsableParentesco)}
+                  ${renderFichaValue("CUIL/CUIT", formatearCuil(ficha.responsableCuilCuit))}
                   ${renderFichaValue("Correo", ficha.responsableEmail)}
-                  ${renderFichaValue("Teléfono", ficha.responsableTelefono || ficha.domicilioTelefono)}
-                  ${renderFichaValue("Celular", ficha.responsableCelular || ficha.domicilioCelular)}
-                  ${renderFichaValue("CUIL/CUIT", ficha.responsableCuilCuit)}
+                  ${renderFichaValue("Celular", ficha.responsableCelular)}
+                  ${renderFichaValue("Teléfono alternativo", ficha.responsableTelefono || "—")}
                 </dl>
-                <h3>Documentación</h3>
+                <h3>Tutores adicionales</h3>
+                ${tutoresAdicionales.length ? `
+                  <ul class="admin-fichas-tutores">
+                    ${tutoresAdicionales.map((tutor) => `
+                      <li>
+                        <strong>${escapeHtml(fichaNombreCompleto(tutor.apellido, tutor.nombre))}</strong>
+                        <span>${escapeHtml(tutor.parentesco)} · ${escapeHtml(tutor.celular)} · ${escapeHtml(tutor.email)}</span>
+                        <span>Estado: ${escapeHtml(tutor.estado_revision)}</span>
+                      </li>
+                    `).join("")}
+                  </ul>
+                ` : `<p>Sin tutores adicionales registrados.</p>`}
+              </article>
+
+              <article class="admin-fichas-detail-card">
+                <h3>Domicilio</h3>
+                <dl>
+                  ${renderFichaValue("Calle", ficha.domicilioCalle)}
+                  ${renderFichaValue("Número", ficha.domicilioNumero)}
+                  ${renderFichaValue("Piso", ficha.domicilioPiso || "—")}
+                  ${renderFichaValue("Departamento", ficha.domicilioDepartamento || "—")}
+                  ${renderFichaValue("Barrio", ficha.domicilioBarrio || "—")}
+                  ${renderFichaValue("Localidad", ficha.domicilioLocalidad)}
+                  ${renderFichaValue("Provincia", ficha.domicilioProvincia)}
+                  ${renderFichaValue("Código postal", ficha.domicilioCodigoPostal)}
+                </dl>
+                <h3>Documentación y firma</h3>
                 <dl class="admin-fichas-doc-grid">
                   ${renderFichaValue("Ficha médica", fichaMedica)}
                   ${renderFichaValue("Ficha de adhesión", fichaAdhesion)}
@@ -3885,24 +3936,19 @@
                 </dl>
                 ${signatureDataUrl ? `
                   <div class="admin-fichas-signature-preview">
-                    <span>Firma del responsable</span>
-                    <img src="${escapeHtml(signatureDataUrl)}" alt="Firma registrada del responsable">
+                    <span>Firma del tutor</span>
+                    <img src="${escapeHtml(signatureDataUrl)}" alt="Firma registrada del tutor">
                   </div>
                 ` : ""}
                 ${ficha.motivoRechazo ? `<p class="admin-fichas-reject-note"><strong>Motivo rechazo:</strong> ${escapeHtml(ficha.motivoRechazo)}</p>` : ""}
               </article>
 
               <article class="admin-fichas-detail-card">
-                <h3>Domicilio declarado</h3>
-                <dl>
-                  ${renderFichaValue("Calle", ficha.domicilioCalle)}
-                  ${renderFichaValue("Número", ficha.domicilioNumero)}
-                  ${renderFichaValue("Piso", ficha.domicilioPiso)}
-                  ${renderFichaValue("Departamento", ficha.domicilioDepartamento)}
-                  ${renderFichaValue("Localidad", ficha.domicilioLocalidad)}
-                  ${renderFichaValue("Provincia", ficha.domicilioProvincia)}
-                  ${renderFichaValue("Código postal", ficha.domicilioCodigoPostal)}
-                </dl>
+                <h3>Correo al tutor</h3>
+                <p>${renderFichaEmailBadge(ficha)} ${ficha.emailEnviadoAt ? `Enviado el ${escapeHtml(formatFichaApprovalDate({ updatedAt: ficha.emailEnviadoAt }))}` : ""}</p>
+                ${ficha.emailEstado === "sin_configurar" ? `<p>El envío de correos todavía no está activado (falta configurar Resend).</p>` : ""}
+                ${ficha.emailError ? `<p class="admin-fichas-reject-note">${escapeHtml(ficha.emailError)}</p>` : ""}
+                <button type="button" class="admin-pasajeros-secondary-button" data-ficha-reenviar-correo="${escapeHtml(ficha.id)}">Reenviar correo</button>
               </article>
 
               ${assignmentColumn}
@@ -3965,16 +4011,22 @@
         }
         group.pasajeros.push({
           nombre: String(ficha.pasajeroNombre || "").trim(),
+          apellido: String(ficha.pasajeroApellido || "").trim(),
           dni,
           contratoId: context.contratoId,
           codigoContrato: context.codigoContrato,
           nacimiento: String(ficha.pasajeroNacimiento || "").trim(),
-          telefono: String(ficha.domicilioCelular || ficha.domicilioTelefono || "").trim(),
+          telefono: String(ficha.responsableCelular || "").trim(),
           responsable: String(ficha.responsableNombre || "").trim(),
+          responsableApellido: String(ficha.responsableApellido || "").trim(),
           responsableDni: String(ficha.responsableNumeroDocumento || "").trim(),
-          responsableTelefono: String(ficha.domicilioCelular || ficha.responsableTelefono || ficha.domicilioTelefono || "").trim(),
-          responsableCuilCuit: String(ficha.responsableCuilCuit || "Pendiente").trim(),
+          responsableTelefono: String(ficha.responsableCelular || ficha.responsableTelefono || "").trim(),
+          responsableEmail: String(ficha.responsableEmail || "").trim(),
+          responsableCuilCuit: String(ficha.responsableCuilCuit || "").trim(),
           vinculo: String(ficha.responsableParentesco || "").trim(),
+          planPagoId: String(ficha.planPagoId || "").trim(),
+          planNombre: String(ficha.planNombre || "").trim(),
+          planCuotas: String(ficha.planCuotas || "").trim(),
           estado: "Activo",
           pago: "Pendiente",
           documentacion: "Pendiente",
@@ -4024,20 +4076,6 @@
         renderAdminFichasRecibidas();
       }
 
-      function fichaPdfFileName(ficha) {
-        const baseName = `${ficha.pasajeroNombre || "pasajero"}-${ficha.pasajeroNumeroDocumento || ficha.pasajeroDni || "sin-dni"}`
-          .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "")
-          .replace(/[^a-zA-Z0-9]+/g, "-")
-          .replace(/^-+|-+$/g, "")
-          .toLowerCase();
-        return `ficha-adhesion-${baseName || "pasajero"}.pdf`;
-      }
-
-      function fichaFieldValue(value) {
-        return String(value || "").trim();
-      }
-
       function normalizeFichaSearchText(value) {
         return normalizeText(value)
           .normalize("NFD")
@@ -4050,26 +4088,27 @@
         if (!needle) return true;
         return [
           ficha.pasajeroNombre,
+          ficha.pasajeroApellido,
           ficha.pasajeroNumeroDocumento,
           ficha.pasajeroDni,
           ficha.responsableNombre,
-          ficha.responsableTelefono,
-          ficha.responsableCelular
+          ficha.responsableApellido,
+          ficha.responsableCelular,
+          ficha.colegio
         ].some((value) => normalizeFichaSearchText(value).includes(needle));
       }
 
       function fichaFilterValue(ficha, field) {
-        const context = fichaAssignmentContext(ficha);
-        if (field === "colegio") return context.selectedGroup?.colegio || context.colegio || ficha.colegio || "";
-        if (field === "viaje") return context.selectedGroup?.viaje || context.viaje || ficha.viaje || "";
+        if (field === "colegio") return ficha.colegio || "";
+        if (field === "viaje") return ficha.viaje || "";
         return "";
       }
 
       function renderAdminFichasFilters(colegios = [], viajes = []) {
         return `
           <div class="admin-fichas-filters" aria-label="Filtros de fichas">
-            <label>Buscar por nombre o DNI
-              <input type="search" value="${escapeHtml(adminFichasSearch)}" placeholder="Ej: Lucia, 50999111" data-admin-fichas-search>
+            <label>Buscar por nombre, apellido, DNI o colegio
+              <input type="search" value="${escapeHtml(adminFichasSearch)}" placeholder="Ej: Benítez, 47555666" data-admin-fichas-search>
             </label>
             <label>Colegio
               <select data-admin-fichas-filter-colegio>
@@ -4082,6 +4121,10 @@
                 <option value="">Todos los viajes</option>
                 ${viajes.map((viaje) => `<option value="${escapeHtml(viaje)}" ${viaje === adminFichasFilterViaje ? "selected" : ""}>${escapeHtml(viaje)}</option>`).join("")}
               </select>
+            </label>
+            <label class="admin-fichas-sin-vincular">
+              <input type="checkbox" data-admin-fichas-sin-vincular ${adminFichasSinVincular ? "checked" : ""}>
+              Solo colegio sin vincular
             </label>
           </div>
         `;
@@ -4113,318 +4156,6 @@
         `;
       }
 
-      function fichaMoneyValue(value) {
-        return fichaFieldValue(value) ? formatAdminMoney(value) : "";
-      }
-
-      function fichaPdfDate(value) {
-        const text = fichaFieldValue(value);
-        if (!text) return "";
-        const parsed = new Date(text);
-        if (!Number.isNaN(parsed.getTime())) {
-          return new Intl.DateTimeFormat("es-AR", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric"
-          }).format(parsed);
-        }
-        return text;
-      }
-
-      // FIX impresión: la plantilla tiene 3 casilleros separados (día / mes / año) con
-      // "/" ya impresos entre medio. Antes se dibujaba la fecha completa "24/10/2001"
-      // de una sola vez en el primer casillero, chocando con las barras de la plantilla
-      // ("24/10/2001 ......../................"). Ahora se parte en 3 partes para que
-      // cada una caiga en su propio casillero.
-      function fichaPdfDateParts(value) {
-        const formatted = fichaPdfDate(value);
-        const match = formatted.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
-        if (match) return { dia: match[1], mes: match[2], anio: match[3] };
-        return { dia: "", mes: "", anio: formatted };
-      }
-
-      function loadPdfImage(dataUrl) {
-        return new Promise((resolve) => {
-          if (!dataUrl) {
-            resolve(null);
-            return;
-          }
-          const image = new Image();
-          image.onload = () => resolve(image);
-          image.onerror = () => resolve(null);
-          image.src = dataUrl;
-        });
-      }
-
-      function dataUrlToBytes(dataUrl) {
-        const base64 = String(dataUrl || "").split(",")[1] || "";
-        const binary = window.atob(base64);
-        const bytes = new Uint8Array(binary.length);
-        for (let index = 0; index < binary.length; index += 1) {
-          bytes[index] = binary.charCodeAt(index);
-        }
-        return bytes;
-      }
-
-      function concatBytes(chunks) {
-        const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
-        const output = new Uint8Array(totalLength);
-        let offset = 0;
-        chunks.forEach((chunk) => {
-          output.set(chunk, offset);
-          offset += chunk.length;
-        });
-        return output;
-      }
-
-      function createImagePdfBlob(jpegBytes, pageWidth = 595, pageHeight = 842) {
-        const encoder = new TextEncoder();
-        const chunks = [];
-        const offsets = [0];
-        let length = 0;
-
-        const pushAscii = (value) => {
-          const bytes = encoder.encode(value);
-          chunks.push(bytes);
-          length += bytes.length;
-        };
-
-        const addObject = (bodyChunks) => {
-          offsets.push(length);
-          const objectNumber = offsets.length - 1;
-          pushAscii(`${objectNumber} 0 obj\n`);
-          bodyChunks.forEach((chunk) => {
-            if (typeof chunk === "string") {
-              pushAscii(chunk);
-            } else {
-              chunks.push(chunk);
-              length += chunk.length;
-            }
-          });
-          pushAscii("\nendobj\n");
-        };
-
-        pushAscii("%PDF-1.4\n");
-        addObject(["<< /Type /Catalog /Pages 2 0 R >>"]);
-        addObject(["<< /Type /Pages /Kids [3 0 R] /Count 1 >>"]);
-        addObject([`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] /Resources << /XObject << /Im1 4 0 R >> >> /Contents 5 0 R >>`]);
-        addObject([`<< /Type /XObject /Subtype /Image /Width 1240 /Height 1754 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpegBytes.length} >>\nstream\n`, jpegBytes, "\nendstream"]);
-        const content = `q\n${pageWidth} 0 0 ${pageHeight} 0 0 cm\n/Im1 Do\nQ`;
-        addObject([`<< /Length ${content.length} >>\nstream\n${content}\nendstream`]);
-
-        const xrefOffset = length;
-        pushAscii(`xref\n0 ${offsets.length}\n0000000000 65535 f \n`);
-        offsets.slice(1).forEach((offset) => {
-          pushAscii(`${String(offset).padStart(10, "0")} 00000 n \n`);
-        });
-        pushAscii(`trailer\n<< /Size ${offsets.length} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`);
-
-        return new Blob([concatBytes(chunks)], { type: "application/pdf" });
-      }
-
-      function wrapCanvasText(context, text, x, y, maxWidth, lineHeight, maxLines = 3) {
-        const words = fichaFieldValue(text).split(/\s+/).filter(Boolean);
-        const lines = [];
-        let currentLine = "";
-        words.forEach((word) => {
-          const testLine = currentLine ? `${currentLine} ${word}` : word;
-          if (context.measureText(testLine).width > maxWidth && currentLine) {
-            lines.push(currentLine);
-            currentLine = word;
-          } else {
-            currentLine = testLine;
-          }
-        });
-        if (currentLine) lines.push(currentLine);
-        lines.slice(0, maxLines).forEach((line, index) => {
-          let fittedLine = line;
-          while (context.measureText(fittedLine).width > maxWidth && fittedLine.length > 3) {
-            fittedLine = `${fittedLine.slice(0, -4).trimEnd()}...`;
-          }
-          context.fillText(fittedLine, x, y + (index * lineHeight));
-        });
-      }
-
-      function fitCanvasFont(context, text, options = {}) {
-        const maxWidth = options.width || 360;
-        const minSize = options.minSize || 11;
-        let size = options.size || 16;
-        const weight = options.weight || "bold";
-        while (size > minSize) {
-          context.font = `${weight} ${size}px Arial, sans-serif`;
-          if (context.measureText(text).width <= maxWidth) break;
-          size -= 1;
-        }
-        return size;
-      }
-
-      async function createFichaAdhesionPdfBlob(ficha) {
-        const administracion = ficha.administracion || {};
-        const canvas = document.createElement("canvas");
-        canvas.width = 1240;
-        canvas.height = 1754;
-        const context = canvas.getContext("2d");
-        const templateImage = await loadPdfImage("/assets/pdf/ficha-adhesion-template.png");
-        const signatureImage = await loadPdfImage(ficha.firma);
-
-        context.fillStyle = "#ffffff";
-        context.fillRect(0, 0, canvas.width, canvas.height);
-        if (templateImage) {
-          context.drawImage(templateImage, 0, 0, canvas.width, canvas.height);
-        }
-
-        const textValue = (value) => fichaFieldValue(value).toUpperCase();
-        // FIX impresión: en el template, cada renglón tiene una línea punteada en
-        // el mismo eje Y que se usó para calibrar los campos. Como fillText() dibuja
-        // con Y = línea base, el texto quedaba literalmente ENCIMA de los puntos
-        // (efecto "tachado") en vez de apoyado arriba de la línea. Se sube 8px.
-        const BASELINE_LIFT = 8;
-        // Sangría horizontal: separa el valor de la etiqueta/dos puntos que lo precede
-        // (ej. "Nº:1542" -> "Nº: 1542") para que no quede pegado y sea más legible.
-        const LEFT_INDENT = 10;
-        const drawValue = (value, field, options = {}) => {
-          const text = options.raw ? fichaFieldValue(value) : textValue(value);
-          if (!text) return;
-          context.fillStyle = options.color || "#064f9e";
-          const fieldOptions = { ...field, ...options };
-          const size = fitCanvasFont(context, text, fieldOptions);
-          context.font = `${fieldOptions.weight || "bold"} ${size}px Arial, sans-serif`;
-          wrapCanvasText(context, text, field.x + LEFT_INDENT, field.y - BASELINE_LIFT, fieldOptions.width || 360, fieldOptions.lineHeight || Math.max(15, size + 2), fieldOptions.lines || 1);
-        };
-
-        const fields = {
-          contrato: { x: 626, y: 200, width: 185, size: 17, minSize: 12 },
-          destino: { x: 626, y: 267, width: 175, size: 17, minSize: 11 },
-          colegio: { x: 626, y: 337, width: 455, size: 17, minSize: 10 },
-          alta: { x: 1145, y: 187, width: 28, size: 22 },
-          modificacion: { x: 1145, y: 231, width: 28, size: 22 },
-
-          pasajeroNombre: { x: 292, y: 489, width: 870, size: 17, minSize: 10 },
-          pasajeroDocumento: { x: 292, y: 533, width: 320, size: 16, minSize: 10 },
-          pasajeroNacimientoDia: { x: 768, y: 533, width: 55, size: 16, minSize: 10 },
-          pasajeroNacimientoMes: { x: 842, y: 533, width: 48, size: 16, minSize: 10 },
-          pasajeroNacimientoAnio: { x: 908, y: 533, width: 80, size: 16, minSize: 10 },
-          pasajeroSexo: { x: 1050, y: 533, width: 95, size: 16, minSize: 10 },
-
-          responsableNombre: { x: 292, y: 658, width: 870, size: 17, minSize: 10 },
-          responsableDocumento: { x: 292, y: 700, width: 320, size: 16, minSize: 10 },
-          responsableNacimientoDia: { x: 768, y: 700, width: 55, size: 16, minSize: 10 },
-          responsableNacimientoMes: { x: 842, y: 700, width: 48, size: 16, minSize: 10 },
-          responsableNacimientoAnio: { x: 908, y: 700, width: 80, size: 16, minSize: 10 },
-          responsableParentesco: { x: 1082, y: 700, width: 72, size: 13, minSize: 9 },
-          responsableEmail: { x: 365, y: 742, width: 335, size: 13, minSize: 9 },
-          responsableCuilCuit: { x: 882, y: 742, width: 275, size: 15, minSize: 10 },
-
-          domicilioCalle: { x: 148, y: 868, width: 500, size: 16, minSize: 10 },
-          domicilioNumero: { x: 680, y: 868, width: 130, size: 16, minSize: 10 },
-          domicilioPiso: { x: 906, y: 868, width: 90, size: 16, minSize: 10 },
-          domicilioDepartamento: { x: 1060, y: 868, width: 90, size: 16, minSize: 10 },
-          domicilioLocalidad: { x: 210, y: 912, width: 435, size: 16, minSize: 10 },
-          domicilioProvincia: { x: 764, y: 912, width: 365, size: 16, minSize: 10 },
-          domicilioTelefono: { x: 136, y: 958, width: 210, size: 16, minSize: 10 },
-          domicilioCelular: { x: 404, y: 958, width: 245, size: 16, minSize: 10 },
-          domicilioCodigoPostal: { x: 1050, y: 958, width: 120, size: 16, minSize: 10 },
-
-          fechaInscripcionDia: { x: 322, y: 1112, width: 55, size: 15, minSize: 10 },
-          fechaInscripcionMes: { x: 392, y: 1112, width: 55, size: 15, minSize: 10 },
-          fechaInscripcionAnio: { x: 462, y: 1112, width: 90, size: 15, minSize: 10 },
-          valorViaje: { x: 568, y: 1148, width: 70, size: 13, minSize: 8 },
-          sena: { x: 862, y: 1148, width: 78, size: 13, minSize: 8 },
-          saldo: { x: 1040, y: 1148, width: 92, size: 13, minSize: 8 },
-          cuotas: { x: 92, y: 1196, width: 80, size: 15, minSize: 10 },
-          formaPago: { x: 292, y: 1196, width: 230, size: 15, minSize: 10 },
-          informacionAdministrativa: { x: 700, y: 1196, width: 430, size: 13, minSize: 9, lines: 2, lineHeight: 15 },
-          aclaracion: { x: 850, y: 1591, width: 300, size: 14, minSize: 9 },
-        };
-
-        drawValue(administracion.contrato, fields.contrato);
-        drawValue(ficha.viaje, fields.destino);
-        drawValue(ficha.colegio, fields.colegio);
-        const altaModificacion = textValue(administracion.altaModificacion);
-        if (altaModificacion.includes("MOD")) {
-          drawValue("X", fields.modificacion);
-        } else if (altaModificacion) {
-          drawValue("X", fields.alta);
-        }
-
-        drawValue(ficha.pasajeroNombre, fields.pasajeroNombre);
-        drawValue(
-          `${ficha.pasajeroTipoDocumento || "DNI"} ${ficha.pasajeroNumeroDocumento || ficha.pasajeroDni || ""}`,
-          fields.pasajeroDocumento
-        );
-        const pasajeroNacParts = fichaPdfDateParts(ficha.pasajeroNacimiento);
-        drawValue(pasajeroNacParts.dia, fields.pasajeroNacimientoDia, { raw: true });
-        drawValue(pasajeroNacParts.mes, fields.pasajeroNacimientoMes, { raw: true });
-        drawValue(pasajeroNacParts.anio, fields.pasajeroNacimientoAnio, { raw: true });
-        drawValue(ficha.pasajeroSexo, fields.pasajeroSexo);
-
-        drawValue(ficha.responsableNombre, fields.responsableNombre);
-        drawValue(
-          `${ficha.responsableTipoDocumento || "DNI"} ${ficha.responsableNumeroDocumento || ""}`,
-          fields.responsableDocumento
-        );
-        const responsableNacParts = fichaPdfDateParts(ficha.responsableNacimiento);
-        drawValue(responsableNacParts.dia, fields.responsableNacimientoDia, { raw: true });
-        drawValue(responsableNacParts.mes, fields.responsableNacimientoMes, { raw: true });
-        drawValue(responsableNacParts.anio, fields.responsableNacimientoAnio, { raw: true });
-        drawValue(ficha.responsableParentesco, fields.responsableParentesco);
-        drawValue(ficha.responsableEmail, fields.responsableEmail, { raw: true });
-        drawValue(ficha.responsableCuilCuit, fields.responsableCuilCuit, { raw: true });
-
-        drawValue(ficha.domicilioCalle, fields.domicilioCalle);
-        drawValue(ficha.domicilioNumero, fields.domicilioNumero);
-        drawValue(ficha.domicilioPiso, fields.domicilioPiso);
-        drawValue(ficha.domicilioDepartamento, fields.domicilioDepartamento);
-        drawValue(ficha.domicilioLocalidad, fields.domicilioLocalidad);
-        drawValue(ficha.domicilioProvincia, fields.domicilioProvincia);
-        drawValue(ficha.domicilioTelefono || ficha.responsableTelefono, fields.domicilioTelefono);
-        drawValue(ficha.domicilioCelular || ficha.responsableCelular, fields.domicilioCelular);
-        drawValue(ficha.domicilioCodigoPostal, fields.domicilioCodigoPostal);
-
-        const fechaInscripcionParts = fichaPdfDateParts(ficha.createdAt);
-        drawValue(fechaInscripcionParts.dia, fields.fechaInscripcionDia, { raw: true });
-        drawValue(fechaInscripcionParts.mes, fields.fechaInscripcionMes, { raw: true });
-        drawValue(fechaInscripcionParts.anio, fields.fechaInscripcionAnio, { raw: true });
-        drawValue(fichaMoneyValue(administracion.valorViaje), fields.valorViaje, { raw: true });
-        drawValue(fichaMoneyValue(administracion.sena), fields.sena, { raw: true });
-        drawValue(fichaMoneyValue(administracion.saldo), fields.saldo, { raw: true });
-        drawValue(administracion.cuotas, fields.cuotas, { raw: true });
-        drawValue(administracion.formaPago, fields.formaPago);
-        drawValue(administracion.informacionAdministrativa, fields.informacionAdministrativa, { raw: true });
-
-        if (signatureImage) {
-          const maxSignatureWidth = 320;
-          const maxSignatureHeight = 62;
-          const ratio = Math.min(maxSignatureWidth / signatureImage.width, maxSignatureHeight / signatureImage.height);
-          const signatureWidth = signatureImage.width * ratio;
-          const signatureHeight = signatureImage.height * ratio;
-          context.drawImage(
-            signatureImage,
-            136 + ((320 - signatureWidth) / 2),
-            1516 + ((62 - signatureHeight) / 2),
-            signatureWidth,
-            signatureHeight
-          );
-        }
-        drawValue(ficha.responsableNombre, fields.aclaracion);
-
-        const jpegDataUrl = canvas.toDataURL("image/jpeg", 0.92);
-        return createImagePdfBlob(dataUrlToBytes(jpegDataUrl));
-      }
-
-      async function downloadFichaAdhesionPdf(id) {
-        const ficha = loadFichasAdhesionDemo().find((item) => item.id === id);
-        if (!ficha) return;
-        const url = URL.createObjectURL(await createFichaAdhesionPdfBlob(ficha));
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = fichaPdfFileName(ficha);
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-      }
-
       async function viewFichaAdhesionDetail(id) {
         const ficha = loadFichasAdhesionDemo().find((item) => item.id === id);
         if (!ficha) return;
@@ -4444,43 +4175,32 @@
         if (!fichas.length) {
           return `
             <tr>
-              <td colspan="5">No hay fichas en esta bandeja.</td>
+              <td colspan="7">No hay fichas en esta bandeja.</td>
             </tr>
           `;
         }
         return fichas.map((ficha) => {
           const estadoRevision = ficha.estadoRevision || "pendiente";
           const estadoClass = estadoRevision === "aprobada" ? "is-ok" : ["rechazada", "duplicada"].includes(estadoRevision) ? "is-alert" : "is-pending";
-          const pasajeroDocumento = ficha.pasajeroNumeroDocumento || ficha.pasajeroDni || "";
-          const responsableTelefono = ficha.responsableCelular || ficha.domicilioCelular || ficha.responsableTelefono || ficha.domicilioTelefono || "";
-          const numeroContrato = ficha.numeroContrato || ficha.administracion?.contrato || "";
-          const context = fichaAssignmentContext(ficha);
-          const assignedLabel = context.selectedGroup
-            ? `${context.selectedGroup.nivel} · ${context.selectedGroup.viaje} · ${context.selectedGroup.colegio} · ${context.selectedGroup.curso} ${context.selectedGroup.division}`
-            : "Asignación pendiente";
-          const assignedContractLabel = context.contratoId
-            ? context.codigoContrato
-            : "Contrato pendiente";
           return `
           <tr class="${ficha.id === adminFichasSelectedId ? "is-selected" : ""}">
             <td class="admin-fichas-main-cell">
-              <strong>${escapeHtml(ficha.pasajeroNombre)}</strong>
-              <span>DNI ${escapeHtml(pasajeroDocumento || "Pendiente")}</span>
-              <span>Contrato ${escapeHtml(context.codigoContrato || numeroContrato || "Pendiente")}</span>
+              <strong>${escapeHtml(fichaNombreCompleto(ficha.pasajeroApellido, ficha.pasajeroNombre) || "Sin nombre")}</strong>
+              <span>DNI ${escapeHtml(ficha.pasajeroNumeroDocumento || "Pendiente")}</span>
+              <span>Tutor: ${escapeHtml(fichaNombreCompleto(ficha.responsableApellido, ficha.responsableNombre) || "Pendiente")}</span>
             </td>
             <td>
-              <strong>${escapeHtml(ficha.responsableNombre || "Pendiente")}</strong>
-              <span>${escapeHtml(responsableTelefono || "Teléfono pendiente")}</span>
+              <strong>${escapeHtml(ficha.colegio || "Pendiente")}</strong>
+              ${ficha.colegioVinculado ? "" : `<span class="admin-pasajeros-status is-alert">Sin vincular</span>`}
+              <span>${escapeHtml(ficha.viaje || "")}</span>
             </td>
             <td>
-              <div class="admin-fichas-request">
-                <span>Solicitado: ${escapeHtml(ficha.nivel || "Pendiente")} · ${escapeHtml(ficha.viaje || "Pendiente")}</span>
-                <span>${escapeHtml(ficha.colegio || "Colegio pendiente")} · ${escapeHtml(ficha.cursoDivision || "Curso pendiente")}</span>
-                <strong>Asignado: ${escapeHtml(assignedLabel)}</strong>
-                <strong>Contrato: ${escapeHtml(assignedContractLabel)}</strong>
-              </div>
+              <strong>${escapeHtml([ficha.nivel, ficha.grado, ficha.division].filter(Boolean).join(" ") || "Pendiente")}</strong>
+              <span>Contrato: ${escapeHtml(ficha.codigoContrato || "Pendiente")}</span>
             </td>
+            <td>${escapeHtml(ficha.planNombre || "Pendiente")}</td>
             <td><span class="admin-pasajeros-status ${estadoClass}">${escapeHtml(estadoRevision)}</span></td>
+            <td>${renderFichaEmailBadge(ficha)}</td>
             <td>
               <div class="admin-pasajeros-row-actions admin-fichas-row-actions">
                 <button type="button" data-ficha-select="${escapeHtml(ficha.id)}">Ver ficha</button>
@@ -4492,6 +4212,58 @@
         }).join("");
       }
 
+      // Fichas del formulario corto de Tutor: se revisan acá y se muestran
+      // también dentro de la ficha y del perfil del pasajero con el mismo DNI.
+      function renderAdminFichasTutorTabla(tutores = adminFichasTutor) {
+        const search = normalizeFichaSearchText(adminFichasSearch);
+        const visibles = tutores.filter((tutor) => !search || [tutor.nombre, tutor.apellido, tutor.numero_documento, tutor.pasajero_nombre, tutor.pasajero_apellido, tutor.pasajero_dni]
+          .some((value) => normalizeFichaSearchText(value).includes(search)));
+        const dnisConFicha = new Set([
+          ...loadFichasAdhesionDemo().map((ficha) => normalizeFichaDni(ficha.pasajeroNumeroDocumento)),
+          ...adminPasajerosRows().map(({ passenger }) => normalizeFichaDni(passenger.dni))
+        ].filter(Boolean));
+        return `
+          <div class="admin-pasajeros-table-wrap">
+            <table class="admin-pasajeros-table admin-fichas-table">
+              <thead>
+                <tr>
+                  <th>Tutor</th>
+                  <th>Pasajero a cargo</th>
+                  <th>Contacto</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${visibles.length ? visibles.map((tutor) => `
+                  <tr>
+                    <td class="admin-fichas-main-cell">
+                      <strong>${escapeHtml(fichaNombreCompleto(tutor.apellido, tutor.nombre))}</strong>
+                      <span>${escapeHtml(tutor.tipo_documento)} ${escapeHtml(tutor.numero_documento)} · CUIL ${escapeHtml(formatearCuil(tutor.cuil_cuit))}</span>
+                      <span>${escapeHtml(tutor.parentesco)}</span>
+                    </td>
+                    <td>
+                      <strong>${escapeHtml(fichaNombreCompleto(tutor.pasajero_apellido, tutor.pasajero_nombre))}</strong>
+                      <span>DNI ${escapeHtml(tutor.pasajero_dni)}</span>
+                      ${dnisConFicha.has(normalizeFichaDni(tutor.pasajero_dni))
+                        ? `<span class="admin-pasajeros-status is-ok">Pasajero registrado</span>`
+                        : `<span class="admin-pasajeros-status is-pending">Pasajero todavía no registrado</span>`}
+                    </td>
+                    <td>
+                      <strong>${escapeHtml(tutor.celular)}</strong>
+                      <span>${escapeHtml(tutor.email)}</span>
+                    </td>
+                    <td>
+                      <select data-ficha-tutor-estado="${escapeHtml(tutor.id)}" aria-label="Estado de la ficha de tutor">
+                        ${["pendiente", "revisada", "observada", "rechazada"].map((estado) => `<option value="${estado}" ${estado === tutor.estado_revision ? "selected" : ""}>${estado}</option>`).join("")}
+                      </select>
+                    </td>
+                  </tr>
+                `).join("") : `<tr><td colspan="4">No hay fichas de tutor.</td></tr>`}
+              </tbody>
+            </table>
+          </div>
+        `;
+      }
 
       function parseAdminMoney(value) {
         const normalized = String(value || "").replace(/[^\d.-]/g, "");
@@ -4601,19 +4373,20 @@
           return `
             <tr class="${isSelected ? "is-selected" : ""}">
               <td class="admin-pasajeros-passenger-cell">
-                <strong>${escapeHtml(passenger.nombre)}</strong>
+                <strong>${escapeHtml(adminPasajeroNombreCompleto(passenger))}</strong>
                 <span>DNI ${escapeHtml(passenger.dni || "Pendiente")}</span>
               </td>
               <td class="admin-pasajeros-contact-cell">
                 <strong>${escapeHtml(passenger.telefono || passenger.responsableTelefono || "Sin teléfono")}</strong>
                 <span>Resp. ${escapeHtml(passenger.responsableTelefono || "Pendiente")}</span>
               </td>
-              <td>${escapeHtml(passenger.responsable || "Pendiente")}</td>
+              <td>${escapeHtml(fichaNombreCompleto(passenger.responsableApellido, passenger.responsable) || "Pendiente")}</td>
               <td class="admin-pasajeros-group-cell">
-                <strong>${escapeHtml(group.viaje)}</strong>
-                <span>${escapeHtml(group.colegio)} · ${escapeHtml(group.curso)} ${escapeHtml(group.division)}</span>
+                <strong>${escapeHtml(group.colegio)}</strong>
+                <span>${escapeHtml(group.nivel)} · ${escapeHtml(group.curso)} ${escapeHtml(group.division)} · ${escapeHtml(group.viaje)}</span>
                 <span>Contrato: ${escapeHtml(passengerCodigoContrato(passenger) || "Pendiente")}</span>
               </td>
+              <td>${escapeHtml(fichaPlanTexto(passenger.planNombre, passenger.planCuotas) || "Pendiente")}</td>
               <td><span class="admin-pasajeros-status ${adminStatusClass(payment.estadoPago)}">${escapeHtml(payment.estadoPago)}</span></td>
               <td><span class="admin-pasajeros-status ${adminStatusClass(passenger.documentacion)}">${escapeHtml(passenger.documentacion)}</span></td>
               <td><span class="admin-pasajeros-status ${adminStatusClass(passenger.estado)}">${escapeHtml(passenger.estado)}</span></td>
@@ -4626,7 +4399,7 @@
           `;
         }).join("") : `
           <tr>
-            <td colspan="8">No hay pasajeros que coincidan con la búsqueda o los filtros aplicados.</td>
+            <td colspan="9">No hay pasajeros que coincidan con la búsqueda o los filtros aplicados.</td>
           </tr>
         `;
       }
@@ -4696,8 +4469,11 @@
 
                 <fieldset>
                   <legend>Datos del pasajero</legend>
-                  <label>Nombre y apellido <span class="admin-pasajeros-required">*</span>
+                  <label>Nombre/s <span class="admin-pasajeros-required">*</span>
                     <input name="nombre" value="${escapeHtml(passenger.nombre)}" required>
+                  </label>
+                  <label>Apellido/s <span class="admin-pasajeros-required">*</span>
+                    <input name="apellido" value="${escapeHtml(passenger.apellido || "")}" required>
                   </label>
                   <label>DNI <span class="admin-pasajeros-required">*</span>
                     <input name="dni" value="${escapeHtml(passenger.dni)}" required>
@@ -4738,6 +4514,12 @@
                     </select>
                   </label>
                   ${contractOptions.length === 0 ? `<p class="admin-pasajeros-modal-note">No hay contratos disponibles para este grupo. Creá uno primero en la sección Contratos.</p>` : ""}
+                  <label>Plan de pago
+                    <select name="planPagoId">
+                      <option value="">Pendiente</option>
+                      ${adminPlanesPago.filter((plan) => plan.contrato_id === passenger.contratoId && (plan.activo === "TRUE" || plan.id === passenger.planPagoId)).map((plan) => `<option value="${escapeHtml(plan.id)}" ${plan.id === passenger.planPagoId ? "selected" : ""}>${escapeHtml(fichaPlanTexto(plan.nombre, plan.cuotas))}</option>`).join("")}
+                    </select>
+                  </label>
                 </fieldset>
 
                 <fieldset>
@@ -4807,10 +4589,23 @@
               </div>
             </div>
 
+            <article class="admin-fichas-detail-card admin-pasajeros-pertenencia">
+              <h3>Pertenencia</h3>
+              <dl class="admin-fichas-pertenencia-grid">
+                ${renderFichaValue("Colegio", group.colegio)}
+                ${renderFichaValue("Curso", group.nivel)}
+                ${renderFichaValue("Grado/Año", group.curso)}
+                ${renderFichaValue("División", group.division)}
+                ${renderFichaValue("Plan", fichaPlanTexto(passenger.planNombre, passenger.planCuotas))}
+                ${renderFichaValue("Contrato", passengerCodigoContrato(passenger))}
+                ${renderFichaValue("Tutor", fichaNombreCompleto(passenger.responsableApellido, passenger.responsable))}
+              </dl>
+            </article>
+
             <div class="admin-pasajeros-profile-grid">
               <article>
                 <span>Datos personales</span>
-                <strong>${escapeHtml(passenger.nombre)}</strong>
+                <strong>${escapeHtml(adminPasajeroNombreCompleto(passenger))}</strong>
                 <dl>
                   <div><dt>DNI</dt><dd>${escapeHtml(passenger.dni || "Pendiente")}</dd></div>
                   <div><dt>Nacimiento</dt><dd>${escapeHtml(passenger.nacimiento || "Pendiente")}</dd></div>
@@ -4818,14 +4613,21 @@
                 </dl>
               </article>
               <article>
-                <span>Responsable</span>
-                <strong>${escapeHtml(passenger.responsable || "Pendiente")}</strong>
+                <span>Tutor principal</span>
+                <strong>${escapeHtml(fichaNombreCompleto(passenger.responsableApellido, passenger.responsable) || "Pendiente")}</strong>
                 <dl>
                   <div><dt>Vínculo</dt><dd>${escapeHtml(passenger.vinculo || "Pendiente")}</dd></div>
                   <div><dt>DNI</dt><dd>${escapeHtml(passenger.responsableDni || "Pendiente")}</dd></div>
-                  <div><dt>CUIL / CUIT</dt><dd>${escapeHtml(passenger.responsableCuilCuit || "Pendiente")}</dd></div>
+                  <div><dt>CUIL / CUIT</dt><dd>${escapeHtml(formatearCuil(passenger.responsableCuilCuit) || "Pendiente")}</dd></div>
                   <div><dt>Teléfono</dt><dd>${escapeHtml(passenger.responsableTelefono || "Pendiente")}</dd></div>
+                  <div><dt>Correo</dt><dd>${escapeHtml(passenger.responsableEmail || "Pendiente")}</dd></div>
                 </dl>
+              </article>
+              <article>
+                <span>Tutores adicionales</span>
+                ${fichaTutoresAdicionales(passenger.dni).length ? `<dl>${fichaTutoresAdicionales(passenger.dni).map((tutor) => `
+                  <div><dt>${escapeHtml(tutor.parentesco)}</dt><dd>${escapeHtml(fichaNombreCompleto(tutor.apellido, tutor.nombre))} · ${escapeHtml(tutor.celular)} · ${escapeHtml(tutor.email)}</dd></div>
+                `).join("")}</dl>` : "<p>Sin tutores adicionales registrados.</p>"}
               </article>
               <article>
                 <span>Viaje asignado</span>
@@ -4927,13 +4729,13 @@
                     <input name="viaje" value="${escapeHtml(adminPasajerosViaje || selectedGroup.viaje || "")}" placeholder="Ej: Bariloche 2026" required>
                   </label>
                   <label>Colegio
-                    <input name="colegio" value="${escapeHtml(showColegio ? "" : adminPasajerosColegio || selectedGroup.colegio || "")}" placeholder="Nombre del colegio" required>
+                    ${renderAdminColegioSelect(showColegio ? "" : selectedGroup.colegioId || "")}
                   </label>
-                  <label>Curso
-                    <input name="curso" value="${escapeHtml(showCurso ? "" : selectedGroup.curso || "")}" placeholder="Ej: 5to" required>
+                  <label>Grado/Año
+                    ${renderAdminGradoSelect(showCurso ? "" : selectedGroup.curso || "")}
                   </label>
                   <label>División
-                    <input name="division" value="" placeholder="Ej: A" required>
+                    <input name="division" value="" placeholder="Ej: A" maxlength="3" required>
                   </label>
                   <label>Cupo esperado
                     <input name="pasajerosEsperados" type="number" min="0" value="${escapeHtml(String(selectedGroup.pasajerosEsperados || 0))}" placeholder="Ej: 28">
@@ -4981,8 +4783,10 @@
         const visibleFichas = stateFichas.filter((ficha) => (
           fichaMatchesText(ficha, adminFichasSearch) &&
           (!adminFichasFilterColegio || fichaFilterValue(ficha, "colegio") === adminFichasFilterColegio) &&
-          (!adminFichasFilterViaje || fichaFilterValue(ficha, "viaje") === adminFichasFilterViaje)
+          (!adminFichasFilterViaje || fichaFilterValue(ficha, "viaje") === adminFichasFilterViaje) &&
+          (!adminFichasSinVincular || !ficha.colegioVinculado)
         ));
+        const esTutor = adminFichasTipo === "tutor";
         const selectedFichaCandidate = visibleFichas.find((ficha) => ficha.id === adminFichasSelectedId);
         const selectedFicha = adminFichasManuallyClosed ? null : selectedFichaCandidate || null;
         adminFichasSelectedId = selectedFicha?.id || "";
@@ -5011,8 +4815,13 @@
                 <h2>Bandeja de fichas</h2>
                 <p>Filtrá por estado y ejecutá la acción siguiente sin salir de la tabla.</p>
               </div>
-              <strong>${visibleFichas.length} / ${fichas.length} fichas</strong>
+              <strong>${esTutor ? `${adminFichasTutor.length} fichas de tutor` : `${visibleFichas.length} / ${fichas.length} fichas`}</strong>
             </div>
+            <div class="admin-fichas-tabs admin-fichas-tipo" role="group" aria-label="Tipo de ficha">
+              <button type="button" class="${esTutor ? "" : "is-active"}" data-admin-fichas-tipo="pax" aria-pressed="${esTutor ? "false" : "true"}">Pasajeros (PAX) <span>${fichas.length}</span></button>
+              <button type="button" class="${esTutor ? "is-active" : ""}" data-admin-fichas-tipo="tutor" aria-pressed="${esTutor ? "true" : "false"}">Tutores <span>${adminFichasTutor.length}</span></button>
+            </div>
+            ${esTutor ? renderAdminFichasTutorTabla() : `
             <div class="admin-fichas-tabs" role="tablist" aria-label="Estado de fichas">
               ${Object.entries(filterMap).map(([key, filter]) => {
                 const count = fichas.filter((ficha) => filter.states.includes(ficha.estadoRevision || "pendiente")).length;
@@ -5030,10 +4839,12 @@
               <table class="admin-pasajeros-table admin-fichas-table">
                 <thead>
                   <tr>
-                    <th>Pasajero</th>
-                    <th>Responsable</th>
-                    <th>Asignación</th>
+                    <th>Apellido y nombre</th>
+                    <th>Colegio</th>
+                    <th>Curso / División</th>
+                    <th>Plan</th>
                     <th>Estado</th>
+                    <th>Correo</th>
                     <th>Acciones</th>
                   </tr>
                 </thead>
@@ -5041,6 +4852,7 @@
               </table>
             </div>
             ${renderAdminFichaDetail(selectedFicha)}
+            `}
           </section>
           ${renderAdminFichasRejectModal()}
         `);
@@ -5131,8 +4943,11 @@
 
               <fieldset>
                 <legend>Datos del pasajero</legend>
-                <label>Nombre y apellido <span class="admin-pasajeros-required">*</span>
-                  <input name="nombre" placeholder="Ej: Juan Pérez" autocomplete="off" required>
+                <label>Nombre/s <span class="admin-pasajeros-required">*</span>
+                  <input name="nombre" placeholder="Ej: Juan Ignacio" autocomplete="off" required>
+                </label>
+                <label>Apellido/s <span class="admin-pasajeros-required">*</span>
+                  <input name="apellido" placeholder="Ej: Pérez" autocomplete="off" required>
                 </label>
                 <label>DNI <span class="admin-pasajeros-required">*</span>
                   <input name="dni" placeholder="Ej: 44123456" autocomplete="off" required>
@@ -5291,10 +5106,11 @@
               <table class="admin-pasajeros-table admin-pasajeros-table--compact">
                 <thead>
                   <tr>
-                    <th>Pasajero</th>
+                    <th>Apellido y nombre</th>
                     <th>Contacto</th>
-                    <th>Responsable</th>
-                    <th>Viaje / grupo</th>
+                    <th>Tutor</th>
+                    <th>Colegio / curso</th>
+                    <th>Plan</th>
                     <th>Pago</th>
                     <th>Documentación</th>
                     <th>Estado</th>
@@ -5381,6 +5197,43 @@
         }).join("");
       }
 
+      // Ficha v2: planes de pago por contrato (1 a 18 cuotas). Se eligen en la
+      // ficha pública y quedan visibles en Fichas y Pasajeros.
+      function renderAdminContratoPlanes(contract) {
+        const planes = adminPlanesPago.filter((plan) => plan.contrato_id === contract.id);
+        return `
+          <section class="admin-contrato-planes" aria-label="Planes de pago">
+            <h3>Planes de pago</h3>
+            <p>Las familias eligen uno de los planes activos al completar la ficha.</p>
+            ${planes.length ? `
+              <ul>
+                ${planes.map((plan) => `
+                  <li>
+                    <div>
+                      <strong>${escapeHtml(plan.nombre)}</strong>
+                      <span>${escapeHtml(plan.cuotas)} ${plan.cuotas === "1" ? "cuota" : "cuotas"}${plan.descripcion ? ` · ${escapeHtml(plan.descripcion)}` : ""}</span>
+                    </div>
+                    <span class="admin-pasajeros-status ${plan.activo === "TRUE" ? "is-ok" : "is-pending"}">${plan.activo === "TRUE" ? "Activo" : "Inactivo"}</span>
+                    <button type="button" class="admin-secondary-action" data-plan-toggle="${escapeHtml(plan.id)}">${plan.activo === "TRUE" ? "Desactivar" : "Activar"}</button>
+                  </li>
+                `).join("")}
+              </ul>
+            ` : "<p>Este contrato todavía no tiene planes cargados.</p>"}
+            <div class="admin-contrato-plan-form">
+              <label><span>Nombre del plan</span><input data-plan-nombre maxlength="80" placeholder="Ej.: 12 cuotas sin interés"></label>
+              <label><span>Cuotas</span><input data-plan-cuotas type="number" min="1" max="18" step="1" placeholder="1 a 18"></label>
+              <label><span>Descripción (opcional)</span><input data-plan-descripcion maxlength="200"></label>
+              <button type="button" data-plan-agregar>Agregar plan</button>
+            </div>
+            <p class="admin-pasajeros-modal-error" data-plan-error hidden></p>
+          </section>
+        `;
+      }
+
+      function adminPasajeroNombreCompleto(passenger = {}) {
+        return fichaNombreCompleto(passenger.apellido, passenger.nombre) || passenger.nombre || "";
+      }
+
       function renderAdminContratoEditModal() {
         if (!adminContratosEditId) return "";
         const contract = adminContratosDemo.find((item) => item.id === adminContratosEditId);
@@ -5436,6 +5289,7 @@
                   <button type="submit">Guardar cambios</button>
                 </div>
               </form>
+              ${renderAdminContratoPlanes(contract)}
             </section>
           </div>
         `;
@@ -5607,6 +5461,34 @@
 
       function bindAdminContratos() {
         const filters = document.querySelector("[data-admin-contratos-filters]");
+        document.querySelector("[data-plan-agregar]")?.addEventListener("click", async () => {
+          const nombre = document.querySelector("[data-plan-nombre]")?.value.trim() || "";
+          const cuotas = Number(document.querySelector("[data-plan-cuotas]")?.value || 0);
+          const descripcion = document.querySelector("[data-plan-descripcion]")?.value.trim() || "";
+          const errorNode = document.querySelector("[data-plan-error]");
+          if (nombre.length < 2 || !Number.isInteger(cuotas) || cuotas < 1 || cuotas > 18) {
+            errorNode.textContent = "Cargá un nombre y una cantidad de cuotas entre 1 y 18.";
+            errorNode.hidden = false;
+            return;
+          }
+          const plan = { id: crypto.randomUUID(), contrato_id: adminContratosEditId, nombre, cuotas: String(cuotas), descripcion, activo: "TRUE", orden: "" };
+          adminPlanesPago = [...adminPlanesPago, plan];
+          const guardado = await queueGoogleSheetsWrite(["PLANES_PAGO"]);
+          if (!guardado) {
+            adminPlanesPago = adminPlanesPago.filter((item) => item.id !== plan.id);
+            adminContratosEditError = googleSheetsSyncState.message;
+          }
+          renderAdminContratos();
+        });
+        document.querySelectorAll("[data-plan-toggle]").forEach((button) => {
+          button.addEventListener("click", async () => {
+            const id = button.dataset.planToggle;
+            adminPlanesPago = adminPlanesPago.map((plan) => (plan.id === id ? { ...plan, activo: plan.activo === "TRUE" ? "FALSE" : "TRUE" } : plan));
+            const guardado = await queueGoogleSheetsWrite(["PLANES_PAGO"]);
+            if (!guardado) adminContratosEditError = googleSheetsSyncState.message;
+            renderAdminContratos();
+          });
+        });
         if (!filters) return;
         const handleFilter = () => {
           const formData = new FormData();
@@ -5737,13 +5619,13 @@
                   <input name="viaje" placeholder="Ej: Bariloche 2026" required>
                 </label>
                 <label>Colegio
-                  <input name="colegio" placeholder="Nombre del colegio" required>
+                  ${renderAdminColegioSelect()}
                 </label>
-                <label>Curso
-                  <input name="curso" placeholder="Ej: 5to" required>
+                <label>Grado/Año
+                  ${renderAdminGradoSelect()}
                 </label>
                 <label>División
-                  <input name="division" placeholder="Ej: A" required>
+                  <input name="division" placeholder="Ej: A" maxlength="3" required>
                 </label>
                 <label>Cupo esperado
                   <input name="pasajerosEsperados" type="number" min="0" placeholder="Ej: 28">
@@ -5869,16 +5751,18 @@
         document.querySelector("[data-admin-grupos-create-form]")?.addEventListener("submit", (event) => {
           event.preventDefault();
           const formData = new FormData(event.currentTarget);
+          const colegioId = String(formData.get("colegio_id") || "").trim();
           const payload = {
             nivel: String(formData.get("nivel") || "").trim(),
             viaje: String(formData.get("viaje") || "").trim(),
-            colegio: String(formData.get("colegio") || "").trim(),
+            colegioId,
+            colegio: adminColegioNombre(colegioId),
             curso: String(formData.get("curso") || "").trim(),
-            division: String(formData.get("division") || "").trim(),
+            division: String(formData.get("division") || "").trim().toUpperCase(),
             pasajerosEsperados: Number(formData.get("pasajerosEsperados") || 0)
           };
           if (!payload.nivel || !payload.viaje || !payload.colegio || !payload.curso || !payload.division) {
-            adminGruposCreateError = "Completá nivel, viaje, colegio, curso y división.";
+            adminGruposCreateError = "Completá nivel, viaje, colegio (de la lista), grado/año y división.";
             renderAdminGrupos();
             return;
           }
@@ -5982,6 +5866,7 @@
           const selectedContract = contractById(String(formData.get("contratoId") || "").trim(), selectedGroup.id);
           const passenger = {
             nombre: String(formData.get("nombre") || "").trim(),
+            apellido: String(formData.get("apellido") || "").trim(),
             dni: String(formData.get("dni") || "").trim(),
             contratoId: selectedContract?.id || "",
             codigoContrato: selectedContract?.codigo_contrato || "",
@@ -6061,16 +5946,18 @@
         document.querySelector("[data-admin-pasajeros-group-form]")?.addEventListener("submit", (event) => {
           event.preventDefault();
           const formData = new FormData(event.currentTarget);
+          const colegioId = String(formData.get("colegio_id") || "").trim();
           const payload = {
             nivel: String(formData.get("nivel") || "").trim(),
             viaje: String(formData.get("viaje") || "").trim(),
-            colegio: String(formData.get("colegio") || "").trim(),
+            colegioId,
+            colegio: adminColegioNombre(colegioId),
             curso: String(formData.get("curso") || "").trim(),
-            division: String(formData.get("division") || "").trim(),
+            division: String(formData.get("division") || "").trim().toUpperCase(),
             pasajerosEsperados: Number(formData.get("pasajerosEsperados") || 0)
           };
           if (!payload.nivel || !payload.viaje || !payload.colegio || !payload.curso || !payload.division) {
-            adminPasajerosGroupModal = { ...(adminPasajerosGroupModal || { type: "colegio" }), error: "Completá nivel, viaje, colegio, curso y división." };
+            adminPasajerosGroupModal = { ...(adminPasajerosGroupModal || { type: "colegio" }), error: "Completá nivel, viaje, colegio (de la lista), grado/año y división." };
             renderAdminPasajeros();
             return;
           }
@@ -6167,9 +6054,14 @@
             renderAdminPasajeros();
             return;
           }
+          const planElegido = adminPlanesPago.find((plan) => plan.id === String(formData.get("planPagoId") || ""));
           targetGroup.pasajeros[passengerIndex] = {
             ...targetGroup.pasajeros[passengerIndex],
             nombre,
+            apellido: String(formData.get("apellido") || "").trim(),
+            planPagoId: planElegido?.id || "",
+            planNombre: planElegido?.nombre || "",
+            planCuotas: planElegido?.cuotas || "",
             dni,
             nacimiento: String(formData.get("nacimiento") || "").trim(),
             telefono: String(formData.get("telefono") || "").trim(),
@@ -6271,19 +6163,94 @@
             renderAdminFichasRecibidas();
           });
         });
+        // PDF generado en el servidor a partir de la ficha guardada (el mismo
+        // que recibe el tutor por correo).
         document.querySelectorAll("[data-ficha-pdf]").forEach((button) => {
-          button.addEventListener("click", async () => {
-            const originalText = button.textContent;
-            button.disabled = true;
-            button.textContent = "Generando PDF...";
-            try {
-              await downloadFichaAdhesionPdf(button.dataset.fichaPdf);
-            } catch (error) {
-              window.alert("No se pudo generar el PDF: " + (error?.message || "error desconocido"));
-            } finally {
-              button.disabled = false;
-              button.textContent = originalText;
-            }
+          button.addEventListener("click", () => {
+            const id = button.dataset.fichaPdf;
+            window.location.href = `/api/admin/fichas/${encodeURIComponent(id)}/pdf`;
+          });
+        });
+        document.querySelectorAll("[data-admin-fichas-tipo]").forEach((button) => {
+          button.addEventListener("click", () => {
+            adminFichasTipo = button.dataset.adminFichasTipo === "tutor" ? "tutor" : "pax";
+            adminFichasSelectedId = "";
+            renderAdminFichasRecibidas();
+          });
+        });
+        document.querySelector("[data-admin-fichas-sin-vincular]")?.addEventListener("change", (event) => {
+          adminFichasSinVincular = event.currentTarget.checked;
+          adminFichasSelectedId = "";
+          renderAdminFichasRecibidas();
+        });
+        document.querySelector("[data-ficha-reenviar-correo]")?.addEventListener("click", async (event) => {
+          const button = event.currentTarget;
+          const id = button.dataset.fichaReenviarCorreo;
+          button.disabled = true;
+          button.textContent = "Enviando…";
+          try {
+            const response = await fetch(`/api/admin/fichas/${encodeURIComponent(id)}/reenviar-correo`, {
+              method: "POST",
+              credentials: "same-origin"
+            });
+            const payload = await response.json();
+            adminFichasMessage = payload.email_estado === "enviado"
+              ? "Correo reenviado al tutor."
+              : payload.email_estado === "sin_configurar"
+                ? "El envío de correos todavía no está activado (falta configurar Resend)."
+                : `No se pudo reenviar el correo: ${payload.email_error || payload.error || "error desconocido"}`;
+          } catch (_) {
+            adminFichasMessage = "No se pudo contactar al servidor para reenviar el correo.";
+          }
+          await hydrateGoogleSheetsData(true);
+          renderAdminFichasRecibidas();
+        });
+        const vincularColegio = async (fichaId, colegioId, mensaje) => {
+          const ficha = loadFichasAdhesionDemo().find((item) => item.id === fichaId);
+          if (!ficha) return;
+          await updateFichaAdhesionStatus(fichaId, ficha.estadoRevision || "pendiente", { colegioId, colegioVinculado: true }, mensaje);
+          // El primer render consume el mensaje; se conserva para mostrarlo
+          // después de recargar el nombre real del colegio desde la base.
+          const resultado = googleSheetsSyncState.status === "ok" ? mensaje : googleSheetsSyncState.message;
+          await hydrateGoogleSheetsData(true);
+          adminFichasMessage = resultado;
+          renderAdminFichasRecibidas();
+        };
+        document.querySelector("[data-ficha-vincular-colegio-btn]")?.addEventListener("click", () => {
+          const colegioId = document.querySelector("[data-ficha-vincular-colegio]")?.value || "";
+          if (!colegioId) {
+            adminFichasMessage = "Elegí un colegio de la lista para vincular la ficha.";
+            renderAdminFichasRecibidas();
+            return;
+          }
+          vincularColegio(adminFichasSelectedId, colegioId, "Colegio vinculado a la ficha.");
+        });
+        document.querySelector("[data-ficha-crear-colegio]")?.addEventListener("click", async (event) => {
+          const nombre = String(event.currentTarget.dataset.fichaCrearColegio || "").trim();
+          const existente = adminColegios.find((colegio) => normalizeFichaSearchText(colegio.nombre) === normalizeFichaSearchText(nombre));
+          if (existente) {
+            await vincularColegio(adminFichasSelectedId, existente.id, `Ya existía “${existente.nombre}”: se vinculó a la ficha.`);
+            return;
+          }
+          const colegio = { id: crypto.randomUUID(), nombre, provincia: "", localidad: "", codigo_oficial: "", activo: "TRUE" };
+          adminColegios = [...adminColegios, colegio];
+          const guardado = await queueGoogleSheetsWrite(["COLEGIOS"]);
+          if (!guardado) {
+            adminColegios = adminColegios.filter((item) => item.id !== colegio.id);
+            adminFichasMessage = googleSheetsSyncState.message;
+            renderAdminFichasRecibidas();
+            return;
+          }
+          await vincularColegio(adminFichasSelectedId, colegio.id, `Colegio “${nombre}” creado y vinculado.`);
+        });
+        document.querySelectorAll("[data-ficha-tutor-estado]").forEach((select) => {
+          select.addEventListener("change", async () => {
+            adminFichasTutor = adminFichasTutor.map((tutor) => (
+              tutor.id === select.dataset.fichaTutorEstado ? { ...tutor, estado_revision: select.value } : tutor
+            ));
+            const guardado = await queueGoogleSheetsWrite(["FICHAS_TUTOR"]);
+            adminFichasMessage = guardado ? "Estado de la ficha de tutor guardado." : googleSheetsSyncState.message;
+            renderAdminFichasRecibidas();
           });
         });
         document.querySelectorAll("[data-ficha-aprobar]").forEach((button) => {
@@ -7664,7 +7631,7 @@
               <div class="inscripcion-hero-copy-compact" data-reveal-light>
                 <span>Inscripción</span>
                 <h1>Anotá a tu grupo en dos pasos simples</h1>
-                <p>Elegí el viaje, cargá colegio y curso, y completá la ficha digital. Te acompañamos en cada paso.</p>
+                <p>Elegí el viaje, tu colegio y curso, y completá la ficha digital. Te acompañamos en cada paso.</p>
                 <div class="inscripcion-hero-reassure" aria-label="Qué esperar de la inscripción">
                   ${[["⏰", "Dos pasos, sin vueltas"], ["📋", "Podés continuar aunque tu colegio no aparezca"], ["🔒", "Tus datos quedan protegidos"]].map(([icon, label]) => `
                     <span><span class="inscripcion-reassure-icon" aria-hidden="true">${icon}</span>${escapeHtml(label)}</span>
@@ -7676,11 +7643,21 @@
             <section class="portal-empty public-inscripcion-card">
               <div class="inscripcion-section-heading">
                 <span>Inscripción oficial</span>
-                <h2>Buscar contrato activo</h2>
-                <p>Buscá tu colegio y curso. Si el contrato no aparece, podés continuar igual: administración lo revisa y vincula después.</p>
+                <h2>¿Quién completa la ficha?</h2>
+                <p>Elegí una opción para ver el formulario que corresponde.</p>
+              </div>
+              <div class="inscripcion-tipo-grid" data-inscripcion-tipo>
+                <button type="button" data-inscripcion-tipo-pax aria-pressed="false">
+                  <strong>Pasajero (PAX)</strong>
+                  <span>Ficha de adhesión del alumno que viaja. La completa su padre, madre o tutor.</span>
+                </button>
+                <a href="#/inscripcion/tutor">
+                  <strong>Tutor</strong>
+                  <span>Registrá a un tutor adicional de un pasajero. Es un formulario corto.</span>
+                </a>
               </div>
 
-              <form data-inscripcion-form>
+              <form data-inscripcion-form hidden>
                 <div hidden>
                   <select data-inscripcion-nivel>
                     <option>Primaria</option>
@@ -7709,7 +7686,7 @@
 
                 <div class="inscripcion-macro-step" data-macro-step="1">
                   <div class="inscripcion-field-block">
-                    <h3><span>1</span> Elegí el nivel escolar</h3>
+                    <h3><span>1</span> Elegí el curso</h3>
                     <div class="inscripcion-option-group inscripcion-option-group--nivel" data-inscripcion-options="nivel"></div>
                   </div>
 
@@ -7724,17 +7701,28 @@
                   </div>
 
                   <div class="inscripcion-field-block">
-                    <h3><span>4</span> Tu institución</h3>
+                    <h3><span>4</span> Colegio, grado y división</h3>
                     <div class="public-inscripcion-grid">
-                      <label>Colegio
-                        <input data-inscripcion-colegio placeholder="Ej: San José">
+                      <label class="public-inscripcion-colegio" data-colegio-buscar-wrap>Colegio
+                        <input data-inscripcion-colegio-buscar list="colegios-lista" placeholder="Escribí y elegí tu colegio" autocomplete="off">
+                        <datalist id="colegios-lista"></datalist>
                       </label>
-                      <label>Curso / División
-                        <input data-inscripcion-curso placeholder="Ej: 5to B">
+                      <label class="public-inscripcion-colegio" data-colegio-texto-wrap hidden>Nombre completo del colegio
+                        <input data-inscripcion-colegio-texto maxlength="120" placeholder="Ej.: Escuela Normal Dr. Juan Pujol">
+                      </label>
+                      <label class="ficha-adhesion-check public-inscripcion-colegio">
+                        <input type="checkbox" data-inscripcion-colegio-no-esta>
+                        Mi colegio no está en la lista
+                      </label>
+                      <label>Grado/Año
+                        <select data-inscripcion-grado></select>
+                      </label>
+                      <label>División
+                        <input data-inscripcion-division maxlength="3" autocapitalize="characters" autocomplete="off" placeholder="Ej.: B">
                       </label>
                     </div>
-                    <p class="inscripcion-field-hint">Si no encontrás tu colegio, contactanos vía WhatsApp.</p>
-                    <div data-inscripcion-contract-result class="inscripcion-contract-result"></div>
+                    <p class="inscripcion-field-hint">Si tu colegio no aparece, marcá “Mi colegio no está en la lista” y escribí su nombre completo: administración lo vincula después.</p>
+                    <div data-inscripcion-contract-result class="inscripcion-contract-result" aria-live="polite"></div>
                   </div>
                 </div>
 
@@ -7743,7 +7731,7 @@
                 </div>
 
                 <aside data-inscripcion-context-summary class="inscripcion-context-summary"></aside>
-                <div class="ficha-adhesion-error" data-inscripcion-error hidden></div>
+                <div class="ficha-adhesion-error" data-inscripcion-error hidden role="alert"></div>
                 <div class="inscripcion-step-actions">
                   <button type="button" data-inscripcion-back>Volver</button>
                   <button type="button" data-inscripcion-next>Seguir con la ficha</button>
@@ -7757,16 +7745,23 @@
       }
 
       function bindInscripcion() {
+        const validacion = window.ElAngelAzulFichaValidation;
+        const tipoPaxButton = document.querySelector("[data-inscripcion-tipo-pax]");
         const form = document.querySelector("[data-inscripcion-form]");
         const nivelField = document.querySelector("[data-inscripcion-nivel]");
         const destinoField = document.querySelector("[data-inscripcion-destino]");
         const anioField = document.querySelector("[data-inscripcion-anio]");
-        const colegioField = document.querySelector("[data-inscripcion-colegio]");
-        const cursoField = document.querySelector("[data-inscripcion-curso]");
+        const colegioBuscar = document.querySelector("[data-inscripcion-colegio-buscar]");
+        const colegiosLista = document.getElementById("colegios-lista");
+        const colegioTexto = document.querySelector("[data-inscripcion-colegio-texto]");
+        const colegioNoEsta = document.querySelector("[data-inscripcion-colegio-no-esta]");
+        const buscarWrap = document.querySelector("[data-colegio-buscar-wrap]");
+        const textoWrap = document.querySelector("[data-colegio-texto-wrap]");
+        const gradoField = document.querySelector("[data-inscripcion-grado]");
+        const divisionField = document.querySelector("[data-inscripcion-division]");
         const contractResult = document.querySelector("[data-inscripcion-contract-result]");
         const summary = document.querySelector("[data-inscripcion-summary]");
         const contextSummary = document.querySelector("[data-inscripcion-context-summary]");
-        const progressItems = [];
         const stepBlocks = [...document.querySelectorAll("[data-macro-step]")];
         const backButton = document.querySelector("[data-inscripcion-back]");
         const nextButton = document.querySelector("[data-inscripcion-next]");
@@ -7776,18 +7771,45 @@
           destino: document.querySelector('[data-inscripcion-options="destino"]'),
           anio: document.querySelector('[data-inscripcion-options="anio"]')
         };
-        if (!form || !nivelField || !destinoField || !anioField || !colegioField || !cursoField || !contractResult || !summary || !contextSummary || !backButton || !nextButton || !errorMessage) return;
-        let currentStep = 1;
-        let matchState = { status: "idle", candidates: [] };
-        let confirmedContrato = null;
-        let publicContractRequest = 0;
-        let publicContractTimer = null;
-        const requiredMessage = "Completá los campos obligatorios para continuar.";
-        const noContractMessage = "No encontramos un contrato activo para ese colegio.";
+        if (!validacion || !tipoPaxButton || !form || !nivelField || !destinoField || !anioField || !colegioBuscar || !gradoField || !divisionField || !contractResult || !summary || !contextSummary || !backButton || !nextButton || !errorMessage) return;
 
-        const optionHtml = (items, selected) => items.map((item) => (
-          `<option value="${escapeHtml(item)}" ${item === selected ? "selected" : ""}>${escapeHtml(item)}</option>`
-        )).join("");
+        let currentStep = 1;
+        let colegios = [];
+        let colegiosCargados = false;
+        // undefined = buscando; null = sin contrato; objeto = contrato encontrado.
+        let contrato = null;
+        let contractRequest = 0;
+        let contractTimer = null;
+        const requiredMessage = "Completá el curso, el destino, el año, el colegio, el grado y la división para continuar.";
+
+        tipoPaxButton.addEventListener("click", () => {
+          tipoPaxButton.setAttribute("aria-pressed", "true");
+          tipoPaxButton.classList.add("selected");
+          form.hidden = false;
+          form.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+
+        const etiquetaColegio = (colegio) => (colegio.localidad ? `${colegio.nombre} — ${colegio.localidad}` : colegio.nombre);
+        const comparable = (texto) => String(texto || "").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ").trim().toLowerCase();
+        const colegioElegido = () => {
+          const valor = comparable(colegioBuscar.value);
+          if (!valor) return null;
+          return colegios.find((colegio) => comparable(etiquetaColegio(colegio)) === valor || comparable(colegio.nombre) === valor) || null;
+        };
+
+        fetch("/api/public/colegios", { cache: "no-store" })
+          .then((response) => response.json())
+          .then((payload) => {
+            colegios = Array.isArray(payload.colegios) ? payload.colegios : [];
+            colegiosCargados = true;
+            colegiosLista.innerHTML = colegios.map((colegio) => `<option value="${escapeHtml(etiquetaColegio(colegio))}"></option>`).join("");
+            update();
+          })
+          .catch(() => {
+            // Sin lista disponible la familia puede seguir con "Mi colegio no está".
+            colegiosCargados = true;
+            update();
+          });
 
         const optionDescription = (key, value) => {
           if (key === "nivel") return value === "Primaria" ? "Viajes para nivel primario" : "Viajes para nivel secundario";
@@ -7809,156 +7831,137 @@
           }).join("");
         };
 
-        const renderChoiceGroups = () => {
+        const renderGrados = () => {
+          const grados = validacion.GRADOS[nivelField.value] || [];
+          const actual = grados.includes(gradoField.value) ? gradoField.value : "";
+          gradoField.innerHTML = `<option value="">Elegí</option>${grados.map((grado) => `<option value="${escapeHtml(grado)}"${grado === actual ? " selected" : ""}>${escapeHtml(grado)}</option>`).join("")}`;
+        };
+
+        const seleccion = () => {
+          const colegio = colegioNoEsta.checked ? null : colegioElegido();
+          const texto = colegioNoEsta.checked ? colegioTexto.value.replace(/\s+/g, " ").trim() : "";
+          return {
+            nivel: nivelField.value,
+            destino: destinoField.value,
+            anio: anioField.value,
+            colegioId: colegio?.id || "",
+            colegioTexto: texto,
+            colegioNombre: colegio?.nombre || texto,
+            grado: gradoField.value,
+            division: divisionField.value.trim().toUpperCase()
+          };
+        };
+
+        const seleccionValida = (s) => Boolean(
+          s.destino && s.anio &&
+          (validacion.GRADOS[s.nivel] || []).includes(s.grado) &&
+          /^[A-Z0-9]{1,3}$/.test(s.division) &&
+          (s.colegioId || s.colegioTexto.length >= 3)
+        );
+
+        const whatsappConsultUrl = (s) => whatsappLink(
+          `Hola, quiero inscribirme y no encuentro contrato activo. Colegio: ${s.colegioNombre || "-"} / Curso: ${s.nivel} / Viaje: ${s.destino} ${s.anio} / Grado y división: ${s.grado} ${s.division}.`
+        );
+
+        const renderContractResult = (s) => {
+          contractResult.className = "inscripcion-contract-result";
+          if (colegioNoEsta.checked) {
+            contractResult.classList.add("is-info");
+            contractResult.innerHTML = `
+              <strong>Seguimos con el nombre que escribiste.</strong>
+              <p class="inscripcion-contract-info-text">Administración revisa tu ficha y la vincula con el colegio y el contrato correctos.</p>
+            `;
+            return;
+          }
+          if (!s.colegioId) {
+            contractResult.innerHTML = colegioBuscar.value.trim() && colegiosCargados
+              ? "No encontramos ese colegio en la lista. Elegí una de las opciones sugeridas o marcá “Mi colegio no está en la lista”."
+              : "Elegí tu colegio, el grado y la división para buscar el contrato activo.";
+            return;
+          }
+          if (!s.grado || !/^[A-Z0-9]{1,3}$/.test(s.division)) {
+            contractResult.innerHTML = "Completá el grado y la división para buscar el contrato activo.";
+            return;
+          }
+          if (contrato === undefined) {
+            contractResult.innerHTML = "Buscando contrato…";
+            return;
+          }
+          if (contrato) {
+            contractResult.classList.add("is-ok");
+            contractResult.innerHTML = `
+              <div class="inscripcion-contract-confirmed">
+                <span>Encontramos tu contrato:</span>
+                <strong>${escapeHtml(contrato.codigo || "Contrato activo")}</strong>
+              </div>
+            `;
+            return;
+          }
+          contractResult.classList.add("is-info");
+          contractResult.innerHTML = `
+            <strong>No encontramos un contrato activo para ese curso.</strong>
+            <p class="inscripcion-contract-info-text">No hay problema: podés continuar igual. Administración revisa y vincula tu ficha.</p>
+            <a href="${escapeHtml(whatsappConsultUrl(s))}" target="_blank" rel="noopener">Consultar por WhatsApp</a>
+          `;
+        };
+
+        const update = (source = "") => {
+          const destinos = inscripcionDestinosPorNivel[nivelField.value] || [];
+          if (source === "nivel" || !destinos.includes(destinoField.value)) {
+            destinoField.innerHTML = destinos.map((destino, index) => `<option value="${escapeHtml(destino)}"${index === 0 ? " selected" : ""}>${escapeHtml(destino)}</option>`).join("");
+          }
+          if (source === "nivel" || !gradoField.options.length) renderGrados();
+          buscarWrap.hidden = colegioNoEsta.checked;
+          textoWrap.hidden = !colegioNoEsta.checked;
+          const s = seleccion();
+          renderContractResult(s);
+          const contratoTexto = s.colegioId && contrato ? contrato.codigo : "Se vincula en administración";
+          const filas = [
+            ["Curso", s.nivel], ["Destino", s.destino], ["Año", s.anio],
+            ["Colegio", s.colegioNombre], ["Grado/Año", s.grado], ["División", s.division], ["Contrato", contratoTexto]
+          ];
+          contextSummary.innerHTML = `
+            <span>Tu inscripción</span>
+            <ul>${filas.map(([label, value]) => `<li><strong>${escapeHtml(label)}:</strong> ${escapeHtml(value || "Pendiente")}</li>`).join("")}</ul>
+          `;
+          summary.innerHTML = `
+            <span>Resumen</span>
+            <h2>Vas a completar una ficha para:</h2>
+            <ul>${filas.map(([label, value]) => `<li><strong>${escapeHtml(label)}:</strong> ${escapeHtml(value || "Pendiente")}</li>`).join("")}</ul>
+            <p class="inscripcion-next-note">El siguiente paso es cargar los datos del pasajero y de su padre, madre o tutor.</p>
+          `;
           renderChoiceButtons(nivelField, optionGroups.nivel, "nivel");
           renderChoiceButtons(destinoField, optionGroups.destino, "destino");
           renderChoiceButtons(anioField, optionGroups.anio, "anio");
         };
 
-        // FIX: usar el helper compartido whatsappLink() (incluye el número real configurado
-        // en data.js). La función local anterior generaba "https://wa.me/?text=..." SIN
-        // número de teléfono, por lo que el botón no llevaba a ningún chat real.
-        const whatsappConsultUrl = ({ nivel, viaje, colegio, cursoDivision }) => {
-          const message = `Hola, quiero inscribirme pero no encuentro contrato activo para mi colegio. Colegio: ${colegio || "-"} / Nivel: ${nivel || "-"} / Viaje: ${viaje || "-"} / Curso: ${cursoDivision || "-"}.`;
-          return whatsappLink(message);
-        };
-
-        const renderConfirmedContract = (candidate) => `
-          <div class="inscripcion-contract-confirmed">
-            <span>Encontramos tu colegio:</span>
-            <strong>${escapeHtml(candidate.colegioNombre || "Colegio encontrado")}</strong>
-            <span>Contrato:</span>
-            <strong>${escapeHtml(candidate.codigoContrato || "Sin código")}</strong>
-          </div>
-        `;
-
-        const renderContractResult = ({ nivel, viaje, colegio, cursoDivision }) => {
-          if (!colegio || !cursoDivision) {
-            contractResult.className = "inscripcion-contract-result";
-            contractResult.innerHTML = "Escribí el colegio y curso/división para buscar contratos activos compatibles.";
+        const refreshContract = () => {
+          clearTimeout(contractTimer);
+          const s = seleccion();
+          if (!s.colegioId || !s.grado || !/^[A-Z0-9]{1,3}$/.test(s.division)) {
+            contrato = null;
+            update();
             return;
           }
-          if (confirmedContrato) {
-            contractResult.className = "inscripcion-contract-result is-ok";
-            contractResult.innerHTML = `
-              ${renderConfirmedContract(confirmedContrato)}
-              <button type="button" data-inscripcion-clear-contract>Corregir colegio</button>
-            `;
-            return;
-          }
-          if (matchState.status === "single" && matchState.selected) {
-            contractResult.className = "inscripcion-contract-result is-ok";
-            contractResult.innerHTML = `
-              ${renderConfirmedContract(matchState.selected)}
-              <button type="button" data-inscripcion-confirm-contract="${escapeHtml(matchState.selected.contratoId)}">Completar ficha de adhesión</button>
-            `;
-            return;
-          }
-          if (matchState.status === "multiple" && matchState.candidates.length) {
-            contractResult.className = "inscripcion-contract-result is-options";
-            contractResult.innerHTML = `
-              <strong>¿Te referís a alguno de estos colegios?</strong>
-              <div class="inscripcion-contract-options">
-                ${matchState.candidates.map((candidate) => `
-                  <button type="button" data-inscripcion-confirm-contract="${escapeHtml(candidate.contratoId)}">
-                    <strong>${escapeHtml(candidate.colegioNombre)}</strong>
-                    <span>${escapeHtml(candidate.viaje || candidate.contract.viaje || viaje)} · ${escapeHtml(candidate.cursoDivision || cursoDivision)}</span>
-                    <small>${escapeHtml(candidate.codigoContrato)} · Completar ficha de adhesión</small>
-                  </button>
-                `).join("")}
-              </div>
-            `;
-            return;
-          }
-          contractResult.className = "inscripcion-contract-result is-info";
-          contractResult.innerHTML = `
-            <strong>${noContractMessage}</strong>
-            <p class="inscripcion-contract-info-text">No hay problema: podés continuar igual con la inscripción. Nuestro equipo va a revisar y vincular tu colegio manualmente.</p>
-            <a href="${escapeHtml(whatsappConsultUrl({ nivel, viaje, colegio, cursoDivision }))}" target="_blank" rel="noopener">Consultar por WhatsApp</a>
-          `;
-        };
-
-        const update = (source = "") => {
-          const nivel = nivelField.value;
-          const destinos = inscripcionDestinosPorNivel[nivel] || [];
-          if (source === "nivel" || !destinos.includes(destinoField.value)) {
-            destinoField.innerHTML = optionHtml(destinos, destinos[0] || "");
-          }
-          const destino = destinoField.value || destinos[0] || "";
-          const anio = anioField.value || inscripcionAnios[0];
-          const currentColegio = colegioField.value.trim();
-          const currentCurso = cursoField.value.trim();
-          const currentViaje = `${destino} ${anio}`.trim();
-          if (source) confirmedContrato = null;
-          matchState = currentColegio && currentCurso
-            ? resolveInscripcionContract({ nivel, viaje: currentViaje, colegio: currentColegio, cursoDivision: currentCurso })
-            : { status: "idle", candidates: [] };
-          const currentContrato = confirmedContrato?.codigoContrato || "";
-          const contractStatus = currentContrato || "Se vincula manualmente";
-          const currentColegioReal = confirmedContrato?.colegioNombre || currentColegio;
-          renderContractResult({ nivel, viaje: currentViaje, colegio: currentColegio, cursoDivision: currentCurso });
-          contextSummary.innerHTML = `
-            <span>Tu inscripción</span>
-            <ul>
-              <li><strong>Nivel:</strong> ${escapeHtml(nivel || "Pendiente")}</li>
-              <li><strong>Destino:</strong> ${escapeHtml(destino || "Pendiente")}</li>
-              <li><strong>Año:</strong> ${escapeHtml(anio || "Pendiente")}</li>
-              <li><strong>Colegio:</strong> ${escapeHtml(currentColegioReal || "Pendiente")}</li>
-              <li><strong>Contrato:</strong> ${escapeHtml(currentColegio && currentCurso ? contractStatus : "Pendiente")}</li>
-              <li><strong>Curso / División:</strong> ${escapeHtml(currentCurso || "Pendiente")}</li>
-            </ul>
-          `;
-          summary.innerHTML = `
-            <span>Resumen</span>
-            <h2>Vas a completar una ficha para:</h2>
-            <ul>
-              <li><strong>Nivel:</strong> ${escapeHtml(nivel)}</li>
-              <li><strong>Viaje:</strong> ${escapeHtml(destino)}</li>
-              <li><strong>Año:</strong> ${escapeHtml(anio)}</li>
-              <li><strong>Colegio:</strong> ${escapeHtml(currentColegioReal)}</li>
-              <li><strong>Contrato:</strong> ${escapeHtml(contractStatus)}</li>
-              <li><strong>Curso / División:</strong> ${escapeHtml(currentCurso)}</li>
-            </ul>
-            <p class="inscripcion-next-note">El siguiente paso es cargar los datos del pasajero y del padre/madre o tutor.</p>
-          `;
-          renderChoiceGroups();
-        };
-
-        const refreshPublicContractContext = () => {
-          clearTimeout(publicContractTimer);
-          const colegio = colegioField.value.trim();
-          const cursoDivision = cursoField.value.trim();
-          if (colegio.length < 3 || !cursoDivision) return;
-          const requestId = ++publicContractRequest;
-          publicContractTimer = setTimeout(async () => {
+          contrato = undefined;
+          update();
+          const requestId = ++contractRequest;
+          contractTimer = setTimeout(async () => {
             const params = new URLSearchParams({
-              nivel: nivelField.value,
-              viaje: `${destinoField.value} ${anioField.value}`.trim(),
-              colegio,
-              cursoDivision
+              colegioId: s.colegioId, nivel: s.nivel, viaje: `${s.destino} ${s.anio}`, grado: s.grado, division: s.division
             });
             try {
               const response = await fetch(`/api/public/inscripcion-context?${params}`, { cache: "no-store" });
               const payload = await response.json();
-              if (!response.ok || !payload.ok || requestId !== publicContractRequest) return;
-              applyGoogleSheetsRows({ grupos: payload.grupos || [], contratos: payload.contratos || [], includePrivate: false });
-              update();
+              if (requestId !== contractRequest) return;
+              contrato = response.ok && payload.ok ? payload.contrato : null;
             } catch (_) {
-              // La inscripción puede continuar con vinculación manual.
+              if (requestId !== contractRequest) return;
+              contrato = null;
             }
+            update();
           }, 300);
         };
-
-        // Ya NO se exige un contrato confirmado para avanzar: cualquier
-        // colegio puede enviar su ficha, aunque no esté cargado en el
-        // sistema todavía. El admin ya soporta fichas sin contrato
-        // vinculado (las marca "Bloqueada" en fichaValidationResult y
-        // permite asignar grupo/contrato a mano desde ahí).
-        const allSelectionValid = () => Boolean(
-          nivelField.value && destinoField.value && anioField.value &&
-          colegioField.value.trim() && cursoField.value.trim()
-        );
-        const stepValue = (step) => (step >= 5 ? allSelectionValid() : allSelectionValid());
 
         const macroLabels = ["50% completado: elegí el viaje", "90% completado: falta completar datos y firma"];
         const progressFill = document.querySelector("[data-macro-fill]");
@@ -7983,7 +7986,7 @@
         };
 
         const goNext = () => {
-          if (!stepValue(currentStep)) {
+          if (!seleccionValida(seleccion())) {
             errorMessage.textContent = requiredMessage;
             errorMessage.hidden = false;
             return;
@@ -7996,40 +7999,28 @@
           form.requestSubmit();
         };
 
-        nivelField.addEventListener("change", () => { update("nivel"); refreshPublicContractContext(); });
-        destinoField.addEventListener("change", () => { update("destino"); refreshPublicContractContext(); });
-        anioField.addEventListener("change", () => { update("anio"); refreshPublicContractContext(); });
-        colegioField.addEventListener("input", () => { update("colegio"); refreshPublicContractContext(); });
-        cursoField.addEventListener("input", () => { update("curso"); refreshPublicContractContext(); });
+        nivelField.addEventListener("change", () => { update("nivel"); refreshContract(); });
+        destinoField.addEventListener("change", () => { update(); refreshContract(); });
+        anioField.addEventListener("change", () => { update(); refreshContract(); });
+        colegioBuscar.addEventListener("input", refreshContract);
+        colegioTexto.addEventListener("input", () => update());
+        colegioNoEsta.addEventListener("change", () => {
+          update();
+          (colegioNoEsta.checked ? colegioTexto : colegioBuscar).focus();
+          refreshContract();
+        });
+        gradoField.addEventListener("change", refreshContract);
+        divisionField.addEventListener("input", () => {
+          divisionField.value = divisionField.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 3);
+          refreshContract();
+        });
         form.addEventListener("click", (event) => {
           const optionButton = event.target.closest("[data-inscripcion-option]");
-          const confirmButton = event.target.closest("[data-inscripcion-confirm-contract]");
-          const clearButton = event.target.closest("[data-inscripcion-clear-contract]");
-          if (confirmButton) {
-            const selected = [matchState.selected, ...(matchState.candidates || [])].filter(Boolean).find((candidate) => candidate.contratoId === confirmButton.dataset.inscripcionConfirmContract);
-            if (!selected) return;
-            confirmedContrato = selected;
-            errorMessage.hidden = true;
-            update();
-            form.requestSubmit();
-            return;
-          }
-          if (clearButton) {
-            confirmedContrato = null;
-            update("colegio");
-            return;
-          }
-          if (optionButton) {
-            const fields = {
-              nivel: nivelField,
-              destino: destinoField,
-              anio: anioField
-            };
-            const field = fields[optionButton.dataset.inscripcionOption];
-            if (!field) return;
-            field.value = optionButton.dataset.value || "";
-            field.dispatchEvent(new Event("change", { bubbles: true }));
-          }
+          if (!optionButton) return;
+          const field = { nivel: nivelField, destino: destinoField, anio: anioField }[optionButton.dataset.inscripcionOption];
+          if (!field) return;
+          field.value = optionButton.dataset.value || "";
+          field.dispatchEvent(new Event("change", { bubbles: true }));
           errorMessage.hidden = true;
         });
         backButton.addEventListener("click", () => {
@@ -8039,35 +8030,15 @@
         nextButton.addEventListener("click", goNext);
         form.addEventListener("submit", (event) => {
           event.preventDefault();
-          if (!stepValue(5)) {
+          const s = seleccion();
+          if (!seleccionValida(s)) {
             errorMessage.textContent = requiredMessage;
             errorMessage.hidden = false;
             return;
           }
-          // FIX: si hay un solo colegio compatible encontrado pero el usuario
-          // avanza con el botón genérico "Seguir con la ficha" en vez del botón
-          // inline "Completar ficha de adhesión" del resultado, confirmedContrato
-          // quedaba null y el match se perdía (la ficha se mandaba como si no
-          // hubiera contrato). Si hay un match único, se usa aunque no se haya
-          // confirmado con el botón inline.
-          const activeContrato = confirmedContrato || (matchState.status === "single" ? matchState.selected : null);
-          const codigoContrato = activeContrato?.codigoContrato || "";
-          const params = new URLSearchParams({
-            nivel: nivelField.value,
-            viaje: `${destinoField.value} ${anioField.value}`,
-            destino: destinoField.value,
-            anio: anioField.value,
-            colegio: activeContrato?.colegioNombre || colegioField.value.trim(),
-            colegioOriginal: colegioField.value.trim(),
-            grupoId: activeContrato?.grupoId || "",
-            contratoId: activeContrato?.contratoId || "",
-            codigoContrato,
-            numeroContrato: codigoContrato,
-            cursoDivision: cursoField.value.trim()
-          });
-          location.hash = `/inscripcion/ficha-adhesion?${params.toString()}`;
+          location.hash = `/inscripcion/ficha-adhesion?${new URLSearchParams(s).toString()}`;
         });
-        update();
+        update("nivel");
         renderStep();
       }
 
@@ -8076,44 +8047,27 @@
           nivel: params.get("nivel") || "",
           destino: params.get("destino") || "",
           anio: params.get("anio") || "",
-          viaje: params.get("viaje") || "",
-          colegio: params.get("colegio") || "",
-          colegioOriginal: params.get("colegioOriginal") || params.get("colegio_escrito") || params.get("colegio") || "",
-          grupoId: params.get("grupoId") || params.get("grupo_id") || "",
-          contratoId: params.get("contratoId") || params.get("contrato_id") || "",
-          codigoContrato: params.get("codigoContrato") || params.get("codigo_contrato") || params.get("numeroContrato") || "",
-          cursoDivision: params.get("cursoDivision") || params.get("curso_division") || ""
+          colegioId: params.get("colegioId") || "",
+          colegioTexto: params.get("colegioTexto") || "",
+          colegioNombre: params.get("colegioNombre") || params.get("colegioTexto") || "",
+          grado: params.get("grado") || "",
+          division: params.get("division") || ""
         };
       }
 
+      // La ficha solo se abre con una selección completa del paso 1. El
+      // contrato no es obligatorio (se permite "Mi colegio no está"); el
+      // servidor vuelve a validar todo al recibir la ficha.
       function hasValidFichaAdhesionContext(params = currentHashParams()) {
         const context = fichaAdhesionContextFromParams(params);
-        // FIX: grupoId/contratoId/codigoContrato ya NO son obligatorios acá.
-        // Desde que se sacó el bloqueo por colegio no encontrado en el paso
-        // de selección (para permitir que cualquier colegio envíe su ficha),
-        // esos 3 campos llegan vacíos a propósito en ese escenario. Esta
-        // función seguía exigiéndolos, así que cualquier inscripción sin
-        // contrato encontrado rebotaba de vuelta a /inscripcion apenas
-        // tocaba 'Completar ficha de adhesión' - perdiendo todos los datos
-        // cargados. Ahora solo se exigen los datos que la familia SÍ carga
-        // siempre (nivel/destino/año/colegio/curso); el vínculo con
-        // grupo/contrato, si existe, se valida pero ya no es bloqueante.
-        const required = [
-          context.nivel,
-          context.destino,
-          context.anio,
-          context.colegio,
-          context.colegioOriginal,
-          context.cursoDivision
-        ];
-        if (required.some((value) => !String(value || "").trim())) return false;
-        if (!context.grupoId && !context.contratoId && !context.codigoContrato) return true;
-        const group = adminPasajerosDemo.find((item) => item.id === context.grupoId);
-        if (!group) return false;
-        const contract = contractById(context.contratoId, context.grupoId);
-        if (!contract || !isInscripcionContractActive(contract)) return false;
-        if (String(contract.codigo_contrato || contract.codigoContrato || "") !== context.codigoContrato) return false;
-        return true;
+        const grados = window.ElAngelAzulFichaValidation?.GRADOS[context.nivel] || [];
+        return Boolean(
+          context.destino &&
+          /^20\d{2}$/.test(context.anio) &&
+          grados.includes(context.grado) &&
+          /^[A-Z0-9]{1,3}$/.test(context.division) &&
+          (context.colegioId || context.colegioTexto.trim().length >= 3)
+        );
       }
 
       async function renderAdminPortal() {
@@ -8298,18 +8252,78 @@
         });
       }
 
-      function renderFichaAdhesion(successMessage = "") {
-        const contextParams = currentHashParams();
-        const contextData = fichaAdhesionContextFromParams(contextParams);
-        const fichaContext = {
-          ...contextData,
-          nivel: contextData.nivel || "Pendiente de asignar por administración",
-          viaje: contextData.viaje || "Pendiente de asignar por administración",
-          colegio: contextData.colegio || "Pendiente de asignar por administración",
-          numeroContrato: contextData.codigoContrato,
-          cursoDivision: contextData.cursoDivision || "Pendiente de asignar por administración"
+      function fichaOpciones(lista, seleccionado = "", placeholder = "") {
+        return `${placeholder ? `<option value="">${escapeHtml(placeholder)}</option>` : ""}${lista.map((valor) => (
+          `<option value="${escapeHtml(valor)}"${valor === seleccionado ? " selected" : ""}>${escapeHtml(valor)}</option>`
+        )).join("")}`;
+      }
+
+      function fichaCampoError(nombre) {
+        return `<small class="ficha-campo-error" data-error-for="${nombre}" hidden></small>`;
+      }
+
+      function fichaFechaNacimiento(nombre, etiqueta) {
+        return `
+          <label>${escapeHtml(etiqueta)}
+            <span class="ficha-dob-group" data-dob-group="${nombre}">
+              <input type="text" inputmode="numeric" maxlength="2" placeholder="DD" data-dob-day aria-label="Día de ${escapeHtml(etiqueta.toLowerCase())}">
+              <span>/</span>
+              <input type="text" inputmode="numeric" maxlength="2" placeholder="MM" data-dob-month aria-label="Mes de ${escapeHtml(etiqueta.toLowerCase())}">
+              <span>/</span>
+              <input type="text" inputmode="numeric" maxlength="4" placeholder="AAAA" data-dob-year aria-label="Año de ${escapeHtml(etiqueta.toLowerCase())}">
+            </span>
+            <input type="hidden" name="${nombre}" data-dob-hidden>
+            ${fichaCampoError(nombre)}
+          </label>
+        `;
+      }
+
+      // Marca los errores por campo (vienen del validador compartido o del
+      // servidor), arma el resumen de faltantes y lleva la vista al primero.
+      function mostrarErroresFormulario(form, errorBox, errores = {}, sugerencias = {}) {
+        const validacion = window.ElAngelAzulFichaValidation;
+        form.querySelectorAll("[data-error-for]").forEach((nodo) => {
+          const campo = nodo.dataset.errorFor;
+          const mensaje = errores[campo] || "";
+          nodo.textContent = mensaje || sugerencias[campo] || "";
+          nodo.hidden = !nodo.textContent;
+          nodo.classList.toggle("is-sugerencia", !mensaje && Boolean(sugerencias[campo]));
+          form.querySelectorAll(`[name="${campo}"]`).forEach((input) => {
+            if (mensaje) input.setAttribute("aria-invalid", "true");
+            else input.removeAttribute("aria-invalid");
+          });
+        });
+        const campos = Object.keys(errores);
+        errorBox.hidden = campos.length === 0;
+        errorBox.innerHTML = campos.length
+          ? `<strong>Faltan completar o corregir ${campos.length === 1 ? "1 dato" : `${campos.length} datos`}:</strong><ul>${campos.map((campo) => `<li>${escapeHtml(validacion.ETIQUETAS[campo] || campo)}</li>`).join("")}</ul>`
+          : "";
+        if (!campos.length) return;
+        const nodo = form.querySelector(`[data-error-for="${campos[0]}"]`);
+        const contenedor = nodo?.closest("label, fieldset, .ficha-adhesion-context") || errorBox;
+        contenedor.scrollIntoView({ behavior: "smooth", block: "center" });
+        contenedor.querySelector?.("input:not([type=hidden]), select")?.focus({ preventScroll: true });
+      }
+
+      // Al corregir un campo se borra su error (no hace falta reenviar para
+      // ver que ya está bien). Sirve también para la fecha en 3 partes.
+      function limpiarErrorAlEditar(form) {
+        const limpiar = (event) => {
+          const contenedor = event.target.closest("label, .ficha-adhesion-signature");
+          const nodo = contenedor?.querySelector("[data-error-for]");
+          if (!nodo || nodo.classList.contains("is-sugerencia")) return;
+          nodo.hidden = true;
+          nodo.textContent = "";
+          form.querySelectorAll(`[name="${nodo.dataset.errorFor}"]`).forEach((input) => input.removeAttribute("aria-invalid"));
         };
-        if (successMessage) {
+        form.addEventListener("input", limpiar);
+        form.addEventListener("change", limpiar);
+      }
+
+      function renderFichaAdhesion(exito = null) {
+        const validacion = window.ElAngelAzulFichaValidation;
+        const contexto = fichaAdhesionContextFromParams();
+        if (exito) {
           document.getElementById("app").innerHTML = `
             <div class="layout ficha-adhesion-layout">
               <section class="ficha-adhesion-panel ficha-adhesion-success-screen">
@@ -8321,6 +8335,7 @@
                   <i aria-hidden="true"></i>
                 </div>
                 <div class="ficha-adhesion-success ficha-adhesion-success-large">Recibimos tu ficha correctamente.</div>
+                ${exito.emailDestino ? `<p>Te enviamos una copia a <strong>${escapeHtml(exito.emailDestino)}</strong>. Si no la ves en unos minutos, revisá la carpeta de spam.</p>` : ""}
                 <p>Queda pendiente de revisión por administración. Te contactaremos si necesitamos validar algún dato.</p>
                 <a class="ficha-adhesion-home-link" href="#/inscripcion">Volver al inicio</a>
               </section>
@@ -8333,7 +8348,7 @@
             <section class="ficha-adhesion-hero" data-ficha-hero>
               <p>Paso 2 de 2</p>
               <h1>Ficha y firma</h1>
-              <p>Cargá los datos del alumno, del responsable legal y firmá la inscripción desde el celular.</p>
+              <p>Cargá los datos del alumno, de su padre, madre o tutor, y firmá la inscripción desde el celular.</p>
             </section>
 
             <section class="ficha-adhesion-panel">
@@ -8345,132 +8360,131 @@
                 <i aria-hidden="true"></i>
               </div>
               <div class="ficha-adhesion-context" data-reveal-light>
-                <span>Contexto del viaje</span>
-                <strong>${escapeHtml(fichaContext.nivel)} · ${escapeHtml(fichaContext.viaje)} · ${escapeHtml(fichaContext.colegio)} · ${escapeHtml(fichaContext.cursoDivision)}</strong>
-                <p>Contrato: <strong>${escapeHtml(fichaContext.codigoContrato || "se vincula manualmente")}</strong></p>
+                <span>Colegio y viaje</span>
+                <strong>${escapeHtml(contexto.colegioNombre)} · ${escapeHtml(contexto.nivel)} ${escapeHtml(contexto.grado)} ${escapeHtml(contexto.division)}</strong>
+                <p>${escapeHtml(contexto.destino)} ${escapeHtml(contexto.anio)} · Contrato: <strong data-ficha-contrato>${contexto.colegioId ? "buscando…" : "se vincula en administración"}</strong></p>
+                ${["colegio", "nivel", "grado", "division", "destino", "anio"].map(fichaCampoError).join("")}
+                <a class="ficha-adhesion-context-edit" href="#/inscripcion">Cambiar colegio o curso</a>
               </div>
               <div class="ficha-adhesion-help" data-reveal-light>
                 <strong>Antes de empezar</strong>
-                <p>Te va a llevar unos minutos. Tené a mano el DNI del pasajero y del padre, madre o tutor responsable.</p>
+                <p>Te va a llevar unos minutos. Tené a mano el DNI del pasajero y el DNI y CUIL del padre, madre o tutor. Todos los campos son obligatorios salvo los marcados como opcionales.</p>
               </div>
               <form class="ficha-adhesion-form" data-ficha-adhesion-form novalidate>
-                <input type="hidden" name="nivel" value="${escapeHtml(fichaContext.nivel)}">
-                <input type="hidden" name="destino" value="${escapeHtml(fichaContext.destino)}">
-                <input type="hidden" name="anio" value="${escapeHtml(fichaContext.anio)}">
-                <input type="hidden" name="viaje" value="${escapeHtml(fichaContext.viaje)}">
-                <input type="hidden" name="colegio" value="${escapeHtml(fichaContext.colegio)}">
-                <input type="hidden" name="colegioOriginal" value="${escapeHtml(fichaContext.colegioOriginal)}">
-                <input type="hidden" name="grupoId" value="${escapeHtml(fichaContext.grupoId)}">
-                <input type="hidden" name="contratoId" value="${escapeHtml(fichaContext.contratoId)}">
-                <input type="hidden" name="codigoContrato" value="${escapeHtml(fichaContext.codigoContrato)}">
-                <input type="hidden" name="numeroContrato" value="${escapeHtml(fichaContext.numeroContrato)}">
-                <input type="hidden" name="cursoDivision" value="${escapeHtml(fichaContext.cursoDivision)}">
                 <fieldset data-reveal-light>
                   <legend>Datos del pasajero</legend>
                   <p class="ficha-fieldset-note">Información del alumno que viaja.</p>
-                  <label>Apellido y nombres
-                    <input name="pasajeroNombre" required>
+                  <p class="ficha-nombre-aviso">Escribí nombre/s y apellido/s completos, tal como figuran en el DNI y con tildes (ej.: José María / Fernández Núñez).</p>
+                  <label>Nombre/s
+                    <input name="pasajeroNombre" autocomplete="off" required>
+                    ${fichaCampoError("pasajeroNombre")}
+                  </label>
+                  <label>Apellido/s
+                    <input name="pasajeroApellido" autocomplete="off" required>
+                    ${fichaCampoError("pasajeroApellido")}
                   </label>
                   <label>Tipo de documento
-                    <select name="pasajeroTipoDocumento">
-                      <option>DNI</option>
-                      <option>Pasaporte</option>
-                      <option>LC</option>
-                      <option>LE</option>
-                    </select>
+                    <select name="pasajeroTipoDocumento">${fichaOpciones(validacion.TIPOS_DOCUMENTO, "DNI")}</select>
+                    ${fichaCampoError("pasajeroTipoDocumento")}
                   </label>
                   <label>Número de documento
-                    <input name="pasajeroNumeroDocumento" required>
+                    <input name="pasajeroNumeroDocumento" inputmode="numeric" autocomplete="off" required>
+                    ${fichaCampoError("pasajeroNumeroDocumento")}
                   </label>
-                  <label>Fecha de nacimiento
-                    <span class="ficha-dob-group" data-dob-group="pasajeroNacimiento">
-                      <input type="text" inputmode="numeric" maxlength="2" placeholder="DD" data-dob-day aria-label="Día de nacimiento">
-                      <span>/</span>
-                      <input type="text" inputmode="numeric" maxlength="2" placeholder="MM" data-dob-month aria-label="Mes de nacimiento">
-                      <span>/</span>
-                      <input type="text" inputmode="numeric" maxlength="4" placeholder="AAAA" data-dob-year aria-label="Año de nacimiento">
-                    </span>
-                    <input type="hidden" name="pasajeroNacimiento" data-dob-hidden>
-                  </label>
-                  <label>Sexo
-                    <select name="pasajeroSexo">
-                      <option value="">Seleccionar</option>
-                      <option>Femenino</option>
-                      <option>Masculino</option>
-                      <option>Otro</option>
-                      <option>Prefiero no informar</option>
-                    </select>
+                  ${fichaFechaNacimiento("pasajeroNacimiento", "Fecha de nacimiento")}
+                  <label>Sexo (como figura en el DNI)
+                    <select name="pasajeroSexo" required>${fichaOpciones(validacion.SEXOS, "", "Seleccionar")}</select>
+                    ${fichaCampoError("pasajeroSexo")}
                   </label>
                 </fieldset>
 
                 <fieldset data-reveal-light>
-                  <legend>Datos del padre / madre / tutor responsable</legend>
-                  <p class="ficha-fieldset-note">Adulto responsable de la inscripción.</p>
-                  <label>Apellido y nombres
-                    <input name="responsableNombre" required>
+                  <legend>Datos del padre, madre o tutor</legend>
+                  <p class="ficha-fieldset-note">Adulto responsable de la inscripción. A este correo le enviamos la copia de la ficha.</p>
+                  <label>Nombre/s
+                    <input name="responsableNombre" autocomplete="given-name" required>
+                    ${fichaCampoError("responsableNombre")}
+                  </label>
+                  <label>Apellido/s
+                    <input name="responsableApellido" autocomplete="family-name" required>
+                    ${fichaCampoError("responsableApellido")}
                   </label>
                   <label>Tipo de documento
-                    <select name="responsableTipoDocumento">
-                      <option>DNI</option>
-                      <option>Pasaporte</option>
-                      <option>LC</option>
-                      <option>LE</option>
-                    </select>
+                    <select name="responsableTipoDocumento">${fichaOpciones(validacion.TIPOS_DOCUMENTO, "DNI")}</select>
+                    ${fichaCampoError("responsableTipoDocumento")}
                   </label>
                   <label>Número de documento
-                    <input name="responsableNumeroDocumento" required>
+                    <input name="responsableNumeroDocumento" inputmode="numeric" autocomplete="off" required>
+                    ${fichaCampoError("responsableNumeroDocumento")}
                   </label>
-                  <label>Fecha de nacimiento
-                    <span class="ficha-dob-group" data-dob-group="responsableNacimiento">
-                      <input type="text" inputmode="numeric" maxlength="2" placeholder="DD" data-dob-day aria-label="Día de nacimiento del responsable">
-                      <span>/</span>
-                      <input type="text" inputmode="numeric" maxlength="2" placeholder="MM" data-dob-month aria-label="Mes de nacimiento del responsable">
-                      <span>/</span>
-                      <input type="text" inputmode="numeric" maxlength="4" placeholder="AAAA" data-dob-year aria-label="Año de nacimiento del responsable">
-                    </span>
-                    <input type="hidden" name="responsableNacimiento" data-dob-hidden>
-                  </label>
+                  ${fichaFechaNacimiento("responsableNacimiento", "Fecha de nacimiento")}
                   <label>Parentesco
-                    <input name="responsableParentesco" placeholder="Madre, padre, tutor" required>
-                  </label>
-                  <label>Correo electrónico
-                    <input name="responsableEmail" type="email">
-                  </label>
-                  <label>Teléfono
-                    <input name="responsableTelefono">
-                  </label>
-                  <label>Celular
-                    <input name="responsableCelular" required>
+                    <select name="responsableParentesco" required>${fichaOpciones(validacion.PARENTESCOS, "", "Seleccionar")}</select>
+                    ${fichaCampoError("responsableParentesco")}
                   </label>
                   <label>CUIL/CUIT
-                    <input name="responsableCuilCuit">
+                    <input name="responsableCuilCuit" inputmode="numeric" autocomplete="off" placeholder="20-12345678-6" required>
+                    ${fichaCampoError("responsableCuilCuit")}
+                  </label>
+                  <label>Correo electrónico
+                    <input name="responsableEmail" type="email" autocomplete="email" inputmode="email" required>
+                    ${fichaCampoError("responsableEmail")}
+                  </label>
+                  <label>Celular
+                    <input name="responsableCelular" type="tel" autocomplete="tel" placeholder="3794 123456" required>
+                    ${fichaCampoError("responsableCelular")}
+                  </label>
+                  <label><span>Teléfono alternativo <span class="ficha-opcional">(opcional)</span></span>
+                    <input name="responsableTelefono" type="tel" autocomplete="off">
+                    ${fichaCampoError("responsableTelefono")}
                   </label>
                 </fieldset>
 
                 <fieldset data-reveal-light>
                   <legend>Domicilio</legend>
-                  <p class="ficha-fieldset-note">Datos de contacto y domicilio declarados.</p>
-                  <label>Calle
-                    <input name="domicilioCalle">
+                  <p class="ficha-fieldset-note">Domicilio del pasajero.</p>
+                  <div class="ficha-fila-calle">
+                    <label>Calle
+                      <input name="domicilioCalle" autocomplete="address-line1" required>
+                      ${fichaCampoError("domicilioCalle")}
+                    </label>
+                    <label>Número
+                      <input name="domicilioNumero" inputmode="numeric" autocomplete="off" placeholder="1234" maxlength="6" required>
+                      ${fichaCampoError("domicilioNumero")}
+                    </label>
+                  </div>
+                  <label><span>Piso <span class="ficha-opcional">(opcional)</span></span>
+                    <input name="domicilioPiso" maxlength="4" autocomplete="off">
+                    ${fichaCampoError("domicilioPiso")}
                   </label>
-                  <label>Número
-                    <input name="domicilioNumero">
+                  <label><span>Departamento <span class="ficha-opcional">(opcional)</span></span>
+                    <input name="domicilioDepartamento" maxlength="6" autocomplete="off">
+                    ${fichaCampoError("domicilioDepartamento")}
                   </label>
-                  <label>Piso
-                    <input name="domicilioPiso">
-                  </label>
-                  <label>Departamento
-                    <input name="domicilioDepartamento">
-                  </label>
-                  <label>Localidad
-                    <input name="domicilioLocalidad">
+                  <label><span>Barrio <span class="ficha-opcional">(opcional)</span></span>
+                    <input name="domicilioBarrio" maxlength="80" autocomplete="off">
+                    ${fichaCampoError("domicilioBarrio")}
                   </label>
                   <label>Provincia
-                    <input name="domicilioProvincia">
+                    <select name="domicilioProvincia" required>${fichaOpciones(validacion.PROVINCIAS, "Corrientes")}</select>
+                    ${fichaCampoError("domicilioProvincia")}
+                  </label>
+                  <label>Localidad
+                    <input name="domicilioLocalidad" list="localidades-lista" autocomplete="off" required>
+                    <datalist id="localidades-lista"></datalist>
+                    ${fichaCampoError("domicilioLocalidad")}
                   </label>
                   <label>Código postal
-                    <input name="domicilioCodigoPostal">
+                    <input name="domicilioCodigoPostal" inputmode="numeric" maxlength="8" autocomplete="postal-code" placeholder="3400" required>
+                    ${fichaCampoError("domicilioCodigoPostal")}
                   </label>
+                </fieldset>
+
+                <fieldset data-reveal-light data-ficha-planes hidden>
+                  <legend>Plan de pago</legend>
+                  <p class="ficha-fieldset-note">Elegí cómo vas a pagar el viaje. Administración te confirma los montos.</p>
+                  <div class="ficha-planes-opciones" data-ficha-planes-opciones></div>
+                  ${fichaCampoError("planPagoId")}
                 </fieldset>
 
                 <fieldset data-reveal-light>
@@ -8479,20 +8493,22 @@
                   <label class="ficha-adhesion-check">
                     <input name="aceptaCondiciones" type="checkbox" value="si">
                     Acepto que esta ficha sea revisada por administración y entiendo que no confirma pagos ni cupo definitivo.
+                    ${fichaCampoError("aceptaCondiciones")}
                   </label>
                 </fieldset>
 
                 <fieldset data-reveal-light>
-                  <legend>Firma del responsable / tutor</legend>
+                  <legend>Firma del padre, madre o tutor</legend>
                   <p class="ficha-fieldset-note">Firmá dentro del recuadro usando el dedo o lápiz óptico.</p>
                   <div class="ficha-adhesion-signature">
-                    <span>Firma del responsable/tutor</span>
+                    <span>Firma del padre, madre o tutor</span>
                     <canvas width="720" height="220" data-ficha-signature></canvas>
                     <button type="button" data-ficha-clear-signature>Limpiar firma</button>
+                    ${fichaCampoError("firma")}
                   </div>
                 </fieldset>
 
-                <div class="ficha-adhesion-error" data-ficha-error hidden></div>
+                <div class="ficha-adhesion-error" data-ficha-error hidden role="alert"></div>
                 <button type="submit" class="ficha-adhesion-submit">Enviar ficha</button>
               </form>
             </section>
@@ -8521,11 +8537,7 @@
             const day = dayInput.value.padStart(2, "0");
             const month = monthInput.value.padStart(2, "0");
             const year = yearInput.value;
-            if (dayInput.value && monthInput.value && year.length === 4) {
-              hiddenInput.value = `${year}-${month}-${day}`;
-            } else {
-              hiddenInput.value = "";
-            }
+            hiddenInput.value = dayInput.value && monthInput.value && year.length === 4 ? `${year}-${month}-${day}` : "";
           };
 
           dayInput.addEventListener("input", () => {
@@ -8544,7 +8556,6 @@
             clampNumeric(yearInput, 4);
             syncHidden();
           });
-          // Backspace en un campo vacío vuelve al anterior (auto-retroceso)
           monthInput.addEventListener("keydown", (event) => {
             if (event.key === "Backspace" && !monthInput.value) dayInput.focus();
           });
@@ -8553,11 +8564,13 @@
           });
         });
 
+        const validacion = window.ElAngelAzulFichaValidation;
         const form = document.querySelector("[data-ficha-adhesion-form]");
         const canvas = document.querySelector("[data-ficha-signature]");
         const clearButton = document.querySelector("[data-ficha-clear-signature]");
         const errorBox = document.querySelector("[data-ficha-error]");
-        if (!form || !canvas || !errorBox) return;
+        if (!validacion || !form || !canvas || !errorBox) return;
+        limpiarErrorAlEditar(form);
 
         const context = canvas.getContext("2d");
         let drawing = false;
@@ -8591,7 +8604,6 @@
         const end = () => {
           drawing = false;
         };
-
         canvas.addEventListener("mousedown", begin);
         canvas.addEventListener("mousemove", move);
         window.addEventListener("mouseup", end);
@@ -8603,131 +8615,283 @@
           hasSignature = false;
         });
 
-        form.addEventListener("submit", async (event) => {
-          event.preventDefault();
-          const submitButton = form.querySelector(".ficha-adhesion-submit");
-          if (submitButton?.disabled) return;
-          if (submitButton) submitButton.disabled = true;
+        // Contrato y planes del curso elegido (si el colegio es de la lista).
+        const contextoInscripcion = fichaAdhesionContextFromParams();
+        const contratoNode = document.querySelector("[data-ficha-contrato]");
+        const planesFieldset = form.querySelector("[data-ficha-planes]");
+        const planesOpciones = form.querySelector("[data-ficha-planes-opciones]");
+        let planesDisponibles = [];
+        if (contextoInscripcion.colegioId) {
+          const params = new URLSearchParams({
+            colegioId: contextoInscripcion.colegioId,
+            nivel: contextoInscripcion.nivel,
+            viaje: `${contextoInscripcion.destino} ${contextoInscripcion.anio}`,
+            grado: contextoInscripcion.grado,
+            division: contextoInscripcion.division
+          });
+          fetch(`/api/public/inscripcion-context?${params}`, { cache: "no-store" })
+            .then((response) => response.json())
+            .then((payload) => {
+              const planes = Array.isArray(payload.planes) ? payload.planes : [];
+              planesDisponibles = planes.map((plan) => plan.id);
+              if (contratoNode) contratoNode.textContent = payload.contrato?.codigo || "se vincula en administración";
+              planesFieldset.hidden = planes.length === 0;
+              planesOpciones.innerHTML = planes.map((plan) => `
+                <label>
+                  <input type="radio" name="planPagoId" value="${escapeHtml(plan.id)}">
+                  <span><strong>${escapeHtml(plan.nombre)}</strong> · ${escapeHtml(String(plan.cuotas))} ${Number(plan.cuotas) === 1 ? "cuota" : "cuotas"}${plan.descripcion ? `<small>${escapeHtml(plan.descripcion)}</small>` : ""}</span>
+                </label>
+              `).join("");
+            })
+            .catch(() => {
+              if (contratoNode) contratoNode.textContent = "se vincula en administración";
+            });
+        }
+
+        // Localidades sugeridas por Georef (API oficial). Si no responde, la
+        // localidad se escribe a mano igual.
+        const localidadInput = form.querySelector('[name="domicilioLocalidad"]');
+        const provinciaSelect = form.querySelector('[name="domicilioProvincia"]');
+        const localidadesLista = document.getElementById("localidades-lista");
+        let georefTimer = null;
+        localidadInput.addEventListener("input", () => {
+          clearTimeout(georefTimer);
+          const nombre = localidadInput.value.trim();
+          if (nombre.length < 2) return;
+          georefTimer = setTimeout(async () => {
+            try {
+              const params = new URLSearchParams({ provincia: provinciaSelect.value, nombre, max: "10", campos: "nombre" });
+              const response = await fetch(`https://apis.datos.gob.ar/georef/api/localidades?${params}`);
+              const payload = await response.json();
+              const nombres = [...new Set((payload.localidades || []).map((localidad) => localidad.nombre))];
+              localidadesLista.innerHTML = nombres.map((valor) => `<option value="${escapeHtml(valor)}"></option>`).join("");
+            } catch (_) {
+              // Georef caído: la localidad se escribe a mano.
+            }
+          }, 250);
+        });
+        provinciaSelect.addEventListener("change", () => {
+          localidadesLista.innerHTML = "";
+        });
+
+        // Sugerencia de email mal escrito (no bloquea).
+        const emailInput = form.querySelector('[name="responsableEmail"]');
+        const emailAviso = form.querySelector('[data-error-for="responsableEmail"]');
+        emailInput.addEventListener("blur", () => {
+          const sugerida = validacion.sugerenciaEmail(emailInput.value);
+          if (!sugerida) return;
+          emailAviso.hidden = false;
+          emailAviso.classList.add("is-sugerencia");
+          emailAviso.innerHTML = `¿Quisiste decir <strong>${escapeHtml(sugerida)}</strong>? <button type="button" data-usar-email>Usar</button>`;
+          emailAviso.querySelector("[data-usar-email]").addEventListener("click", () => {
+            emailInput.value = sugerida;
+            emailAviso.hidden = true;
+            emailAviso.textContent = "";
+          });
+        });
+
+        const CAMPOS = [
+          "pasajeroNombre", "pasajeroApellido", "pasajeroTipoDocumento", "pasajeroNumeroDocumento", "pasajeroNacimiento", "pasajeroSexo",
+          "responsableNombre", "responsableApellido", "responsableTipoDocumento", "responsableNumeroDocumento", "responsableNacimiento",
+          "responsableParentesco", "responsableCuilCuit", "responsableEmail", "responsableCelular", "responsableTelefono",
+          "domicilioCalle", "domicilioNumero", "domicilioPiso", "domicilioDepartamento", "domicilioBarrio", "domicilioLocalidad",
+          "domicilioProvincia", "domicilioCodigoPostal", "planPagoId"
+        ];
+        const leerFormulario = () => {
           const formData = new FormData(form);
-          const responsableTelefono = String(formData.get("responsableTelefono") || "").trim();
-          const responsableCelular = String(formData.get("responsableCelular") || "").trim();
-          const grupoId = String(formData.get("grupoId") || "").trim();
-          const contratoId = String(formData.get("contratoId") || "").trim();
-          const codigoContrato = String(formData.get("codigoContrato") || formData.get("numeroContrato") || "").trim();
-          const ficha = {
-            id: `ficha-${Date.now()}`,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            estadoRevision: "pendiente",
-            documentacionEstado: "Pendiente",
-            fichaMedicaEstado: "Pendiente",
-            autorizacionEstado: "Pendiente",
-            pasajeroNombre: String(formData.get("pasajeroNombre") || "").trim(),
-            pasajeroTipoDocumento: String(formData.get("pasajeroTipoDocumento") || "").trim(),
-            pasajeroNumeroDocumento: String(formData.get("pasajeroNumeroDocumento") || "").trim(),
-            pasajeroNacimiento: String(formData.get("pasajeroNacimiento") || "").trim(),
-            pasajeroSexo: String(formData.get("pasajeroSexo") || "").trim(),
-            responsableNombre: String(formData.get("responsableNombre") || "").trim(),
-            responsableTipoDocumento: String(formData.get("responsableTipoDocumento") || "").trim(),
-            responsableNumeroDocumento: String(formData.get("responsableNumeroDocumento") || "").trim(),
-            responsableNacimiento: String(formData.get("responsableNacimiento") || "").trim(),
-            responsableParentesco: String(formData.get("responsableParentesco") || "").trim(),
-            responsableEmail: String(formData.get("responsableEmail") || "").trim(),
-            responsableTelefono,
-            responsableCelular,
-            responsableCuilCuit: String(formData.get("responsableCuilCuit") || "").trim(),
-            domicilioCalle: String(formData.get("domicilioCalle") || "").trim(),
-            domicilioNumero: String(formData.get("domicilioNumero") || "").trim(),
-            domicilioPiso: String(formData.get("domicilioPiso") || "").trim(),
-            domicilioDepartamento: String(formData.get("domicilioDepartamento") || "").trim(),
-            domicilioLocalidad: String(formData.get("domicilioLocalidad") || "").trim(),
-            domicilioProvincia: String(formData.get("domicilioProvincia") || "").trim(),
-            domicilioTelefono: responsableTelefono,
-            domicilioCelular: responsableCelular,
-            domicilioCodigoPostal: String(formData.get("domicilioCodigoPostal") || "").trim(),
-            nivel: String(formData.get("nivel") || "").trim(),
-            destino: String(formData.get("destino") || "").trim(),
-            anio: String(formData.get("anio") || "").trim(),
-            viaje: String(formData.get("viaje") || "").trim(),
-            colegio: String(formData.get("colegio") || "").trim(),
-            colegioOriginal: String(formData.get("colegioOriginal") || "").trim(),
-            grupoAsignadoId: grupoId,
-            contratoId,
-            codigoContrato,
-            numeroContrato: codigoContrato,
-            cursoDivision: String(formData.get("cursoDivision") || "").trim(),
-            grupoSolicitado: String(formData.get("colegioOriginal") || "").trim(),
-            asignacionGrupo: {
-              grupoId,
-              contratoId,
-              codigoContrato,
-              nivel: String(formData.get("nivel") || "").trim(),
-              viaje: String(formData.get("viaje") || "").trim(),
-              colegio: String(formData.get("colegio") || "").trim()
-            },
-            administracion: {
-              contrato: codigoContrato,
-              numeroLegajo: "",
-              altaModificacion: "",
-              valorViaje: "",
-              sena: "",
-              cuotas: "",
-              saldo: "",
-              formaPago: "",
-              informacionAdministrativa: ""
-            },
+          return {
+            ...contextoInscripcion,
+            ...Object.fromEntries(CAMPOS.map((campo) => [campo, String(formData.get(campo) || "")])),
             aceptaCondiciones: formData.get("aceptaCondiciones") === "si",
             firma: hasSignature ? canvas.toDataURL("image/png") : ""
           };
-          const showError = (message) => {
-            if (submitButton) submitButton.disabled = false;
-            errorBox.hidden = false;
-            errorBox.textContent = message;
-          };
-          if (!ficha.pasajeroNombre) return showError("El nombre del pasajero es obligatorio.");
-          if (!ficha.pasajeroNumeroDocumento) return showError("El número de documento del pasajero es obligatorio.");
-          if (!ficha.responsableNombre) return showError("El nombre del responsable es obligatorio.");
-          if (!ficha.responsableNumeroDocumento) return showError("El documento del responsable es obligatorio.");
-          if (!ficha.responsableCelular) return showError("El celular del responsable es obligatorio.");
-          // FIX: el admin exige "vínculo" para poder aprobar la ficha y crear el
-          // pasajero (fichaRequiredMissingFields) pero no hay forma de cargarlo
-          // desde el panel admin si falta - una ficha sin este dato quedaba
-          // bloqueada para siempre. Se exige acá, en el origen.
-          if (!ficha.responsableParentesco) return showError("El vínculo con el pasajero (madre, padre, tutor) es obligatorio.");
-          // FIX: ya no se exige contrato resuelto para enviar la ficha - es el
-          // mismo caso que se habilitó en el paso de selección (colegio no
-          // encontrado). El admin ya maneja fichas sin grupo/contrato
-          // asignado (las marca "Bloqueada" y permite vincularlas a mano
-          // desde el panel de asignación).
-          if (!ficha.aceptaCondiciones) return showError("Tenés que aceptar las condiciones para enviar la ficha.");
-          if (!ficha.firma) return showError("Falta la firma del responsable/tutor.");
+        };
 
-          // FIX: antes, si fallaba la sincronización con Google Sheets (ej. credenciales
-          // no configuradas en este entorno), se bloqueaba el envío con un error genérico
-          // AUNQUE la ficha ya se hubiera guardado localmente (fichaAdhesionCollection.save
-          // corre primero y de forma síncrona, antes del intento de sync con Sheets).
-          // Esto perdía el flujo de la familia por un problema de infraestructura ajeno a
-          // sus datos. Ahora: el guardado local es la condición real de éxito; si Sheets
-          // falla, se avisa de forma no bloqueante y se sigue igual.
-          const fichas = loadFichasAdhesionDemo();
-          fichas.unshift(ficha);
-          let localSaveOk = true;
-          try {
-            fichaAdhesionCollection.save(fichas);
-          } catch (error) {
-            localSaveOk = false;
-          }
-          if (!localSaveOk) {
-            showError("No pudimos guardar la ficha en este dispositivo. Intentá nuevamente o consultanos por WhatsApp.");
+        form.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const submitButton = form.querySelector(".ficha-adhesion-submit");
+          if (submitButton.disabled) return;
+          const ficha = leerFormulario();
+          const local = validacion.validarFichaPax(ficha, { planesDisponibles });
+          if (!local.ok) {
+            mostrarErroresFormulario(form, errorBox, local.errores, local.sugerencias);
             return;
           }
-          if (!googleSheetsHydrating) {
-            queueGoogleSheetsWrite(["FICHAS_ADHESION"]).catch(() => {});
+          mostrarErroresFormulario(form, errorBox, {}, local.sugerencias);
+          submitButton.disabled = true;
+          submitButton.textContent = "Enviando…";
+          try {
+            const response = await fetch("/api/public/fichas", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(ficha)
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (response.status === 201 && payload.ok) {
+              renderFichaAdhesion({ emailDestino: payload.emailDestino || "" });
+              window.scrollTo({ top: 0 });
+              return;
+            }
+            if (payload.errores && Object.keys(payload.errores).length) {
+              mostrarErroresFormulario(form, errorBox, payload.errores);
+            } else {
+              errorBox.hidden = false;
+              errorBox.textContent = payload.error || "No pudimos enviar la ficha. Tus datos siguen cargados: volvé a intentar.";
+              errorBox.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+          } catch (_) {
+            errorBox.hidden = false;
+            errorBox.textContent = "No hay conexión con el servidor. Tus datos siguen cargados: revisá tu internet y volvé a intentar.";
+            errorBox.scrollIntoView({ behavior: "smooth", block: "center" });
+          } finally {
+            if (submitButton.isConnected) {
+              submitButton.disabled = false;
+              submitButton.textContent = "Enviar ficha";
+            }
           }
-          const syncWarning = googleSheetsSyncState.status === "error"
-            ? " (Quedó guardada en este dispositivo; la sincronización con el sistema central se reintentará.)"
-            : "";
-          renderFichaAdhesion(`Ficha enviada correctamente. Queda pendiente de revisión por administración.${syncWarning}`);
+        });
+      }
+
+      function renderFichaTutor(registrado = false) {
+        const validacion = window.ElAngelAzulFichaValidation;
+        if (registrado) {
+          document.getElementById("app").innerHTML = `
+            <div class="layout ficha-adhesion-layout">
+              <section class="ficha-adhesion-panel ficha-adhesion-success-screen">
+                <div class="ficha-adhesion-success ficha-adhesion-success-large">Registramos tus datos como tutor.</div>
+                <p>Administración los vincula con la ficha del pasajero. Te contactaremos si necesitamos validar algún dato.</p>
+                <a class="ficha-adhesion-home-link" href="#/inscripcion">Volver al inicio</a>
+              </section>
+            </div>
+          `;
+          return;
+        }
+        document.getElementById("app").innerHTML = `
+          <div class="layout ficha-adhesion-layout">
+            <section class="ficha-adhesion-hero" data-ficha-hero>
+              <p>Registro de tutor</p>
+              <h1>Datos del tutor</h1>
+              <p>Formulario corto para sumar a un tutor de un pasajero. La ficha de adhesión completa la carga el tutor principal.</p>
+            </section>
+            <section class="ficha-adhesion-panel">
+              <form class="ficha-adhesion-form" data-ficha-tutor-form novalidate>
+                <fieldset data-reveal-light>
+                  <legend>Pasajero a cargo</legend>
+                  <p class="ficha-nombre-aviso">Escribí nombre/s y apellido/s completos, tal como figuran en el DNI y con tildes.</p>
+                  <label>Nombre/s del pasajero
+                    <input name="pasajeroNombre" autocomplete="off" required>
+                    ${fichaCampoError("pasajeroNombre")}
+                  </label>
+                  <label>Apellido/s del pasajero
+                    <input name="pasajeroApellido" autocomplete="off" required>
+                    ${fichaCampoError("pasajeroApellido")}
+                  </label>
+                  <label>DNI del pasajero
+                    <input name="pasajeroNumeroDocumento" inputmode="numeric" autocomplete="off" required>
+                    ${fichaCampoError("pasajeroNumeroDocumento")}
+                  </label>
+                </fieldset>
+                <fieldset data-reveal-light>
+                  <legend>Datos del tutor</legend>
+                  <label>Nombre/s
+                    <input name="nombre" autocomplete="given-name" required>
+                    ${fichaCampoError("nombre")}
+                  </label>
+                  <label>Apellido/s
+                    <input name="apellido" autocomplete="family-name" required>
+                    ${fichaCampoError("apellido")}
+                  </label>
+                  <label>Tipo de documento
+                    <select name="tipoDocumento">${fichaOpciones(validacion.TIPOS_DOCUMENTO, "DNI")}</select>
+                    ${fichaCampoError("tipoDocumento")}
+                  </label>
+                  <label>Número de documento
+                    <input name="numeroDocumento" inputmode="numeric" autocomplete="off" required>
+                    ${fichaCampoError("numeroDocumento")}
+                  </label>
+                  <label>CUIL/CUIT
+                    <input name="cuilCuit" inputmode="numeric" autocomplete="off" placeholder="20-12345678-6" required>
+                    ${fichaCampoError("cuilCuit")}
+                  </label>
+                  <label>Parentesco
+                    <select name="parentesco" required>${fichaOpciones(validacion.PARENTESCOS, "", "Seleccionar")}</select>
+                    ${fichaCampoError("parentesco")}
+                  </label>
+                  <label>Celular
+                    <input name="celular" type="tel" autocomplete="tel" placeholder="3794 123456" required>
+                    ${fichaCampoError("celular")}
+                  </label>
+                  <label>Correo electrónico
+                    <input name="email" type="email" autocomplete="email" inputmode="email" required>
+                    ${fichaCampoError("email")}
+                  </label>
+                  <label class="ficha-adhesion-check">
+                    <input name="aceptaCondiciones" type="checkbox" value="si">
+                    Confirmo que soy tutor de este pasajero y que los datos son correctos.
+                    ${fichaCampoError("aceptaCondiciones")}
+                  </label>
+                </fieldset>
+                <div class="ficha-adhesion-error" data-ficha-error hidden role="alert"></div>
+                <button type="submit" class="ficha-adhesion-submit">Registrar tutor</button>
+              </form>
+            </section>
+          </div>
+        `;
+        bindFichaTutor();
+        bindFichaAdhesionAnimations();
+      }
+
+      function bindFichaTutor() {
+        const validacion = window.ElAngelAzulFichaValidation;
+        const form = document.querySelector("[data-ficha-tutor-form]");
+        const errorBox = form?.querySelector("[data-ficha-error]");
+        if (!validacion || !form || !errorBox) return;
+        limpiarErrorAlEditar(form);
+        const CAMPOS = ["pasajeroNombre", "pasajeroApellido", "pasajeroNumeroDocumento", "nombre", "apellido", "tipoDocumento", "numeroDocumento", "cuilCuit", "celular", "email", "parentesco"];
+        form.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const submitButton = form.querySelector(".ficha-adhesion-submit");
+          if (submitButton.disabled) return;
+          const formData = new FormData(form);
+          const tutor = {
+            ...Object.fromEntries(CAMPOS.map((campo) => [campo, String(formData.get(campo) || "")])),
+            aceptaCondiciones: formData.get("aceptaCondiciones") === "si"
+          };
+          const local = validacion.validarFichaTutor(tutor);
+          if (!local.ok) {
+            mostrarErroresFormulario(form, errorBox, local.errores, local.sugerencias);
+            return;
+          }
+          mostrarErroresFormulario(form, errorBox, {}, local.sugerencias);
+          submitButton.disabled = true;
+          submitButton.textContent = "Enviando…";
+          try {
+            const response = await fetch("/api/public/fichas-tutor", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(tutor)
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (response.status === 201 && payload.ok) {
+              renderFichaTutor(true);
+              window.scrollTo({ top: 0 });
+              return;
+            }
+            if (payload.errores && Object.keys(payload.errores).length) {
+              mostrarErroresFormulario(form, errorBox, payload.errores);
+            } else {
+              errorBox.hidden = false;
+              errorBox.textContent = payload.error || "No pudimos registrar tus datos. Volvé a intentar.";
+            }
+          } catch (_) {
+            errorBox.hidden = false;
+            errorBox.textContent = "No hay conexión con el servidor. Revisá tu internet y volvé a intentar.";
+          } finally {
+            if (submitButton.isConnected) {
+              submitButton.disabled = false;
+              submitButton.textContent = "Registrar tutor";
+            }
+          }
         });
       }
 
@@ -8789,13 +8953,17 @@
           renderPortalPasajeros();
           return;
         }
+        // Ficha v2: la inscripción ya no hidrata Grupos/Contratos en el
+        // navegador; consulta colegios y contrato exacto en /api/public/*.
         if (path === "/inscripcion") {
-          await hydrateGoogleSheetsData();
           renderInscripcion();
           return;
         }
+        if (path === "/inscripcion/tutor") {
+          renderFichaTutor();
+          return;
+        }
         if (path === "/inscripcion/ficha-adhesion") {
-          await hydrateGoogleSheetsData();
           if (!hasValidFichaAdhesionContext()) {
             location.replace("#/inscripcion");
             return;
