@@ -913,6 +913,22 @@ async function procesarCorreoFicha(id, idempotencyKey) {
   }
 }
 
+async function recuperarCorreosPendientes() {
+  if (!email.correoConfigurado()) return;
+  try {
+    const pendientes = await db.listFichaEmailsPendientes(25);
+    for (const ficha of pendientes) {
+      await procesarCorreoFicha(ficha.id, `ficha-${ficha.id}`);
+    }
+    if (pendientes.length) {
+      console.log(`Correos pendientes procesados al iniciar: ${pendientes.length}`);
+    }
+  } catch (error) {
+    // El sitio debe seguir disponible aunque la recuperación de correo falle.
+    console.error("No se pudieron recuperar los correos pendientes:", safeErrorForLog(error));
+  }
+}
+
 async function handlePublicFicha(req, res) {
   if (requireSameOrigin(req, res)) return;
   const ip = clientIp(req);
@@ -1075,6 +1091,7 @@ function createAppServer() {
 if (process.env.NODE_ENV !== "test" || require.main === module) {
   createAppServer().listen(PORT, "0.0.0.0", () => {
     console.log(`El Ángel Azul server listening on ${PORT}`);
+    setImmediate(recuperarCorreosPendientes);
   });
 }
 
@@ -1085,6 +1102,7 @@ module.exports = {
     sameOriginRequest,
     sessionCookie,
     safePasswordEqual,
-    safeErrorForLog
+    safeErrorForLog,
+    recuperarCorreosPendientes
   }
 };

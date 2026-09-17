@@ -1,6 +1,8 @@
 // scripts/email.test.js
 const assert = require("node:assert/strict");
 const test = require("node:test");
+const fs = require("node:fs");
+const path = require("node:path");
 const email = require("../lib/email");
 
 const env = { RESEND_API_KEY: "re_test", EAA_EMAIL_FROM: "El Ángel Azul <fichas@example.com>", EAA_EMAIL_COPIA: "agencia@example.com" };
@@ -45,4 +47,22 @@ test("traduce errores de Resend a mensajes legibles", async () => {
   const falla = (status) => async () => ({ ok: false, status, json: async () => ({ message: "x" }) });
   await assert.rejects(email.enviarCorreoFicha(fila, new Uint8Array([1]), { env, fetchImpl: falla(429) }), (e) => /Límite/.test(e.friendlyMessage));
   await assert.rejects(email.enviarCorreoFicha(fila, new Uint8Array([1]), { env, fetchImpl: falla(403) }), (e) => /dominio/.test(e.friendlyMessage));
+});
+
+test("el arranque recupera correos pendientes con una clave idempotente", () => {
+  const serverSource = fs.readFileSync(path.join(__dirname, "..", "server.js"), "utf8");
+  const dbSource = fs.readFileSync(path.join(__dirname, "..", "lib", "db.js"), "utf8");
+  assert.match(serverSource, /setImmediate\(recuperarCorreosPendientes\)/);
+  assert.match(serverSource, /`ficha-\$\{ficha\.id\}`/);
+  assert.match(dbSource, /email_estado in \('pendiente', 'sin_configurar'\)/);
+  assert.doesNotMatch(dbSource, /email_estado in \([^)]*'error'/);
+});
+
+test("la migración v2 se detiene si encuentra fichas o inscripciones", () => {
+  const migration = fs.readFileSync(
+    path.join(__dirname, "..", "supabase", "migrations", "0003_ficha_adhesion_v2.sql"),
+    "utf8"
+  );
+  assert.match(migration, /Migración 0003 detenida/);
+  assert.match(migration, /fichas_existentes > 0 or inscripciones_existentes > 0/);
 });

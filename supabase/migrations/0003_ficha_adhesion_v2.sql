@@ -1,9 +1,28 @@
 -- El Ángel Azul — Ficha de Adhesión v2 (15/09/2026)
 -- Ver docs/superpowers/specs/2026-09-15-ficha-adhesion-design.md §3.
--- La base solo tenía datos de prueba: inscripciones y fichas_adhesion se
--- recrean con los obligatorios exigidos en la propia base.
+-- Esta migración recrea inscripciones y fichas_adhesion con los obligatorios
+-- exigidos en la propia base. Por seguridad se niega a borrar filas: cualquier
+-- dato existente debe respaldarse y retirarse explícitamente antes de correrla.
 -- grupos.curso guarda el Grado/Año ("5°") y grupos.division la división;
 -- el Curso (Primaria/Secundaria) es viajes.nivel.
+
+do $$
+declare
+  fichas_existentes bigint := 0;
+  inscripciones_existentes bigint := 0;
+begin
+  if to_regclass('public.fichas_adhesion') is not null then
+    execute 'select count(*) from public.fichas_adhesion' into fichas_existentes;
+  end if;
+  if to_regclass('public.inscripciones') is not null then
+    execute 'select count(*) from public.inscripciones' into inscripciones_existentes;
+  end if;
+  if fichas_existentes > 0 or inscripciones_existentes > 0 then
+    raise exception
+      'Migración 0003 detenida: hay % fichas y % inscripciones. Respaldar y migrar esos datos antes de recrear las tablas.',
+      fichas_existentes, inscripciones_existentes;
+  end if;
+end $$;
 
 drop table if exists fichas_adhesion;
 drop table if exists inscripciones;
