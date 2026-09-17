@@ -19,6 +19,15 @@ const REQUIRED_TABLES = [
   "documentos"
 ];
 
+const REQUIRED_COLUMNS = {
+  colegios: ["activo", "provincia", "localidad", "codigo_oficial"],
+  personas: ["apellido"],
+  responsables: ["apellido"],
+  pasajeros: ["plan_pago_id"],
+  fichas_adhesion: ["inscripcion_id", "pasajero_apellido", "responsable_apellido", "firma_storage_path", "email_estado"],
+  inscripciones: ["colegio_id", "colegio_texto", "grado", "division", "plan_pago_id"]
+};
+
 async function main() {
   if (!process.env.DATABASE_URL) {
     console.error(
@@ -54,7 +63,35 @@ async function main() {
       );
       process.exitCode = 1;
     } else {
-      console.log("\nEsquema completo. Listo para usar.");
+      const missingColumns = [];
+      for (const [table, columns] of Object.entries(REQUIRED_COLUMNS)) {
+        const result = await pool.query(
+          `select column_name from information_schema.columns
+           where table_schema = 'public' and table_name = $1 and column_name = any($2::text[])`,
+          [table, columns]
+        );
+        const present = new Set(result.rows.map((row) => row.column_name));
+        for (const column of columns) {
+          const exists = present.has(column);
+          console.log(`  columna ${table}.${column}:`, exists ? "OK" : "FALTA");
+          if (!exists) missingColumns.push(`${table}.${column}`);
+        }
+      }
+
+      const counts = await pool.query(
+        `select
+           (select count(*)::int from fichas_adhesion) as fichas,
+           (select count(*)::int from inscripciones) as inscripciones,
+           (select count(*)::int from fichas_tutor) as fichas_tutor`
+      );
+      console.log("\nFilas actuales (sin mostrar datos personales):", counts.rows[0]);
+
+      if (missingColumns.length) {
+        console.error(`\nFaltan ${missingColumns.length} columna(s) de Fase 1: ${missingColumns.join(", ")}`);
+        process.exitCode = 1;
+      } else {
+        console.log("\nEsquema de Fase 1 completo. Listo para el smoke test.");
+      }
     }
   } catch (error) {
     console.error("No se pudo conectar o consultar Postgres:", error.message);
