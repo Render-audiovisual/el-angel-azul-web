@@ -76,28 +76,59 @@ test("login sin Origin se rechaza antes de autenticar", async () => {
   assert.equal(response.json?.error, "Origen no permitido");
 });
 
-test("una ficha pública con firma falsa se rechaza antes de tocar la base", async () => {
+test("POST /api/public/fichas sin Origin se rechaza", async () => {
+  const response = await request({ method: "POST", path: "/api/public/fichas", body: {} });
+  assert.equal(response.status, 403);
+});
+
+test("POST /api/public/fichas incompleta devuelve errores por campo sin tocar la base", async () => {
+  const origin = `http://127.0.0.1:${port}`;
+  const response = await request({
+    method: "POST",
+    path: "/api/public/fichas",
+    headers: { origin },
+    body: { nivel: "Secundaria", colegioTexto: "Normal 2", pasajeroNombre: "José" }
+  });
+  assert.equal(response.status, 400);
+  assert.equal(response.json.ok, false);
+  assert.ok(response.json.errores.pasajeroApellido);
+  assert.ok(response.json.errores.responsableCuilCuit);
+  assert.ok(response.json.errores.firma);
+});
+
+test("POST /api/public/fichas-tutor incompleta devuelve errores por campo", async () => {
+  const origin = `http://127.0.0.1:${port}`;
+  const response = await request({
+    method: "POST",
+    path: "/api/public/fichas-tutor",
+    headers: { origin },
+    body: { nombre: "Carlos" }
+  });
+  assert.equal(response.status, 400);
+  assert.ok(response.json.errores.cuilCuit);
+});
+
+test("la escritura pública vieja de FICHAS_ADHESION ya no existe", async () => {
   const origin = `http://127.0.0.1:${port}`;
   const response = await request({
     method: "POST",
     path: "/api/google-sheets",
     headers: { origin },
-    body: {
-      sheet: "FICHAS_ADHESION",
-      rows: [{
-        pasajero_dni: "99000999",
-        pasajero_nombre: "PRUEBA SEGURIDAD",
-        responsable_nombre: "RESPONSABLE SEGURIDAD",
-        responsable_telefono: "3794000000",
-        colegio: "Colegio QA",
-        curso_division: "5 A",
-        acepta_condiciones: "TRUE",
-        firma_data_url: `data:image/png;base64,${Buffer.from("<svg></svg>").toString("base64")}`
-      }]
-    }
+    body: { sheet: "FICHAS_ADHESION", rows: [{ pasajero_nombre: "X" }] }
   });
-  assert.equal(response.status, 400);
-  assert.match(response.json?.error || "", /PNG válida/);
+  assert.equal(response.status, 401);
+});
+
+test("el PDF y el reenvío de correo de una ficha exigen sesión", async () => {
+  const id = "3f1c2a8e-5b6d-4c7e-8f9a-0b1c2d3e4f5a";
+  assert.equal((await request({ path: `/api/admin/fichas/${id}/pdf` })).status, 401);
+  const origin = `http://127.0.0.1:${port}`;
+  assert.equal((await request({ method: "POST", path: `/api/admin/fichas/${id}/reenviar-correo`, headers: { origin } })).status, 401);
+});
+
+test("la CSP permite consultar Georef", async () => {
+  const response = await request({ path: "/" });
+  assert.match(response.headers["content-security-policy"], /connect-src 'self' https:\/\/apis\.datos\.gob\.ar/);
 });
 
 test("los métodos equivocados devuelven 405 en endpoints conocidos", async () => {
@@ -263,23 +294,6 @@ test("Grupos y Contratos completos exigen sesión", async () => {
     const response = await request({ path: `/api/google-sheets?sheet=${sheet}` });
     assert.equal(response.status, 401);
   }
-});
-
-test("la búsqueda pública devuelve solo coincidencias activas y campos mínimos", () => {
-  const grupos = [
-    { id: "g1", nivel: "Secundaria", viaje: "Bariloche 2026", colegio: "Colegio San José", curso: "5to", division: "B", pasajeros_esperados: 30, created_at: "privado" },
-    { id: "g2", nivel: "Secundaria", viaje: "Bariloche 2026", colegio: "Otro Colegio", curso: "5to", division: "B" }
-  ];
-  const contratos = [
-    { id: "c1", codigo_contrato: "CON-1", colegio_nombre: "Colegio San José", grupo_id: "g1", nivel: "Secundaria", viaje: "Bariloche 2026", curso: "5to", division: "B", estado: "Activo", observaciones: "privado" },
-    { id: "c2", codigo_contrato: "CON-2", colegio_nombre: "Otro Colegio", grupo_id: "g2", nivel: "Secundaria", viaje: "Bariloche 2026", curso: "5to", division: "B", estado: "Inactivo" }
-  ];
-  const params = new URLSearchParams({ nivel: "Secundaria", viaje: "Bariloche 2026", colegio: "San Jose", cursoDivision: "5to B" });
-  const result = __test.publicInscripcionContext(grupos, contratos, params);
-  assert.equal(result.grupos.length, 1);
-  assert.equal(result.contratos.length, 1);
-  assert.equal(result.grupos[0].pasajeros_esperados, undefined);
-  assert.equal(result.contratos[0].observaciones, undefined);
 });
 
 test("HTML, CSS y JavaScript se revalidan para evitar versiones viejas", async () => {

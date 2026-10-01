@@ -4,6 +4,9 @@ const http = require("http");
 const path = require("path");
 const { URL } = require("url");
 const db = require("./lib/db");
+const fichaValidation = require("./assets/js/modules/ficha-validation.js");
+const fichaPdf = require("./lib/ficha-pdf");
+const email = require("./lib/email");
 
 const PORT = Number(process.env.PORT || 8080);
 const ROOT = __dirname;
@@ -192,26 +195,30 @@ function clientIp(req) {
 }
 
 const SCHEMA = {
-  GRUPOS: ["id", "nivel", "viaje", "colegio", "curso", "division", "pasajeros_esperados", "estado", "created_at", "updated_at"],
+  GRUPOS: ["id", "nivel", "viaje", "colegio", "colegio_id", "curso", "division", "pasajeros_esperados", "estado", "created_at", "updated_at"],
   CONTRATOS: ["id", "codigo_contrato", "colegio_id", "colegio_nombre", "grupo_id", "nivel", "viaje", "curso", "division", "estado", "fecha_creacion", "observaciones", "created_at", "updated_at"],
-  PASAJEROS: ["id", "grupo_id", "contrato_id", "codigo_contrato", "nombre", "dni", "nacimiento", "telefono", "responsable_nombre", "responsable_dni", "responsable_telefono", "vinculo", "responsable_cuil_cuit", "estado", "documentacion_estado", "ficha_medica_estado", "pago_estado", "observaciones", "created_at", "updated_at"],
+  PASAJEROS: ["id", "grupo_id", "contrato_id", "codigo_contrato", "nombre", "dni", "nacimiento", "telefono", "responsable_nombre", "responsable_dni", "responsable_telefono", "vinculo", "responsable_cuil_cuit", "estado", "documentacion_estado", "ficha_medica_estado", "pago_estado", "observaciones", "created_at", "updated_at", "apellido", "responsable_apellido", "responsable_email", "plan_pago_id", "plan_nombre", "plan_cuotas"],
   FICHAS_ADHESION: [
-    "id", "pasajero_dni", "pasajero_nombre", "pasajero_tipo_documento", "pasajero_nacimiento", "pasajero_sexo",
-    "responsable_nombre", "responsable_tipo_documento", "responsable_numero_documento", "responsable_nacimiento",
+    "id", "tipo", "pasajero_dni", "pasajero_nombre", "pasajero_apellido", "pasajero_tipo_documento", "pasajero_nacimiento", "pasajero_sexo",
+    "responsable_nombre", "responsable_apellido", "responsable_tipo_documento", "responsable_numero_documento", "responsable_nacimiento",
     "responsable_parentesco", "responsable_email", "responsable_telefono", "responsable_celular", "responsable_cuil_cuit",
-    "domicilio_calle", "domicilio_numero", "domicilio_piso", "domicilio_departamento", "domicilio_localidad",
+    "domicilio_calle", "domicilio_numero", "domicilio_piso", "domicilio_departamento", "domicilio_barrio", "domicilio_localidad",
     "domicilio_provincia", "domicilio_codigo_postal", "acepta_condiciones", "firma_data_url",
-    "nivel", "viaje", "colegio", "curso_division", "grupo_solicitado", "grupo_asignado_id", "contrato_id",
-    "codigo_contrato", "estado_revision", "documentacion_estado", "ficha_medica_estado", "autorizacion_estado",
-    "observaciones", "created_at", "updated_at"
+    "nivel", "viaje", "colegio_id", "colegio", "colegio_texto", "colegio_vinculado", "grado", "division", "curso_division",
+    "plan_pago_id", "plan_nombre", "plan_cuotas", "grupo_asignado_id", "contrato_id", "codigo_contrato",
+    "estado_revision", "documentacion_estado", "ficha_medica_estado", "autorizacion_estado", "motivo_rechazo", "observaciones",
+    "email_estado", "email_error", "email_enviado_at", "created_at", "updated_at"
   ],
+  FICHAS_TUTOR: ["id", "tipo", "pasajero_nombre", "pasajero_apellido", "pasajero_dni", "nombre", "apellido", "tipo_documento", "numero_documento", "cuil_cuit", "celular", "email", "parentesco", "estado_revision", "observaciones", "created_at", "updated_at"],
+  PLANES_PAGO: ["id", "contrato_id", "nombre", "cuotas", "descripcion", "activo", "orden"],
+  COLEGIOS: ["id", "nombre", "provincia", "localidad", "codigo_oficial", "activo"],
   PAGOS: ["id", "pasajero_id", "pasajero_dni", "contrato_codigo", "fecha", "monto", "medio", "estado", "cuota_id", "comprobante_url", "observaciones", "created_at"],
   CUOTAS: ["id", "pasajero_id", "pasajero_dni", "contrato_codigo", "numero", "nombre", "monto", "vencimiento", "estado", "created_at", "updated_at"],
   CONFIG: ["clave", "valor", "descripcion", "updated_at"],
   TURISMO: ["id", "slug", "destino", "titulo", "duracion", "temporada", "fecha_salida", "fecha_regreso", "salida_garantizada", "precio_desde", "precio_valor", "moneda", "precio_base_doble", "suplemento_single", "precio_menor", "condicion_venta", "categorias", "descripcion_corta", "descripcion_larga", "incluye", "no_incluye", "formas_pago", "itinerario", "fotos", "estado", "destacado", "orden", "created_at", "updated_at"]
 };
 
-const WRITE_ALLOWED = new Set(["GRUPOS", "CONTRATOS", "PASAJEROS", "FICHAS_ADHESION", "TURISMO"]);
+const WRITE_ALLOWED = new Set(["GRUPOS", "CONTRATOS", "PASAJEROS", "FICHAS_ADHESION", "TURISMO", "FICHAS_TUTOR", "PLANES_PAGO", "COLEGIOS"]);
 
 // Migración a Supabase (24/07): Grupos, Contratos, Pasajeros y Turismo
 // (admin) pasan de Google Sheets a Postgres, mismo principio que ya se usó
@@ -233,20 +240,28 @@ if (POSTGRES_MIGRATION_REQUESTED && !process.env.DATABASE_URL) {
   );
 }
 const POSTGRES_SHEETS = new Set(
-  POSTGRES_MIGRATION_ENABLED ? ["GRUPOS", "CONTRATOS", "PASAJEROS", "TURISMO", "CONFIG"] : []
+  POSTGRES_MIGRATION_ENABLED
+    ? ["GRUPOS", "CONTRATOS", "PASAJEROS", "TURISMO", "CONFIG", "FICHAS_TUTOR", "PLANES_PAGO", "COLEGIOS"]
+    : []
 );
 const POSTGRES_LIST_FN = {
   GRUPOS: db.listGruposAdmin,
   CONTRATOS: db.listContratosAdmin,
   PASAJEROS: db.listPasajerosAdmin,
   TURISMO: db.listTurismoAdmin,
-  CONFIG: db.listConfigAdmin
+  CONFIG: db.listConfigAdmin,
+  FICHAS_TUTOR: db.listFichasTutorAdmin,
+  PLANES_PAGO: db.listPlanesPagoAdmin,
+  COLEGIOS: db.listColegiosAdmin
 };
 const POSTGRES_SAVE_FN = {
   GRUPOS: db.saveGruposAdmin,
   CONTRATOS: db.saveContratosAdmin,
   PASAJEROS: db.savePasajerosAdmin,
-  TURISMO: db.saveTurismoAdmin
+  TURISMO: db.saveTurismoAdmin,
+  FICHAS_TUTOR: db.saveFichasTutorAdmin,
+  PLANES_PAGO: db.savePlanesPagoAdmin,
+  COLEGIOS: db.saveColegiosAdmin
 };
 let cachedToken = null;
 
@@ -337,7 +352,7 @@ function securityHeaders(req) {
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net",
       "font-src 'self' data: https://fonts.gstatic.com",
       "img-src 'self' data: blob: https:",
-      "connect-src 'self'",
+      "connect-src 'self' https://apis.datos.gob.ar",
       "upgrade-insecure-requests"
     ].join("; ")
   };
@@ -423,64 +438,6 @@ function sameOriginRequest(req) {
   } catch (error) {
     return false;
   }
-}
-
-function normalizePublicMatch(value) {
-  return String(value || "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim();
-}
-
-function publicMatchScore(input, candidate) {
-  if (!input || !candidate) return 0;
-  if (input === candidate) return 1;
-  if (input.length >= 4 && candidate.includes(input)) return 0.94;
-  if (candidate.length >= 4 && input.includes(candidate)) return 0.94;
-  const rows = Array.from({ length: input.length + 1 }, (_, index) => [index]);
-  for (let column = 0; column <= candidate.length; column += 1) rows[0][column] = column;
-  for (let row = 1; row <= input.length; row += 1) {
-    for (let column = 1; column <= candidate.length; column += 1) {
-      rows[row][column] = Math.min(
-        rows[row - 1][column] + 1,
-        rows[row][column - 1] + 1,
-        rows[row - 1][column - 1] + (input[row - 1] === candidate[column - 1] ? 0 : 1)
-      );
-    }
-  }
-  return Math.max(0, 1 - (rows[input.length][candidate.length] / Math.max(input.length, candidate.length, 1)));
-}
-
-function publicInscripcionContext(grupos, contratos, params) {
-  const nivel = normalizePublicMatch(params.get("nivel"));
-  const viaje = normalizePublicMatch(params.get("viaje"));
-  const colegio = normalizePublicMatch(params.get("colegio"));
-  const cursoDivision = normalizePublicMatch(params.get("cursoDivision"));
-  if (!nivel || !viaje || colegio.length < 3 || !cursoDivision) return { grupos: [], contratos: [] };
-
-  const groupsById = new Map(grupos.map((group) => [String(group.id || ""), group]));
-  const matches = contratos.map((contract) => {
-    const group = groupsById.get(String(contract.grupo_id || ""));
-    if (!group) return null;
-    const school = normalizePublicMatch(contract.colegio_nombre || group.colegio);
-    const course = normalizePublicMatch(`${contract.curso || group.curso || ""} ${contract.division || group.division || ""}`);
-    const active = ["activo", "activa"].includes(normalizePublicMatch(contract.estado));
-    const score = publicMatchScore(colegio, school);
-    const matches = active && normalizePublicMatch(contract.nivel) === nivel &&
-      normalizePublicMatch(contract.viaje) === viaje && course === cursoDivision && score >= 0.68;
-    return matches ? { contract, score } : null;
-  }).filter(Boolean).sort((a, b) => b.score - a.score).slice(0, 5).map(({ contract }) => contract);
-  const matchedGroupIds = new Set(matches.map((contract) => String(contract.grupo_id || "")));
-  return {
-    grupos: grupos
-      .filter((group) => matchedGroupIds.has(String(group.id || "")))
-      .map(({ id, nivel: groupNivel, viaje: groupViaje, colegio: groupSchool, curso, division }) =>
-        ({ id, nivel: groupNivel, viaje: groupViaje, colegio: groupSchool, curso, division })),
-    contratos: matches.map(({ id, codigo_contrato, colegio_nombre, grupo_id, nivel: contractNivel, viaje: contractViaje, curso, division, estado }) =>
-      ({ id, codigo_contrato, colegio_nombre, grupo_id, nivel: contractNivel, viaje: contractViaje, curso, division, estado }))
-  };
 }
 
 function requireSameOrigin(req, res) {
@@ -617,10 +574,10 @@ const PUBLIC_READ_SHEETS = new Set(["TURISMO", "CONFIG"]);
 // hacía el pedido. Eso significaba que alguien podía, sin loguearse:
 //   - inyectar/corromper pasajeros, grupos, contratos o paquetes de turismo
 //   - pisar la ficha de OTRA familia mandando el mismo "id" que ya existe
-// Ahora: solo FICHAS_ADHESION admite escritura sin sesión (porque la
-// inscripción pública la necesita), y con reglas estrictas para ese caso
-// puntual. Todo lo demás exige sesión de admin válida.
-const PUBLIC_WRITE_SHEETS = new Set(["FICHAS_ADHESION"]);
+// Ahora ninguna hoja admite escritura sin sesión. La ficha pública (que era
+// la única excepción) entra por POST /api/public/fichas, con validación
+// completa y una sola ficha por pedido (ficha v2, 15/09/2026).
+const PUBLIC_WRITE_SHEETS = new Set();
 
 // FIX: el límite plano de 1000 caracteres por campo truncaba (corrompía)
 // el itinerario y las fotos de Turismo en cuanto un viaje tenía un
@@ -663,19 +620,6 @@ function sanitizeDeleteIds(deleteIds) {
   return deleteIds
     .map((id) => String(id || "").trim().slice(0, 200))
     .filter(Boolean);
-}
-
-function validPublicFicha(row) {
-  const dni = String(row.pasajero_dni || "").replace(/\D/g, "");
-  const hasPassenger = dni.length >= 6 && String(row.pasajero_nombre || "").trim().length >= 3;
-  const hasResponsible = String(row.responsable_nombre || "").trim().length >= 3 &&
-    String(row.responsable_telefono || "").replace(/\D/g, "").length >= 6;
-  const hasTripContext = Boolean(
-    String(row.codigo_contrato || row.contrato_id || row.grupo_asignado_id || row.colegio || row.curso_division || "").trim()
-  );
-  const acceptedConditions = row.acepta_condiciones === true ||
-    String(row.acepta_condiciones || "").trim().toUpperCase() === "TRUE";
-  return hasPassenger && hasResponsible && hasTripContext && acceptedConditions && Boolean(row.firma_data_url);
 }
 
 async function handleSheets(req, res, url) {
@@ -734,53 +678,6 @@ async function handleSheets(req, res, url) {
     }
     if (deleteIds.length > MAX_DELETE_IDS_PER_WRITE) {
       return json(res, 413, { ok: false, error: "Demasiadas eliminaciones para una sola escritura" });
-    }
-
-    if (sheet === "FICHAS_ADHESION" && !isAdmin) {
-      const ip = clientIp(req);
-      if (fichaSubmitRateLimited(ip)) {
-        return json(res, 429, { ok: false, error: "Se alcanzó el límite de envíos. Probá de nuevo más tarde o consultanos por WhatsApp." });
-      }
-      // Envío público (familia sin login): máximo 1 ficha por pedido, el
-      // servidor genera su propio id (ignora el que mande el cliente) para
-      // que nadie pueda pisar la ficha de otra familia mandando un id que
-      // ya exista, y se acotan los campos a un largo razonable.
-      const publicRow = rows.slice(0, 1)[0];
-      if (!publicRow) {
-        return json(res, 400, { ok: false, error: "Ficha incompleta o inválida" });
-      }
-      try {
-        publicRow.firma_data_url = db.normalizeSignatureDataUrl(publicRow.firma_data_url);
-      } catch (error) {
-        return json(res, 400, { ok: false, error: error.friendlyMessage || error.message || "Firma inválida" });
-      }
-      rows = [{
-        ...sanitizeRow(publicRow, SCHEMA.FICHAS_ADHESION),
-        id: `ficha-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`
-      }];
-      deleteIds = [];
-      if (!rows.length || !validPublicFicha(rows[0])) {
-        return json(res, 400, { ok: false, error: "Ficha incompleta o inválida" });
-      }
-      registerFichaSubmit(ip);
-      // FIX: este flujo escribía a Google Sheets, que hoy no tiene
-      // credenciales configuradas en este entorno y siempre fallaba con
-      // "Credenciales de Google Sheets no configuradas" - la familia veía
-      // éxito en la UI (la promesa de escritura es fire-and-forget del
-      // lado del cliente) pero la ficha nunca se guardaba en ningún lado.
-      // Ahora este flujo público va directo a Supabase/Postgres (ver
-      // lib/db.js), en una transacción real (persona + viaje + inscripción
-      // + ficha). El resto de las hojas (GRUPOS/CONTRATOS/PASAJEROS/
-      // TURISMO) y la lectura/edición de fichas desde el admin siguen en
-      // Google Sheets sin tocar - eso es parte del adaptador completo que
-      // se está armando aparte, no de este fix puntual.
-      try {
-        await db.insertFichaPublica(rows[0]);
-      } catch (error) {
-        console.error("Error al guardar ficha de adhesión en Supabase:", safeErrorForLog(error));
-        return json(res, 500, { ok: false, error: "No se pudo guardar la ficha. Intentá de nuevo en unos minutos o consultanos por WhatsApp." });
-      }
-      return json(res, 200, { ok: true, sheet });
     }
 
     rows = sanitizeRows(rows, SCHEMA[sheet]);
@@ -984,6 +881,170 @@ function sweepExpiredEntries() {
 }
 setInterval(sweepExpiredEntries, 15 * 60 * 1000).unref();
 
+// ============ FICHA DE ADHESIÓN v2: rutas públicas y de admin ============
+//
+// El envío público usa rutas propias (antes iba por /api/google-sheets y el
+// navegador mandaba TODAS las fichas acumuladas en localStorage, mostrando
+// éxito sin esperar la respuesta). Se valida con el mismo módulo que usa el
+// formulario (assets/js/modules/ficha-validation.js) y se responde 201 solo
+// cuando la ficha quedó guardada.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const MAX_FICHA_BODY_BYTES = 400_000;
+
+// Genera el PDF y envía el correo de una ficha ya guardada. Nunca lanza: el
+// resultado queda en fichas_adhesion.email_estado para verlo en el admin.
+async function procesarCorreoFicha(id, idempotencyKey) {
+  try {
+    if (!email.correoConfigurado()) {
+      await db.setFichaEmailResultado(id, { estado: "sin_configurar" });
+      return;
+    }
+    const [fila] = await db.listFichasAdmin(id);
+    if (!fila) return;
+    const pdf = await fichaPdf.generarPdfFicha(fila);
+    await email.enviarCorreoFicha(fila, pdf, idempotencyKey ? { idempotencyKey } : {});
+    await db.setFichaEmailResultado(id, { estado: "enviado" });
+  } catch (error) {
+    console.error("Error al enviar el correo de la ficha:", safeErrorForLog(error));
+    await db.setFichaEmailResultado(id, {
+      estado: "error",
+      error: error.friendlyMessage || "No se pudo generar o enviar el correo."
+    }).catch(() => {});
+  }
+}
+
+async function recuperarCorreosPendientes() {
+  if (!email.correoConfigurado()) return;
+  try {
+    const pendientes = await db.listFichaEmailsPendientes(25);
+    for (const ficha of pendientes) {
+      await procesarCorreoFicha(ficha.id, `ficha-${ficha.id}`);
+    }
+    if (pendientes.length) {
+      console.log(`Correos pendientes procesados al iniciar: ${pendientes.length}`);
+    }
+  } catch (error) {
+    // El sitio debe seguir disponible aunque la recuperación de correo falle.
+    console.error("No se pudieron recuperar los correos pendientes:", safeErrorForLog(error));
+  }
+}
+
+async function handlePublicFicha(req, res) {
+  if (requireSameOrigin(req, res)) return;
+  const ip = clientIp(req);
+  if (fichaSubmitRateLimited(ip)) {
+    return json(res, 429, { ok: false, error: "Se alcanzó el límite de envíos. Probá de nuevo más tarde o consultanos por WhatsApp." });
+  }
+  const body = await readJsonBody(req, MAX_FICHA_BODY_BYTES);
+  // Primera pasada sin planes: descarta fichas incompletas antes de tocar la
+  // base. El plan se valida en la segunda pasada, con los planes reales del
+  // contrato.
+  const previa = fichaValidation.validarFichaPax(body);
+  if (Object.keys(previa.errores).length) {
+    return json(res, 400, { ok: false, error: "Revisá los datos marcados.", errores: previa.errores });
+  }
+  try {
+    body.firma = db.normalizeSignatureDataUrl(body.firma);
+  } catch (error) {
+    return json(res, 400, {
+      ok: false,
+      error: "Revisá los datos marcados.",
+      errores: { firma: error.friendlyMessage || "Firma inválida." }
+    });
+  }
+  const contexto = UUID_RE.test(previa.datos.colegioId)
+    ? await db.contextoInscripcion({
+      colegioId: previa.datos.colegioId,
+      nivel: previa.datos.nivel,
+      viaje: `${previa.datos.destino} ${previa.datos.anio}`,
+      grado: previa.datos.grado,
+      division: previa.datos.division
+    })
+    : { contrato: null, grupoId: null, planes: [] };
+  const validacion = fichaValidation.validarFichaPax(body, { planesDisponibles: contexto.planes.map((plan) => plan.id) });
+  if (!validacion.ok) {
+    return json(res, 400, { ok: false, error: "Revisá los datos marcados.", errores: validacion.errores });
+  }
+  registerFichaSubmit(ip);
+  let guardada;
+  try {
+    guardada = await db.insertFichaPublica(validacion.datos, contexto);
+  } catch (error) {
+    if (error.statusCode === 400) {
+      return json(res, 400, { ok: false, error: error.message, errores: error.errores || {} });
+    }
+    console.error("Error al guardar ficha de adhesión:", safeErrorForLog(error));
+    return json(res, 500, {
+      ok: false,
+      error: "No se pudo guardar la ficha. Tus datos siguen cargados: intentá de nuevo en unos minutos o consultanos por WhatsApp."
+    });
+  }
+  json(res, 201, { ok: true, id: guardada.id, emailDestino: email.enmascararEmail(validacion.datos.responsableEmail) });
+  setImmediate(() => procesarCorreoFicha(guardada.id));
+}
+
+async function handlePublicFichaTutor(req, res) {
+  if (requireSameOrigin(req, res)) return;
+  const ip = clientIp(req);
+  if (fichaSubmitRateLimited(ip)) {
+    return json(res, 429, { ok: false, error: "Se alcanzó el límite de envíos. Probá de nuevo más tarde o consultanos por WhatsApp." });
+  }
+  const body = await readJsonBody(req, 20_000);
+  const validacion = fichaValidation.validarFichaTutor(body);
+  if (!validacion.ok) {
+    return json(res, 400, { ok: false, error: "Revisá los datos marcados.", errores: validacion.errores });
+  }
+  registerFichaSubmit(ip);
+  try {
+    const guardada = await db.insertFichaTutor(validacion.datos);
+    return json(res, 201, { ok: true, id: guardada.id });
+  } catch (error) {
+    console.error("Error al guardar ficha de tutor:", safeErrorForLog(error));
+    return json(res, 500, { ok: false, error: "No se pudo guardar el registro. Intentá de nuevo en unos minutos." });
+  }
+}
+
+// /api/admin/fichas/:id/pdf y /api/admin/fichas/:id/reenviar-correo.
+// Devuelve false si la ruta no es de este handler.
+async function handleAdminFicha(req, res, url) {
+  const match = /^\/api\/admin\/fichas\/([^/]+)\/(pdf|reenviar-correo)$/.exec(url.pathname);
+  if (!match) return false;
+  if (!currentAdminSession(req)) {
+    json(res, 401, { ok: false, error: "Necesitás iniciar sesión." });
+    return true;
+  }
+  const [, id, accion] = match;
+  if (!UUID_RE.test(id)) {
+    json(res, 404, { ok: false, error: "Ficha no encontrada." });
+    return true;
+  }
+  if (accion === "pdf" && req.method === "GET") {
+    const [fila] = await db.listFichasAdmin(id);
+    if (!fila) {
+      json(res, 404, { ok: false, error: "Ficha no encontrada." });
+      return true;
+    }
+    const pdf = await fichaPdf.generarPdfFicha(fila);
+    res.writeHead(200, {
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename="${fichaPdf.nombreArchivoPdf(fila)}"`,
+      "Cache-Control": "no-store",
+      ...securityHeaders(req)
+    });
+    res.end(Buffer.from(pdf));
+    return true;
+  }
+  if (accion === "reenviar-correo" && req.method === "POST") {
+    if (requireSameOrigin(req, res)) return true;
+    await procesarCorreoFicha(id, `ficha-${id}-reenvio-${Date.now()}`);
+    const [fila] = await db.listFichasAdmin(id);
+    json(res, 200, { ok: true, email_estado: fila?.email_estado || "", email_error: fila?.email_error || "" });
+    return true;
+  }
+  json(res, 405, { ok: false, error: "Método no permitido" });
+  return true;
+}
+
 function createAppServer() {
   return http.createServer(async (req, res) => {
     res.req = req;
@@ -992,11 +1053,26 @@ function createAppServer() {
       if (url.pathname.startsWith("/api/") && apiRateLimited(req, url)) {
         return json(res, 429, { ok: false, error: "Demasiadas solicitudes. Probá de nuevo más tarde." });
       }
-      if (url.pathname.startsWith("/api/admin/")) return await handleAdminAuth(req, res, url);
-      if (url.pathname === "/api/public/inscripcion-context" && req.method === "GET") {
-        const [grupos, contratos] = await Promise.all([db.listGruposAdmin(), db.listContratosAdmin()]);
-        return json(res, 200, { ok: true, ...publicInscripcionContext(grupos, contratos, url.searchParams) });
+      if (url.pathname.startsWith("/api/admin/fichas/")) {
+        if (await handleAdminFicha(req, res, url)) return;
       }
+      if (url.pathname.startsWith("/api/admin/")) return await handleAdminAuth(req, res, url);
+      if (url.pathname === "/api/public/colegios" && req.method === "GET") {
+        return json(res, 200, { ok: true, colegios: await db.listColegiosPublicos() });
+      }
+      if (url.pathname === "/api/public/inscripcion-context" && req.method === "GET") {
+        const params = url.searchParams;
+        const contexto = await db.contextoInscripcion({
+          colegioId: params.get("colegioId"),
+          nivel: params.get("nivel"),
+          viaje: params.get("viaje"),
+          grado: params.get("grado"),
+          division: params.get("division")
+        });
+        return json(res, 200, { ok: true, contrato: contexto.contrato, planes: contexto.planes });
+      }
+      if (url.pathname === "/api/public/fichas" && req.method === "POST") return await handlePublicFicha(req, res);
+      if (url.pathname === "/api/public/fichas-tutor" && req.method === "POST") return await handlePublicFichaTutor(req, res);
       if (url.pathname === "/api/google-sheets") return await handleSheets(req, res, url);
       return staticFile(req, res, url);
     } catch (error) {
@@ -1015,6 +1091,7 @@ function createAppServer() {
 if (process.env.NODE_ENV !== "test" || require.main === module) {
   createAppServer().listen(PORT, "0.0.0.0", () => {
     console.log(`El Ángel Azul server listening on ${PORT}`);
+    setImmediate(recuperarCorreosPendientes);
   });
 }
 
@@ -1026,6 +1103,6 @@ module.exports = {
     sessionCookie,
     safePasswordEqual,
     safeErrorForLog,
-    publicInscripcionContext
+    recuperarCorreosPendientes
   }
 };
