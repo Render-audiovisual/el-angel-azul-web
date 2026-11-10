@@ -340,3 +340,20 @@ test("los grupos eligen el colegio de la lista", () => {
   assert.match(functionSource("renderAdminGruposCreateForm", "renderAdminGrupos"), /renderAdminColegioSelect\(\)/);
   assert.match(functionSource("renderAdminPasajerosGroupModal", "renderAdminPasajeros"), /renderAdminColegioSelect\(/);
 });
+
+test("Colegios admin: ruta registrada, carpeta física y baja lógica (sin borrar)", () => {
+  assert.match(appSource, /path: "\/admin\/colegios"/);
+  assert.match(appSource, /path === "\/admin\/colegios"/);
+  assert.match(appSource, /endsWith\("\/admin\/colegios"\)/);
+  assert.ok(fs.existsSync(path.join(__dirname, "..", "admin", "colegios", "index.html")));
+  const source = functionSource("renderAdminColegios", "renderAdminConfiguracion");
+  assert.match(source, /activo: baja \? "FALSE" : "TRUE"/);
+  assert.doesNotMatch(source, /deleteIds|DELETE/i);
+});
+
+test("la pertenencia de la ficha y del pasajero llega hasta el Tutor", () => {
+  const ficha = functionSource("renderAdminFichaDetail", "approveFichaAdhesionAndCreatePassenger");
+  assert.match(ficha, /renderFichaValue\("Tutor"/);
+  const pasajero = functionSource("renderAdminPasajerosProfile", "renderAdminPasajerosGroupModal");
+  assert.match(pasajero, /renderFichaValue\("Tutor"/);
+});
