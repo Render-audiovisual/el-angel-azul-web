@@ -973,6 +973,7 @@ async function handlePublicFicha(req, res) {
     if (error.statusCode === 400) {
       return json(res, 400, { ok: false, error: error.message, errores: error.errores || {} });
     }
+    if (error.statusCode === 409) return json(res, 409, { ok: false, error: error.message });
     console.error("Error al guardar ficha de adhesión:", safeErrorForLog(error));
     return json(res, 500, {
       ok: false,
@@ -999,6 +1000,7 @@ async function handlePublicFichaTutor(req, res) {
     const guardada = await db.insertFichaTutor(validacion.datos);
     return json(res, 201, { ok: true, id: guardada.id });
   } catch (error) {
+    if (error.statusCode === 409) return json(res, 409, { ok: false, error: error.message });
     console.error("Error al guardar ficha de tutor:", safeErrorForLog(error));
     return json(res, 500, { ok: false, error: "No se pudo guardar el registro. Intentá de nuevo en unos minutos." });
   }

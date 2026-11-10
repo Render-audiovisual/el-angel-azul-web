@@ -309,3 +309,64 @@ test("HTML, CSS y JavaScript se revalidan para evitar versiones viejas", async (
     assert.equal(response.headers["cross-origin-resource-policy"], "same-origin");
   }
 });
+
+test("bug: POST fichas con cuerpo JSON null responde 400, no 500", async () => {
+  const origin = `http://127.0.0.1:${port}`;
+  for (const path of ["/api/public/fichas", "/api/public/fichas-tutor"]) {
+    const response = await request({ method: "POST", path, headers: { origin }, rawBody: "null" });
+    assert.equal(response.status, 400, path);
+    assert.equal(response.json.ok, false);
+  }
+});
+
+// Reenvío de la misma ficha (doble toque, reintento desde otro equipo): la base
+// avisa con 409 y el formulario muestra el mensaje en vez de guardar un duplicado.
+const PNG_1X1 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
+const cuilConDigitoVerificador = (base) => {
+  const pesos = [5, 4, 3, 2, 7, 6, 5, 4, 3, 2];
+  const resto = 11 - ([...base].reduce((suma, digito, i) => suma + Number(digito) * pesos[i], 0) % 11);
+  return `${base}${resto === 11 ? 0 : resto === 10 ? 9 : resto}`;
+};
+
+test("fichas duplicadas: el 409 de la base llega al formulario con su mensaje", async () => {
+  const db = require("../lib/db");
+  const original = { pax: db.insertFichaPublica, tutor: db.insertFichaTutor };
+  const duplicado = Object.assign(new Error("Ya recibimos esta ficha."), { statusCode: 409 });
+  db.insertFichaPublica = async () => { throw duplicado; };
+  db.insertFichaTutor = async () => { throw duplicado; };
+  try {
+    const origin = `http://127.0.0.1:${port}`;
+    const cuil = cuilConDigitoVerificador("2720123456");
+    const pax = await request({
+      method: "POST",
+      path: "/api/public/fichas",
+      headers: { origin },
+      body: {
+        nivel: "Secundaria", destino: "Bariloche", anio: "2027", colegioTexto: "Escuela Normal 2", grado: "5°", division: "B",
+        pasajeroNombre: "Lucía", pasajeroApellido: "Ibáñez", pasajeroTipoDocumento: "DNI", pasajeroNumeroDocumento: "48000111", pasajeroNacimiento: "2010-05-20", pasajeroSexo: "Femenino",
+        responsableNombre: "Marta", responsableApellido: "Ibáñez", responsableTipoDocumento: "DNI", responsableNumeroDocumento: "20123456", responsableNacimiento: "1980-07-02",
+        responsableParentesco: "Madre", responsableCuilCuit: cuil, responsableEmail: "marta@gmail.com", responsableCelular: "3794123456",
+        domicilioCalle: "San Martín", domicilioNumero: "123", domicilioLocalidad: "Corrientes", domicilioProvincia: "Corrientes", domicilioCodigoPostal: "3400",
+        aceptaCondiciones: true, firma: PNG_1X1
+      }
+    });
+    assert.equal(pax.status, 409);
+    assert.equal(pax.json.ok, false);
+    assert.equal(pax.json.error, "Ya recibimos esta ficha.");
+    const tutor = await request({
+      method: "POST",
+      path: "/api/public/fichas-tutor",
+      headers: { origin },
+      body: {
+        pasajeroNombre: "Lucía", pasajeroApellido: "Ibáñez", pasajeroNumeroDocumento: "48000111",
+        nombre: "Raúl", apellido: "Ibáñez", tipoDocumento: "DNI", numeroDocumento: "20123456", cuilCuit: cuil,
+        parentesco: "Padre", celular: "3794555666", email: "raul@gmail.com", aceptaCondiciones: true
+      }
+    });
+    assert.equal(tutor.status, 409);
+    assert.equal(tutor.json.error, "Ya recibimos esta ficha.");
+  } finally {
+    db.insertFichaPublica = original.pax;
+    db.insertFichaTutor = original.tutor;
+  }
+});

@@ -48,10 +48,12 @@
 
   const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   const NOMBRE_RE = /^[\p{L}][\p{L}' -]{1,79}$/u;
-  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+  const EMAIL_RE = /^[^\s@]+@([^\s@.]+\.)+[^\s@.]{2,}$/;
   const FIRMA_RE = /^data:image\/png;base64,[a-z0-9+/]+={0,2}$/i;
 
-  const limpiar = (valor) => String(valor ?? "").replace(/\s+/g, " ").trim();
+  // NFC: macOS/pegado pueden mandar la tilde como carácter suelto (e + ´).
+  // Apóstrofos curvos (teclado de iOS/Android) se guardan como apóstrofo recto.
+  const limpiar = (valor) => String(valor ?? "").normalize("NFC").replace(/[‘’´`]/g, "'").replace(/\s+/g, " ").trim();
   const digitos = (valor) => String(valor ?? "").replace(/\D+/g, "");
   const aceptado = (valor) => valor === true || String(valor ?? "").trim().toLowerCase() === "true" || valor === "si";
 
@@ -84,6 +86,7 @@
   }
 
   function crearValidador(input, hoy) {
+    if (!input || typeof input !== "object") input = {};
     const errores = {};
     const sugerencias = {};
     const datos = {};
@@ -140,7 +143,7 @@
       const valor = limpiar(input[campo]).toLowerCase();
       datos[campo] = valor;
       if (!valor) return error(campo, `Completá ${ETIQUETAS[campo]}.`);
-      if (!EMAIL_RE.test(valor)) return error(campo, `${ETIQUETAS[campo]}: formato inválido.`);
+      if (valor.length > 254 || !EMAIL_RE.test(valor)) return error(campo, `${ETIQUETAS[campo]}: formato inválido.`);
       const sugerida = sugerenciaEmail(valor);
       if (sugerida) sugerencias[campo] = `¿Quisiste decir ${sugerida}?`;
     };
@@ -148,6 +151,7 @@
       const valor = digitos(input[campo]);
       datos[campo] = valor;
       if (!valor) { if (requerido) error(campo, `Completá ${ETIQUETAS[campo]}.`); return; }
+      if (/[^\d\s()+.-]/.test(String(input[campo]))) return error(campo, `${ETIQUETAS[campo]}: usá solo números.`);
       if (valor.length < 10 || valor.length > 13) error(campo, `${ETIQUETAS[campo]}: ingresá característica y número (10 a 13 dígitos).`);
     };
     const condiciones = () => {
@@ -161,7 +165,8 @@
     return { ok: Object.keys(val.errores).length === 0, errores: val.errores, sugerencias: val.sugerencias, datos: val.datos };
   }
 
-  function validarFichaPax(input = {}, { hoy = new Date(), planesDisponibles = [] } = {}) {
+  function validarFichaPax(input, { hoy = new Date(), planesDisponibles = [] } = {}) {
+    if (!input || typeof input !== "object") input = {};
     const val = crearValidador(input, hoy);
     const { datos, error } = val;
 
@@ -210,7 +215,7 @@
     val.texto("domicilioPiso", { requerido: false, min: 1, max: 4 });
     val.texto("domicilioDepartamento", { requerido: false, min: 1, max: 6 });
     val.texto("domicilioBarrio", { requerido: false, min: 2, max: 80 });
-    val.texto("domicilioLocalidad", { max: 80 });
+    if (val.texto("domicilioLocalidad", { max: 80 }) && !/\p{L}/u.test(datos.domicilioLocalidad)) error("domicilioLocalidad", "Localidad: escribí el nombre.");
     val.lista("domicilioProvincia", PROVINCIAS);
     const cp = limpiar(input.domicilioCodigoPostal).toUpperCase().replace(/\s+/g, "");
     datos.domicilioCodigoPostal = cp;
@@ -230,7 +235,8 @@
     return resultado(val);
   }
 
-  function validarFichaTutor(input = {}, { hoy = new Date() } = {}) {
+  function validarFichaTutor(input, { hoy = new Date() } = {}) {
+    if (!input || typeof input !== "object") input = {};
     const val = crearValidador(input, hoy);
     val.nombre("pasajeroNombre");
     val.nombre("pasajeroApellido");

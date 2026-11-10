@@ -99,3 +99,43 @@ test("ficha de tutor válida e inválida", () => {
   assert.ok(r.errores.cuilCuit);
   assert.ok(r.errores.pasajeroNumeroDocumento);
 });
+
+// ---- Estabilización de la ficha pública: un test por bug hallado ----
+const tutorValido = (extra = {}) => ({
+  pasajeroNombre: "Ana", pasajeroApellido: "Pérez", pasajeroNumeroDocumento: "45123456",
+  nombre: "María", apellido: "Núñez", tipoDocumento: "DNI", numeroDocumento: "12345678",
+  cuilCuit: "20-12345678-6", celular: "3794123456", email: "a@gmail.com", parentesco: "Madre",
+  aceptaCondiciones: true, ...extra
+});
+
+test("bug: tildes descompuestas (NFD, macOS/pegado) se aceptan y se normalizan a NFC", () => {
+  const r = v.validarFichaTutor(tutorValido({ nombre: "Jose\u0301" }));
+  assert.deepEqual(r.errores, {});
+  assert.equal(r.datos.nombre, "José");
+});
+
+test("bug: apóstrofo curvo del teclado del celular se acepta como apóstrofo", () => {
+  const r = v.validarFichaTutor(tutorValido({ apellido: "D\u2019Angelo" }));
+  assert.deepEqual(r.errores, {});
+  assert.equal(r.datos.apellido, "D'Angelo");
+});
+
+test("bug: celular con letras se rechaza", () => {
+  assert.ok(v.validarFichaTutor(tutorValido({ celular: "llamar 3794123456 abc" })).errores.celular);
+  assert.deepEqual(v.validarFichaTutor(tutorValido({ celular: "(3794) 12-3456" })).errores, {});
+});
+
+test("bug: correo con dominio malformado o más largo que 254 se rechaza", () => {
+  assert.ok(v.validarFichaTutor(tutorValido({ email: "a@b..com" })).errores.email);
+  assert.ok(v.validarFichaTutor(tutorValido({ email: `${"a".repeat(250)}@gmail.com` })).errores.email);
+});
+
+test("bug: cuerpo null no tira excepción (devolvía 500 en la API)", () => {
+  assert.equal(v.validarFichaTutor(null).ok, false);
+  assert.equal(v.validarFichaPax(null).ok, false);
+});
+
+test("bug: localidad solo con números se rechaza", () => {
+  const r = v.validarFichaPax(fichaValida({ domicilioLocalidad: "12345" }), { hoy: HOY });
+  assert.ok(r.errores.domicilioLocalidad);
+});

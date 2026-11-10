@@ -8674,7 +8674,14 @@
         const planesFieldset = form.querySelector("[data-ficha-planes]");
         const planesOpciones = form.querySelector("[data-ficha-planes-opciones]");
         let planesDisponibles = [];
-        if (contextoInscripcion.colegioId) {
+        // Sin colegio de la lista no hay planes que cargar. Con colegio, el envío
+        // espera a que los planes estén cargados: si no, el servidor los exigiría
+        // sin que el usuario viera dónde elegirlos.
+        let planesCargados = !contextoInscripcion.colegioId;
+        let planesEnCurso = null;
+        const cargarPlanes = () => {
+          if (planesCargados) return Promise.resolve(true);
+          if (planesEnCurso) return planesEnCurso;
           const params = new URLSearchParams({
             colegioId: contextoInscripcion.colegioId,
             nivel: contextoInscripcion.nivel,
@@ -8682,8 +8689,11 @@
             grado: contextoInscripcion.grado,
             division: contextoInscripcion.division
           });
-          fetch(`/api/public/inscripcion-context?${params}`, { cache: "no-store" })
-            .then((response) => response.json())
+          planesEnCurso = fetch(`/api/public/inscripcion-context?${params}`, { cache: "no-store" })
+            .then((response) => {
+              if (!response.ok) throw new Error("contexto");
+              return response.json();
+            })
             .then((payload) => {
               const planes = Array.isArray(payload.planes) ? payload.planes : [];
               planesDisponibles = planes.map((plan) => plan.id);
@@ -8695,11 +8705,17 @@
                   <span><strong>${escapeHtml(plan.nombre)}</strong> · ${escapeHtml(String(plan.cuotas))} ${Number(plan.cuotas) === 1 ? "cuota" : "cuotas"}${plan.descripcion ? `<small>${escapeHtml(plan.descripcion)}</small>` : ""}</span>
                 </label>
               `).join("");
+              planesCargados = true;
+              return true;
             })
             .catch(() => {
               if (contratoNode) contratoNode.textContent = "se vincula en administración";
-            });
-        }
+              return false;
+            })
+            .finally(() => { planesEnCurso = null; });
+          return planesEnCurso;
+        };
+        cargarPlanes();
 
         // Localidades sugeridas por Georef (API oficial). Si no responde, la
         // localidad se escribe a mano igual.
@@ -8707,15 +8723,19 @@
         const provinciaSelect = form.querySelector('[name="domicilioProvincia"]');
         const localidadesLista = document.getElementById("localidades-lista");
         let georefTimer = null;
+        let georefSeq = 0;
         localidadInput.addEventListener("input", () => {
           clearTimeout(georefTimer);
           const nombre = localidadInput.value.trim();
           if (nombre.length < 2) return;
           georefTimer = setTimeout(async () => {
+            const seq = ++georefSeq;
             try {
               const params = new URLSearchParams({ provincia: provinciaSelect.value, nombre, max: "10", campos: "nombre" });
               const response = await fetch(`https://apis.datos.gob.ar/georef/api/localidades?${params}`);
               const payload = await response.json();
+              // Respuesta vieja (otra provincia o texto ya cambiado): se descarta.
+              if (seq !== georefSeq) return;
               const nombres = [...new Set((payload.localidades || []).map((localidad) => localidad.nombre))];
               localidadesLista.innerHTML = nombres.map((valor) => `<option value="${escapeHtml(valor)}"></option>`).join("");
             } catch (_) {
@@ -8724,6 +8744,7 @@
           }, 250);
         });
         provinciaSelect.addEventListener("change", () => {
+          georefSeq += 1;
           localidadesLista.innerHTML = "";
         });
 
@@ -8764,6 +8785,17 @@
           event.preventDefault();
           const submitButton = form.querySelector(".ficha-adhesion-submit");
           if (submitButton.disabled) return;
+          if (!planesCargados) {
+            submitButton.disabled = true;
+            const cargados = await cargarPlanes();
+            submitButton.disabled = false;
+            if (!cargados) {
+              errorBox.hidden = false;
+              errorBox.textContent = "No pudimos cargar los planes de pago. Tus datos siguen cargados: revisá tu internet y volvé a intentar.";
+              errorBox.scrollIntoView({ behavior: "smooth", block: "center" });
+              return;
+            }
+          }
           const ficha = leerFormulario();
           const local = validacion.validarFichaPax(ficha, { planesDisponibles });
           if (!local.ok) {

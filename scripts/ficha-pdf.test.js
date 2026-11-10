@@ -35,3 +35,11 @@ test("no falla con caracteres fuera de WinAnsi", async () => {
 test("nombre de archivo sin tildes ni espacios", () => {
   assert.equal(nombreArchivoPdf(fila), "ficha-fernandez-nunez-jose-maria-45123456.pdf");
 });
+
+test("la fecha de inscripción del PDF es la de Argentina, no la UTC", () => {
+  const { fechaArgentina } = require("../lib/ficha-pdf");
+  // 22:30 del 15/09 en Argentina (UTC-3) ya es 16/09 en UTC.
+  assert.equal(fechaArgentina("2026-09-16T01:30:00Z"), "2026-09-15");
+  assert.equal(fechaArgentina("2026-09-15T12:00:00Z"), "2026-09-15");
+  assert.equal(fechaArgentina(""), "");
+});
