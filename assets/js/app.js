@@ -12,6 +12,7 @@
         if (pathname.endsWith("/admin/turismo") || pathname.endsWith("/admin-turismo")) return "/admin/turismo";
         if (pathname.endsWith("/admin/fichas")) return "/admin/fichas";
         if (pathname.endsWith("/admin/grupos")) return "/admin/grupos";
+        if (pathname.endsWith("/admin/colegios")) return "/admin/colegios";
         if (pathname.endsWith("/admin/pasajeros")) return "/admin/pasajeros";
         if (pathname.endsWith("/admin/contratos")) return "/admin/contratos";
         if (pathname.endsWith("/admin/pagos")) return "/admin/pagos";
@@ -49,6 +50,7 @@
           path === "/admin/turismo" ||
           path === "/admin/fichas" ||
           path === "/admin/grupos" ||
+          path === "/admin/colegios" ||
           path === "/admin/pasajeros" ||
           path === "/admin/contratos" ||
           path === "/admin/pagos" ||
@@ -2082,6 +2084,12 @@
           icon: "groups"
         },
         {
+          id: "colegios",
+          label: "Colegios",
+          path: "/admin/colegios",
+          icon: "school"
+        },
+        {
           id: "pasajeros",
           label: "Pasajeros",
           path: "/admin/pasajeros",
@@ -2113,6 +2121,7 @@
           space_dashboard: '<path d="M3 3h8v8H3V3Zm10 0h8v5h-8V3ZM3 13h8v8H3v-8Zm10-3h8v11h-8V10Z"/>',
           assignment: '<path d="M9 5V3h6v2h3a2 2 0 0 1 2 2v14H4V7a2 2 0 0 1 2-2h3Zm2 0h2V4h-2v1Zm-3 5h8V8H8v2Zm0 4h8v-2H8v2Zm0 4h6v-2H8v2Z"/>',
           groups: '<path d="M8 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm8-1a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM2 21v-3c0-3 2.7-5 6-5s6 2 6 5v3H2Zm13.5 0v-3c0-1.4-.5-2.7-1.4-3.8.6-.2 1.2-.2 1.9-.2 3.3 0 6 1.8 6 4.5V21h-6.5Z"/>',
+          school: '<path d="M12 3 1 9l11 6 9-4.9V17h2V9L12 3ZM5 13.2v4L12 21l7-3.8v-4L12 17l-7-3.8Z"/>',
           person: '<path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm-9 9v-2c0-3.3 4-5 9-5s9 1.7 9 5v2H3Z"/>',
           payments: '<path d="M3 6h18v12H3V6Zm2 2v8h14V8H5Zm7 7a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM6 10h2V9H6v1Zm10 5h2v-1h-2v1Z"/>',
           flight: '<path d="m2 16 8-3V4.5a2 2 0 1 1 4 0V13l8 3v2l-8-1v3l2 1.5V23l-4-1-4 1v-1.5l2-1.5v-3l-8 1v-2Z"/>',
@@ -2721,6 +2730,136 @@
 
       function downloadGoogleSheetAppsScript() {
         downloadTextFile("EAA_Google_Sheets_Apps_Script.js", window.ElAngelAzulPersistence.appsScriptTemplate(), "text/javascript;charset=utf-8");
+      }
+
+      // ABM de colegios (lista que usa la inscripción pública). Baja lógica:
+      // activo = FALSE los saca de la inscripción pero conserva fichas y grupos.
+      let adminColegiosEditId = "";
+      let adminColegiosMessage = "";
+      let adminColegiosVerInactivos = false;
+
+      async function saveAdminColegios(nuevos, mensajeOk) {
+        const anteriores = adminColegios;
+        adminColegios = nuevos;
+        const guardado = await queueGoogleSheetsWrite(["COLEGIOS"]);
+        if (guardado) {
+          adminColegiosMessage = mensajeOk;
+        } else {
+          adminColegios = anteriores;
+          adminColegiosMessage = googleSheetsSyncState.message;
+        }
+        return guardado;
+      }
+
+      function renderAdminColegios() {
+        const sinVincular = loadFichasAdhesionDemo().filter((ficha) => !ficha.colegioVinculado && ficha.colegioTexto).length;
+        const editando = adminColegios.find((colegio) => colegio.id === adminColegiosEditId) || null;
+        const provincias = window.ElAngelAzulFichaValidation.PROVINCIAS;
+        const filas = [...adminColegios]
+          .filter((colegio) => adminColegiosVerInactivos || colegio.activo === "TRUE")
+          .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+        document.getElementById("app").innerHTML = renderAdminShell("colegios", `
+          <section class="admin-turismo-panel admin-colegios">
+            <div class="admin-pasajeros-table-head">
+              <div>
+                <h2>Colegios</h2>
+                <p>Lista que ven las familias al inscribirse. ${sinVincular ? `<strong>${sinVincular} ficha(s)</strong> tienen un colegio escrito a mano sin vincular (se resuelven desde Inscripciones).` : "No hay colegios escritos a mano pendientes de vincular."}</p>
+              </div>
+              <label class="admin-colegios-toggle"><input type="checkbox" data-admin-colegios-inactivos ${adminColegiosVerInactivos ? "checked" : ""}> Mostrar dados de baja</label>
+            </div>
+            ${adminColegiosMessage ? `<div class="admin-fichas-assigned-note" role="status">${escapeHtml(adminColegiosMessage)}</div>` : ""}
+            <form class="admin-pasajeros-form admin-colegios-form" data-admin-colegios-form novalidate>
+              <fieldset>
+                <legend>${editando ? "Editar colegio" : "Nuevo colegio"}</legend>
+                <label>Nombre <span class="admin-pasajeros-required">*</span>
+                  <input name="nombre" value="${escapeHtml(editando?.nombre || "")}" maxlength="120" required>
+                </label>
+                <label>Provincia
+                  <select name="provincia">
+                    <option value="">Sin indicar</option>
+                    ${provincias.map((provincia) => `<option value="${escapeHtml(provincia)}" ${provincia === (editando ? editando.provincia : "Corrientes") ? "selected" : ""}>${escapeHtml(provincia)}</option>`).join("")}
+                  </select>
+                </label>
+                <label>Localidad
+                  <input name="localidad" value="${escapeHtml(editando?.localidad || "")}" maxlength="80">
+                </label>
+              </fieldset>
+              <div class="admin-colegios-error" data-admin-colegios-error role="alert" hidden></div>
+              <div class="admin-pasajeros-form-actions">
+                <button type="submit" class="admin-pasajeros-primary-button">${editando ? "Guardar cambios" : "Agregar colegio"}</button>
+                ${editando ? `<button type="button" class="admin-pasajeros-secondary-button" data-admin-colegios-cancelar>Cancelar</button>` : ""}
+              </div>
+            </form>
+            <div class="admin-pasajeros-table-wrap">
+              <table class="admin-pasajeros-table">
+                <thead><tr><th>Nombre</th><th>Provincia</th><th>Localidad</th><th>Estado</th><th></th></tr></thead>
+                <tbody>
+                  ${filas.length ? filas.map((colegio) => `
+                    <tr>
+                      <td>${escapeHtml(colegio.nombre)}</td>
+                      <td>${escapeHtml(colegio.provincia || "—")}</td>
+                      <td>${escapeHtml(colegio.localidad || "—")}</td>
+                      <td><span class="admin-pasajeros-status ${colegio.activo === "TRUE" ? "is-ok" : "is-alert"}">${colegio.activo === "TRUE" ? "Activo" : "De baja"}</span></td>
+                      <td class="admin-colegios-actions">
+                        <button type="button" class="admin-pasajeros-secondary-button" data-admin-colegios-editar="${escapeHtml(colegio.id)}">Editar</button>
+                        <button type="button" class="admin-pasajeros-secondary-button" data-admin-colegios-estado="${escapeHtml(colegio.id)}">${colegio.activo === "TRUE" ? "Dar de baja" : "Reactivar"}</button>
+                      </td>
+                    </tr>
+                  `).join("") : `<tr><td colspan="5">Todavía no hay colegios cargados.</td></tr>`}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        `);
+        bindAdminShell();
+        document.querySelector("[data-admin-colegios-inactivos]")?.addEventListener("change", (event) => {
+          adminColegiosVerInactivos = event.target.checked;
+          renderAdminColegios();
+        });
+        document.querySelector("[data-admin-colegios-cancelar]")?.addEventListener("click", () => {
+          adminColegiosEditId = "";
+          adminColegiosMessage = "";
+          renderAdminColegios();
+        });
+        document.querySelectorAll("[data-admin-colegios-editar]").forEach((button) => {
+          button.addEventListener("click", () => {
+            adminColegiosEditId = button.dataset.adminColegiosEditar;
+            adminColegiosMessage = "";
+            renderAdminColegios();
+            document.querySelector("[data-admin-colegios-form] [name=nombre]")?.focus();
+          });
+        });
+        document.querySelectorAll("[data-admin-colegios-estado]").forEach((button) => {
+          button.addEventListener("click", async () => {
+            const colegio = adminColegios.find((item) => item.id === button.dataset.adminColegiosEstado);
+            if (!colegio) return;
+            const baja = colegio.activo === "TRUE";
+            if (baja && !confirm(`¿Dar de baja “${colegio.nombre}”? Deja de aparecer en la inscripción; las fichas y grupos existentes se conservan.`)) return;
+            await saveAdminColegios(
+              adminColegios.map((item) => (item.id === colegio.id ? { ...item, activo: baja ? "FALSE" : "TRUE" } : item)),
+              baja ? `“${colegio.nombre}” dado de baja.` : `“${colegio.nombre}” reactivado.`
+            );
+            renderAdminColegios();
+          });
+        });
+        document.querySelector("[data-admin-colegios-form]")?.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const form = event.currentTarget;
+          const errorBox = form.querySelector("[data-admin-colegios-error]");
+          const datos = new FormData(form);
+          const nombre = String(datos.get("nombre") || "").replace(/\s+/g, " ").trim();
+          const mostrarError = (texto) => { errorBox.hidden = false; errorBox.textContent = texto; };
+          if (nombre.length < 3) return mostrarError("El nombre del colegio es muy corto (mínimo 3 letras).");
+          const repetido = adminColegios.find((colegio) => colegio.id !== adminColegiosEditId && normalizeFichaSearchText(colegio.nombre) === normalizeFichaSearchText(nombre));
+          if (repetido) return mostrarError(`Ya existe un colegio con ese nombre${repetido.activo === "TRUE" ? "" : " (está dado de baja: reactivalo)"}.`);
+          const campos = { nombre, provincia: String(datos.get("provincia") || ""), localidad: String(datos.get("localidad") || "").replace(/\s+/g, " ").trim() };
+          const nuevos = editando
+            ? adminColegios.map((colegio) => (colegio.id === editando.id ? { ...colegio, ...campos } : colegio))
+            : [...adminColegios, { id: crypto.randomUUID(), codigo_oficial: "", activo: "TRUE", ...campos }];
+          const guardado = await saveAdminColegios(nuevos, editando ? `“${nombre}” actualizado.` : `“${nombre}” agregado.`);
+          if (guardado) adminColegiosEditId = "";
+          renderAdminColegios();
+        });
       }
 
       function renderAdminConfiguracion() {
@@ -3870,6 +4009,7 @@
                   ${renderFichaValue("División", ficha.division)}
                   ${renderFichaValue("Plan", planTexto)}
                   ${renderFichaValue("Contrato", ficha.codigoContrato)}
+                  ${renderFichaValue("Tutor", fichaNombreCompleto(ficha.responsableApellido, ficha.responsableNombre))}
                   ${renderFichaValue("Viaje", ficha.viaje)}
                 </dl>
                 ${renderFichaVincularColegio(ficha)}
@@ -9097,6 +9237,10 @@
         }
         if (path === "/admin/grupos") {
           renderAdminGrupos();
+          return;
+        }
+        if (path === "/admin/colegios") {
+          renderAdminColegios();
           return;
         }
         if (path === "/admin/pasajeros") {

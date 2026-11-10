@@ -11232,3 +11232,8 @@
           justify-self: start;
         }
       }
+
+/* Colegios (admin): ABM */
+.admin-colegios-toggle { align-items: center; display: flex; font-weight: 700; gap: 8px; }
+.admin-colegios-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.admin-colegios-error { background: #fdecec; border: 1px solid #f1b5b5; border-radius: 10px; color: #8a1f1f; font-weight: 700; padding: 10px 12px; }
