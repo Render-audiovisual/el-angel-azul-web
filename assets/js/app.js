@@ -5143,6 +5143,15 @@
             <form class="admin-pasajeros-form" data-admin-pasajeros-form novalidate>
 
               <fieldset>
+                <legend>Grupo</legend>
+                <label>Grupo (colegio · curso · viaje) <span class="admin-pasajeros-required">*</span>
+                  <select name="grupoId" data-admin-pasajeros-form-grupo required>
+                    ${adminPasajerosDemo.map((group) => `<option value="${escapeHtml(group.id)}" ${group.id === selectedGroup?.id ? "selected" : ""}>${escapeHtml(`${group.colegio} · ${group.curso} ${group.division} · ${group.viaje} · ${group.nivel}`)}</option>`).join("")}
+                  </select>
+                </label>
+              </fieldset>
+
+              <fieldset>
                 <legend>Datos del pasajero</legend>
                 <label>Nombre/s <span class="admin-pasajeros-required">*</span>
                   <input name="nombre" placeholder="Ej: Juan Ignacio" autocomplete="off" required>
@@ -6061,10 +6070,13 @@
         });
         document.querySelector("[data-admin-pasajeros-form]")?.addEventListener("submit", (event) => {
           event.preventDefault();
-          const selectedGroup = adminPasajerosDemo.find((group) => group.id === adminPasajerosGrupoId);
-          if (!selectedGroup) return;
-
           const formData = new FormData(event.currentTarget);
+          const selectedGroup = adminPasajerosDemo.find((group) => group.id === String(formData.get("grupoId") || adminPasajerosGrupoId));
+          if (!selectedGroup) return;
+          adminPasajerosNivel = selectedGroup.nivel;
+          adminPasajerosViaje = selectedGroup.viaje;
+          adminPasajerosColegio = selectedGroup.colegio;
+          adminPasajerosGrupoId = selectedGroup.id;
           const selectedContract = contractById(String(formData.get("contratoId") || "").trim(), selectedGroup.id);
           const passenger = {
             nombre: String(formData.get("nombre") || "").trim(),
@@ -6135,6 +6147,20 @@
           adminPasajerosShowForm = false;
           adminPasajerosFormError = "";
           renderAdminPasajeros();
+        });
+        document.querySelector("[data-admin-pasajeros-form-grupo]")?.addEventListener("change", (event) => {
+          const group = adminPasajerosDemo.find((item) => item.id === event.currentTarget.value);
+          if (!group) return;
+          const typed = [...new FormData(event.currentTarget.form)].filter(([name]) => name !== "grupoId" && name !== "contratoId");
+          adminPasajerosNivel = group.nivel;
+          adminPasajerosViaje = group.viaje;
+          adminPasajerosColegio = group.colegio;
+          adminPasajerosGrupoId = group.id;
+          adminPasajerosFormError = "";
+          renderAdminPasajeros();
+          const form = document.querySelector("[data-admin-pasajeros-form]");
+          typed.forEach(([name, value]) => { if (form?.elements[name]) form.elements[name].value = value; });
+          form?.elements.grupoId?.focus();
         });
         document.querySelector("[data-admin-pasajeros-new-colegio]")?.addEventListener("click", () => openAdminPasajerosGroupModal("colegio"));
         document.querySelector("[data-admin-pasajeros-new-curso]")?.addEventListener("click", () => openAdminPasajerosGroupModal("curso"));
