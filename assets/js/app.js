@@ -3508,7 +3508,7 @@
 
       function fichaSignatureDataUrl(ficha = {}) {
         const value = String(ficha.firma || ficha.firmaDataUrl || "");
-        return /^data:image\/png;base64,[a-z0-9+/=]+$/i.test(value) ? value : "";
+        return /^(data:image\/png;base64,[a-z0-9+/=]+|\/api\/admin\/fichas\/[0-9a-f-]{36}\/firma)$/i.test(value) ? value : "";
       }
 
       function renderFichaAssignmentControls(ficha) {

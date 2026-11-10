@@ -40,6 +40,10 @@ SUPABASE_DB_CA_CERT="-----BEGIN CERTIFICATE-----\\n...\\n-----END CERTIFICATE---
 RESEND_API_KEY=...
 EAA_EMAIL_FROM="El Ángel Azul <fichas@DOMINIO-VERIFICADO>"
 EAA_EMAIL_COPIA=agencia@DOMINIO   # opcional, copia oculta
+# Firma de la ficha en Supabase Storage (bucket privado "fichas", migración 0005).
+# Sin estas dos variables la firma sigue guardándose como data URL en la base.
+SUPABASE_URL=https://<proyecto>.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=...   # solo servidor; nunca en el frontend
 ```
 
 El correo necesita el dominio de la agencia verificado en Resend (registros DNS).
