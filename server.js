@@ -7,6 +7,7 @@ const db = require("./lib/db");
 const fichaValidation = require("./assets/js/modules/ficha-validation.js");
 const fichaPdf = require("./lib/ficha-pdf");
 const email = require("./lib/email");
+const storage = require("./lib/storage");
 
 const PORT = Number(process.env.PORT || 8080);
 const ROOT = __dirname;
@@ -648,10 +649,10 @@ async function handleSheets(req, res, url) {
     // de Hostinger antes de tocar ningún dato real.
     if (sheet === "FICHAS_ADHESION" && adminSession) {
       if (POSTGRES_MIGRATION_ENABLED) {
-        return json(res, 200, { ok: true, sheet, rows: await db.listFichasAdmin() });
+        return json(res, 200, { ok: true, sheet, rows: conFirmaPorUrl(await db.listFichasAdmin()) });
       }
       const [sheetsRows, postgresRows] = await Promise.all([readSheet(sheet), db.listFichasAdmin()]);
-      return json(res, 200, { ok: true, sheet, rows: [...postgresRows, ...sheetsRows] });
+      return json(res, 200, { ok: true, sheet, rows: [...conFirmaPorUrl(postgresRows), ...sheetsRows] });
     }
     if (POSTGRES_SHEETS.has(sheet)) {
       return json(res, 200, { ok: true, sheet, rows: await POSTGRES_LIST_FN[sheet]() });
@@ -893,6 +894,20 @@ const MAX_FICHA_BODY_BYTES = 400_000;
 
 // Genera el PDF y envía el correo de una ficha ya guardada. Nunca lanza: el
 // resultado queda en fichas_adhesion.email_estado para verlo en el admin.
+// El PDF espera la firma como data URL: si está en Storage se descarga acá.
+async function conFirmaEmbebida(fila) {
+  const bytes = await storage.bytesFirma(fila.firma_data_url);
+  fila.firma_data_url = bytes ? `data:image/png;base64,${bytes.toString("base64")}` : "";
+  return fila;
+}
+
+// El listado del admin no trae los bytes: las firmas de Storage se sirven por URL.
+function conFirmaPorUrl(filas) {
+  return filas.map((fila) => (
+    storage.esRutaStorage(fila.firma_data_url) ? { ...fila, firma_data_url: `/api/admin/fichas/${fila.id}/firma` } : fila
+  ));
+}
+
 async function procesarCorreoFicha(id, idempotencyKey) {
   try {
     if (!email.correoConfigurado()) {
@@ -901,6 +916,7 @@ async function procesarCorreoFicha(id, idempotencyKey) {
     }
     const [fila] = await db.listFichasAdmin(id);
     if (!fila) return;
+    await conFirmaEmbebida(fila);
     const pdf = await fichaPdf.generarPdfFicha(fila);
     await email.enviarCorreoFicha(fila, pdf, idempotencyKey ? { idempotencyKey } : {});
     await db.setFichaEmailResultado(id, { estado: "enviado" });
@@ -968,6 +984,9 @@ async function handlePublicFicha(req, res) {
   registerFichaSubmit(ip);
   let guardada;
   try {
+    if (storage.storageConfigurado()) {
+      validacion.datos.firma = await storage.subirFirma(validacion.datos.firma, crypto.randomUUID());
+    }
     guardada = await db.insertFichaPublica(validacion.datos, contexto);
   } catch (error) {
     if (error.statusCode === 400) {
@@ -1009,7 +1028,7 @@ async function handlePublicFichaTutor(req, res) {
 // /api/admin/fichas/:id/pdf y /api/admin/fichas/:id/reenviar-correo.
 // Devuelve false si la ruta no es de este handler.
 async function handleAdminFicha(req, res, url) {
-  const match = /^\/api\/admin\/fichas\/([^/]+)\/(pdf|reenviar-correo)$/.exec(url.pathname);
+  const match = /^\/api\/admin\/fichas\/([^/]+)\/(pdf|reenviar-correo|firma)$/.exec(url.pathname);
   if (!match) return false;
   if (!currentAdminSession(req)) {
     json(res, 401, { ok: false, error: "Necesitás iniciar sesión." });
@@ -1026,7 +1045,7 @@ async function handleAdminFicha(req, res, url) {
       json(res, 404, { ok: false, error: "Ficha no encontrada." });
       return true;
     }
-    const pdf = await fichaPdf.generarPdfFicha(fila);
+    const pdf = await fichaPdf.generarPdfFicha(await conFirmaEmbebida(fila));
     res.writeHead(200, {
       "Content-Type": "application/pdf",
       "Content-Disposition": `attachment; filename="${fichaPdf.nombreArchivoPdf(fila)}"`,
@@ -1034,6 +1053,17 @@ async function handleAdminFicha(req, res, url) {
       ...securityHeaders(req)
     });
     res.end(Buffer.from(pdf));
+    return true;
+  }
+  if (accion === "firma" && req.method === "GET") {
+    const [fila] = await db.listFichasAdmin(id);
+    const bytes = fila && await storage.bytesFirma(fila.firma_data_url);
+    if (!bytes) {
+      json(res, 404, { ok: false, error: "Firma no encontrada." });
+      return true;
+    }
+    res.writeHead(200, { "Content-Type": "image/png", "Cache-Control": "no-store", ...securityHeaders(req) });
+    res.end(bytes);
     return true;
   }
   if (accion === "reenviar-correo" && req.method === "POST") {
