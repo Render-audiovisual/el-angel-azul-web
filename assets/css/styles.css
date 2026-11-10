@@ -7778,6 +7778,17 @@
         font-weight: 500;
       }
 
+      .ficha-campo {
+        align-content: start;
+        display: grid;
+        gap: 6px;
+        min-width: 0;
+      }
+
+      .ficha-campo--full {
+        grid-column: 1 / -1;
+      }
+
       .ficha-campo-error {
         color: #b42318;
         font-size: 0.9rem;
