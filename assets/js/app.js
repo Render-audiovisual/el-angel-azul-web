@@ -4362,6 +4362,57 @@
         });
       }
 
+      // Exporta las filas filtradas en pantalla. Los datos de domicilio y tutor
+      // salen de la ficha con el mismo DNI (si no hay ficha, quedan vacíos).
+      const ADMIN_PASAJEROS_EXPORT_COLUMNS = [
+        "Colegio", "Curso", "Grado/Año", "División", "Contrato", "Plan", "Cuotas", "Apellido", "Nombre", "DNI",
+        "Nacimiento", "Sexo", "Tutor apellido", "Tutor nombre", "Parentesco", "Tutor DNI", "CUIL/CUIT", "Celular",
+        "Email", "Calle y número", "Barrio", "Localidad", "Provincia", "CP", "Estado", "Documentación",
+        "Ficha médica", "Estado de pago"
+      ];
+
+      function adminPasajerosExportRows(rows) {
+        const fichas = loadFichasAdhesionDemo();
+        const collator = new Intl.Collator("es", { numeric: true, sensitivity: "base" });
+        const sorted = [...rows].sort((a, b) => (
+          collator.compare(a.group.colegio, b.group.colegio)
+          || collator.compare(a.group.curso, b.group.curso)
+          || collator.compare(a.group.division, b.group.division)
+          || collator.compare(a.passenger.apellido || "", b.passenger.apellido || "")
+        ));
+        return sorted.map(({ group, passenger: p, payment }) => {
+          const f = fichas.find((item) => item.tipo !== "tutor" && normalizeFichaDni(item.pasajeroNumeroDocumento) === normalizeFichaDni(p.dni)) || {};
+          return {
+            "Colegio": group.colegio, "Curso": group.nivel, "Grado/Año": group.curso, "División": group.division,
+            "Contrato": p.codigoContrato || "", "Plan": p.planNombre || "", "Cuotas": p.planCuotas || "",
+            "Apellido": p.apellido || "", "Nombre": p.nombre || "", "DNI": p.dni || "",
+            "Nacimiento": p.nacimiento || f.pasajeroNacimiento || "", "Sexo": f.pasajeroSexo || "",
+            "Tutor apellido": p.responsableApellido || f.responsableApellido || "",
+            "Tutor nombre": p.responsable || f.responsableNombre || "",
+            "Parentesco": p.vinculo || f.responsableParentesco || "",
+            "Tutor DNI": p.responsableDni || f.responsableNumeroDocumento || "",
+            "CUIL/CUIT": p.responsableCuilCuit || f.responsableCuilCuit || "",
+            "Celular": f.responsableCelular || p.responsableTelefono || p.telefono || "",
+            "Email": p.responsableEmail || f.responsableEmail || "",
+            "Calle y número": [f.domicilioCalle, f.domicilioNumero].filter(Boolean).join(" "),
+            "Barrio": f.domicilioBarrio || "", "Localidad": f.domicilioLocalidad || "",
+            "Provincia": f.domicilioProvincia || "", "CP": f.domicilioCodigoPostal || "",
+            "Estado": p.estado || "", "Documentación": p.documentacion || "", "Ficha médica": p.fichaMedica || "",
+            "Estado de pago": payment.estadoPago || ""
+          };
+        });
+      }
+
+      function exportAdminPasajerosXlsx() {
+        const rows = adminPasajerosExportRows(adminPasajerosFilteredRows());
+        const sheet = XLSX.utils.json_to_sheet(rows, { header: ADMIN_PASAJEROS_EXPORT_COLUMNS });
+        sheet["!cols"] = autoFitColumnWidths(rows, ADMIN_PASAJEROS_EXPORT_COLUMNS);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, sheet, "Pasajeros");
+        // Fecha local: toISOString() es UTC y de noche en Argentina (UTC-3) ya marca el día siguiente.
+        XLSX.writeFile(workbook, `EAA_pasajeros_${new Date().toLocaleDateString("sv-SE")}.xlsx`);
+      }
+
       function adminPasajerosSelectedRecord() {
         if (!adminPasajerosSelectedDni) return null;
         return adminPasajerosRows().find(({ passenger }) => String(passenger.dni) === String(adminPasajerosSelectedDni)) || null;
@@ -5090,6 +5141,7 @@
               ${renderAdminPasajerosSelect("curso", adminPasajerosFilterCurso, allCursos, "Curso")}
               ${renderAdminPasajerosSelect("estado", adminPasajerosFilterEstado, allEstados, "Estado")}
               <button type="button" class="admin-pasajeros-secondary-button" data-admin-pasajeros-clear-filters>Limpiar</button>
+              <button type="button" class="admin-pasajeros-secondary-button" data-admin-pasajeros-export>Exportar a Excel</button>
             </div>
           </section>
 
@@ -5997,6 +6049,7 @@
             renderAdminPasajeros();
           });
         });
+        document.querySelector("[data-admin-pasajeros-export]")?.addEventListener("click", exportAdminPasajerosXlsx);
         document.querySelector("[data-admin-pasajeros-clear-filters]")?.addEventListener("click", () => {
           adminPasajerosSearch = "";
           adminPasajerosFilterViaje = "";

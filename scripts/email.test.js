@@ -47,6 +47,8 @@ test("traduce errores de Resend a mensajes legibles", async () => {
   const falla = (status) => async () => ({ ok: false, status, json: async () => ({ message: "x" }) });
   await assert.rejects(email.enviarCorreoFicha(fila, new Uint8Array([1]), { env, fetchImpl: falla(429) }), (e) => /Límite/.test(e.friendlyMessage));
   await assert.rejects(email.enviarCorreoFicha(fila, new Uint8Array([1]), { env, fetchImpl: falla(403) }), (e) => /dominio/.test(e.friendlyMessage));
+  await assert.rejects(email.enviarCorreoFicha(fila, new Uint8Array([1]), { env, fetchImpl: falla(422) }), (e) => /email del tutor/.test(e.friendlyMessage));
+  await assert.rejects(email.enviarCorreoFicha(fila, new Uint8Array([1]), { env, fetchImpl: falla(500) }), (e) => /respondió 500/.test(e.friendlyMessage));
 });
 
 test("el arranque recupera correos pendientes con una clave idempotente", () => {
