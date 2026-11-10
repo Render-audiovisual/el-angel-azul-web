@@ -82,6 +82,9 @@ const adminSessions = new Map();
 // No es un rate-limiter distribuido (se resetea si el proceso reinicia),
 // pero corta un ataque de fuerza bruta automatizado básico.
 const LOGIN_ATTEMPT_LIMIT = 5;
+// Además del límite por IP (evadible si el proxy no fija X-Forwarded-For), cada
+// usuario tiene un tope propio más alto, para frenar la fuerza bruta rotando IP.
+const LOGIN_USER_ATTEMPT_LIMIT = 20;
 const LOGIN_ATTEMPT_WINDOW_MS = 15 * 60 * 1000;
 const loginAttempts = new Map();
 
@@ -157,14 +160,14 @@ function registerFichaSubmit(ip) {
   record.count += 1;
 }
 
-function loginRateLimited(ip) {
-  const record = loginAttempts.get(ip);
+function loginRateLimited(key, limit = LOGIN_ATTEMPT_LIMIT) {
+  const record = loginAttempts.get(key);
   if (!record) return false;
   if (Date.now() - record.firstAttemptAt > LOGIN_ATTEMPT_WINDOW_MS) {
-    loginAttempts.delete(ip);
+    loginAttempts.delete(key);
     return false;
   }
-  return record.count >= LOGIN_ATTEMPT_LIMIT;
+  return record.count >= limit;
 }
 
 function registerFailedLogin(ip) {
@@ -274,8 +277,17 @@ function parseCookies(req) {
     .map((part) => {
       const index = part.indexOf("=");
       if (index === -1) return [part, ""];
-      return [decodeURIComponent(part.slice(0, index)), decodeURIComponent(part.slice(index + 1))];
+      return [safeDecode(part.slice(0, index)), safeDecode(part.slice(index + 1))];
     }));
+}
+
+// Una cookie o ruta con % mal formado no debe tumbar el pedido con un 500.
+function safeDecode(value) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
 }
 
 function sessionCookie(token, maxAgeSeconds, isSecureRequest = false) {
@@ -744,19 +756,22 @@ async function handleAdminAuth(req, res, url) {
   if (url.pathname === "/api/admin/login" && req.method === "POST") {
     if (requireSameOrigin(req, res)) return;
     const ip = clientIp(req);
-    if (loginRateLimited(ip)) {
-      return json(res, 429, { ok: false, error: "Demasiados intentos fallidos. Esperá unos minutos antes de volver a intentar." });
-    }
     const payload = await readJsonBody(req, 20_000);
     const username = String(payload.username || "").trim().toLowerCase().slice(0, 100);
+    const userKey = `user:${username}`;
+    if (loginRateLimited(ip) || loginRateLimited(userKey, LOGIN_USER_ATTEMPT_LIMIT)) {
+      return json(res, 429, { ok: false, error: "Demasiados intentos fallidos. Esperá unos minutos antes de volver a intentar." });
+    }
     const password = String(payload.password || "").slice(0, 1000);
     const user = ADMIN_USERS[username];
     const configuredPassword = user?.password || "disabled-account-placeholder";
     if (!user?.password || !safePasswordEqual(configuredPassword, password)) {
       registerFailedLogin(ip);
+      registerFailedLogin(userKey);
       return json(res, 401, { ok: false, error: "Usuario o contraseña incorrectos" });
     }
     clearLoginAttempts(ip);
+    clearLoginAttempts(userKey);
     // Una cuenta mantiene una sola sesión activa. Un nuevo ingreso invalida
     // tokens anteriores (útil al rotar claves o cerrar una sesión olvidada).
     for (const [existingToken, existingSession] of adminSessions) {
@@ -804,7 +819,7 @@ function staticFile(req, res, url) {
       return res.end();
     }
   }
-  const cleanPath = decodeURIComponent(url.pathname === "/" ? "/index.html" : url.pathname);
+  const cleanPath = safeDecode(url.pathname === "/" ? "/index.html" : url.pathname);
   const publicPath = cleanPath.replace(/^\/+/, "");
   const normalizedPublicPath = path.posix.normalize(publicPath);
   const isPublicAsset = normalizedPublicPath.startsWith("assets/") && !normalizedPublicPath.includes("../");

@@ -328,6 +328,27 @@ const cuilConDigitoVerificador = (base) => {
   return `${base}${resto === 11 ? 0 : resto === 10 ? 9 : resto}`;
 };
 
+test("cookie y ruta con % mal formado no dan 500", async () => {
+  const cookie = await request({ path: "/api/admin/me", headers: { cookie: "eaa_session=%E0%A4%A" } });
+  assert.equal(cookie.status, 200);
+  const ruta = await request({ path: "/%E0%A4%A" });
+  assert.notEqual(ruta.status, 500);
+});
+
+test("login: el límite por usuario frena la fuerza bruta aunque rote la IP", async () => {
+  const origin = `http://127.0.0.1:${port}`;
+  let ultimo;
+  for (let i = 0; i < 21; i++) {
+    ultimo = await request({
+      method: "POST",
+      path: "/api/admin/login",
+      headers: { origin, "x-forwarded-for": `9.9.9.${i}` },
+      body: { username: "victima-fuerza-bruta", password: "x" }
+    });
+  }
+  assert.equal(ultimo.status, 429);
+});
+
 test("fichas duplicadas: el 409 de la base llega al formulario con su mensaje", async () => {
   const db = require("../lib/db");
   const original = { pax: db.insertFichaPublica, tutor: db.insertFichaTutor };
