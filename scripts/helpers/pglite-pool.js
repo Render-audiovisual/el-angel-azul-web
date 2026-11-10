@@ -6,6 +6,8 @@ const path = require("node:path");
 async function crearPoolLocal() {
   const { PGlite } = await import("@electric-sql/pglite");
   const pg = new PGlite();
+  // Supabase trae el esquema storage; PGlite no. Stub mínimo para la migración 0005.
+  await pg.exec("create schema if not exists storage; create table if not exists storage.buckets (id text primary key, name text, public boolean, file_size_limit bigint, allowed_mime_types text[])");
   const dir = path.join(__dirname, "../../supabase/migrations");
   for (const archivo of fs.readdirSync(dir).filter((f) => f.endsWith(".sql")).sort()) {
     await pg.exec(fs.readFileSync(path.join(dir, archivo), "utf8").replace(/create extension[^;]*;/gi, ""));
