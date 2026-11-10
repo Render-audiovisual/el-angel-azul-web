@@ -2767,7 +2767,7 @@
               </div>
               <label class="admin-colegios-toggle"><input type="checkbox" data-admin-colegios-inactivos ${adminColegiosVerInactivos ? "checked" : ""}> Mostrar dados de baja</label>
             </div>
-            ${adminColegiosMessage ? `<div class="admin-fichas-assigned-note" role="status">${escapeHtml(adminColegiosMessage)}</div>` : ""}
+            ${adminColegiosMessage ? `<div class="admin-fichas-assigned-note" role="status" tabindex="-1" data-admin-colegios-status>${escapeHtml(adminColegiosMessage)}</div>` : ""}
             <form class="admin-pasajeros-form admin-colegios-form" data-admin-colegios-form novalidate>
               <fieldset>
                 <legend>${editando ? "Editar colegio" : "Nuevo colegio"}</legend>
@@ -2784,7 +2784,7 @@
                   <input name="localidad" value="${escapeHtml(editando?.localidad || "")}" maxlength="80">
                 </label>
               </fieldset>
-              <div class="admin-colegios-error" data-admin-colegios-error role="alert" hidden></div>
+              <div class="admin-colegios-error" id="admin-colegios-error" data-admin-colegios-error role="alert" hidden></div>
               <div class="admin-pasajeros-form-actions">
                 <button type="submit" class="admin-pasajeros-primary-button">${editando ? "Guardar cambios" : "Agregar colegio"}</button>
                 ${editando ? `<button type="button" class="admin-pasajeros-secondary-button" data-admin-colegios-cancelar>Cancelar</button>` : ""}
@@ -2792,7 +2792,7 @@
             </form>
             <div class="admin-pasajeros-table-wrap">
               <table class="admin-pasajeros-table">
-                <thead><tr><th>Nombre</th><th>Provincia</th><th>Localidad</th><th>Estado</th><th></th></tr></thead>
+                <thead><tr><th>Nombre</th><th>Provincia</th><th>Localidad</th><th>Estado</th><th><span class="sr-only">Acciones</span></th></tr></thead>
                 <tbody>
                   ${filas.length ? filas.map((colegio) => `
                     <tr>
@@ -2801,8 +2801,8 @@
                       <td>${escapeHtml(colegio.localidad || "—")}</td>
                       <td><span class="admin-pasajeros-status ${colegio.activo === "TRUE" ? "is-ok" : "is-alert"}">${colegio.activo === "TRUE" ? "Activo" : "De baja"}</span></td>
                       <td class="admin-colegios-actions">
-                        <button type="button" class="admin-pasajeros-secondary-button" data-admin-colegios-editar="${escapeHtml(colegio.id)}">Editar</button>
-                        <button type="button" class="admin-pasajeros-secondary-button" data-admin-colegios-estado="${escapeHtml(colegio.id)}">${colegio.activo === "TRUE" ? "Dar de baja" : "Reactivar"}</button>
+                        <button type="button" class="admin-pasajeros-secondary-button" data-admin-colegios-editar="${escapeHtml(colegio.id)}" aria-label="Editar ${escapeHtml(colegio.nombre)}">Editar</button>
+                        <button type="button" class="admin-pasajeros-secondary-button" data-admin-colegios-estado="${escapeHtml(colegio.id)}" aria-label="${colegio.activo === "TRUE" ? "Dar de baja" : "Reactivar"} ${escapeHtml(colegio.nombre)}">${colegio.activo === "TRUE" ? "Dar de baja" : "Reactivar"}</button>
                       </td>
                     </tr>
                   `).join("") : `<tr><td colspan="5">Todavía no hay colegios cargados.</td></tr>`}
@@ -2840,6 +2840,7 @@
               baja ? `“${colegio.nombre}” dado de baja.` : `“${colegio.nombre}” reactivado.`
             );
             renderAdminColegios();
+            document.querySelector("[data-admin-colegios-status]")?.focus();
           });
         });
         document.querySelector("[data-admin-colegios-form]")?.addEventListener("submit", async (event) => {
@@ -2848,7 +2849,15 @@
           const errorBox = form.querySelector("[data-admin-colegios-error]");
           const datos = new FormData(form);
           const nombre = String(datos.get("nombre") || "").replace(/\s+/g, " ").trim();
-          const mostrarError = (texto) => { errorBox.hidden = false; errorBox.textContent = texto; };
+          const mostrarError = (texto) => {
+            form.closest("section")?.querySelector("[data-admin-colegios-status]")?.remove();
+            errorBox.hidden = false;
+            errorBox.textContent = texto;
+            const campoNombre = form.querySelector("[name=nombre]");
+            campoNombre.setAttribute("aria-invalid", "true");
+            campoNombre.setAttribute("aria-describedby", "admin-colegios-error");
+            campoNombre.focus();
+          };
           if (nombre.length < 3) return mostrarError("El nombre del colegio es muy corto (mínimo 3 letras).");
           const repetido = adminColegios.find((colegio) => colegio.id !== adminColegiosEditId && normalizeFichaSearchText(colegio.nombre) === normalizeFichaSearchText(nombre));
           if (repetido) return mostrarError(`Ya existe un colegio con ese nombre${repetido.activo === "TRUE" ? "" : " (está dado de baja: reactivalo)"}.`);
@@ -2859,6 +2868,7 @@
           const guardado = await saveAdminColegios(nuevos, editando ? `“${nombre}” actualizado.` : `“${nombre}” agregado.`);
           if (guardado) adminColegiosEditId = "";
           renderAdminColegios();
+          document.querySelector("[data-admin-colegios-status]")?.focus();
         });
       }
 
@@ -8481,9 +8491,15 @@
           nodo.textContent = mensaje || sugerencias[campo] || "";
           nodo.hidden = !nodo.textContent;
           nodo.classList.toggle("is-sugerencia", !mensaje && Boolean(sugerencias[campo]));
-          form.querySelectorAll(`[name="${campo}"]`).forEach((input) => {
-            if (mensaje) input.setAttribute("aria-invalid", "true");
-            else input.removeAttribute("aria-invalid");
+          nodo.id = nodo.id || `error-${campo}`;
+          form.querySelectorAll(`[name="${campo}"], [data-dob-group="${campo}"] input`).forEach((input) => {
+            if (mensaje) {
+              input.setAttribute("aria-invalid", "true");
+              input.setAttribute("aria-describedby", nodo.id);
+            } else {
+              input.removeAttribute("aria-invalid");
+              input.removeAttribute("aria-describedby");
+            }
           });
         });
         const campos = Object.keys(errores);

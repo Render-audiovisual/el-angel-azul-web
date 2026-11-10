@@ -7652,8 +7652,22 @@
       }
 
       .ficha-adhesion-check input {
-        min-height: auto;
-        width: auto;
+        flex: 0 0 24px;
+        height: 24px;
+        min-height: 24px;
+        width: 24px;
+      }
+
+      .sr-only {
+        border: 0;
+        clip: rect(0 0 0 0);
+        height: 1px;
+        margin: -1px;
+        overflow: hidden;
+        padding: 0;
+        position: absolute;
+        white-space: nowrap;
+        width: 1px;
       }
 
       .ficha-adhesion-signature {
@@ -10270,7 +10284,7 @@
 
       input::placeholder,
       textarea::placeholder {
-        color: color-mix(in srgb, var(--color-muted) 74%, transparent);
+        color: #5c6c76;
       }
 
       input:focus,
