@@ -5143,6 +5143,15 @@
             <form class="admin-pasajeros-form" data-admin-pasajeros-form novalidate>
 
               <fieldset>
+                <legend>Grupo</legend>
+                <label>Grupo (colegio · curso · viaje) <span class="admin-pasajeros-required">*</span>
+                  <select name="grupoId" data-admin-pasajeros-form-grupo required>
+                    ${adminPasajerosDemo.map((group) => `<option value="${escapeHtml(group.id)}" ${group.id === selectedGroup?.id ? "selected" : ""}>${escapeHtml(`${group.colegio} · ${group.curso} ${group.division} · ${group.viaje} · ${group.nivel}`)}</option>`).join("")}
+                  </select>
+                </label>
+              </fieldset>
+
+              <fieldset>
                 <legend>Datos del pasajero</legend>
                 <label>Nombre/s <span class="admin-pasajeros-required">*</span>
                   <input name="nombre" placeholder="Ej: Juan Ignacio" autocomplete="off" required>
@@ -6061,10 +6070,17 @@
         });
         document.querySelector("[data-admin-pasajeros-form]")?.addEventListener("submit", (event) => {
           event.preventDefault();
-          const selectedGroup = adminPasajerosDemo.find((group) => group.id === adminPasajerosGrupoId);
-          if (!selectedGroup) return;
-
           const formData = new FormData(event.currentTarget);
+          const selectedGroup = adminPasajerosDemo.find((group) => group.id === String(formData.get("grupoId") || ""));
+          if (!selectedGroup) {
+            adminPasajerosFormError = "Elegí un grupo.";
+            renderAdminPasajeros();
+            return;
+          }
+          adminPasajerosNivel = selectedGroup.nivel;
+          adminPasajerosViaje = selectedGroup.viaje;
+          adminPasajerosColegio = selectedGroup.colegio;
+          adminPasajerosGrupoId = selectedGroup.id;
           const selectedContract = contractById(String(formData.get("contratoId") || "").trim(), selectedGroup.id);
           const passenger = {
             nombre: String(formData.get("nombre") || "").trim(),
@@ -6135,6 +6151,20 @@
           adminPasajerosShowForm = false;
           adminPasajerosFormError = "";
           renderAdminPasajeros();
+        });
+        document.querySelector("[data-admin-pasajeros-form-grupo]")?.addEventListener("change", (event) => {
+          const group = adminPasajerosDemo.find((item) => item.id === event.currentTarget.value);
+          if (!group) return;
+          const typed = [...new FormData(event.currentTarget.form)].filter(([name]) => name !== "grupoId" && name !== "contratoId");
+          adminPasajerosNivel = group.nivel;
+          adminPasajerosViaje = group.viaje;
+          adminPasajerosColegio = group.colegio;
+          adminPasajerosGrupoId = group.id;
+          adminPasajerosFormError = "";
+          renderAdminPasajeros();
+          const form = document.querySelector("[data-admin-pasajeros-form]");
+          typed.forEach(([name, value]) => { if (form?.elements[name]) form.elements[name].value = value; });
+          form?.elements.grupoId?.focus();
         });
         document.querySelector("[data-admin-pasajeros-new-colegio]")?.addEventListener("click", () => openAdminPasajerosGroupModal("colegio"));
         document.querySelector("[data-admin-pasajeros-new-curso]")?.addEventListener("click", () => openAdminPasajerosGroupModal("curso"));
@@ -8492,7 +8522,7 @@
           nodo.hidden = !nodo.textContent;
           nodo.classList.toggle("is-sugerencia", !mensaje && Boolean(sugerencias[campo]));
           nodo.id = nodo.id || `error-${campo}`;
-          form.querySelectorAll(`[name="${campo}"], [data-dob-group="${campo}"] input`).forEach((input) => {
+          form.querySelectorAll(`[name="${campo}"], [data-error-target="${campo}"], [data-dob-group="${campo}"] input`).forEach((input) => {
             if (mensaje) {
               input.setAttribute("aria-invalid", "true");
               input.setAttribute("aria-describedby", nodo.id);
@@ -8509,7 +8539,7 @@
           : "";
         if (!campos.length) return;
         const nodo = form.querySelector(`[data-error-for="${campos[0]}"]`);
-        const contenedor = nodo?.closest("label, fieldset, .ficha-adhesion-context") || errorBox;
+        const contenedor = nodo?.closest(".ficha-campo, .ficha-adhesion-signature, label, fieldset, .ficha-adhesion-context") || errorBox;
         contenedor.scrollIntoView({ behavior: "smooth", block: "center" });
         contenedor.querySelector?.("input:not([type=hidden]), select")?.focus({ preventScroll: true });
       }
@@ -8517,13 +8547,26 @@
       // Al corregir un campo se borra su error (no hace falta reenviar para
       // ver que ya está bien). Sirve también para la fecha en 3 partes.
       function limpiarErrorAlEditar(form) {
+        // El mensaje de error no puede vivir dentro del <label>: el lector de
+        // pantalla lo leería como parte del nombre del campo. Se envuelve
+        // label + mensaje en un .ficha-campo y se asocia con aria-describedby.
+        form.querySelectorAll("label [data-error-for]").forEach((nodo) => {
+          const label = nodo.closest("label");
+          const campo = document.createElement("div");
+          campo.className = "ficha-campo" + (label.classList.contains("ficha-adhesion-check") ? " ficha-campo--full" : "");
+          label.replaceWith(campo);
+          campo.append(label, nodo);
+        });
         const limpiar = (event) => {
-          const contenedor = event.target.closest("label, .ficha-adhesion-signature");
+          const contenedor = event.target.closest(".ficha-campo, .ficha-adhesion-signature") || event.target.closest("label");
           const nodo = contenedor?.querySelector("[data-error-for]");
           if (!nodo || nodo.classList.contains("is-sugerencia")) return;
           nodo.hidden = true;
           nodo.textContent = "";
-          form.querySelectorAll(`[name="${nodo.dataset.errorFor}"]`).forEach((input) => input.removeAttribute("aria-invalid"));
+          form.querySelectorAll(`[name="${nodo.dataset.errorFor}"], [data-error-target="${nodo.dataset.errorFor}"]`).forEach((input) => {
+            input.removeAttribute("aria-invalid");
+            input.removeAttribute("aria-describedby");
+          });
         };
         form.addEventListener("input", limpiar);
         form.addEventListener("change", limpiar);
@@ -8543,7 +8586,7 @@
                   </div>
                   <i aria-hidden="true"></i>
                 </div>
-                <div class="ficha-adhesion-success ficha-adhesion-success-large">Recibimos tu ficha correctamente.</div>
+                <div class="ficha-adhesion-success ficha-adhesion-success-large" role="status" tabindex="-1" data-ficha-exito>Recibimos tu ficha correctamente.</div>
                 ${exito.emailDestino ? `<p>Te enviamos una copia a <strong>${escapeHtml(exito.emailDestino)}</strong>. Si no la ves en unos minutos, revisá la carpeta de spam.</p>` : ""}
                 <p>Queda pendiente de revisión por administración. Te contactaremos si necesitamos validar algún dato.</p>
                 <a class="ficha-adhesion-home-link" href="#/inscripcion">Volver al inicio</a>
@@ -8708,11 +8751,14 @@
 
                 <fieldset data-reveal-light>
                   <legend>Firma del padre, madre o tutor</legend>
-                  <p class="ficha-fieldset-note">Firmá dentro del recuadro usando el dedo o lápiz óptico.</p>
+                  <p class="ficha-fieldset-note">Firmá dentro del recuadro con el dedo, el mouse o un lápiz óptico. Si no podés dibujarla (por ejemplo, si usás teclado o lector de pantalla), escribí tu nombre completo en el campo de abajo.</p>
                   <div class="ficha-adhesion-signature">
                     <span>Firma del padre, madre o tutor</span>
-                    <canvas width="720" height="220" data-ficha-signature></canvas>
+                    <canvas width="720" height="220" role="img" aria-label="Recuadro para dibujar la firma. Alternativa: escribí tu nombre completo en el campo siguiente." data-ficha-signature></canvas>
                     <button type="button" data-ficha-clear-signature>Limpiar firma</button>
+                    <label>O escribí tu nombre y apellido completos como firma
+                      <input name="firmaTexto" autocomplete="off" maxlength="80" data-error-target="firma" data-ficha-signature-text>
+                    </label>
                     ${fichaCampoError("firma")}
                   </div>
                 </fieldset>
@@ -8792,8 +8838,35 @@
             y: (source.clientY - rect.top) * (canvas.height / rect.height)
           };
         };
+        const textoFirma = form.querySelector("[data-ficha-signature-text]");
+        // Alternativa sin mouse ni pantalla táctil: el nombre escrito se dibuja
+        // en un canvas y sale el mismo PNG que la firma a mano (mismo contrato).
+        const firmaDesdeTexto = (texto) => {
+          const lienzo = document.createElement("canvas");
+          lienzo.width = canvas.width;
+          lienzo.height = canvas.height;
+          const g = lienzo.getContext("2d");
+          g.fillStyle = "#10202b";
+          g.textAlign = "center";
+          g.textBaseline = "middle";
+          let tamano = 96;
+          g.font = `italic ${tamano}px "Brush Script MT", "Segoe Script", cursive`;
+          while (g.measureText(texto).width > lienzo.width - 40 && tamano > 20) {
+            tamano -= 4;
+            g.font = `italic ${tamano}px "Brush Script MT", "Segoe Script", cursive`;
+          }
+          g.fillText(texto, lienzo.width / 2, lienzo.height / 2);
+          return lienzo.toDataURL("image/png");
+        };
+        const nombreFirmaValido = () => textoFirma.value.trim().split(/\s+/).filter(Boolean).length >= 2;
+        textoFirma.addEventListener("input", () => {
+          if (!textoFirma.value.trim()) return;
+          context.clearRect(0, 0, canvas.width, canvas.height);
+          hasSignature = false;
+        });
         const begin = (event) => {
           event.preventDefault();
+          textoFirma.value = "";
           drawing = true;
           const point = canvasPoint(event);
           context.beginPath();
@@ -8822,6 +8895,7 @@
         clearButton?.addEventListener("click", () => {
           context.clearRect(0, 0, canvas.width, canvas.height);
           hasSignature = false;
+          textoFirma.value = "";
         });
 
         // Contrato y planes del curso elegido (si el colegio es de la lista).
@@ -8933,7 +9007,7 @@
             ...contextoInscripcion,
             ...Object.fromEntries(CAMPOS.map((campo) => [campo, String(formData.get(campo) || "")])),
             aceptaCondiciones: formData.get("aceptaCondiciones") === "si",
-            firma: hasSignature ? canvas.toDataURL("image/png") : ""
+            firma: nombreFirmaValido() ? firmaDesdeTexto(textoFirma.value.trim()) : hasSignature ? canvas.toDataURL("image/png") : ""
           };
         };
 
@@ -8955,6 +9029,7 @@
           const ficha = leerFormulario();
           const local = validacion.validarFichaPax(ficha, { planesDisponibles });
           if (!local.ok) {
+            if (local.errores.firma && textoFirma.value.trim()) local.errores.firma = "Escribí nombre y apellido completos para usar tu nombre como firma.";
             mostrarErroresFormulario(form, errorBox, local.errores, local.sugerencias);
             return;
           }
@@ -8971,6 +9046,7 @@
             if (response.status === 201 && payload.ok) {
               renderFichaAdhesion({ emailDestino: payload.emailDestino || "" });
               window.scrollTo({ top: 0 });
+              document.querySelector("[data-ficha-exito]")?.focus({ preventScroll: true });
               return;
             }
             if (payload.errores && Object.keys(payload.errores).length) {
@@ -8999,7 +9075,7 @@
           document.getElementById("app").innerHTML = `
             <div class="layout ficha-adhesion-layout">
               <section class="ficha-adhesion-panel ficha-adhesion-success-screen">
-                <div class="ficha-adhesion-success ficha-adhesion-success-large">Registramos tus datos como tutor.</div>
+                <div class="ficha-adhesion-success ficha-adhesion-success-large" role="status" tabindex="-1" data-ficha-exito>Registramos tus datos como tutor.</div>
                 <p>Administración los vincula con la ficha del pasajero. Te contactaremos si necesitamos validar algún dato.</p>
                 <a class="ficha-adhesion-home-link" href="#/inscripcion">Volver al inicio</a>
               </section>
@@ -9116,6 +9192,7 @@
             if (response.status === 201 && payload.ok) {
               renderFichaTutor(true);
               window.scrollTo({ top: 0 });
+              document.querySelector("[data-ficha-exito]")?.focus({ preventScroll: true });
               return;
             }
             if (payload.errores && Object.keys(payload.errores).length) {
