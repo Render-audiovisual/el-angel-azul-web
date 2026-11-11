@@ -357,3 +357,48 @@ test("la pertenencia de la ficha y del pasajero llega hasta el Tutor", () => {
   const pasajero = functionSource("renderAdminPasajerosProfile", "renderAdminPasajerosGroupModal");
   assert.match(pasajero, /renderFichaValue\("Tutor"/);
 });
+
+test("el alta de pasajero guarda en el grupo elegido y sin grupo no guarda", () => {
+  const render = functionSource("renderAdminPasajeros", "adminContratosFilteredRows");
+  assert.match(render, /<label>Grupo[^<]*<span[^>]*>\*<\/span>\s*<select name="grupoId"/);
+  const bind = functionSource("bindAdminPasajeros", "bindAdminFichasRecibidas");
+  const submit = bind.slice(bind.indexOf("[data-admin-pasajeros-form]\")?.addEventListener(\"submit\""));
+  assert.match(submit, /group\.id === String\(formData\.get\("grupoId"\) \|\| ""\)\)/);
+  assert.doesNotMatch(submit.slice(0, submit.indexOf("selectedGroup.pasajeros.push")), /adminPasajerosDemo\[0\]|formData\.get\("grupoId"\) \|\| adminPasajerosGrupoId/);
+  assert.match(submit, /if \(!selectedGroup\) \{\s*adminPasajerosFormError = "Elegí un grupo\.";\s*renderAdminPasajeros\(\);\s*return;/);
+  assert.match(submit, /selectedGroup\.pasajeros\.push\(passenger\)/);
+});
+
+test("la firma de la ficha tiene alternativa por teclado con el mismo PNG", () => {
+  const render = functionSource("renderFichaAdhesion", "bindFichaAdhesion");
+  assert.match(render, /<label>[^<]*firma\s*<input name="firmaTexto"[^>]*data-error-target="firma"[^>]*data-ficha-signature-text>\s*<\/label>/);
+  const bind = functionSource("bindFichaAdhesion", "renderFichaTutor");
+  assert.match(bind, /const firmaDesdeTexto = [\s\S]*?fillText\([\s\S]*?return lienzo\.toDataURL\("image\/png"\);/);
+  assert.match(bind, /firma: nombreFirmaValido\(\) \? firmaDesdeTexto\(textoFirma\.value\.trim\(\)\) : hasSignature \? canvas\.toDataURL\("image\/png"\) : ""/);
+  // "Limpiar firma" borra el trazo y el nombre escrito.
+  assert.match(bind, /clearButton\?\.addEventListener\("click", \(\) => \{\s*context\.clearRect[^;]*;\s*hasSignature = false;\s*textoFirma\.value = "";/);
+  // El servidor no cambia: sigue recibiendo firma como PNG base64 (CAMPOS no incluye firmaTexto).
+  assert.doesNotMatch(bind, /"firmaTexto"/);
+});
+
+test("la pantalla de éxito de la ficha recibe el foco", () => {
+  const render = functionSource("renderFichaAdhesion", "bindFichaAdhesion");
+  assert.match(render, /class="ficha-adhesion-success[^"]*" role="status" tabindex="-1" data-ficha-exito/);
+  const tutor = functionSource("renderFichaTutor", "bindFichaTutor");
+  assert.match(tutor, /role="status" tabindex="-1" data-ficha-exito/);
+  const exito = /\s*window\.scrollTo\(\{ top: 0 \}\);\s*document\.querySelector\("\[data-ficha-exito\]"\)\?\.focus\(/;
+  assert.match(functionSource("bindFichaAdhesion", "renderFichaTutor"), new RegExp(/renderFichaAdhesion\(\{[^\n]*\);/.source + exito.source));
+  assert.match(functionSource("bindFichaTutor", "renderNotFound"), new RegExp(/renderFichaTutor\(true\);/.source + exito.source));
+});
+
+test("los errores de la ficha salen del label y se enlazan con aria-describedby", () => {
+  const limpiar = functionSource("limpiarErrorAlEditar", "renderFichaAdhesion");
+  assert.match(limpiar, /querySelectorAll\("label \[data-error-for\]"\)[\s\S]*?label\.replaceWith\(campo\);\s*campo\.append\(label, nodo\);/);
+  const mostrar = functionSource("mostrarErroresFormulario", "limpiarErrorAlEditar");
+  assert.match(mostrar, /\[data-error-target="\$\{campo\}"\]/);
+  assert.match(mostrar, /setAttribute\("aria-describedby", nodo\.id\)/);
+  // Ambos formularios aplican el arreglo antes de validar.
+  assert.match(functionSource("bindFichaAdhesion", "renderFichaTutor"), /limpiarErrorAlEditar\(form\)/);
+  assert.match(functionSource("bindFichaTutor", "renderNotFound"), /limpiarErrorAlEditar\(form\)/);
+  assert.match(stylesSource, /\.ficha-campo \{/);
+});
