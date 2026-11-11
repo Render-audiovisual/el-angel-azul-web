@@ -6071,8 +6071,12 @@
         document.querySelector("[data-admin-pasajeros-form]")?.addEventListener("submit", (event) => {
           event.preventDefault();
           const formData = new FormData(event.currentTarget);
-          const selectedGroup = adminPasajerosDemo.find((group) => group.id === String(formData.get("grupoId") || adminPasajerosGrupoId));
-          if (!selectedGroup) return;
+          const selectedGroup = adminPasajerosDemo.find((group) => group.id === String(formData.get("grupoId") || ""));
+          if (!selectedGroup) {
+            adminPasajerosFormError = "Elegí un grupo.";
+            renderAdminPasajeros();
+            return;
+          }
           adminPasajerosNivel = selectedGroup.nivel;
           adminPasajerosViaje = selectedGroup.viaje;
           adminPasajerosColegio = selectedGroup.colegio;
