@@ -47,3 +47,19 @@ test("el servidor sirve la firma solo por la ruta admin y la migración crea el 
   const sql = fs.readFileSync(path.join(__dirname, "..", "supabase", "migrations", "0005_storage_firmas.sql"), "utf8");
   assert.match(sql, /'fichas', 'fichas', false/);
 });
+
+test("borrarFirma hace DELETE sobre la ruta y tolera 404", async () => {
+  const llamadas = [];
+  const fetchImpl = async (url, opciones) => { llamadas.push([url, opciones.method]); return { ok: false, status: 404 }; };
+  await storage.borrarFirma("firmas/abc.png", { env, fetchImpl });
+  assert.deepEqual(llamadas, [["https://proyecto.supabase.co/storage/v1/object/fichas/firmas/abc.png", "DELETE"]]);
+  await assert.rejects(
+    storage.borrarFirma("firmas/abc.png", { env, fetchImpl: async () => ({ ok: false, status: 500 }) }),
+    (e) => e.statusCode === 502
+  );
+});
+
+test("si la ficha no se guarda, el servidor borra la firma ya subida", () => {
+  const server = fs.readFileSync(path.join(__dirname, "..", "server.js"), "utf8");
+  assert.match(server, /if \(firmaSubida\)[\s\S]{0,80}storage\.borrarFirma\(firmaSubida\)/);
+});

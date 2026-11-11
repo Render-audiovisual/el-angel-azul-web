@@ -998,12 +998,18 @@ async function handlePublicFicha(req, res) {
   }
   registerFichaSubmit(ip);
   let guardada;
+  let firmaSubida = null;
   try {
     if (storage.storageConfigurado()) {
-      validacion.datos.firma = await storage.subirFirma(validacion.datos.firma, crypto.randomUUID());
+      firmaSubida = await storage.subirFirma(validacion.datos.firma, crypto.randomUUID());
+      validacion.datos.firma = firmaSubida;
     }
     guardada = await db.insertFichaPublica(validacion.datos, contexto);
   } catch (error) {
+    // La ficha no se guardó: la firma ya subida quedaría huérfana en el bucket.
+    if (firmaSubida) {
+      await storage.borrarFirma(firmaSubida).catch((e) => console.error("No se pudo borrar la firma huérfana:", safeErrorForLog(e)));
+    }
     if (error.statusCode === 400) {
       return json(res, 400, { ok: false, error: error.message, errores: error.errores || {} });
     }
