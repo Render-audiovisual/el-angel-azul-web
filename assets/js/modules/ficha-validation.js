@@ -85,7 +85,12 @@
     return edad;
   }
 
+  // Argentina = UTC-3 todo el año (sin horario de verano): la edad se mide con
+  // la fecha de Argentina, no la de UTC (de noche ya sería "mañana").
+  function fechaArgentina(fecha) { return new Date(fecha.getTime() - 3 * 3600 * 1000); }
+
   function crearValidador(input, hoy) {
+    hoy = fechaArgentina(hoy);
     if (!input || typeof input !== "object") input = {};
     const errores = {};
     const sugerencias = {};

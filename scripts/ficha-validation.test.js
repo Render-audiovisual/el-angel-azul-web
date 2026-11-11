@@ -139,3 +139,12 @@ test("bug: localidad solo con números se rechaza", () => {
   const r = v.validarFichaPax(fichaValida({ domicilioLocalidad: "12345" }), { hoy: HOY });
   assert.ok(r.errores.domicilioLocalidad);
 });
+
+test("la edad mínima se calcula con la fecha de Argentina, no UTC", () => {
+  // 15/09/2026 01:00 UTC = 14/09/2026 22:00 en Argentina: el pasajero aún tiene 4 años.
+  const hoy = new Date("2026-09-15T01:00:00Z");
+  const r = v.validarFichaPax({ pasajeroNacimiento: "2021-09-15" }, { hoy });
+  assert.ok(r.errores.pasajeroNacimiento);
+  const ok = v.validarFichaPax({ pasajeroNacimiento: "2021-09-14" }, { hoy });
+  assert.equal(ok.errores.pasajeroNacimiento, undefined);
+});

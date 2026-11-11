@@ -61,3 +61,14 @@ test("carrera de fichas de tutor: 409 y rechazada permite reenviar", async () =>
   await assert.rejects(db.insertFichaTutor(tutor), (e) => e.statusCode === 409 && /Ya registramos/.test(e.message));
   db.__test.setPool(pool);
 });
+
+test("una ficha pública no pisa nacimiento ni teléfono de una persona ya cargada", async () => {
+  await pool.query(
+    `insert into personas (tipo_documento, numero_documento, nombre, nacimiento, telefono)
+     values ('DNI', '45000077', 'Ana', '2008-01-01', '3794000000')`
+  );
+  await db.insertFichaPublica(datosPax("45000077"), CTX); // la ficha trae nacimiento 2009-03-14
+  const { rows } = await pool.query(`select nacimiento::text as n, telefono from personas where numero_documento = '45000077'`);
+  assert.equal(rows[0].n, "2008-01-01");
+  assert.equal(rows[0].telefono, "3794000000");
+});
