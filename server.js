@@ -7,6 +7,7 @@ const db = require("./lib/db");
 const fichaValidation = require("./assets/js/modules/ficha-validation.js");
 const fichaPdf = require("./lib/ficha-pdf");
 const email = require("./lib/email");
+const storage = require("./lib/storage");
 
 const PORT = Number(process.env.PORT || 8080);
 const ROOT = __dirname;
@@ -81,6 +82,9 @@ const adminSessions = new Map();
 // No es un rate-limiter distribuido (se resetea si el proceso reinicia),
 // pero corta un ataque de fuerza bruta automatizado básico.
 const LOGIN_ATTEMPT_LIMIT = 5;
+// Además del límite por IP (evadible si el proxy no fija X-Forwarded-For), cada
+// usuario tiene un tope propio más alto, para frenar la fuerza bruta rotando IP.
+const LOGIN_USER_ATTEMPT_LIMIT = 20;
 const LOGIN_ATTEMPT_WINDOW_MS = 15 * 60 * 1000;
 const loginAttempts = new Map();
 
@@ -156,14 +160,14 @@ function registerFichaSubmit(ip) {
   record.count += 1;
 }
 
-function loginRateLimited(ip) {
-  const record = loginAttempts.get(ip);
+function loginRateLimited(key, limit = LOGIN_ATTEMPT_LIMIT) {
+  const record = loginAttempts.get(key);
   if (!record) return false;
   if (Date.now() - record.firstAttemptAt > LOGIN_ATTEMPT_WINDOW_MS) {
-    loginAttempts.delete(ip);
+    loginAttempts.delete(key);
     return false;
   }
-  return record.count >= LOGIN_ATTEMPT_LIMIT;
+  return record.count >= limit;
 }
 
 function registerFailedLogin(ip) {
@@ -273,8 +277,17 @@ function parseCookies(req) {
     .map((part) => {
       const index = part.indexOf("=");
       if (index === -1) return [part, ""];
-      return [decodeURIComponent(part.slice(0, index)), decodeURIComponent(part.slice(index + 1))];
+      return [safeDecode(part.slice(0, index)), safeDecode(part.slice(index + 1))];
     }));
+}
+
+// Una cookie o ruta con % mal formado no debe tumbar el pedido con un 500.
+function safeDecode(value) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
 }
 
 function sessionCookie(token, maxAgeSeconds, isSecureRequest = false) {
@@ -648,10 +661,10 @@ async function handleSheets(req, res, url) {
     // de Hostinger antes de tocar ningún dato real.
     if (sheet === "FICHAS_ADHESION" && adminSession) {
       if (POSTGRES_MIGRATION_ENABLED) {
-        return json(res, 200, { ok: true, sheet, rows: await db.listFichasAdmin() });
+        return json(res, 200, { ok: true, sheet, rows: conFirmaPorUrl(await db.listFichasAdmin()) });
       }
       const [sheetsRows, postgresRows] = await Promise.all([readSheet(sheet), db.listFichasAdmin()]);
-      return json(res, 200, { ok: true, sheet, rows: [...postgresRows, ...sheetsRows] });
+      return json(res, 200, { ok: true, sheet, rows: [...conFirmaPorUrl(postgresRows), ...sheetsRows] });
     }
     if (POSTGRES_SHEETS.has(sheet)) {
       return json(res, 200, { ok: true, sheet, rows: await POSTGRES_LIST_FN[sheet]() });
@@ -743,19 +756,22 @@ async function handleAdminAuth(req, res, url) {
   if (url.pathname === "/api/admin/login" && req.method === "POST") {
     if (requireSameOrigin(req, res)) return;
     const ip = clientIp(req);
-    if (loginRateLimited(ip)) {
-      return json(res, 429, { ok: false, error: "Demasiados intentos fallidos. Esperá unos minutos antes de volver a intentar." });
-    }
     const payload = await readJsonBody(req, 20_000);
     const username = String(payload.username || "").trim().toLowerCase().slice(0, 100);
+    const userKey = `user:${username}`;
+    if (loginRateLimited(ip) || loginRateLimited(userKey, LOGIN_USER_ATTEMPT_LIMIT)) {
+      return json(res, 429, { ok: false, error: "Demasiados intentos fallidos. Esperá unos minutos antes de volver a intentar." });
+    }
     const password = String(payload.password || "").slice(0, 1000);
     const user = ADMIN_USERS[username];
     const configuredPassword = user?.password || "disabled-account-placeholder";
     if (!user?.password || !safePasswordEqual(configuredPassword, password)) {
       registerFailedLogin(ip);
+      registerFailedLogin(userKey);
       return json(res, 401, { ok: false, error: "Usuario o contraseña incorrectos" });
     }
     clearLoginAttempts(ip);
+    clearLoginAttempts(userKey);
     // Una cuenta mantiene una sola sesión activa. Un nuevo ingreso invalida
     // tokens anteriores (útil al rotar claves o cerrar una sesión olvidada).
     for (const [existingToken, existingSession] of adminSessions) {
@@ -803,7 +819,7 @@ function staticFile(req, res, url) {
       return res.end();
     }
   }
-  const cleanPath = decodeURIComponent(url.pathname === "/" ? "/index.html" : url.pathname);
+  const cleanPath = safeDecode(url.pathname === "/" ? "/index.html" : url.pathname);
   const publicPath = cleanPath.replace(/^\/+/, "");
   const normalizedPublicPath = path.posix.normalize(publicPath);
   const isPublicAsset = normalizedPublicPath.startsWith("assets/") && !normalizedPublicPath.includes("../");
@@ -893,6 +909,20 @@ const MAX_FICHA_BODY_BYTES = 400_000;
 
 // Genera el PDF y envía el correo de una ficha ya guardada. Nunca lanza: el
 // resultado queda en fichas_adhesion.email_estado para verlo en el admin.
+// El PDF espera la firma como data URL: si está en Storage se descarga acá.
+async function conFirmaEmbebida(fila) {
+  const bytes = await storage.bytesFirma(fila.firma_data_url);
+  fila.firma_data_url = bytes ? `data:image/png;base64,${bytes.toString("base64")}` : "";
+  return fila;
+}
+
+// El listado del admin no trae los bytes: las firmas de Storage se sirven por URL.
+function conFirmaPorUrl(filas) {
+  return filas.map((fila) => (
+    storage.esRutaStorage(fila.firma_data_url) ? { ...fila, firma_data_url: `/api/admin/fichas/${fila.id}/firma` } : fila
+  ));
+}
+
 async function procesarCorreoFicha(id, idempotencyKey) {
   try {
     if (!email.correoConfigurado()) {
@@ -901,6 +931,7 @@ async function procesarCorreoFicha(id, idempotencyKey) {
     }
     const [fila] = await db.listFichasAdmin(id);
     if (!fila) return;
+    await conFirmaEmbebida(fila);
     const pdf = await fichaPdf.generarPdfFicha(fila);
     await email.enviarCorreoFicha(fila, pdf, idempotencyKey ? { idempotencyKey } : {});
     await db.setFichaEmailResultado(id, { estado: "enviado" });
@@ -967,12 +998,22 @@ async function handlePublicFicha(req, res) {
   }
   registerFichaSubmit(ip);
   let guardada;
+  let firmaSubida = null;
   try {
+    if (storage.storageConfigurado()) {
+      firmaSubida = await storage.subirFirma(validacion.datos.firma, crypto.randomUUID());
+      validacion.datos.firma = firmaSubida;
+    }
     guardada = await db.insertFichaPublica(validacion.datos, contexto);
   } catch (error) {
+    // La ficha no se guardó: la firma ya subida quedaría huérfana en el bucket.
+    if (firmaSubida) {
+      await storage.borrarFirma(firmaSubida).catch((e) => console.error("No se pudo borrar la firma huérfana:", safeErrorForLog(e)));
+    }
     if (error.statusCode === 400) {
       return json(res, 400, { ok: false, error: error.message, errores: error.errores || {} });
     }
+    if (error.statusCode === 409) return json(res, 409, { ok: false, error: error.message });
     console.error("Error al guardar ficha de adhesión:", safeErrorForLog(error));
     return json(res, 500, {
       ok: false,
@@ -999,6 +1040,7 @@ async function handlePublicFichaTutor(req, res) {
     const guardada = await db.insertFichaTutor(validacion.datos);
     return json(res, 201, { ok: true, id: guardada.id });
   } catch (error) {
+    if (error.statusCode === 409) return json(res, 409, { ok: false, error: error.message });
     console.error("Error al guardar ficha de tutor:", safeErrorForLog(error));
     return json(res, 500, { ok: false, error: "No se pudo guardar el registro. Intentá de nuevo en unos minutos." });
   }
@@ -1007,7 +1049,7 @@ async function handlePublicFichaTutor(req, res) {
 // /api/admin/fichas/:id/pdf y /api/admin/fichas/:id/reenviar-correo.
 // Devuelve false si la ruta no es de este handler.
 async function handleAdminFicha(req, res, url) {
-  const match = /^\/api\/admin\/fichas\/([^/]+)\/(pdf|reenviar-correo)$/.exec(url.pathname);
+  const match = /^\/api\/admin\/fichas\/([^/]+)\/(pdf|reenviar-correo|firma)$/.exec(url.pathname);
   if (!match) return false;
   if (!currentAdminSession(req)) {
     json(res, 401, { ok: false, error: "Necesitás iniciar sesión." });
@@ -1024,7 +1066,7 @@ async function handleAdminFicha(req, res, url) {
       json(res, 404, { ok: false, error: "Ficha no encontrada." });
       return true;
     }
-    const pdf = await fichaPdf.generarPdfFicha(fila);
+    const pdf = await fichaPdf.generarPdfFicha(await conFirmaEmbebida(fila));
     res.writeHead(200, {
       "Content-Type": "application/pdf",
       "Content-Disposition": `attachment; filename="${fichaPdf.nombreArchivoPdf(fila)}"`,
@@ -1032,6 +1074,17 @@ async function handleAdminFicha(req, res, url) {
       ...securityHeaders(req)
     });
     res.end(Buffer.from(pdf));
+    return true;
+  }
+  if (accion === "firma" && req.method === "GET") {
+    const [fila] = await db.listFichasAdmin(id);
+    const bytes = fila && await storage.bytesFirma(fila.firma_data_url);
+    if (!bytes) {
+      json(res, 404, { ok: false, error: "Firma no encontrada." });
+      return true;
+    }
+    res.writeHead(200, { "Content-Type": "image/png", "Cache-Control": "no-store", ...securityHeaders(req) });
+    res.end(bytes);
     return true;
   }
   if (accion === "reenviar-correo" && req.method === "POST") {

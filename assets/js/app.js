@@ -12,6 +12,7 @@
         if (pathname.endsWith("/admin/turismo") || pathname.endsWith("/admin-turismo")) return "/admin/turismo";
         if (pathname.endsWith("/admin/fichas")) return "/admin/fichas";
         if (pathname.endsWith("/admin/grupos")) return "/admin/grupos";
+        if (pathname.endsWith("/admin/colegios")) return "/admin/colegios";
         if (pathname.endsWith("/admin/pasajeros")) return "/admin/pasajeros";
         if (pathname.endsWith("/admin/contratos")) return "/admin/contratos";
         if (pathname.endsWith("/admin/pagos")) return "/admin/pagos";
@@ -49,6 +50,7 @@
           path === "/admin/turismo" ||
           path === "/admin/fichas" ||
           path === "/admin/grupos" ||
+          path === "/admin/colegios" ||
           path === "/admin/pasajeros" ||
           path === "/admin/contratos" ||
           path === "/admin/pagos" ||
@@ -2082,6 +2084,12 @@
           icon: "groups"
         },
         {
+          id: "colegios",
+          label: "Colegios",
+          path: "/admin/colegios",
+          icon: "school"
+        },
+        {
           id: "pasajeros",
           label: "Pasajeros",
           path: "/admin/pasajeros",
@@ -2113,6 +2121,7 @@
           space_dashboard: '<path d="M3 3h8v8H3V3Zm10 0h8v5h-8V3ZM3 13h8v8H3v-8Zm10-3h8v11h-8V10Z"/>',
           assignment: '<path d="M9 5V3h6v2h3a2 2 0 0 1 2 2v14H4V7a2 2 0 0 1 2-2h3Zm2 0h2V4h-2v1Zm-3 5h8V8H8v2Zm0 4h8v-2H8v2Zm0 4h6v-2H8v2Z"/>',
           groups: '<path d="M8 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm8-1a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM2 21v-3c0-3 2.7-5 6-5s6 2 6 5v3H2Zm13.5 0v-3c0-1.4-.5-2.7-1.4-3.8.6-.2 1.2-.2 1.9-.2 3.3 0 6 1.8 6 4.5V21h-6.5Z"/>',
+          school: '<path d="M12 3 1 9l11 6 9-4.9V17h2V9L12 3ZM5 13.2v4L12 21l7-3.8v-4L12 17l-7-3.8Z"/>',
           person: '<path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm-9 9v-2c0-3.3 4-5 9-5s9 1.7 9 5v2H3Z"/>',
           payments: '<path d="M3 6h18v12H3V6Zm2 2v8h14V8H5Zm7 7a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM6 10h2V9H6v1Zm10 5h2v-1h-2v1Z"/>',
           flight: '<path d="m2 16 8-3V4.5a2 2 0 1 1 4 0V13l8 3v2l-8-1v3l2 1.5V23l-4-1-4 1v-1.5l2-1.5v-3l-8 1v-2Z"/>',
@@ -2721,6 +2730,146 @@
 
       function downloadGoogleSheetAppsScript() {
         downloadTextFile("EAA_Google_Sheets_Apps_Script.js", window.ElAngelAzulPersistence.appsScriptTemplate(), "text/javascript;charset=utf-8");
+      }
+
+      // ABM de colegios (lista que usa la inscripción pública). Baja lógica:
+      // activo = FALSE los saca de la inscripción pero conserva fichas y grupos.
+      let adminColegiosEditId = "";
+      let adminColegiosMessage = "";
+      let adminColegiosVerInactivos = false;
+
+      async function saveAdminColegios(nuevos, mensajeOk) {
+        const anteriores = adminColegios;
+        adminColegios = nuevos;
+        const guardado = await queueGoogleSheetsWrite(["COLEGIOS"]);
+        if (guardado) {
+          adminColegiosMessage = mensajeOk;
+        } else {
+          adminColegios = anteriores;
+          adminColegiosMessage = googleSheetsSyncState.message;
+        }
+        return guardado;
+      }
+
+      function renderAdminColegios() {
+        const sinVincular = loadFichasAdhesionDemo().filter((ficha) => !ficha.colegioVinculado && ficha.colegioTexto).length;
+        const editando = adminColegios.find((colegio) => colegio.id === adminColegiosEditId) || null;
+        const provincias = window.ElAngelAzulFichaValidation.PROVINCIAS;
+        const filas = [...adminColegios]
+          .filter((colegio) => adminColegiosVerInactivos || colegio.activo === "TRUE")
+          .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+        document.getElementById("app").innerHTML = renderAdminShell("colegios", `
+          <section class="admin-turismo-panel admin-colegios">
+            <div class="admin-pasajeros-table-head">
+              <div>
+                <h2>Colegios</h2>
+                <p>Lista que ven las familias al inscribirse. ${sinVincular ? `<strong>${sinVincular} ficha(s)</strong> tienen un colegio escrito a mano sin vincular (se resuelven desde Inscripciones).` : "No hay colegios escritos a mano pendientes de vincular."}</p>
+              </div>
+              <label class="admin-colegios-toggle"><input type="checkbox" data-admin-colegios-inactivos ${adminColegiosVerInactivos ? "checked" : ""}> Mostrar dados de baja</label>
+            </div>
+            ${adminColegiosMessage ? `<div class="admin-fichas-assigned-note" role="status" tabindex="-1" data-admin-colegios-status>${escapeHtml(adminColegiosMessage)}</div>` : ""}
+            <form class="admin-pasajeros-form admin-colegios-form" data-admin-colegios-form novalidate>
+              <fieldset>
+                <legend>${editando ? "Editar colegio" : "Nuevo colegio"}</legend>
+                <label>Nombre <span class="admin-pasajeros-required">*</span>
+                  <input name="nombre" value="${escapeHtml(editando?.nombre || "")}" maxlength="120" required>
+                </label>
+                <label>Provincia
+                  <select name="provincia">
+                    <option value="">Sin indicar</option>
+                    ${provincias.map((provincia) => `<option value="${escapeHtml(provincia)}" ${provincia === (editando ? editando.provincia : "Corrientes") ? "selected" : ""}>${escapeHtml(provincia)}</option>`).join("")}
+                  </select>
+                </label>
+                <label>Localidad
+                  <input name="localidad" value="${escapeHtml(editando?.localidad || "")}" maxlength="80">
+                </label>
+              </fieldset>
+              <div class="admin-colegios-error" id="admin-colegios-error" data-admin-colegios-error role="alert" hidden></div>
+              <div class="admin-pasajeros-form-actions">
+                <button type="submit" class="admin-pasajeros-primary-button">${editando ? "Guardar cambios" : "Agregar colegio"}</button>
+                ${editando ? `<button type="button" class="admin-pasajeros-secondary-button" data-admin-colegios-cancelar>Cancelar</button>` : ""}
+              </div>
+            </form>
+            <div class="admin-pasajeros-table-wrap">
+              <table class="admin-pasajeros-table">
+                <thead><tr><th>Nombre</th><th>Provincia</th><th>Localidad</th><th>Estado</th><th><span class="sr-only">Acciones</span></th></tr></thead>
+                <tbody>
+                  ${filas.length ? filas.map((colegio) => `
+                    <tr>
+                      <td>${escapeHtml(colegio.nombre)}</td>
+                      <td>${escapeHtml(colegio.provincia || "—")}</td>
+                      <td>${escapeHtml(colegio.localidad || "—")}</td>
+                      <td><span class="admin-pasajeros-status ${colegio.activo === "TRUE" ? "is-ok" : "is-alert"}">${colegio.activo === "TRUE" ? "Activo" : "De baja"}</span></td>
+                      <td class="admin-colegios-actions">
+                        <button type="button" class="admin-pasajeros-secondary-button" data-admin-colegios-editar="${escapeHtml(colegio.id)}" aria-label="Editar ${escapeHtml(colegio.nombre)}">Editar</button>
+                        <button type="button" class="admin-pasajeros-secondary-button" data-admin-colegios-estado="${escapeHtml(colegio.id)}" aria-label="${colegio.activo === "TRUE" ? "Dar de baja" : "Reactivar"} ${escapeHtml(colegio.nombre)}">${colegio.activo === "TRUE" ? "Dar de baja" : "Reactivar"}</button>
+                      </td>
+                    </tr>
+                  `).join("") : `<tr><td colspan="5">Todavía no hay colegios cargados.</td></tr>`}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        `);
+        bindAdminShell();
+        document.querySelector("[data-admin-colegios-inactivos]")?.addEventListener("change", (event) => {
+          adminColegiosVerInactivos = event.target.checked;
+          renderAdminColegios();
+        });
+        document.querySelector("[data-admin-colegios-cancelar]")?.addEventListener("click", () => {
+          adminColegiosEditId = "";
+          adminColegiosMessage = "";
+          renderAdminColegios();
+        });
+        document.querySelectorAll("[data-admin-colegios-editar]").forEach((button) => {
+          button.addEventListener("click", () => {
+            adminColegiosEditId = button.dataset.adminColegiosEditar;
+            adminColegiosMessage = "";
+            renderAdminColegios();
+            document.querySelector("[data-admin-colegios-form] [name=nombre]")?.focus();
+          });
+        });
+        document.querySelectorAll("[data-admin-colegios-estado]").forEach((button) => {
+          button.addEventListener("click", async () => {
+            const colegio = adminColegios.find((item) => item.id === button.dataset.adminColegiosEstado);
+            if (!colegio) return;
+            const baja = colegio.activo === "TRUE";
+            if (baja && !confirm(`¿Dar de baja “${colegio.nombre}”? Deja de aparecer en la inscripción; las fichas y grupos existentes se conservan.`)) return;
+            await saveAdminColegios(
+              adminColegios.map((item) => (item.id === colegio.id ? { ...item, activo: baja ? "FALSE" : "TRUE" } : item)),
+              baja ? `“${colegio.nombre}” dado de baja.` : `“${colegio.nombre}” reactivado.`
+            );
+            renderAdminColegios();
+            document.querySelector("[data-admin-colegios-status]")?.focus();
+          });
+        });
+        document.querySelector("[data-admin-colegios-form]")?.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const form = event.currentTarget;
+          const errorBox = form.querySelector("[data-admin-colegios-error]");
+          const datos = new FormData(form);
+          const nombre = String(datos.get("nombre") || "").replace(/\s+/g, " ").trim();
+          const mostrarError = (texto) => {
+            form.closest("section")?.querySelector("[data-admin-colegios-status]")?.remove();
+            errorBox.hidden = false;
+            errorBox.textContent = texto;
+            const campoNombre = form.querySelector("[name=nombre]");
+            campoNombre.setAttribute("aria-invalid", "true");
+            campoNombre.setAttribute("aria-describedby", "admin-colegios-error");
+            campoNombre.focus();
+          };
+          if (nombre.length < 3) return mostrarError("El nombre del colegio es muy corto (mínimo 3 letras).");
+          const repetido = adminColegios.find((colegio) => colegio.id !== adminColegiosEditId && normalizeFichaSearchText(colegio.nombre) === normalizeFichaSearchText(nombre));
+          if (repetido) return mostrarError(`Ya existe un colegio con ese nombre${repetido.activo === "TRUE" ? "" : " (está dado de baja: reactivalo)"}.`);
+          const campos = { nombre, provincia: String(datos.get("provincia") || ""), localidad: String(datos.get("localidad") || "").replace(/\s+/g, " ").trim() };
+          const nuevos = editando
+            ? adminColegios.map((colegio) => (colegio.id === editando.id ? { ...colegio, ...campos } : colegio))
+            : [...adminColegios, { id: crypto.randomUUID(), codigo_oficial: "", activo: "TRUE", ...campos }];
+          const guardado = await saveAdminColegios(nuevos, editando ? `“${nombre}” actualizado.` : `“${nombre}” agregado.`);
+          if (guardado) adminColegiosEditId = "";
+          renderAdminColegios();
+          document.querySelector("[data-admin-colegios-status]")?.focus();
+        });
       }
 
       function renderAdminConfiguracion() {
@@ -3508,7 +3657,7 @@
 
       function fichaSignatureDataUrl(ficha = {}) {
         const value = String(ficha.firma || ficha.firmaDataUrl || "");
-        return /^data:image\/png;base64,[a-z0-9+/=]+$/i.test(value) ? value : "";
+        return /^(data:image\/png;base64,[a-z0-9+/=]+|\/api\/admin\/fichas\/[0-9a-f-]{36}\/firma)$/i.test(value) ? value : "";
       }
 
       function renderFichaAssignmentControls(ficha) {
@@ -3870,6 +4019,7 @@
                   ${renderFichaValue("División", ficha.division)}
                   ${renderFichaValue("Plan", planTexto)}
                   ${renderFichaValue("Contrato", ficha.codigoContrato)}
+                  ${renderFichaValue("Tutor", fichaNombreCompleto(ficha.responsableApellido, ficha.responsableNombre))}
                   ${renderFichaValue("Viaje", ficha.viaje)}
                 </dl>
                 ${renderFichaVincularColegio(ficha)}
@@ -4360,6 +4510,57 @@
           estado: adminPasajerosFilterEstado,
           normalizeText: normalizeFichaSearchText
         });
+      }
+
+      // Exporta las filas filtradas en pantalla. Los datos de domicilio y tutor
+      // salen de la ficha con el mismo DNI (si no hay ficha, quedan vacíos).
+      const ADMIN_PASAJEROS_EXPORT_COLUMNS = [
+        "Colegio", "Curso", "Grado/Año", "División", "Contrato", "Plan", "Cuotas", "Apellido", "Nombre", "DNI",
+        "Nacimiento", "Sexo", "Tutor apellido", "Tutor nombre", "Parentesco", "Tutor DNI", "CUIL/CUIT", "Celular",
+        "Email", "Calle y número", "Barrio", "Localidad", "Provincia", "CP", "Estado", "Documentación",
+        "Ficha médica", "Estado de pago"
+      ];
+
+      function adminPasajerosExportRows(rows) {
+        const fichas = loadFichasAdhesionDemo();
+        const collator = new Intl.Collator("es", { numeric: true, sensitivity: "base" });
+        const sorted = [...rows].sort((a, b) => (
+          collator.compare(a.group.colegio, b.group.colegio)
+          || collator.compare(a.group.curso, b.group.curso)
+          || collator.compare(a.group.division, b.group.division)
+          || collator.compare(a.passenger.apellido || "", b.passenger.apellido || "")
+        ));
+        return sorted.map(({ group, passenger: p, payment }) => {
+          const f = fichas.find((item) => item.tipo !== "tutor" && normalizeFichaDni(item.pasajeroNumeroDocumento) === normalizeFichaDni(p.dni)) || {};
+          return {
+            "Colegio": group.colegio, "Curso": group.nivel, "Grado/Año": group.curso, "División": group.division,
+            "Contrato": p.codigoContrato || "", "Plan": p.planNombre || "", "Cuotas": p.planCuotas || "",
+            "Apellido": p.apellido || "", "Nombre": p.nombre || "", "DNI": p.dni || "",
+            "Nacimiento": p.nacimiento || f.pasajeroNacimiento || "", "Sexo": f.pasajeroSexo || "",
+            "Tutor apellido": p.responsableApellido || f.responsableApellido || "",
+            "Tutor nombre": p.responsable || f.responsableNombre || "",
+            "Parentesco": p.vinculo || f.responsableParentesco || "",
+            "Tutor DNI": p.responsableDni || f.responsableNumeroDocumento || "",
+            "CUIL/CUIT": p.responsableCuilCuit || f.responsableCuilCuit || "",
+            "Celular": f.responsableCelular || p.responsableTelefono || p.telefono || "",
+            "Email": p.responsableEmail || f.responsableEmail || "",
+            "Calle y número": [f.domicilioCalle, f.domicilioNumero].filter(Boolean).join(" "),
+            "Barrio": f.domicilioBarrio || "", "Localidad": f.domicilioLocalidad || "",
+            "Provincia": f.domicilioProvincia || "", "CP": f.domicilioCodigoPostal || "",
+            "Estado": p.estado || "", "Documentación": p.documentacion || "", "Ficha médica": p.fichaMedica || "",
+            "Estado de pago": payment.estadoPago || ""
+          };
+        });
+      }
+
+      function exportAdminPasajerosXlsx() {
+        const rows = adminPasajerosExportRows(adminPasajerosFilteredRows());
+        const sheet = XLSX.utils.json_to_sheet(rows, { header: ADMIN_PASAJEROS_EXPORT_COLUMNS });
+        sheet["!cols"] = autoFitColumnWidths(rows, ADMIN_PASAJEROS_EXPORT_COLUMNS);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, sheet, "Pasajeros");
+        // Fecha local: toISOString() es UTC y de noche en Argentina (UTC-3) ya marca el día siguiente.
+        XLSX.writeFile(workbook, `EAA_pasajeros_${new Date().toLocaleDateString("sv-SE")}.xlsx`);
       }
 
       function adminPasajerosSelectedRecord() {
@@ -4942,6 +5143,15 @@
             <form class="admin-pasajeros-form" data-admin-pasajeros-form novalidate>
 
               <fieldset>
+                <legend>Grupo</legend>
+                <label>Grupo (colegio · curso · viaje) <span class="admin-pasajeros-required">*</span>
+                  <select name="grupoId" data-admin-pasajeros-form-grupo required>
+                    ${adminPasajerosDemo.map((group) => `<option value="${escapeHtml(group.id)}" ${group.id === selectedGroup?.id ? "selected" : ""}>${escapeHtml(`${group.colegio} · ${group.curso} ${group.division} · ${group.viaje} · ${group.nivel}`)}</option>`).join("")}
+                  </select>
+                </label>
+              </fieldset>
+
+              <fieldset>
                 <legend>Datos del pasajero</legend>
                 <label>Nombre/s <span class="admin-pasajeros-required">*</span>
                   <input name="nombre" placeholder="Ej: Juan Ignacio" autocomplete="off" required>
@@ -5090,6 +5300,7 @@
               ${renderAdminPasajerosSelect("curso", adminPasajerosFilterCurso, allCursos, "Curso")}
               ${renderAdminPasajerosSelect("estado", adminPasajerosFilterEstado, allEstados, "Estado")}
               <button type="button" class="admin-pasajeros-secondary-button" data-admin-pasajeros-clear-filters>Limpiar</button>
+              <button type="button" class="admin-pasajeros-secondary-button" data-admin-pasajeros-export>Exportar a Excel</button>
             </div>
           </section>
 
@@ -5859,10 +6070,17 @@
         });
         document.querySelector("[data-admin-pasajeros-form]")?.addEventListener("submit", (event) => {
           event.preventDefault();
-          const selectedGroup = adminPasajerosDemo.find((group) => group.id === adminPasajerosGrupoId);
-          if (!selectedGroup) return;
-
           const formData = new FormData(event.currentTarget);
+          const selectedGroup = adminPasajerosDemo.find((group) => group.id === String(formData.get("grupoId") || ""));
+          if (!selectedGroup) {
+            adminPasajerosFormError = "Elegí un grupo.";
+            renderAdminPasajeros();
+            return;
+          }
+          adminPasajerosNivel = selectedGroup.nivel;
+          adminPasajerosViaje = selectedGroup.viaje;
+          adminPasajerosColegio = selectedGroup.colegio;
+          adminPasajerosGrupoId = selectedGroup.id;
           const selectedContract = contractById(String(formData.get("contratoId") || "").trim(), selectedGroup.id);
           const passenger = {
             nombre: String(formData.get("nombre") || "").trim(),
@@ -5934,6 +6152,20 @@
           adminPasajerosFormError = "";
           renderAdminPasajeros();
         });
+        document.querySelector("[data-admin-pasajeros-form-grupo]")?.addEventListener("change", (event) => {
+          const group = adminPasajerosDemo.find((item) => item.id === event.currentTarget.value);
+          if (!group) return;
+          const typed = [...new FormData(event.currentTarget.form)].filter(([name]) => name !== "grupoId" && name !== "contratoId");
+          adminPasajerosNivel = group.nivel;
+          adminPasajerosViaje = group.viaje;
+          adminPasajerosColegio = group.colegio;
+          adminPasajerosGrupoId = group.id;
+          adminPasajerosFormError = "";
+          renderAdminPasajeros();
+          const form = document.querySelector("[data-admin-pasajeros-form]");
+          typed.forEach(([name, value]) => { if (form?.elements[name]) form.elements[name].value = value; });
+          form?.elements.grupoId?.focus();
+        });
         document.querySelector("[data-admin-pasajeros-new-colegio]")?.addEventListener("click", () => openAdminPasajerosGroupModal("colegio"));
         document.querySelector("[data-admin-pasajeros-new-curso]")?.addEventListener("click", () => openAdminPasajerosGroupModal("curso"));
         document.querySelector("[data-admin-pasajeros-new-division]")?.addEventListener("click", () => openAdminPasajerosGroupModal("division"));
@@ -5997,6 +6229,7 @@
             renderAdminPasajeros();
           });
         });
+        document.querySelector("[data-admin-pasajeros-export]")?.addEventListener("click", exportAdminPasajerosXlsx);
         document.querySelector("[data-admin-pasajeros-clear-filters]")?.addEventListener("click", () => {
           adminPasajerosSearch = "";
           adminPasajerosFilterViaje = "";
@@ -8288,9 +8521,15 @@
           nodo.textContent = mensaje || sugerencias[campo] || "";
           nodo.hidden = !nodo.textContent;
           nodo.classList.toggle("is-sugerencia", !mensaje && Boolean(sugerencias[campo]));
-          form.querySelectorAll(`[name="${campo}"]`).forEach((input) => {
-            if (mensaje) input.setAttribute("aria-invalid", "true");
-            else input.removeAttribute("aria-invalid");
+          nodo.id = nodo.id || `error-${campo}`;
+          form.querySelectorAll(`[name="${campo}"], [data-error-target="${campo}"], [data-dob-group="${campo}"] input`).forEach((input) => {
+            if (mensaje) {
+              input.setAttribute("aria-invalid", "true");
+              input.setAttribute("aria-describedby", nodo.id);
+            } else {
+              input.removeAttribute("aria-invalid");
+              input.removeAttribute("aria-describedby");
+            }
           });
         });
         const campos = Object.keys(errores);
@@ -8300,7 +8539,7 @@
           : "";
         if (!campos.length) return;
         const nodo = form.querySelector(`[data-error-for="${campos[0]}"]`);
-        const contenedor = nodo?.closest("label, fieldset, .ficha-adhesion-context") || errorBox;
+        const contenedor = nodo?.closest(".ficha-campo, .ficha-adhesion-signature, label, fieldset, .ficha-adhesion-context") || errorBox;
         contenedor.scrollIntoView({ behavior: "smooth", block: "center" });
         contenedor.querySelector?.("input:not([type=hidden]), select")?.focus({ preventScroll: true });
       }
@@ -8308,13 +8547,26 @@
       // Al corregir un campo se borra su error (no hace falta reenviar para
       // ver que ya está bien). Sirve también para la fecha en 3 partes.
       function limpiarErrorAlEditar(form) {
+        // El mensaje de error no puede vivir dentro del <label>: el lector de
+        // pantalla lo leería como parte del nombre del campo. Se envuelve
+        // label + mensaje en un .ficha-campo y se asocia con aria-describedby.
+        form.querySelectorAll("label [data-error-for]").forEach((nodo) => {
+          const label = nodo.closest("label");
+          const campo = document.createElement("div");
+          campo.className = "ficha-campo" + (label.classList.contains("ficha-adhesion-check") ? " ficha-campo--full" : "");
+          label.replaceWith(campo);
+          campo.append(label, nodo);
+        });
         const limpiar = (event) => {
-          const contenedor = event.target.closest("label, .ficha-adhesion-signature");
+          const contenedor = event.target.closest(".ficha-campo, .ficha-adhesion-signature") || event.target.closest("label");
           const nodo = contenedor?.querySelector("[data-error-for]");
           if (!nodo || nodo.classList.contains("is-sugerencia")) return;
           nodo.hidden = true;
           nodo.textContent = "";
-          form.querySelectorAll(`[name="${nodo.dataset.errorFor}"]`).forEach((input) => input.removeAttribute("aria-invalid"));
+          form.querySelectorAll(`[name="${nodo.dataset.errorFor}"], [data-error-target="${nodo.dataset.errorFor}"]`).forEach((input) => {
+            input.removeAttribute("aria-invalid");
+            input.removeAttribute("aria-describedby");
+          });
         };
         form.addEventListener("input", limpiar);
         form.addEventListener("change", limpiar);
@@ -8334,7 +8586,7 @@
                   </div>
                   <i aria-hidden="true"></i>
                 </div>
-                <div class="ficha-adhesion-success ficha-adhesion-success-large">Recibimos tu ficha correctamente.</div>
+                <div class="ficha-adhesion-success ficha-adhesion-success-large" role="status" tabindex="-1" data-ficha-exito>Recibimos tu ficha correctamente.</div>
                 ${exito.emailDestino ? `<p>Te enviamos una copia a <strong>${escapeHtml(exito.emailDestino)}</strong>. Si no la ves en unos minutos, revisá la carpeta de spam.</p>` : ""}
                 <p>Queda pendiente de revisión por administración. Te contactaremos si necesitamos validar algún dato.</p>
                 <a class="ficha-adhesion-home-link" href="#/inscripcion">Volver al inicio</a>
@@ -8499,11 +8751,14 @@
 
                 <fieldset data-reveal-light>
                   <legend>Firma del padre, madre o tutor</legend>
-                  <p class="ficha-fieldset-note">Firmá dentro del recuadro usando el dedo o lápiz óptico.</p>
+                  <p class="ficha-fieldset-note">Firmá dentro del recuadro con el dedo, el mouse o un lápiz óptico. Si no podés dibujarla (por ejemplo, si usás teclado o lector de pantalla), escribí tu nombre completo en el campo de abajo.</p>
                   <div class="ficha-adhesion-signature">
                     <span>Firma del padre, madre o tutor</span>
-                    <canvas width="720" height="220" data-ficha-signature></canvas>
+                    <canvas width="720" height="220" role="img" aria-label="Recuadro para dibujar la firma. Alternativa: escribí tu nombre completo en el campo siguiente." data-ficha-signature></canvas>
                     <button type="button" data-ficha-clear-signature>Limpiar firma</button>
+                    <label>O escribí tu nombre y apellido completos como firma
+                      <input name="firmaTexto" autocomplete="off" maxlength="80" data-error-target="firma" data-ficha-signature-text>
+                    </label>
                     ${fichaCampoError("firma")}
                   </div>
                 </fieldset>
@@ -8583,8 +8838,35 @@
             y: (source.clientY - rect.top) * (canvas.height / rect.height)
           };
         };
+        const textoFirma = form.querySelector("[data-ficha-signature-text]");
+        // Alternativa sin mouse ni pantalla táctil: el nombre escrito se dibuja
+        // en un canvas y sale el mismo PNG que la firma a mano (mismo contrato).
+        const firmaDesdeTexto = (texto) => {
+          const lienzo = document.createElement("canvas");
+          lienzo.width = canvas.width;
+          lienzo.height = canvas.height;
+          const g = lienzo.getContext("2d");
+          g.fillStyle = "#10202b";
+          g.textAlign = "center";
+          g.textBaseline = "middle";
+          let tamano = 96;
+          g.font = `italic ${tamano}px "Brush Script MT", "Segoe Script", cursive`;
+          while (g.measureText(texto).width > lienzo.width - 40 && tamano > 20) {
+            tamano -= 4;
+            g.font = `italic ${tamano}px "Brush Script MT", "Segoe Script", cursive`;
+          }
+          g.fillText(texto, lienzo.width / 2, lienzo.height / 2);
+          return lienzo.toDataURL("image/png");
+        };
+        const nombreFirmaValido = () => textoFirma.value.trim().split(/\s+/).filter(Boolean).length >= 2;
+        textoFirma.addEventListener("input", () => {
+          if (!textoFirma.value.trim()) return;
+          context.clearRect(0, 0, canvas.width, canvas.height);
+          hasSignature = false;
+        });
         const begin = (event) => {
           event.preventDefault();
+          textoFirma.value = "";
           drawing = true;
           const point = canvasPoint(event);
           context.beginPath();
@@ -8613,6 +8895,7 @@
         clearButton?.addEventListener("click", () => {
           context.clearRect(0, 0, canvas.width, canvas.height);
           hasSignature = false;
+          textoFirma.value = "";
         });
 
         // Contrato y planes del curso elegido (si el colegio es de la lista).
@@ -8621,7 +8904,14 @@
         const planesFieldset = form.querySelector("[data-ficha-planes]");
         const planesOpciones = form.querySelector("[data-ficha-planes-opciones]");
         let planesDisponibles = [];
-        if (contextoInscripcion.colegioId) {
+        // Sin colegio de la lista no hay planes que cargar. Con colegio, el envío
+        // espera a que los planes estén cargados: si no, el servidor los exigiría
+        // sin que el usuario viera dónde elegirlos.
+        let planesCargados = !contextoInscripcion.colegioId;
+        let planesEnCurso = null;
+        const cargarPlanes = () => {
+          if (planesCargados) return Promise.resolve(true);
+          if (planesEnCurso) return planesEnCurso;
           const params = new URLSearchParams({
             colegioId: contextoInscripcion.colegioId,
             nivel: contextoInscripcion.nivel,
@@ -8629,8 +8919,11 @@
             grado: contextoInscripcion.grado,
             division: contextoInscripcion.division
           });
-          fetch(`/api/public/inscripcion-context?${params}`, { cache: "no-store" })
-            .then((response) => response.json())
+          planesEnCurso = fetch(`/api/public/inscripcion-context?${params}`, { cache: "no-store" })
+            .then((response) => {
+              if (!response.ok) throw new Error("contexto");
+              return response.json();
+            })
             .then((payload) => {
               const planes = Array.isArray(payload.planes) ? payload.planes : [];
               planesDisponibles = planes.map((plan) => plan.id);
@@ -8642,11 +8935,17 @@
                   <span><strong>${escapeHtml(plan.nombre)}</strong> · ${escapeHtml(String(plan.cuotas))} ${Number(plan.cuotas) === 1 ? "cuota" : "cuotas"}${plan.descripcion ? `<small>${escapeHtml(plan.descripcion)}</small>` : ""}</span>
                 </label>
               `).join("");
+              planesCargados = true;
+              return true;
             })
             .catch(() => {
               if (contratoNode) contratoNode.textContent = "se vincula en administración";
-            });
-        }
+              return false;
+            })
+            .finally(() => { planesEnCurso = null; });
+          return planesEnCurso;
+        };
+        cargarPlanes();
 
         // Localidades sugeridas por Georef (API oficial). Si no responde, la
         // localidad se escribe a mano igual.
@@ -8654,15 +8953,19 @@
         const provinciaSelect = form.querySelector('[name="domicilioProvincia"]');
         const localidadesLista = document.getElementById("localidades-lista");
         let georefTimer = null;
+        let georefSeq = 0;
         localidadInput.addEventListener("input", () => {
           clearTimeout(georefTimer);
           const nombre = localidadInput.value.trim();
           if (nombre.length < 2) return;
           georefTimer = setTimeout(async () => {
+            const seq = ++georefSeq;
             try {
               const params = new URLSearchParams({ provincia: provinciaSelect.value, nombre, max: "10", campos: "nombre" });
               const response = await fetch(`https://apis.datos.gob.ar/georef/api/localidades?${params}`);
               const payload = await response.json();
+              // Respuesta vieja (otra provincia o texto ya cambiado): se descarta.
+              if (seq !== georefSeq) return;
               const nombres = [...new Set((payload.localidades || []).map((localidad) => localidad.nombre))];
               localidadesLista.innerHTML = nombres.map((valor) => `<option value="${escapeHtml(valor)}"></option>`).join("");
             } catch (_) {
@@ -8671,6 +8974,7 @@
           }, 250);
         });
         provinciaSelect.addEventListener("change", () => {
+          georefSeq += 1;
           localidadesLista.innerHTML = "";
         });
 
@@ -8703,7 +9007,7 @@
             ...contextoInscripcion,
             ...Object.fromEntries(CAMPOS.map((campo) => [campo, String(formData.get(campo) || "")])),
             aceptaCondiciones: formData.get("aceptaCondiciones") === "si",
-            firma: hasSignature ? canvas.toDataURL("image/png") : ""
+            firma: nombreFirmaValido() ? firmaDesdeTexto(textoFirma.value.trim()) : hasSignature ? canvas.toDataURL("image/png") : ""
           };
         };
 
@@ -8711,9 +9015,21 @@
           event.preventDefault();
           const submitButton = form.querySelector(".ficha-adhesion-submit");
           if (submitButton.disabled) return;
+          if (!planesCargados) {
+            submitButton.disabled = true;
+            const cargados = await cargarPlanes();
+            submitButton.disabled = false;
+            if (!cargados) {
+              errorBox.hidden = false;
+              errorBox.textContent = "No pudimos cargar los planes de pago. Tus datos siguen cargados: revisá tu internet y volvé a intentar.";
+              errorBox.scrollIntoView({ behavior: "smooth", block: "center" });
+              return;
+            }
+          }
           const ficha = leerFormulario();
           const local = validacion.validarFichaPax(ficha, { planesDisponibles });
           if (!local.ok) {
+            if (local.errores.firma && textoFirma.value.trim()) local.errores.firma = "Escribí nombre y apellido completos para usar tu nombre como firma.";
             mostrarErroresFormulario(form, errorBox, local.errores, local.sugerencias);
             return;
           }
@@ -8730,6 +9046,7 @@
             if (response.status === 201 && payload.ok) {
               renderFichaAdhesion({ emailDestino: payload.emailDestino || "" });
               window.scrollTo({ top: 0 });
+              document.querySelector("[data-ficha-exito]")?.focus({ preventScroll: true });
               return;
             }
             if (payload.errores && Object.keys(payload.errores).length) {
@@ -8758,7 +9075,7 @@
           document.getElementById("app").innerHTML = `
             <div class="layout ficha-adhesion-layout">
               <section class="ficha-adhesion-panel ficha-adhesion-success-screen">
-                <div class="ficha-adhesion-success ficha-adhesion-success-large">Registramos tus datos como tutor.</div>
+                <div class="ficha-adhesion-success ficha-adhesion-success-large" role="status" tabindex="-1" data-ficha-exito>Registramos tus datos como tutor.</div>
                 <p>Administración los vincula con la ficha del pasajero. Te contactaremos si necesitamos validar algún dato.</p>
                 <a class="ficha-adhesion-home-link" href="#/inscripcion">Volver al inicio</a>
               </section>
@@ -8875,6 +9192,7 @@
             if (response.status === 201 && payload.ok) {
               renderFichaTutor(true);
               window.scrollTo({ top: 0 });
+              document.querySelector("[data-ficha-exito]")?.focus({ preventScroll: true });
               return;
             }
             if (payload.errores && Object.keys(payload.errores).length) {
@@ -9012,6 +9330,10 @@
         }
         if (path === "/admin/grupos") {
           renderAdminGrupos();
+          return;
+        }
+        if (path === "/admin/colegios") {
+          renderAdminColegios();
           return;
         }
         if (path === "/admin/pasajeros") {

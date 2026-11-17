@@ -7652,8 +7652,22 @@
       }
 
       .ficha-adhesion-check input {
-        min-height: auto;
-        width: auto;
+        flex: 0 0 24px;
+        height: 24px;
+        min-height: 24px;
+        width: 24px;
+      }
+
+      .sr-only {
+        border: 0;
+        clip: rect(0 0 0 0);
+        height: 1px;
+        margin: -1px;
+        overflow: hidden;
+        padding: 0;
+        position: absolute;
+        white-space: nowrap;
+        width: 1px;
       }
 
       .ficha-adhesion-signature {
@@ -7762,6 +7776,17 @@
       .ficha-opcional {
         color: #6b7b85;
         font-weight: 500;
+      }
+
+      .ficha-campo {
+        align-content: start;
+        display: grid;
+        gap: 6px;
+        min-width: 0;
+      }
+
+      .ficha-campo--full {
+        grid-column: 1 / -1;
       }
 
       .ficha-campo-error {
@@ -10270,7 +10295,7 @@
 
       input::placeholder,
       textarea::placeholder {
-        color: color-mix(in srgb, var(--color-muted) 74%, transparent);
+        color: #5c6c76;
       }
 
       input:focus,
@@ -11232,3 +11257,8 @@
           justify-self: start;
         }
       }
+
+/* Colegios (admin): ABM */
+.admin-colegios-toggle { align-items: center; display: flex; font-weight: 700; gap: 8px; }
+.admin-colegios-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.admin-colegios-error { background: #fdecec; border: 1px solid #f1b5b5; border-radius: 10px; color: #8a1f1f; font-weight: 700; padding: 10px 12px; }
