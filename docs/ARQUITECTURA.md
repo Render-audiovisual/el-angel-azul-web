@@ -16,6 +16,7 @@ Leer esto ANTES de abrir código. `assets/js/app.js` pesa ~474 KB: nunca leerlo 
 | Storage | `lib/storage.js` | Firma en bucket privado `fichas` (subir, leer, borrar). Apagado sin `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` |
 | Correo | `lib/email.js` | Resend. Apagado sin `RESEND_API_KEY`, `EAA_EMAIL_FROM`, `EAA_EMAIL_COPIA` |
 | PDF | `lib/ficha-pdf.js` | pdf-lib |
+| Padrón de colegios | `lib/padron.js`, `scripts/import-padron-colegios.js` | Lee el .xlsx del Padrón Oficial (sin dependencias) y hace upsert en `colegios` por `codigo_oficial` |
 | Validación | `assets/js/modules/ficha-validation.js` | UMD: el mismo código valida en el formulario y en el servidor |
 | SPA | `assets/js/app.js` | Todas las pantallas (ver abajo) |
 | Módulos viejos | `assets/js/modules/*.js` | Pequeños (forms, groups, passengers, payments, persistence, portal) |

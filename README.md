@@ -149,10 +149,28 @@ HTML, CSS, JavaScript y JSON se sirven con revalidación obligatoria. Así, un
 deploy nuevo no depende de cambiar manualmente el sufijo `?v=` para que el
 navegador reciba la versión actual.
 
+## Importar el Padrón de colegios
+
+El Padrón Oficial de Establecimientos Educativos se baja de
+argentina.gob.ar (Ministerio de Educación → Padrón Oficial). Se importan los
+establecimientos comunes con primario o secundario de Corrientes y Misiones
+(`--provincias=` cambia la lista), con el CUE como `codigo_oficial`.
+
+```bash
+node scripts/import-padron-colegios.js padron.xlsx            # solo lee el archivo
+DATABASE_URL=... node scripts/import-padron-colegios.js padron.xlsx            # simula y revierte
+DATABASE_URL=... node scripts/import-padron-colegios.js padron.xlsx --aplicar  # guarda
+```
+
+Reglas: el código oficial manda; un colegio cargado a mano con el mismo nombre
+se vincula en vez de duplicarse; si el nombre ya existe con otro código se agrega
+la localidad; reimportar no pisa nombres editados ni reactiva colegios dados de baja.
+Aplicar en producción solo con OK del dueño.
+
 ## Pendientes de producto
 
 - Pagos todavía usa datos de demostración; no representa cobranza real.
-- Sección Colegios del admin e importación del Padrón oficial (Fase 2).
+- Cargar los colegios del Padrón en la base real (ver «Importar el Padrón de colegios»).
 - Exportación de pasajeros a Excel y Supabase Storage (Fase 3).
 - Retirar el adaptador muerto de Google Sheets solo después de un período
   estable en PostgreSQL.
