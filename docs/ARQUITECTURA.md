@@ -46,5 +46,5 @@ Estado actualizado y pendientes en `docs/HANDOFF-SESION.md`. Plan con tareas, te
 - Escribir en Supabase de producción solo con confirmación del dueño.
 
 ## Comandos
-- `npm test` (113 tests) · `npm run check` · `npm run db:check`.
+- `npm test` (117 tests al 20/11/2026) · `npm run check` · `npm run db:check`.
 - E2E: `PLAYWRIGHT_PATH=<node_modules/playwright> node scripts/e2e/ficha.e2e.js` (no corre en `npm test`).

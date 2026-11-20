@@ -8587,7 +8587,7 @@
                   <i aria-hidden="true"></i>
                 </div>
                 <div class="ficha-adhesion-success ficha-adhesion-success-large" role="status" tabindex="-1" data-ficha-exito>Recibimos tu ficha correctamente.</div>
-                ${exito.emailDestino ? `<p>Te enviamos una copia a <strong>${escapeHtml(exito.emailDestino)}</strong>. Si no la ves en unos minutos, revisá la carpeta de spam.</p>` : ""}
+                ${exito.emailEstado === "pendiente" && exito.emailDestino ? `<p>La copia por correo está pendiente de envío a <strong>${escapeHtml(exito.emailDestino)}</strong>. Si no llega, consultanos: tu ficha ya quedó guardada.</p>` : ""}
                 <p>Queda pendiente de revisión por administración. Te contactaremos si necesitamos validar algún dato.</p>
                 <a class="ficha-adhesion-home-link" href="#/inscripcion">Volver al inicio</a>
               </section>
@@ -9044,7 +9044,7 @@
             });
             const payload = await response.json().catch(() => ({}));
             if (response.status === 201 && payload.ok) {
-              renderFichaAdhesion({ emailDestino: payload.emailDestino || "" });
+              renderFichaAdhesion({ emailDestino: payload.emailDestino || "", emailEstado: payload.emailEstado || "" });
               window.scrollTo({ top: 0 });
               document.querySelector("[data-ficha-exito]")?.focus({ preventScroll: true });
               return;

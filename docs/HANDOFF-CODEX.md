@@ -2,6 +2,14 @@
 
 Para quien siga este trabajo con Codex u otro agente. Leé este archivo, después `docs/ARQUITECTURA.md`, y seguí desde «Qué sigue».
 
+## Actualización del 20/11/2026
+
+- Consignas del cliente y estado de cada punto en `docs/CONSIGNAS-CLIENTE.md`. Objetivo confirmado: toda la inscripción online.
+- Nueva prueba HTTP + PGlite del circuito completo de ficha, tutor, admin, aprobación y PDF: `scripts/inscripcion-online.test.js`. `npm run check`: 117 aprobadas.
+- Corregida la confirmación de correo: guardar la ficha no implica haber enviado la copia. API devuelve `emailEstado`; la pantalla distingue el envío pendiente del guardado.
+- El 17/11 se creó la PR #3 y un sitio independiente de previsualización en Hostinger (`devoted-sienna-fox-25.hostingersite.com`) sin base conectada. `main` no se fusionó en esa sesión.
+- El proyecto «Angel Azul base» no figura en las conexiones de Supabase disponibles el 20/11. No se verificaron ni modificaron sus datos/migraciones; los estados de producción mencionados abajo corresponden al traspaso original.
+
 ## Dónde está el código
 - Repo: https://github.com/Render-audiovisual/el-angel-azul-web (privado: hay que tener acceso a la organización).
 - Clonar y pararse en la rama de trabajo:

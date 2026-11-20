@@ -1020,7 +1020,14 @@ async function handlePublicFicha(req, res) {
       error: "No se pudo guardar la ficha. Tus datos siguen cargados: intentá de nuevo en unos minutos o consultanos por WhatsApp."
     });
   }
-  json(res, 201, { ok: true, id: guardada.id, emailDestino: email.enmascararEmail(validacion.datos.responsableEmail) });
+  // Guardar la ficha y enviar el correo son resultados distintos: el correo
+  // se procesa después de responder y todavía puede fallar.
+  json(res, 201, {
+    ok: true,
+    id: guardada.id,
+    emailDestino: email.enmascararEmail(validacion.datos.responsableEmail),
+    emailEstado: email.correoConfigurado() ? "pendiente" : "sin_configurar"
+  });
   setImmediate(() => procesarCorreoFicha(guardada.id));
 }
 
