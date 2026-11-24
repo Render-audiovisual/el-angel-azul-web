@@ -1,79 +1,104 @@
-# Traspaso a Codex – El Ángel Azul (17/11/2026)
+# Traspaso del proyecto – El Ángel Azul (24/11/2026)
 
-Para quien siga este trabajo con Codex u otro agente. Leé este archivo, después `docs/ARQUITECTURA.md`, y seguí desde «Qué sigue».
+Escrito para el programador que sigue el trabajo (con Codex, Claude Code u otro agente). Leé este archivo entero, después `docs/ARQUITECTURA.md`, y seguí los pasos de la sección 5 en orden.
 
-## Actualización del 20/11/2026
+## Integración de Codex (24/11/2026)
 
-- Consignas del cliente y estado de cada punto en `docs/CONSIGNAS-CLIENTE.md`. Objetivo confirmado: toda la inscripción online.
-- Nueva prueba HTTP + PGlite del circuito completo de ficha, tutor, admin, aprobación y PDF: `scripts/inscripcion-online.test.js`. `npm run check`: 117 aprobadas.
-- Corregida la confirmación de correo: guardar la ficha no implica haber enviado la copia. API devuelve `emailEstado`; la pantalla distingue el envío pendiente del guardado.
-- El 17/11 se creó la PR #3 y un sitio independiente de previsualización en Hostinger (`devoted-sienna-fox-25.hostingersite.com`) sin base conectada. `main` no se fusionó en esa sesión.
-- El proyecto «Angel Azul base» no figura en las conexiones de Supabase disponibles el 20/11. No se verificaron ni modificaron sus datos/migraciones; los estados de producción mencionados abajo corresponden al traspaso original.
+- Se integró el traspaso `0c9d626` con el commit local `1c3bde0`: confirmación de correo pendiente y prueba HTTP completa de inscripción. Base integrada: 117 pruebas.
+- Hostinger fue verificado como hosting el 17/11. Se creó una previsualización independiente sin base conectada (`devoted-sienna-fox-25.hostingersite.com`), además de la vista previa automática del PR #3. No se modificó `main`.
+- Se trabaja en `fix/admin-guardado-concurrente`, sin escrituras en la base real.
 
-## Dónde está el código
-- Repo: https://github.com/Render-audiovisual/el-angel-azul-web (privado: hay que tener acceso a la organización).
-- Clonar y pararse en la rama de trabajo:
+## 1. Qué es y dónde está
+- Web de viajes estudiantiles: sitio público, ficha de adhesión online (PAX y Tutor) y panel de administración. Node sin framework (`server.js`) + una SPA en `assets/js/app.js` (~9.500 líneas: **no la leas entera**, usá `grep -n` y leé el rango). Datos en Postgres (Supabase).
+- Repo: https://github.com/Render-audiovisual/el-angel-azul-web (privado: pedí acceso a la organización).
+- **Rama de trabajo: `feat/colegios-padron`**. Está abierto el PR #3 hacia `main` (no mergear sin OK del dueño). Hostinger arma una vista previa por cada push: https://hushed-teal-stingray-74.hostingersite.com (no verificado a qué base apunta; confirmalo antes de usarla con datos).
+- **Nada está desplegado todavía.** Todo se trabajó en local.
+- Lo escrito antes de noviembre de 2026 está desactualizado (`contexto proyecto/*` habla de Railway). Vigentes: este archivo, `docs/ARQUITECTURA.md`, `docs/correcciones-del-angel.md` y `docs/superpowers/plans/2026-11-10-plan-mejora-angel-azul.md`.
 
+## 2. Reglas del dueño (no negociables)
+- Toda escritura en Supabase y todo push o merge a `main` los aprueba el dueño antes.
+- `DATABASE_URL` y demás secretos nunca se piden, se muestran ni pasan por chat.
+- Respuestas al dueño en español, cortas. Textos de la web en español rioplatense (vos).
+- `git add` por nombre de archivo, nunca `git add .`.
+- Por ahora decide el dueño; el frontend (rediseño visual) va al final.
+
+## 3. Arranque rápido
 ```bash
 git clone https://github.com/Render-audiovisual/el-angel-azul-web.git
 cd el-angel-azul-web
 git checkout feat/colegios-padron
 npm ci
-npm run check      # 116 tests; usan Postgres en memoria (PGlite), no tocan Supabase
+npm run check     # 116 tests, sin red ni base real (usa PGlite en memoria)
+npm run dev       # web local en http://localhost:3057
 ```
+`npm run dev` levanta el servidor real con una base en memoria y datos de prueba: 3 colegios, «Bariloche 2027» y un contrato `LOCAL-001` (5° B de «Escuela Normal N° 1») con 2 planes. Admin: usuario `admin`, clave `TestAdmin-123456` (solo local). Los datos se pierden al cortarlo. Ignora cualquier clave real de Supabase o Resend que tengas exportada.
+- Ojo: el viaje se guarda como destino + año en un solo texto («Bariloche 2027»). Si cargás «Bariloche» a secas, el contrato no se encuentra.
+- El buscador de colegio de la ficha es una lista nativa del navegador: hay que elegir la opción («Escuela Normal N° 1 — Goya»).
+- Las secciones del formulario aparecen al hacer scroll (animación); si automatizás con Playwright, hacé scroll real con `mouse.wheel`.
 
-## Contexto en pocas líneas
-- Web de viajes estudiantiles. Node sin framework (`server.js`) + SPA en `assets/js/app.js` (~9500 líneas, ~474 KB: **nunca leerlo entero**, usar `grep -n` y leer el rango).
-- Producción: Hostinger (deploy automático desde `main`) + base Supabase «Angel Azul base». Hoy la base tiene casi todo vacío (0 contratos, grupos, pasajeros, fichas; 2 colegios de prueba), así que nadie puede enviar una ficha real todavía.
-- Todo lo de este traspaso se trabajó **en local, nada está desplegado**.
-- **Lo escrito antes de noviembre de 2026 está desactualizado** (por ejemplo `contexto proyecto/*` habla de Railway; el hosting real es Hostinger). Fuentes vigentes: este archivo, `docs/ARQUITECTURA.md`, `docs/HANDOFF-SESION.md` y `docs/superpowers/plans/2026-11-10-plan-mejora-angel-azul.md`.
+## 4. Estado
+**Hecho en código (nada desplegado):** los 12 puntos del cliente tienen su parte hecha. El detalle punto por punto, con lo que falta de cada uno, está en `docs/correcciones-del-angel.md`.
+**Verificado a mano en el navegador local (ficha PAX):** selector PAX/Tutor, curso/grado/división, nombre y apellido separados con aviso de tildes, validación (bloquea y lista los 20 datos faltantes), CUIL/correo/celular del tutor, plan de pago, dirección, envío 201 y ficha guardada con colegio, contrato y plan; el PDF sale con «APELLIDO, NOMBRE» y el plan.
+**Todavía sin revisar a mano:** formulario de Tutor, ficha en celular (390 px), pantalla Fichas del admin, exportación a Excel, el PDF visualmente.
+**Depende de configuración externa:** correo (Resend) apagado: faltan `RESEND_API_KEY`, `EAA_EMAIL_FROM`, `EAA_EMAIL_COPIA` y el DNS de `elangelazul.tur.ar` (la delegación a AWS está muerta). La base real está casi vacía (0 planes, 0 contratos) y faltan las migraciones 0005 y 0006.
 
-## Reglas del dueño (no negociables)
-- Toda escritura en Supabase y todo push a `main` los aprueba el dueño antes. No pedir ni mostrar `DATABASE_URL`; los secretos nunca pasan por chat.
-- Respuestas al dueño en español, cortas. Textos de la web en español rioplatense (vos).
-- No usar `git add .`: agregar archivos por nombre. Los archivos de `lib/`, `server.js` y `app.js` pueden venir en CRLF si se editan en Windows; no mezclar fines de línea.
+## 5. Pasos para seguir (en orden)
+Cada paso termina con `npm run check` en verde y un commit chico. Si tocás algo del admin, probalo con `npm run dev`.
 
-## Mapa de ramas (todas en GitHub)
+**Paso 1 – Arreglar el guardado del admin (lo más urgente).** Hoy cada guardado manda al servidor TODAS las filas que el navegador tiene (`googleSheetsFichaRows` en `assets/js/app.js`, ~línea 2646, y las de Grupos, Contratos, Pasajeros, Colegios). Consecuencias comprobadas:
+- Dos admins se pisan: A rechaza una ficha, B (con la lista vieja) guarda una nota y la ficha vuelve a «pendiente» (reproducido en local).
+- El servidor rechaza pedidos de más de 1.000.000 bytes (`MAX_BODY_BYTES`, `server.js`): con ~120 fichas (~500 con Storage) guardar da 413.
+- Cada guardado hace una transacción y una fila de auditoría por ficha (`updateFichasAdmin`, `lib/db.js`).
+Arreglo: mandar solo las filas modificadas y rechazar si la fila cambió desde que se cargó (comparar `updated_at`). Agregar un test que reproduzca el caso de los dos admins.
+
+**Paso 2 – IP del visitante en Hostinger** (`clientIp`, `server.js` ~190). Hoy toma la última IP de `X-Forwarded-For`, pensado para Render. Confirmar qué manda Hostinger; si hay un proxy más, todos los visitantes comparten límite (50 fichas por hora para todo el sitio y 5 contraseñas malas bloquean el login de todos).
+
+**Paso 3 – Seguridad del servidor.**
+- Roles: el servidor nunca mira `role` (`ADMIN_USERS`, `handleSheets` en `server.js`); cualquier agente puede borrar grupos o contratos con curl. Definir qué puede hacer cada rol, chequearlo en el servidor y escribir un test que lo pruebe (el test actual de «Configuración bloqueada» solo lee texto de `app.js`).
+- Auditoría: solo las fichas escriben en `eventos_administrativos`; borrados y ediciones de grupos, contratos, pasajeros y turismo no dejan rastro (`actorUsername` llega y no se usa).
+- `GET /api/google-sheets?sheet=CONFIG` se puede leer sin sesión (`PUBLIC_READ_SHEETS`). Cerrarlo o exponer solo las claves necesarias.
+- La base no verifica el certificado de Supabase por defecto (`rejectUnauthorized: false` en `lib/db.js`). Cargar el CA y activar `EAA_POSTGRES_TLS_VERIFY_FULL=true`.
+- Los 5 scripts de `cdn.jsdelivr.net` en `index.html` no tienen `integrity` y `swiper@11` no está fijado a una versión exacta.
+- La ficha pública crea viajes nuevos desde el texto libre de «destino» (`findOrCreateViaje`). Que solo busque, no cree.
+
+**Paso 4 – Terminar de revisar los 12 puntos en el navegador** (lista de la sección 4): Tutor, celular, pantalla Fichas del admin, Excel, PDF. Anotar lo que falle en `docs/correcciones-del-angel.md`.
+
+**Paso 5 – Datos reales (con OK del dueño).**
+1. Aplicar las migraciones 0005 y 0006 en Supabase.
+2. Importar el Padrón de colegios (ver sección 6): simular primero, `--aplicar` después.
+3. Cargar viajes, grupos, contratos y planes de pago. Todo registro lleva `legacy_id` (sin él el admin muestra `id: null`).
+
+**Paso 6 – Correo.** Verificar el dominio en Resend, cargar las tres variables en Hostinger, probar un envío y revisar que la ficha llegue con todos los datos. Corregir el email de contacto del sitio (`contacto@elangelazul.com.ar` no existe). Al arrancar, el servidor reenvía solo 25 correos atrasados por vez (`listFichaEmailsPendientes`).
+
+**Paso 7 – Entrega.** Confirmar el hosting real (README y `render.yaml` dicen Render, comentarios dicen Railway, `admin/README.md` dice Hostinger) y limpiar la documentación. Con OK del dueño: mergear el PR #3, cargar las variables en Hostinger (`EAA_POSTGRES_MIGRATION_ENABLED=true`), rotar `EAA_ADMIN_PASSWORD` y `EAA_AGENTE*_PASSWORD` (la vieja está en el historial público de git).
+
+**Paso 8 – Al final: frontend.** Rediseño visual y detalles (por ejemplo, el resumen del paso 1 de la inscripción aparece duplicado).
+
+**Limpieza menor:** manejador `error` en `fs.createReadStream` de `server.js` (~línea 872); letras fuera de Latin-1 se pierden en el PDF (`textoSeguro`, `lib/ficha-pdf.js`: «Mićić» sale «Mii»); retirar el adaptador de Google Sheets (~150 líneas) cuando la base esté estable.
+
+## 6. Importar el Padrón de colegios
+Fuente: «Padrón Oficial de Establecimientos Educativos» en argentina.gob.ar (Ministerio de Educación). Probado con la versión del 07/09/2026: 2.929 establecimientos (1.170 Corrientes, 1.759 Misiones). Entran los comunes con primario o secundario; el CUE queda como `codigo_oficial`.
+```bash
+node scripts/import-padron-colegios.js padron.xlsx                          # solo lee el archivo
+DATABASE_URL=... node scripts/import-padron-colegios.js padron.xlsx         # simula y revierte
+DATABASE_URL=... node scripts/import-padron-colegios.js padron.xlsx --aplicar   # guarda (pedir OK)
+```
+Un colegio cargado a mano con el mismo nombre se vincula; si el nombre ya existe con otro código se agrega la localidad; reimportar no pisa nombres editados ni reactiva bajas. Después de importar, el buscador público recibe ~2.900 colegios sin paginar: probarlo en celular.
+
+## 7. Cómo trabajar (workflow)
+1. Una rama por persona o agente; nunca dos en la misma. Salir de `feat/colegios-padron`.
+2. Al empezar: `git fetch`, mirar `git log origin/<rama>` y releer la sección 5.
+3. Reparto por archivos para no pisarse: servidor y base (`lib/`, `server.js`, `supabase/migrations/`) vs. frontend (`assets/js/app.js`, CSS, HTML).
+4. Commits chicos; `npm run check` antes de cada push.
+5. Al cerrar la sesión: actualizar este archivo (pasos hechos y lo que sigue) y pushear.
+6. Ramas chicas entran a `feat/colegios-padron` por PR; la vista previa de Hostinger sirve para revisar. A `main` solo con OK del dueño.
+
+## 8. Mapa de ramas
 | Rama | Qué es |
 |---|---|
-| `main` | Producción. Último commit 01/10/2026 (Ficha de Adhesión v2, Fase 1). |
-| `integracion/abc` | Reúne las ramas de noviembre: estabilización de la ficha, Colegios admin, firma en Storage, doble envío (migración 0006), accesibilidad y selector de grupo. **Candidata a `main`.** 113 tests. |
-| `feat/colegios-padron` | **Rama de trabajo actual.** Sale de `integracion/abc` y suma el importador del Padrón de colegios (Fase 2). 116 tests. |
-| `feat/ficha-estabilizacion` | Rama A. Además tiene docs de contexto (`b65f7ef`) que no están en `integracion/abc`. |
-| `feat/colegios-admin`, `feat/storage-firma`, `feat/db-doble-envio`, `feat/frontend-pasajeros-a11y` | Ramas B, C, E, D, ya incluidas en `integracion/abc`. |
+| `main` | Producción. Último commit 01/10/2026. |
+| `feat/colegios-padron` | Trabajo actual (PR #3): suma el importador del Padrón y los documentos de traspaso a `integracion/abc`. |
+| `integracion/abc` | Reúne las ramas de noviembre (estabilización de la ficha, Colegios admin, firma en Storage, doble envío, accesibilidad). |
+| `feat/ficha-estabilizacion` | Rama A; tiene docs de contexto (`b65f7ef`) que no están en `integracion/abc`. |
+| `feat/colegios-admin`, `feat/storage-firma`, `feat/db-doble-envio`, `feat/frontend-pasajeros-a11y` | Ya incluidas en `integracion/abc`. |
 | `fix/migracion-supabase-segura`, `feat/ficha-adhesion-v2`, `fix/ficha-v2-release` | Anteriores a noviembre; ignorar. |
-
-## Qué se hizo en esta sesión (Fase 2 de Colegios)
-La pantalla Colegios del admin ya estaba hecha en `integracion/abc`. Faltaba importar el Padrón oficial:
-- `lib/padron.js`: lee el `.xlsx` sin dependencias nuevas (zip con `zlib` + regex sobre el XML) y hace el upsert.
-- `scripts/import-padron-colegios.js`: el comando.
-- `scripts/padron.test.js`: 3 tests (lectura y filtro, formato distinto, upsert repetible).
-- Sección «Importar el Padrón de colegios» en `README.md`.
-
-Cómo funciona:
-- Fuente: Padrón Oficial de Establecimientos Educativos, de argentina.gob.ar (Ministerio de Educación → Padrón Oficial). Versión probada: 07/09/2026. La URL del archivo cambia con cada versión; se saca de esa página.
-- Se importan los establecimientos **comunes con primario o secundario** de Corrientes y Misiones (`--provincias=` cambia la lista). Resultado con el archivo real: **2.929** (1.170 Corrientes, 1.759 Misiones).
-- El CUE (columna Cueanexo) queda como `codigo_oficial`.
-- Un colegio cargado a mano con el mismo nombre se **vincula** en vez de duplicarse. Si el nombre ya existe con otro código, se agrega la localidad. Reimportar no pisa nombres editados ni reactiva colegios dados de baja.
-
-```bash
-node scripts/import-padron-colegios.js padron.xlsx                           # solo lee el archivo
-DATABASE_URL=... node scripts/import-padron-colegios.js padron.xlsx          # simula y revierte
-DATABASE_URL=... node scripts/import-padron-colegios.js padron.xlsx --aplicar  # guarda (pedir OK al dueño)
-```
-
-## Qué sigue (en orden)
-1. Revisar que Grupos y Contratos elijan el colegio de la lista (spec `docs/superpowers/specs/2026-09-15-ficha-adhesion-design.md`, sección 5.1). `findOrCreateColegio` ya no existe en el código, pero las pantallas no se verificaron.
-2. Probar en el navegador el buscador público de colegios con ~2.900 entradas. `GET /api/public/colegios` devuelve todos los activos sin paginar; si pesa o se traba, paginar o filtrar en el servidor.
-3. Con OK del dueño: correr el importador con `--aplicar` contra Supabase (primero la simulación).
-4. Carga real en Supabase (con OK): viajes («Bariloche 2027» exacto), grupos, contratos y planes de pago. **Todo registro lleva `legacy_id`**; sin él el admin muestra `id: null`.
-5. Entrega: mergear `integracion/abc` y esta rama a `main`, aplicar las migraciones 0005 y 0006 en Supabase (hoy NO aplicadas), subir y cargar variables en Hostinger (`EAA_POSTGRES_MIGRATION_ENABLED=true`; las de Storage y correo si se activan).
-6. Correo (Resend): `RESEND_API_KEY`, `EAA_EMAIL_FROM`, `EAA_EMAIL_COPIA` y DNS de `elangelazul.tur.ar` (la delegación a AWS Route 53 está muerta). Corregir el email de contacto del sitio (`contacto@elangelazul.com.ar` no existe).
-7. Endurecer: confirmar la IP real detrás del proxy de Hostinger (`X-Forwarded-For`), que el admin no muestre 200 pasajeros de demostración cuando falla la base, calle sin HTML, rotar `EAA_ADMIN_PASSWORD` / `EAA_AGENCIA_PASSWORD` (la vieja quedó en el historial público de git). Decidir si se borra `admin/colegios/index.html` (inalcanzable).
-8. Actualizar `docs/ARQUITECTURA.md` cuando cambie el número de tests o migraciones.
-9. Pendientes viejos: paquete «Bariloche» de ejemplo en Sheets, Sucursales en Home. El rediseño visual va al final.
-
-## Cómo probar
-- `npm run check` = `node --check` de `server.js` y `app.js` + todos los tests. No necesita base ni red.
-- Probar el servidor con una base local: ver «Entorno local de pruebas» en `docs/HANDOFF-SESION.md`.
-- E2E con Playwright: `scripts/e2e/ficha.e2e.js` y `scripts/e2e/colegios.e2e.js`, con `PLAYWRIGHT_PATH` apuntando a `node_modules/playwright`.
