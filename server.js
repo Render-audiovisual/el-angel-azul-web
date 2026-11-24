@@ -8,6 +8,7 @@ const fichaValidation = require("./assets/js/modules/ficha-validation.js");
 const fichaPdf = require("./lib/ficha-pdf");
 const email = require("./lib/email");
 const storage = require("./lib/storage");
+const adminWrite = require("./lib/admin-write");
 
 const PORT = Number(process.env.PORT || 8080);
 const ROOT = __dirname;
@@ -661,13 +662,13 @@ async function handleSheets(req, res, url) {
     // de Hostinger antes de tocar ningún dato real.
     if (sheet === "FICHAS_ADHESION" && adminSession) {
       if (POSTGRES_MIGRATION_ENABLED) {
-        return json(res, 200, { ok: true, sheet, rows: conFirmaPorUrl(await db.listFichasAdmin()) });
+        return json(res, 200, { ok: true, sheet, rows: conFirmaPorUrl(adminWrite.versionedRows(await db.listFichasAdmin())) });
       }
       const [sheetsRows, postgresRows] = await Promise.all([readSheet(sheet), db.listFichasAdmin()]);
       return json(res, 200, { ok: true, sheet, rows: [...conFirmaPorUrl(postgresRows), ...sheetsRows] });
     }
     if (POSTGRES_SHEETS.has(sheet)) {
-      return json(res, 200, { ok: true, sheet, rows: await POSTGRES_LIST_FN[sheet]() });
+      return json(res, 200, { ok: true, sheet, rows: adminWrite.versionedRows(await POSTGRES_LIST_FN[sheet]()) });
     }
     return json(res, 200, { ok: true, sheet, rows: await readSheet(sheet) });
   }
@@ -695,6 +696,21 @@ async function handleSheets(req, res, url) {
 
     rows = sanitizeRows(rows, SCHEMA[sheet]);
     deleteIds = sanitizeDeleteIds(deleteIds);
+
+    if (POSTGRES_MIGRATION_ENABLED && (sheet === "FICHAS_ADHESION" || POSTGRES_SAVE_FN[sheet])) {
+      const list = sheet === "FICHAS_ADHESION" ? db.listFichasAdmin : POSTGRES_LIST_FN[sheet];
+      const save = sheet === "FICHAS_ADHESION"
+        ? () => db.updateFichasAdmin(rows, adminSession.user)
+        : () => POSTGRES_SAVE_FN[sheet](rows, deleteIds, adminSession.user);
+      const result = await adminWrite.write({
+        pool: db.getPool(), sheet, rows, deleteIds,
+        expectedVersions: payload.expectedVersions, list, save
+      });
+      if (result.failed.length) {
+        return json(res, 200, { ok: false, sheet, error: `No se guardó el pedido: ${result.failed.map((item) => item.error).join(" | ")}` });
+      }
+      return json(res, 200, { ok: true, sheet, updated: result.updated, versions: result.versions });
+    }
 
     // Auditoría 23/07: la edición/aprobación de fichas desde el admin
     // manda TODAS las fichas conocidas por el navegador en un solo POST
