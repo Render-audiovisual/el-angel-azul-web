@@ -83,7 +83,7 @@
                 <h1 id="eaa-hero-title">EL VIAJE PASA.<br>LA HISTORIA<br><em>QUEDA.</em></h1>
                 <p class="eaa-hero-description">La nieve, las sierras, tus amigos. Ese viaje que esperás todo el año empieza con El Ángel Azul.</p>
                 <div class="eaa-actions">
-                  <a class="eaa-button eaa-button-orange" href="#/estudiantil" data-scroll-target="eaa-destinos">Encontrá tu viaje ${arrow}</a>
+                  <a class="eaa-button eaa-button-accent" href="#/estudiantil" data-scroll-target="eaa-destinos">Encontrá tu viaje ${arrow}</a>
                   <a class="eaa-hero-secondary" href="${whatsappLink("Hola, quiero organizar una reunión para conocer los viajes estudiantiles de El Ángel Azul.")}" target="_blank" rel="noopener">Quiero una reunión ${arrow}</a>
                 </div>
               </div>
@@ -157,7 +157,7 @@
             <section class="eaa-final" aria-labelledby="eaa-final-title">
               <p class="eaa-eyebrow">La próxima historia puede ser la tuya</p>
               <h2 id="eaa-final-title">¿Y SI NOS<br><em>VAMOS JUNTOS?</em></h2>
-              <div class="eaa-actions"><a class="eaa-button eaa-button-orange" href="${whatsappLink("Hola, queremos viajar con El Ángel Azul. ¿Nos cuentan las propuestas para nuestro grupo?")}" target="_blank" rel="noopener">Armemos el viaje ${arrow}</a><a class="eaa-final-secondary" href="#/inscripcion">Ya tengo mi viaje: inscribirme ${arrow}</a></div>
+              <div class="eaa-actions"><a class="eaa-button eaa-button-accent" href="${whatsappLink("Hola, queremos viajar con El Ángel Azul. ¿Nos cuentan las propuestas para nuestro grupo?")}" target="_blank" rel="noopener">Armemos el viaje ${arrow}</a><a class="eaa-final-secondary" href="#/inscripcion">Ya tengo mi viaje: inscribirme ${arrow}</a></div>
               <span class="eaa-final-mark" aria-hidden="true">AZUL.</span>
             </section>
           </div>

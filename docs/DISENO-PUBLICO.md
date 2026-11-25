@@ -8,8 +8,8 @@ Referencia del dueño: https://maxdream.tur.ar/. Se toman la escala fotográfica
 
 La portada ayuda a estudiantes y familias a elegir un destino, conocer a la agencia y consultar o completar su inscripción. Mantiene las rutas y el sistema de fichas existentes.
 
-- Azul profundo `#082b4a`, azul viaje `#155bc4`, hielo `#e4f3fa`, papel `#f6f9fc`, naranja `#ff7049` y tinta `#132e46`.
-- Titulares: Barlow Condensed 800. Texto y controles: Plus Jakarta Sans. Reutiliza las fuentes ya cargadas.
+- Paleta de marca: azul profundo `#083b7a`, azul `#0d69a1`, fucsia `#eb3e8f`, fondo `#f7fbfe` y gris `#4f6472`. Verde `#18a957` reservado para WhatsApp; CTAs en fucsia oscuro `#d82f80` para mantener contraste con texto blanco.
+- Pedido del dueño (25/11): Bebas Neue 400 en titulares, Poppins en textos y controles públicos. La tipografía del panel no cambia.
 - Rasgo principal: fotografía real del grupo y titular de gran escala «El viaje pasa. La historia queda».
 - Recorrido: portada → destinos Bariloche/Carlos Paz → acompañamiento → galería real → preguntas de las familias → consulta e inscripción.
 - Header y footer compartidos con el resto de la web pública. CSS nuevo aislado del panel y de los formularios.
