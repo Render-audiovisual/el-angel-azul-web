@@ -8,6 +8,12 @@ Escrito para el programador que sigue el trabajo (con Codex, Claude Code u otro 
 - Hostinger fue verificado como hosting el 17/11. Se creó una previsualización independiente sin base conectada (`devoted-sienna-fox-25.hostingersite.com`), además de la vista previa automática del PR #3. No se modificó `main`.
 - Se trabaja en `fix/admin-guardado-concurrente`, sin escrituras en la base real.
 
+## Página pública (25/11/2026)
+
+- Propuesta pedida por el dueño con referencia Maxdream en `feat/publica-experiencia`, basada en `fix/admin-guardado-concurrente`. Dirección y validación en `docs/DISENO-PUBLICO.md`.
+- Portada nueva y navegación/footer públicos; `assets/css/public-experience.css` separa los estilos del admin y los formularios. Fotografías propias existentes, destinos, galería, preguntas frecuentes y accesos a consulta e inscripción.
+- 130 pruebas aprobadas, revisión de escritorio/móvil y rutas públicas. Sin cambios en `main`, Supabase real ni el despliegue compartido.
+
 ## 1. Qué es y dónde está
 - Web de viajes estudiantiles: sitio público, ficha de adhesión online (PAX y Tutor) y panel de administración. Node sin framework (`server.js`) + una SPA en `assets/js/app.js` (~9.500 líneas: **no la leas entera**, usá `grep -n` y leé el rango). Datos en Postgres (Supabase).
 - Repo: https://github.com/Render-audiovisual/el-angel-azul-web (privado: pedí acceso a la organización).
