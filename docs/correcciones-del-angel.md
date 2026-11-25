@@ -106,3 +106,42 @@ Criterio: «En código» = está en la rama y lo cubren tests o lo vi en el cód
 | 12 | Excel | En código: exporta pasajeros filtrados, 28 columnas, orden Colegio → Grado → División → Apellido. | Probar con datos reales. |
 
 Dependen de la base real (todavía no): puntos 1, 8 y 10. Depende de configuración externa: punto 7.
+
+---
+
+# Revisión a mano en el navegador (Paso 4, 25/11/2026)
+
+Rama `b830cbb` (`feat/colegios-padron` con el PR #4). Servidor local con `npm run dev` (base en memoria, datos ficticios), Playwright a 1280 px y a 390 px. No se escribió en Supabase ni se mandaron correos.
+
+## Qué se probó y cómo salió
+
+| Qué | Resultado |
+|---|---|
+| Formulario de Tutor (`#/inscripcion/tutor`), 1280 px | OK. Vacío lista los 11 datos faltantes, cada campo marca su error. Con DNI de 2 dígitos, CUIL de dígito verificador incorrecto, celular corto y correo sin `@` marca los 4 errores. Con datos válidos: HTTP 201 y pantalla de confirmación. |
+| Tutor y selector PAX/Tutor, 390 px | OK. Sin desborde horizontal, letra de 16 px o más en todos los campos (iPhone no hace zoom), controles de 40 px o más. |
+| Ficha PAX completa, 390 px | OK. Se completó entera en celular con nombres con tildes, domicilio `S/N`, plan de 12 cuotas y firma escrita: HTTP 201, «Recibimos tu ficha correctamente», correo `sin_configurar`. Sin desborde, letra de 16 px o más. Único control bajo 40 px: «Limpiar firma» (34 px). |
+| Pantalla Fichas del admin, 1280 px | OK. Lista con colegio, viaje, curso, contrato, plan, tutor, estado y correo. Detalle con la pertenencia completa (punto 11): Colegio → Curso → Grado/Año → División → Plan → Contrato → Tutor, más datos del pasajero, tutor, domicilio, firma y asignación de grupo y contrato. |
+| Aprobar ficha | OK: «Marcar en revisión» y «Aprobar y crear pasajero» devuelven 200 y la ficha pasa a Aprobadas. |
+| Pasajeros y Excel (punto 12) | OK. Descarga `EAA_pasajeros_AAAA-MM-DD.xlsx`, hoja «Pasajeros», 28 columnas: Colegio, Curso, Grado/Año, División, Contrato, Plan, Cuotas, Apellido, Nombre, DNI, Nacimiento, Sexo, datos del tutor, domicilio, estados. Las tildes llegan bien. |
+| PDF (puntos 3, 8) | OK salvo la falla 1. Una página, «APELLIDO, NOMBRE» separados con coma, colegio, contrato, destino, plan, domicilio, CUIL y firma. |
+| Admin a 390 px | Sin desborde de página; las tablas (Fichas ~2.200 px, Pasajeros ~1.250 px) scrollean dentro de su contenedor. |
+
+## Fallas y observaciones
+
+| # | Gravedad | Qué pasa | Dónde |
+|---|---|---|---|
+| 1 | **Media** | El PDF pierde las letras fuera de Latin-1: «Fernández Mićić» sale **«FERNÁNDEZ MII»**. El admin y el Excel conservan el nombre bien. Afecta apellidos croatas, polacos, etc. | `textoSeguro` en `lib/ficha-pdf.js` (ya estaba en la limpieza menor del HANDOFF; ahora está confirmado). |
+| 2 | Media | Si la sesión del admin se pierde (vence, o alguien inicia sesión con el mismo usuario), el guardado devuelve 401. La pantalla muestra el aviso «No se pudo guardar en la base de datos: Necesitás iniciar sesión…», pero el selector sigue mostrando el valor nuevo (sin guardar) y no manda al login. Quien no lea el aviso cree que quedó guardado. Al recargar vuelve el valor anterior. | Frontend del admin (`assets/js/app.js`). |
+| 3 | Baja | Iniciar sesión borra las demás sesiones del mismo usuario. Dos personas que comparten `admin` se echan entre sí. Con un usuario por persona no pasa. | `server.js` ~793. Definirlo junto con los roles (Paso 3). |
+| 4 | Baja | Cabecera del admin: la etiqueta «Admin» sale en negro sobre azul oscuro (poco contraste). | CSS del admin. |
+| 5 | Baja | En celular, las tablas de Fichas y Pasajeros obligan a scrollear de costado dentro de la tabla. Sirve, pero es incómodo. Mejor decidirlo con el rediseño (Paso 8). | Frontend del admin. |
+| 6 | Baja | Los placeholders (`20-12345678-6`, `3794 123456`, `1234`, `3400`) son gris oscuro (`rgb(92,108,118)`, contraste suficiente) y pueden parecer datos cargados. | CSS de la ficha. |
+| 7 | Baja | «Limpiar firma» mide 34 px de alto (menos de 40 px). | CSS de la ficha. |
+| 8 | Ya conocida | El footer muestra `contacto@elangelazul.com.ar`, que no existe. | Paso 6. |
+| 9 | A verificar | Las secciones de la ficha PAX están en `visibility: hidden` hasta que el scroll las revela (GSAP). No se probó la navegación solo con teclado ni con lector de pantalla: si el foco salta campos ocultos, es un problema de accesibilidad. | `bindFichaAdhesionAnimations` en `assets/js/app.js`. |
+
+## Estado de los puntos tras la revisión
+
+Puntos revisados a mano con datos de prueba, sin fallas bloqueantes: 2, 3, 4, 5, 6, 8, 9, 11 y 12. El 3 tiene la falla 1 en el PDF. Siguen dependiendo de la base real o de configuración externa: 1, 8 (planes reales), 10 (migración 0006) y 7 (Resend).
+
+No se revisó: la ficha con ~2.900 colegios en el buscador (requiere importar el Padrón), un envío real de correo, ni Safari/iPhone reales.
