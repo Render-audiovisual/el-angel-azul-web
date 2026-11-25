@@ -232,18 +232,47 @@
     return Array.isArray(payload.rows) ? payload.rows : [];
   }
 
+  const adminSnapshots = new Map();
+  function rowContent(row) {
+    return JSON.stringify(Object.keys(row).filter((key) => !["_version", "created_at", "updated_at"].includes(key)).sort().map((key) => [key, row[key]]));
+  }
+
+  // Capturar DESPUÉS de normalizar las filas para la UI. Comparar directamente
+  // los DTO recibidos con los serializadores generaba falsos cambios masivos.
+  function captureAdminSheet(sheet, serializedRows, sourceRows) {
+    const versions = new Map(sourceRows.map((row) => [String(row.id), row._version || null]));
+    adminSnapshots.set(sheet, new Map(serializedRows.map((row) => [String(row.id), {
+      content: rowContent(row), version: versions.get(String(row.id)) || null
+    }])));
+  }
+
   async function writeGoogleSheetRows(sheet, rows = [], deleteIds = []) {
     const config = readGoogleSheetsConfig();
     if (!config.endpoint || config.enabled === false) {
       throw new Error("Google Sheets no configurado");
     }
+    const snapshot = adminSnapshots.get(sheet);
+    if (!snapshot) throw new Error("Primero recargá el panel para leer la versión actual de los registros.");
+    const changed = rows.filter((row) => snapshot.get(String(row.id))?.content !== rowContent(row));
+    // Las bajas siempre son explícitas; omitir una fila no significa borrarla.
+    const expectedVersions = Object.fromEntries([...changed.map((row) => String(row.id)), ...deleteIds.map(String)]
+      .map((id) => [id, snapshot.get(id)?.version || null]));
+    if (!changed.length && !deleteIds.length) return { ok: true, updated: 0 };
+    const sent = changed.map((row) => ({ ...row }));
     const response = await fetch(config.endpoint, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({ token: config.token, sheet, rows, deleteIds })
+      body: JSON.stringify({ token: config.token, sheet, rows: sent, deleteIds, expectedVersions })
     });
     const payload = await response.json();
-    if (!payload.ok) throw new Error(payload.error || "No se pudo escribir Google Sheets");
+    if (!response.ok || !payload.ok) {
+      const error = new Error(payload.error || "No se pudo escribir Google Sheets");
+      error.status = response.status;
+      throw error;
+    }
+    // Confirmar solo lo enviado: una edición hecha durante el fetch sigue sucia.
+    for (const row of sent) snapshot.set(String(row.id), { content: rowContent(row), version: payload.versions?.[row.id] || null });
+    for (const id of deleteIds) snapshot.delete(String(id));
     return payload;
   }
 
@@ -447,6 +476,7 @@ function jsonResponse(data) {
     writeGoogleSheetsConfig,
     googleSheetsStatus,
     fetchGoogleSheetRows,
+    captureAdminSheet,
     writeGoogleSheetRows,
     toCsv,
     blankCsvPackage,

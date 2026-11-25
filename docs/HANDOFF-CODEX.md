@@ -1,6 +1,12 @@
 # Traspaso del proyecto – El Ángel Azul (24/11/2026)
 
-Escrito para el programador que sigue el trabajo (con Codex, Claude Code u otro agente). Leé este archivo entero, después `docs/ARQUITECTURA.md`, y seguí los pasos de la sección 5 en orden.
+Escrito para el programador que sigue el trabajo (con Codex, Claude Code u otro agente). Leé este archivo entero, después `docs/ARQUITECTURA.md`, y seguí desde el primer paso pendiente de la sección 5.
+
+## Integración de Codex (24/11/2026)
+
+- Se integró el traspaso `0c9d626` con el commit local `1c3bde0`: confirmación de correo pendiente y prueba HTTP completa de inscripción. Base integrada: 117 pruebas. Guardado concurrente terminado: 130 pruebas aprobadas.
+- Hostinger fue verificado como hosting el 17/11. Se creó una previsualización independiente sin base conectada (`devoted-sienna-fox-25.hostingersite.com`), además de la vista previa automática del PR #3. No se modificó `main`.
+- Se trabaja en `fix/admin-guardado-concurrente`, sin escrituras en la base real.
 
 ## 1. Qué es y dónde está
 - Web de viajes estudiantiles: sitio público, ficha de adhesión online (PAX y Tutor) y panel de administración. Node sin framework (`server.js`) + una SPA en `assets/js/app.js` (~9.500 líneas: **no la leas entera**, usá `grep -n` y leé el rango). Datos en Postgres (Supabase).
@@ -22,7 +28,7 @@ git clone https://github.com/Render-audiovisual/el-angel-azul-web.git
 cd el-angel-azul-web
 git checkout feat/colegios-padron
 npm ci
-npm run check     # 116 tests, sin red ni base real (usa PGlite en memoria)
+npm run check     # 130 tests, sin red ni base real (usa PGlite en memoria)
 npm run dev       # web local en http://localhost:3057
 ```
 `npm run dev` levanta el servidor real con una base en memoria y datos de prueba: 3 colegios, «Bariloche 2027» y un contrato `LOCAL-001` (5° B de «Escuela Normal N° 1») con 2 planes. Admin: usuario `admin`, clave `TestAdmin-123456` (solo local). Los datos se pierden al cortarlo. Ignora cualquier clave real de Supabase o Resend que tengas exportada.
@@ -39,11 +45,15 @@ npm run dev       # web local en http://localhost:3057
 ## 5. Pasos para seguir (en orden)
 Cada paso termina con `npm run check` en verde y un commit chico. Si tocás algo del admin, probalo con `npm run dev`.
 
-**Paso 1 – Arreglar el guardado del admin (lo más urgente).** Hoy cada guardado manda al servidor TODAS las filas que el navegador tiene (`googleSheetsFichaRows` en `assets/js/app.js`, ~línea 2646, y las de Grupos, Contratos, Pasajeros, Colegios). Consecuencias comprobadas:
-- Dos admins se pisan: A rechaza una ficha, B (con la lista vieja) guarda una nota y la ficha vuelve a «pendiente» (reproducido en local).
-- El servidor rechaza pedidos de más de 1.000.000 bytes (`MAX_BODY_BYTES`, `server.js`): con ~120 fichas (~500 con Storage) guardar da 413.
-- Cada guardado hace una transacción y una fila de auditoría por ficha (`updateFichasAdmin`, `lib/db.js`).
-Arreglo: mandar solo las filas modificadas y rechazar si la fila cambió desde que se cargó (comparar `updated_at`). Agregar un test que reproduzca el caso de los dos admins.
+**Paso 1 – Guardado del admin: resuelto en `fix/admin-guardado-concurrente` (24/11).**
+- El navegador captura una base normalizada al hidratar y manda solo altas/filas modificadas y bajas explícitas. Cambios hechos durante un envío siguen pendientes; ante error no avanza la base local.
+- Postgres devuelve `_version` por registro (incluye `updated_at` con microsegundos). Se verifica la versión bajo bloqueo y dentro de la misma transacción del guardado. Dos sesiones que editan la misma versión: una guarda y la otra recibe HTTP 409. Registros distintos pueden guardarse sin sobrescribir datos ajenos.
+- Los lotes protegidos se confirman completos o se revierten completos; no quedan filas parcialmente guardadas si alguna falla. Las transacciones de los adaptadores existentes usan savepoints dentro del pedido protegido.
+- Colegios conserva el borrador visible ante conflicto. La interfaz pide recargar y revisar la versión actual; no reintenta automáticamente con una versión ajena.
+- Protegidos: Fichas PAX/Tutor, Grupos, Contratos, Pasajeros, Colegios, Planes y Turismo, con `EAA_POSTGRES_MIGRATION_ENABLED=true`. El adaptador legado de Google Sheets sigue disponible, sin garantía de concurrencia entre procesos; la protección descrita es para Postgres.
+- No requiere migración de esquema. Publicar frontend y servidor juntos; un cliente anterior sin versión recibe 409 al editar registros existentes y debe recargar.
+- Pruebas: `npm run check` 130/130; prueba HTTP con cuentas admin/agente distintas, envíos simultáneos, lotes, bajas obsoletas y todas las colecciones. Prueba del navegador con dos pestañas de Colegios: el primer cambio persiste, el segundo se bloquea y conserva el borrador. Prueba de 120 fichas: el POST contiene una fila (~12 KB), no la colección (>1 MB).
+- `npm run dev` usa IDs legados en los datos de prueba y fuerza la contraseña local, sin heredar ni imprimir una contraseña real del entorno.
 
 **Paso 2 – IP del visitante en Hostinger** (`clientIp`, `server.js` ~190). Hoy toma la última IP de `X-Forwarded-For`, pensado para Render. Confirmar qué manda Hostinger; si hay un proxy más, todos los visitantes comparten límite (50 fichas por hora para todo el sitio y 5 contraseñas malas bloquean el login de todos).
 

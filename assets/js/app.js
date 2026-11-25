@@ -2572,7 +2572,7 @@
 
       function googleSheetsPassengerRows(now = new Date().toISOString(), rows = adminPasajerosRows()) {
         return rows.map(({ group, passenger }) => ({
-          id: `pasajero-${passenger.dni || sheetMigrationSlug(passenger.nombre || "sin-dni")}`,
+          id: passenger.id || `pasajero-${passenger.dni || sheetMigrationSlug(passenger.nombre || "sin-dni")}-${group.id}`,
           grupo_id: group.id,
           contrato_id: passenger.contratoId || passenger.contrato_id || "",
           codigo_contrato: passenger.codigoContrato || passenger.codigo_contrato || passenger.contratoCodigo || "",
@@ -2868,6 +2868,12 @@
           const guardado = await saveAdminColegios(nuevos, editando ? `“${nombre}” actualizado.` : `“${nombre}” agregado.`);
           if (guardado) adminColegiosEditId = "";
           renderAdminColegios();
+          if (!guardado) {
+            // Conservar el borrador visible aunque se haya rechazado el
+            // guardado. La tabla mantiene el estado anterior, sin fingir éxito.
+            const nuevoForm = document.querySelector("[data-admin-colegios-form]");
+            for (const [campo, valor] of Object.entries(campos)) nuevoForm.elements.namedItem(campo).value = valor;
+          }
           document.querySelector("[data-admin-colegios-status]")?.focus();
         });
       }
@@ -3262,6 +3268,7 @@
 
       function sheetPassengerFromRow(row = {}) {
         return {
+          id: row.id || "",
           nombre: row.nombre || "",
           apellido: row.apellido || "",
           responsableApellido: row.responsable_apellido || "",
@@ -3485,6 +3492,17 @@
             fichas: fichasRows,
             includePrivate: adminEntry
           });
+          if (adminEntry) {
+            const capture = window.ElAngelAzulPersistence.captureAdminSheet;
+            capture("GRUPOS", googleSheetsGroupRows(), grupos);
+            capture("CONTRATOS", googleSheetsContratoRows(), contratos);
+            capture("PASAJEROS", googleSheetsPassengerRows(), pasajerosRows);
+            capture("FICHAS_ADHESION", googleSheetsFichaRows(), fichasRows);
+            capture("TURISMO", googleSheetsTurismoRows(), turismo);
+            capture("FICHAS_TUTOR", adminFichasTutor, fichasTutor);
+            capture("COLEGIOS", adminColegios, colegios);
+            capture("PLANES_PAGO", adminPlanesPago, planesPago);
+          }
           googleSheetsHydrated = true;
           googleSheetsSyncState = {
             status: "ok",
@@ -3535,7 +3553,7 @@
         }).catch((error) => {
           googleSheetsSyncState = {
             status: "error",
-            message: `No se pudo guardar en la base de datos: ${error.message || "error desconocido"}.`
+            message: `No se pudo guardar en la base de datos: ${error.message || "error desconocido"}`
           };
           return false;
         });
@@ -3547,7 +3565,7 @@
           ? successText
           : googleSheetsSyncState.status === "local"
             ? googleSheetsSyncState.message
-            : "Error al guardar en la base de datos.";
+            : googleSheetsSyncState.message || "Error al guardar en la base de datos.";
       }
 
       async function updateFichaAdhesionStatus(id, estado, patch = {}, successText = "") {
@@ -8587,7 +8605,7 @@
                   <i aria-hidden="true"></i>
                 </div>
                 <div class="ficha-adhesion-success ficha-adhesion-success-large" role="status" tabindex="-1" data-ficha-exito>Recibimos tu ficha correctamente.</div>
-                ${exito.emailDestino ? `<p>Te enviamos una copia a <strong>${escapeHtml(exito.emailDestino)}</strong>. Si no la ves en unos minutos, revisá la carpeta de spam.</p>` : ""}
+                ${exito.emailEstado === "pendiente" && exito.emailDestino ? `<p>La copia por correo está pendiente de envío a <strong>${escapeHtml(exito.emailDestino)}</strong>. Si no llega, consultanos: tu ficha ya quedó guardada.</p>` : ""}
                 <p>Queda pendiente de revisión por administración. Te contactaremos si necesitamos validar algún dato.</p>
                 <a class="ficha-adhesion-home-link" href="#/inscripcion">Volver al inicio</a>
               </section>
@@ -9044,7 +9062,7 @@
             });
             const payload = await response.json().catch(() => ({}));
             if (response.status === 201 && payload.ok) {
-              renderFichaAdhesion({ emailDestino: payload.emailDestino || "" });
+              renderFichaAdhesion({ emailDestino: payload.emailDestino || "", emailEstado: payload.emailEstado || "" });
               window.scrollTo({ top: 0 });
               document.querySelector("[data-ficha-exito]")?.focus({ preventScroll: true });
               return;

@@ -13,7 +13,16 @@ async function crearPoolLocal() {
     await pg.exec(fs.readFileSync(path.join(dir, archivo), "utf8").replace(/create extension[^;]*;/gi, ""));
   }
   const cliente = { query: (text, values) => pg.query(text, values), release() {} };
-  return { query: cliente.query, connect: async () => cliente, on() {}, close: () => pg.close() };
+  // PGlite tiene una sola sesión SQL: emular el préstamo exclusivo de una
+  // conexión de pg evita entremezclar BEGIN de dos pedidos HTTP simultáneos.
+  let turno = Promise.resolve();
+  return { query: cliente.query, connect: async () => {
+    const anterior = turno;
+    let liberar;
+    turno = new Promise((resolve) => { liberar = resolve; });
+    await anterior;
+    return { query: cliente.query, release: liberar };
+  }, on() {}, close: () => pg.close() };
 }
 
 module.exports = { crearPoolLocal };

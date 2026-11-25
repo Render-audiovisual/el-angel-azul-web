@@ -12,6 +12,7 @@ Leer esto ANTES de abrir código. `assets/js/app.js` pesa ~474 KB: nunca leerlo 
 | Capa | Archivo | Qué hace |
 |---|---|---|
 | Servidor y rutas | `server.js` | Login admin, rutas públicas, `/api/google-sheets?sheet=X`, rate limit, estáticos |
+| Concurrencia del admin | `lib/admin-write.js` | Versiones por registro, bloqueo transaccional y savepoints; `persistence.js` envía solo filas modificadas |
 | Base | `lib/db.js` (~1600 líneas) | Todas las consultas. Exports: `insertFichaPublica`, `insertFichaTutor`, `contextoInscripcion`, `list*Admin` / `save*Admin` de Colegios, Grupos, Contratos, Planes, Pasajeros, Fichas, Turismo |
 | Storage | `lib/storage.js` | Firma en bucket privado `fichas` (subir, leer, borrar). Apagado sin `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` |
 | Correo | `lib/email.js` | Resend. Apagado sin `RESEND_API_KEY`, `EAA_EMAIL_FROM`, `EAA_EMAIL_COPIA` |
@@ -46,5 +47,5 @@ Estado actualizado y pendientes en `docs/HANDOFF-SESION.md`. Plan con tareas, te
 - Escribir en Supabase de producción solo con confirmación del dueño.
 
 ## Comandos
-- `npm test` (113 tests) · `npm run check` · `npm run db:check`.
+- `npm test` (130 tests al 24/11/2026) · `npm run check` · `npm run db:check`.
 - E2E: `PLAYWRIGHT_PATH=<node_modules/playwright> node scripts/e2e/ficha.e2e.js` (no corre en `npm test`).
