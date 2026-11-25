@@ -1,0 +1,29 @@
+# Corre `npm run check` en cada PR y en cada push a las ramas compartidas.
+# No usa secretos ni toca Supabase: los tests corren con PGlite en memoria.
+name: check
+
+on:
+  pull_request:
+    branches: [feat/colegios-padron, main]
+  push:
+    branches: [feat/colegios-padron, main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run check
