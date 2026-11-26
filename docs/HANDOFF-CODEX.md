@@ -92,7 +92,9 @@ Cada paso termina con `npm run check` en verde y un commit chico. Si tocás algo
 
 **Paso 8 – Al final: frontend.** Rediseño visual y detalles (por ejemplo, el resumen del paso 1 de la inscripción aparece duplicado).
 
-**Limpieza menor:** manejador `error` en `fs.createReadStream` de `server.js` (~línea 872); letras fuera de Latin-1 se pierden en el PDF (`textoSeguro`, `lib/ficha-pdf.js`: «Mićić» sale «Mii»); retirar el adaptador de Google Sheets (~150 líneas) cuando la base esté estable.
+**Hecho el 26/11:** el PDF transliteró «Mićić» → «Micic» (`textoSeguro`, `lib/ficha-pdf.js`; lo exacto pide embeber una fuente con fontkit, dependencia nueva). Un 401 al guardar en el admin recarga y el login avisa que el cambio no se guardó.
+
+**Limpieza menor:** manejador `error` en `fs.createReadStream` de `server.js` (~línea 872); retirar el adaptador de Google Sheets (~150 líneas) cuando la base esté estable.
 
 ## 6. Importar el Padrón de colegios
 Fuente: «Padrón Oficial de Establecimientos Educativos» en argentina.gob.ar (Ministerio de Educación). Probado con la versión del 07/09/2026: 2.929 establecimientos (1.170 Corrientes, 1.759 Misiones). Entran los comunes con primario o secundario; el CUE queda como `codigo_oficial`.

@@ -1254,6 +1254,7 @@
           return true;
         } catch (error) {
           adminTurismoSaveFeedback = { ok: false, message: `No se pudo guardar en la base de datos: ${error.message || "error desconocido"}.` };
+          if (error.status === 401) handleAdminSessionLost();
           return false;
         }
       }
@@ -2145,6 +2146,23 @@
 
       let adminSession = null;
       let adminSessionChecked = false;
+      const ADMIN_SESION_PERDIDA_KEY = "eaa-admin-sesion-perdida";
+      let adminLoginNotice = "";
+      try {
+        if (sessionStorage.getItem(ADMIN_SESION_PERDIDA_KEY)) {
+          adminLoginNotice = "Tu sesión terminó (venció o se abrió en otro lugar). El último cambio no se guardó: ingresá de nuevo y repetilo.";
+          sessionStorage.removeItem(ADMIN_SESION_PERDIDA_KEY);
+        }
+      } catch (_) { /* sin sessionStorage el login se muestra igual, solo sin el aviso */ }
+
+      // El servidor respondió 401 a un guardado: la sesión venció o se abrió en otro lugar
+      // con el mismo usuario y el cambio no se guardó. Se recarga en vez de dibujar el login
+      // acá: quien llamó al guardado vuelve a dibujar el panel por su cuenta y lo taparía, y
+      // un arranque limpio vuelve a leer la base en lugar de dejar el cambio sin guardar.
+      function handleAdminSessionLost() {
+        try { sessionStorage.setItem(ADMIN_SESION_PERDIDA_KEY, "1"); } catch (_) { /* ver arriba */ }
+        location.reload();
+      }
 
       async function fetchAdminSession(force = false) {
         if (adminSessionChecked && !force) return adminSession;
@@ -2210,7 +2228,7 @@
                       <button type="button" data-admin-password-toggle aria-label="Mostrar contraseña" aria-pressed="false">Ver</button>
                     </span>
                   </label>
-                  ${errorMessage ? `<p class="admin-login-error">${escapeHtml(errorMessage)}</p>` : ""}
+                  ${errorMessage || adminLoginNotice ? `<p class="admin-login-error" role="alert">${escapeHtml(errorMessage || adminLoginNotice)}</p>` : ""}
                   <button type="submit">Ingresar al panel</button>
                 </form>
                 <div class="admin-login-note">
@@ -2261,6 +2279,7 @@
             }
             adminSession = payload;
             adminSessionChecked = true;
+            adminLoginNotice = "";
             render();
             return;
           } catch (error) {
@@ -2318,6 +2337,7 @@
           }
           adminSession = null;
           adminSessionChecked = true;
+          adminLoginNotice = "";
           renderAdminLogin();
         });
       }
@@ -3555,6 +3575,7 @@
             status: "error",
             message: `No se pudo guardar en la base de datos: ${error.message || "error desconocido"}`
           };
+          if (error.status === 401) handleAdminSessionLost();
           return false;
         });
         return googleSheetsWriteQueue;
