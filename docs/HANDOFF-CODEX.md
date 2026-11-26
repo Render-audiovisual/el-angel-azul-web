@@ -1,6 +1,19 @@
 # Traspaso del proyecto – El Ángel Azul (24/11/2026)
 
-Escrito para el programador que sigue el trabajo (con Codex, Claude Code u otro agente). Leé este archivo entero, después `docs/ARQUITECTURA.md`, y seguí desde el primer paso pendiente de la sección 5.
+Escrito para el programador que sigue el trabajo (con Codex, Claude Code u otro agente). Primero `AGENTS.md` (reglas, checklist de sesión y qué puede hacer un agente). Después leé este archivo entero, `docs/ARQUITECTURA.md`, y seguí desde el primer paso pendiente de la sección 5.
+
+## En curso
+Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerrar la sesión.
+
+| Quién | Rama | Paso | Archivos que toca | Actualizado |
+|---|---|---|---|---|
+| Fran (Claude Code) | `fran/harness` | Harness: guardas, `AGENTS.md`, docs | `AGENTS.md`, `CLAUDE.md`, `package.json`, `scripts/guardas.test.js`, `scripts/helpers/sin-secretos.js`, docs | 25/11 |
+| Agustín (Codex) | — | Sin asignar (propuesto: Paso 3, servidor y base; lo define el dueño) | — | — |
+
+## Harness (25/11/2026)
+- Las reglas del repo ahora se chequean en `npm run check` con `scripts/guardas.test.js`: secretos en archivos del repo, `.env` trackeados, docs con referencias rotas y `CLAUDE.md` → `AGENTS.md`.
+- `npm test` carga `scripts/helpers/sin-secretos.js`: borra `DATABASE_URL`, claves de Supabase y Resend y contraseñas antes de cada test.
+- La deuda del Paso 3 figura como `todo` en la salida del check. Quien la resuelve le saca el `todo`.
 
 ## Integración de Codex (24/11/2026)
 
@@ -13,7 +26,7 @@ Escrito para el programador que sigue el trabajo (con Codex, Claude Code u otro 
 - Repo: https://github.com/Render-audiovisual/el-angel-azul-web (privado: pedí acceso a la organización).
 - **Rama de trabajo: `feat/colegios-padron`**. Está abierto el PR #3 hacia `main` (no mergear sin OK del dueño). Hostinger arma una vista previa por cada push: https://hushed-teal-stingray-74.hostingersite.com (no verificado a qué base apunta; confirmalo antes de usarla con datos).
 - **Nada está desplegado todavía.** Todo se trabajó en local.
-- Lo escrito antes de noviembre de 2026 está desactualizado (`contexto proyecto/*` habla de Railway). Vigentes: este archivo, `docs/ARQUITECTURA.md`, `docs/correcciones-del-angel.md` y `docs/superpowers/plans/2026-11-10-plan-mejora-angel-azul.md`.
+- Lo escrito antes de noviembre de 2026 está desactualizado (`contexto proyecto/*` habla de Railway). Vigentes: `AGENTS.md`, este archivo, `docs/ARQUITECTURA.md`, `docs/correcciones-del-angel.md` y `docs/CONSIGNAS-CLIENTE.md`. Referencia histórica: `docs/superpowers/plans/2026-11-10-plan-mejora-angel-azul.md`.
 
 ## 2. Reglas del dueño (no negociables)
 - Toda escritura en Supabase y todo push o merge a `main` los aprueba el dueño antes.
@@ -28,7 +41,7 @@ git clone https://github.com/Render-audiovisual/el-angel-azul-web.git
 cd el-angel-azul-web
 git checkout feat/colegios-padron
 npm ci
-npm run check     # 130 tests, sin red ni base real (usa PGlite en memoria)
+npm run check     # tests y guardas, sin red ni base real (usa PGlite en memoria)
 npm run dev       # web local en http://localhost:3057
 ```
 `npm run dev` levanta el servidor real con una base en memoria y datos de prueba: 3 colegios, «Bariloche 2027» y un contrato `LOCAL-001` (5° B de «Escuela Normal N° 1») con 2 planes. Admin: usuario `admin`, clave `TestAdmin-123456` (solo local). Los datos se pierden al cortarlo. Ignora cualquier clave real de Supabase o Resend que tengas exportada.
@@ -90,12 +103,7 @@ DATABASE_URL=... node scripts/import-padron-colegios.js padron.xlsx --aplicar   
 Un colegio cargado a mano con el mismo nombre se vincula; si el nombre ya existe con otro código se agrega la localidad; reimportar no pisa nombres editados ni reactiva bajas. Después de importar, el buscador público recibe ~2.900 colegios sin paginar: probarlo en celular.
 
 ## 7. Cómo trabajar (workflow)
-1. Una rama por persona o agente; nunca dos en la misma. Salir de `feat/colegios-padron`.
-2. Al empezar: `git fetch`, mirar `git log origin/<rama>` y releer la sección 5.
-3. Reparto por archivos para no pisarse: servidor y base (`lib/`, `server.js`, `supabase/migrations/`) vs. frontend (`assets/js/app.js`, CSS, HTML).
-4. Commits chicos; `npm run check` antes de cada push.
-5. Al cerrar la sesión: actualizar este archivo (pasos hechos y lo que sigue) y pushear.
-6. Ramas chicas entran a `feat/colegios-padron` por PR; la vista previa de Hostinger sirve para revisar. A `main` solo con OK del dueño.
+Ramas, reparto, checklist de inicio y cierre y qué puede hacer un agente: ver `AGENTS.md`. Al cerrar la sesión, actualizá tu fila de «En curso» (arriba) y los pasos de la sección 5. La vista previa de Hostinger sirve para revisar los PR.
 
 ## 8. Mapa de ramas
 | Rama | Qué es |
