@@ -32,6 +32,9 @@ EAA_AGENTE3_PASSWORD=...
 EAA_AGENTE4_PASSWORD=...
 EAA_AGENTE5_PASSWORD=...
 NODE_ENV=production
+# Proxies de confianza delante del servidor (por defecto 1). Subir a 2 solo si el diagnóstico
+# /api/admin/diagnostico-ip muestra la IP de un proxy en vez de la del visitante.
+EAA_PROXY_HOPS=1
 # Activar juntos después de descargar el certificado CA desde Supabase:
 EAA_POSTGRES_TLS_VERIFY_FULL=true
 SUPABASE_DB_CA_CERT="-----BEGIN CERTIFICATE-----\\n...\\n-----END CERTIFICATE-----"

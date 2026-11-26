@@ -188,15 +188,43 @@ function clearLoginAttempts(ip) {
   loginAttempts.delete(ip);
 }
 
-function clientIp(req) {
-  const forwarded = String(req.headers["x-forwarded-for"] || "")
+// Cantidad de proxies de confianza delante del servidor (los que agregan una
+// IP al final de X-Forwarded-For). Render y la mayoría de los hostings: 1.
+// Si el hosting suma un proxy más (CDN, balanceador), subir EAA_PROXY_HOPS; si
+// no, todos los visitantes comparten IP y los límites (fichas por hora, intentos
+// de login) se pegan entre sí. Medirlo con GET /api/admin/diagnostico-ip.
+function proxyHops(env = process.env) {
+  const hops = Number.parseInt(env.EAA_PROXY_HOPS, 10);
+  return Number.isInteger(hops) && hops >= 1 && hops <= 5 ? hops : 1;
+}
+
+function forwardedForList(req) {
+  return String(req.headers["x-forwarded-for"] || "")
     .split(",")
     .map((value) => value.trim())
     .filter(Boolean);
-  // Render agrega la IP real al final de X-Forwarded-For. Tomar el primer
-  // valor permitía que el cliente eligiera su IP aparente y eludiera todos
-  // los límites. El último salto es el que agregó el proxy más cercano.
-  return forwarded.at(-1) || req.socket.remoteAddress || "unknown";
+}
+
+// Se cuenta desde la derecha: lo que está más a la izquierda lo puede escribir
+// el cliente y permitiría elegir su IP aparente para eludir los límites.
+function clientIp(req, hops = proxyHops()) {
+  return forwardedForList(req).at(-hops) || req.socket.remoteAddress || "unknown";
+}
+
+// Solo para el rol admin: muestra qué le llega al servidor y qué IP calcula,
+// para confirmar el hosting sin adivinar. Compará "ipCalculada" con tu IP pública.
+function diagnosticoIp(req) {
+  const h = req.headers;
+  return {
+    ipCalculada: clientIp(req),
+    proxyHops: proxyHops(),
+    xForwardedFor: forwardedForList(req),
+    xRealIp: h["x-real-ip"] || null,
+    forwarded: h.forwarded || null,
+    cfConnectingIp: h["cf-connecting-ip"] || null,
+    via: h.via || null,
+    remoteAddress: req.socket.remoteAddress || null
+  };
 }
 
 const SCHEMA = {
@@ -819,7 +847,13 @@ async function handleAdminAuth(req, res, url) {
       "Set-Cookie": sessionCookie("", 0, isHttpsRequest(req))
     });
   }
-  if (["/api/admin/me", "/api/admin/login", "/api/admin/logout"].includes(url.pathname)) {
+  if (url.pathname === "/api/admin/diagnostico-ip" && req.method === "GET") {
+    const session = currentAdminSession(req);
+    if (!session) return json(res, 401, { ok: false, error: "Necesitás iniciar sesión para ver esta información" });
+    if (session.role !== "admin") return json(res, 403, { ok: false, error: "Solo el administrador puede ver este diagnóstico" });
+    return jsonWithHeaders(req, res, 200, { ok: true, ...diagnosticoIp(req) }, { "Cache-Control": "no-store" });
+  }
+  if (["/api/admin/me", "/api/admin/login", "/api/admin/logout", "/api/admin/diagnostico-ip"].includes(url.pathname)) {
     return json(res, 405, { ok: false, error: "Método no permitido" });
   }
   json(res, 404, { ok: false, error: "Endpoint no encontrado" });
@@ -1192,6 +1226,8 @@ module.exports = {
     sessionCookie,
     safePasswordEqual,
     safeErrorForLog,
-    recuperarCorreosPendientes
+    recuperarCorreosPendientes,
+    clientIp,
+    proxyHops
   }
 };
