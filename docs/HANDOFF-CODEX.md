@@ -1,6 +1,19 @@
 # Traspaso del proyecto – El Ángel Azul (24/11/2026)
 
-Escrito para el programador que sigue el trabajo (con Codex, Claude Code u otro agente). Leé este archivo entero, después `docs/ARQUITECTURA.md`, y seguí desde el primer paso pendiente de la sección 5.
+Escrito para el programador que sigue el trabajo (con Codex, Claude Code u otro agente). Primero `AGENTS.md` (reglas, checklist de sesión y qué puede hacer un agente). Después leé este archivo entero, `docs/ARQUITECTURA.md`, y seguí desde el primer paso pendiente de la sección 5.
+
+## En curso
+Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerrar la sesión.
+
+| Quién | Rama | Paso | Archivos que toca | Actualizado |
+|---|---|---|---|---|
+| Fran (Claude Code) | `fran/harness` | Harness: guardas, `AGENTS.md`, docs | `AGENTS.md`, `CLAUDE.md`, `package.json`, `scripts/guardas.test.js`, `scripts/helpers/sin-secretos.js`, docs | 25/11 |
+| Agustín (Codex) | — | Sin asignar (propuesto: Paso 3, servidor y base; lo define el dueño) | — | — |
+
+## Harness (25/11/2026)
+- Las reglas del repo ahora se chequean en `npm run check` con `scripts/guardas.test.js`: secretos en archivos del repo, `.env` trackeados, docs con referencias rotas y `CLAUDE.md` → `AGENTS.md`.
+- `npm test` carga `scripts/helpers/sin-secretos.js`: borra `DATABASE_URL`, claves de Supabase y Resend y contraseñas antes de cada test.
+- La deuda del Paso 3 figura como `todo` en la salida del check. Quien la resuelve le saca el `todo`.
 
 ## Integración de Codex (24/11/2026)
 
@@ -13,7 +26,7 @@ Escrito para el programador que sigue el trabajo (con Codex, Claude Code u otro 
 - Repo: https://github.com/Render-audiovisual/el-angel-azul-web (privado: pedí acceso a la organización).
 - **Rama de trabajo: `feat/colegios-padron`**. Está abierto el PR #3 hacia `main` (no mergear sin OK del dueño). Hostinger arma una vista previa por cada push: https://hushed-teal-stingray-74.hostingersite.com (no verificado a qué base apunta; confirmalo antes de usarla con datos).
 - **Nada está desplegado todavía.** Todo se trabajó en local.
-- Lo escrito antes de noviembre de 2026 está desactualizado (`contexto proyecto/*` habla de Railway). Vigentes: este archivo, `docs/ARQUITECTURA.md`, `docs/correcciones-del-angel.md` y `docs/superpowers/plans/2026-11-10-plan-mejora-angel-azul.md`.
+- Lo escrito antes de noviembre de 2026 está desactualizado (`contexto proyecto/*` habla de Railway). Vigentes: `AGENTS.md`, este archivo, `docs/ARQUITECTURA.md`, `docs/correcciones-del-angel.md` y `docs/CONSIGNAS-CLIENTE.md`. Referencia histórica: `docs/superpowers/plans/2026-11-10-plan-mejora-angel-azul.md`.
 
 ## 2. Reglas del dueño (no negociables)
 - Toda escritura en Supabase y todo push o merge a `main` los aprueba el dueño antes.
@@ -28,7 +41,7 @@ git clone https://github.com/Render-audiovisual/el-angel-azul-web.git
 cd el-angel-azul-web
 git checkout feat/colegios-padron
 npm ci
-npm run check     # 130 tests, sin red ni base real (usa PGlite en memoria)
+npm run check     # tests y guardas, sin red ni base real (usa PGlite en memoria)
 npm run dev       # web local en http://localhost:3057
 ```
 `npm run dev` levanta el servidor real con una base en memoria y datos de prueba: 3 colegios, «Bariloche 2027» y un contrato `LOCAL-001` (5° B de «Escuela Normal N° 1») con 2 planes. Admin: usuario `admin`, clave `TestAdmin-123456` (solo local). Los datos se pierden al cortarlo. Ignora cualquier clave real de Supabase o Resend que tengas exportada.
@@ -39,7 +52,8 @@ npm run dev       # web local en http://localhost:3057
 ## 4. Estado
 **Hecho en código (nada desplegado):** los 12 puntos del cliente tienen su parte hecha. El detalle punto por punto, con lo que falta de cada uno, está en `docs/correcciones-del-angel.md`.
 **Verificado a mano en el navegador local (ficha PAX):** selector PAX/Tutor, curso/grado/división, nombre y apellido separados con aviso de tildes, validación (bloquea y lista los 20 datos faltantes), CUIL/correo/celular del tutor, plan de pago, dirección, envío 201 y ficha guardada con colegio, contrato y plan; el PDF sale con «APELLIDO, NOMBRE» y el plan.
-**Todavía sin revisar a mano:** formulario de Tutor, ficha en celular (390 px), pantalla Fichas del admin, exportación a Excel, el PDF visualmente.
+**Revisado a mano el 25/11 (Paso 4):** formulario de Tutor, ficha PAX en celular (390 px), pantalla Fichas del admin, aprobación, exportación a Excel y PDF. Resultado y 9 fallas anotadas en `docs/correcciones-del-angel.md`. La principal: el PDF pierde las letras fuera de Latin-1 («Mićić» sale «MII»).
+**Todavía sin revisar:** el buscador con ~2.900 colegios, un correo real y Safari/iPhone reales.
 **Depende de configuración externa:** correo (Resend) apagado: faltan `RESEND_API_KEY`, `EAA_EMAIL_FROM`, `EAA_EMAIL_COPIA` y el DNS de `elangelazul.tur.ar` (la delegación a AWS está muerta). La base real está casi vacía (0 planes, 0 contratos) y faltan las migraciones 0005 y 0006.
 
 ## 5. Pasos para seguir (en orden)
@@ -70,7 +84,7 @@ Cada paso termina con `npm run check` en verde y un commit chico. Si tocás algo
 - Los 5 scripts de `cdn.jsdelivr.net` en `index.html` no tienen `integrity` y `swiper@11` no está fijado a una versión exacta.
 - La ficha pública crea viajes nuevos desde el texto libre de «destino» (`findOrCreateViaje`). Que solo busque, no cree.
 
-**Paso 4 – Terminar de revisar los 12 puntos en el navegador** (lista de la sección 4): Tutor, celular, pantalla Fichas del admin, Excel, PDF. Anotar lo que falle en `docs/correcciones-del-angel.md`.
+**Paso 4 – Revisar los 12 puntos en el navegador: hecho el 25/11.** Fallas anotadas en `docs/correcciones-del-angel.md` (sección «Revisión a mano»); falta corregirlas.
 
 **Paso 5 – Datos reales (con OK del dueño).**
 1. Aplicar las migraciones 0005 y 0006 en Supabase.
@@ -83,7 +97,9 @@ Cada paso termina con `npm run check` en verde y un commit chico. Si tocás algo
 
 **Paso 8 – Al final: frontend.** Rediseño visual y detalles (por ejemplo, el resumen del paso 1 de la inscripción aparece duplicado).
 
-**Limpieza menor:** manejador `error` en `fs.createReadStream` de `server.js` (~línea 872); letras fuera de Latin-1 se pierden en el PDF (`textoSeguro`, `lib/ficha-pdf.js`: «Mićić» sale «Mii»); retirar el adaptador de Google Sheets (~150 líneas) cuando la base esté estable.
+**Hecho el 26/11:** el PDF transliteró «Mićić» → «Micic» (`textoSeguro`, `lib/ficha-pdf.js`; lo exacto pide embeber una fuente con fontkit, dependencia nueva). Un 401 al guardar en el admin recarga y el login avisa que el cambio no se guardó.
+
+**Limpieza menor:** manejador `error` en `fs.createReadStream` de `server.js` (~línea 872); retirar el adaptador de Google Sheets (~150 líneas) cuando la base esté estable.
 
 ## 6. Importar el Padrón de colegios
 Fuente: «Padrón Oficial de Establecimientos Educativos» en argentina.gob.ar (Ministerio de Educación). Probado con la versión del 07/09/2026: 2.929 establecimientos (1.170 Corrientes, 1.759 Misiones). Entran los comunes con primario o secundario; el CUE queda como `codigo_oficial`.
@@ -95,12 +111,7 @@ DATABASE_URL=... node scripts/import-padron-colegios.js padron.xlsx --aplicar   
 Un colegio cargado a mano con el mismo nombre se vincula; si el nombre ya existe con otro código se agrega la localidad; reimportar no pisa nombres editados ni reactiva bajas. Después de importar, el buscador público recibe ~2.900 colegios sin paginar: probarlo en celular.
 
 ## 7. Cómo trabajar (workflow)
-1. Una rama por persona o agente; nunca dos en la misma. Salir de `feat/colegios-padron`.
-2. Al empezar: `git fetch`, mirar `git log origin/<rama>` y releer la sección 5.
-3. Reparto por archivos para no pisarse: servidor y base (`lib/`, `server.js`, `supabase/migrations/`) vs. frontend (`assets/js/app.js`, CSS, HTML).
-4. Commits chicos; `npm run check` antes de cada push.
-5. Al cerrar la sesión: actualizar este archivo (pasos hechos y lo que sigue) y pushear.
-6. Ramas chicas entran a `feat/colegios-padron` por PR; la vista previa de Hostinger sirve para revisar. A `main` solo con OK del dueño.
+Ramas, reparto, checklist de inicio y cierre y qué puede hacer un agente: ver `AGENTS.md`. Al cerrar la sesión, actualizá tu fila de «En curso» (arriba) y los pasos de la sección 5. La vista previa de Hostinger sirve para revisar los PR.
 
 ## 8. Mapa de ramas
 | Rama | Qué es |

@@ -402,3 +402,15 @@ test("los errores de la ficha salen del label y se enlazan con aria-describedby"
   assert.match(functionSource("bindFichaTutor", "renderNotFound"), /limpiarErrorAlEditar\(form\)/);
   assert.match(stylesSource, /\.ficha-campo \{/);
 });
+
+test("si un guardado del admin recibe 401, se recarga y el login avisa que el cambio no se guardó", () => {
+  const perdida = functionSource("handleAdminSessionLost", "fetchAdminSession");
+  assert.match(perdida, /sessionStorage\.setItem\(ADMIN_SESION_PERDIDA_KEY/);
+  assert.match(perdida, /location\.reload\(\)/, "dibujar el login acá lo tapa el código que llamó al guardado");
+  assert.match(appSource, /sessionStorage\.getItem\(ADMIN_SESION_PERDIDA_KEY\)/);
+  const cola = functionSource("queueGoogleSheetsWrite", "adminFichasSaveMessage");
+  assert.match(cola, /error\.status === 401\) handleAdminSessionLost\(\)/);
+  const turismo = functionSource("saveAdminTurismoTripsWithFeedback", "importAdminTurismoPublicDefaults");
+  assert.match(turismo, /error\.status === 401\) handleAdminSessionLost\(\)/);
+  assert.match(functionSource("renderAdminLogin", "renderAdminShell"), /adminLoginNotice/);
+});
