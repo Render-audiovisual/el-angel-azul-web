@@ -52,7 +52,8 @@ npm run dev       # web local en http://localhost:3057
 ## 4. Estado
 **Hecho en código (nada desplegado):** los 12 puntos del cliente tienen su parte hecha. El detalle punto por punto, con lo que falta de cada uno, está en `docs/correcciones-del-angel.md`.
 **Verificado a mano en el navegador local (ficha PAX):** selector PAX/Tutor, curso/grado/división, nombre y apellido separados con aviso de tildes, validación (bloquea y lista los 20 datos faltantes), CUIL/correo/celular del tutor, plan de pago, dirección, envío 201 y ficha guardada con colegio, contrato y plan; el PDF sale con «APELLIDO, NOMBRE» y el plan.
-**Todavía sin revisar a mano:** formulario de Tutor, ficha en celular (390 px), pantalla Fichas del admin, exportación a Excel, el PDF visualmente.
+**Revisado a mano el 25/11 (Paso 4):** formulario de Tutor, ficha PAX en celular (390 px), pantalla Fichas del admin, aprobación, exportación a Excel y PDF. Resultado y 9 fallas anotadas en `docs/correcciones-del-angel.md`. La principal: el PDF pierde las letras fuera de Latin-1 («Mićić» sale «MII»).
+**Todavía sin revisar:** el buscador con ~2.900 colegios, un correo real y Safari/iPhone reales.
 **Depende de configuración externa:** correo (Resend) apagado: faltan `RESEND_API_KEY`, `EAA_EMAIL_FROM`, `EAA_EMAIL_COPIA` y el DNS de `elangelazul.tur.ar` (la delegación a AWS está muerta). La base real está casi vacía (0 planes, 0 contratos) y faltan las migraciones 0005 y 0006.
 
 ## 5. Pasos para seguir (en orden)
@@ -78,7 +79,7 @@ Cada paso termina con `npm run check` en verde y un commit chico. Si tocás algo
 - Los 5 scripts de `cdn.jsdelivr.net` en `index.html` no tienen `integrity` y `swiper@11` no está fijado a una versión exacta.
 - La ficha pública crea viajes nuevos desde el texto libre de «destino» (`findOrCreateViaje`). Que solo busque, no cree.
 
-**Paso 4 – Terminar de revisar los 12 puntos en el navegador** (lista de la sección 4): Tutor, celular, pantalla Fichas del admin, Excel, PDF. Anotar lo que falle en `docs/correcciones-del-angel.md`.
+**Paso 4 – Revisar los 12 puntos en el navegador: hecho el 25/11.** Fallas anotadas en `docs/correcciones-del-angel.md` (sección «Revisión a mano»); falta corregirlas.
 
 **Paso 5 – Datos reales (con OK del dueño).**
 1. Aplicar las migraciones 0005 y 0006 en Supabase.
