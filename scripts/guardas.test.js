@@ -107,7 +107,7 @@ test("la base verifica el certificado de Supabase por defecto", { todo: "Paso 3:
   assert.doesNotMatch(leer("lib/db.js"), /rejectUnauthorized:\s*false/);
 });
 
-test("los scripts y estilos de CDN tienen integrity y versión exacta", { todo: "Paso 3: index.html sin integrity, swiper@11" }, () => {
+test("los scripts y estilos de CDN tienen integrity y versión exacta", () => {
   const problemas = [];
   for (const rel of ["index.html", "admin/index.html", "admin-turismo/index.html"]) {
     if (!fs.existsSync(path.join(ROOT, rel))) continue;
@@ -119,18 +119,17 @@ test("los scripts y estilos de CDN tienen integrity y versión exacta", { todo: 
   assert.deepEqual(problemas, []);
 });
 
-test("CONFIG no se puede leer sin sesión", { todo: "Paso 3: PUBLIC_READ_SHEETS incluye CONFIG" }, () => {
+test("CONFIG no se puede leer sin sesión", () => {
   const [, lista] = leer("server.js").match(/PUBLIC_READ_SHEETS = new Set\(\[([^\]]*)\]\)/);
   assert.doesNotMatch(lista, /"CONFIG"/);
 });
 
-test("la ficha pública no crea viajes desde texto libre", { todo: "Paso 3: insertFichaPublica usa findOrCreateViaje" }, () => {
+test("la ficha pública no crea viajes desde texto libre", () => {
   assert.doesNotMatch(cuerpoDeFuncion(leer("lib/db.js"), "insertFichaPublica"), /findOrCreateViaje\(/);
 });
 
-test("los archivos estáticos manejan errores de lectura", { todo: "Limpieza: fs.createReadStream sin manejador de error en server.js" }, () => {
+test("los archivos estáticos manejan errores de lectura", () => {
   assert.doesNotMatch(leer("server.js"), /fs\.createReadStream\([^)]*\)\.pipe\(/);
 });
 
 test.todo("un agente no puede borrar grupos ni contratos (prueba HTTP con sesión de agente) — Paso 3: roles");
-test.todo("editar o borrar grupos, contratos, pasajeros y turismo escribe en eventos_administrativos — Paso 3: auditoría");

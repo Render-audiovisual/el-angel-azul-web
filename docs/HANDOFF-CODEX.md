@@ -76,13 +76,17 @@ Cada paso termina con `npm run check` en verde y un commit chico. Si tocás algo
 4. Si `ipCalculada` es la misma en las dos redes o no es la tuya: mirá `xForwardedFor`. Si tu IP aparece una posición antes del final, cargá `EAA_PROXY_HOPS=2` (o el número que corresponda, hasta 5) en Hostinger y repetí.
 5. Si `xForwardedFor` viene vacío, el hosting no manda el encabezado: avisá antes de seguir, porque hace falta otra fuente (por ejemplo `xRealIp`).
 
-**Paso 3 – Seguridad del servidor.**
-- Roles: el servidor nunca mira `role` (`ADMIN_USERS`, `handleSheets` en `server.js`); cualquier agente puede borrar grupos o contratos con curl. Definir qué puede hacer cada rol, chequearlo en el servidor y escribir un test que lo pruebe (el test actual de «Configuración bloqueada» solo lee texto de `app.js`).
-- Auditoría: solo las fichas escriben en `eventos_administrativos`; borrados y ediciones de grupos, contratos, pasajeros y turismo no dejan rastro (`actorUsername` llega y no se usa).
-- `GET /api/google-sheets?sheet=CONFIG` se puede leer sin sesión (`PUBLIC_READ_SHEETS`). Cerrarlo o exponer solo las claves necesarias.
-- La base no verifica el certificado de Supabase por defecto (`rejectUnauthorized: false` en `lib/db.js`). Cargar el CA y activar `EAA_POSTGRES_TLS_VERIFY_FULL=true`.
-- Los 5 scripts de `cdn.jsdelivr.net` en `index.html` no tienen `integrity` y `swiper@11` no está fijado a una versión exacta.
-- La ficha pública crea viajes nuevos desde el texto libre de «destino» (`findOrCreateViaje`). Que solo busque, no cree.
+**Paso 3 – Seguridad del servidor (parcial, 26/11).**
+- **Hecho:**
+  - `GET /api/google-sheets?sheet=CONFIG` ya no se lee sin sesión (y la pantalla Configuración, que ya era solo admin, ahora también lo es en el servidor: 403 para agencia).
+  - Los 7 scripts y estilos de `cdn.jsdelivr.net` llevan `integrity` y versión exacta (`swiper@11.2.10`, mismo contenido que servía `swiper@11`). Hashes calculados bajando los archivos de jsDelivr el 26/11: si cambia una versión, hay que recalcularlos.
+  - La ficha pública solo **busca** el viaje (`findViaje`); si el destino y año no están cargados, responde 400 «Ese viaje todavía no está habilitado…» y no crea ni viaje ni persona. **Antes de abrir inscripciones hay que cargar los viajes** (Paso 5).
+  - Auditoría: crear, editar y eliminar en Grupos, Contratos, Pasajeros, Turismo, Tutores, Planes y Colegios escriben en `eventos_administrativos` (usuario, entidad, id y nombres de los campos cambiados, sin valores), en la misma transacción del guardado. Las fichas ya se auditaban.
+  - `server.js`: el stream de archivos estáticos tiene manejador de error (antes un error de lectura tiraba el proceso).
+  - Aviso en el log al arrancar en producción si el certificado de la base no se verifica.
+- **Falta (necesita tu decisión o configuración):**
+  - **Roles:** hoy solo Configuración es exclusiva del admin. Un agente (rol `agencia`) puede borrar grupos, contratos, colegios y viajes con la API. Hay que definir la matriz de permisos y chequearla en el servidor con un test (propuesta en el PR #11).
+  - **Certificado de Supabase:** cargar `SUPABASE_DB_CA_CERT` (CA descargado del panel de Supabase) y `EAA_POSTGRES_TLS_VERIFY_FULL=true` en Hostinger. Es configuración, no código; hasta entonces `lib/db.js` conserva `rejectUnauthorized: false` por defecto.
 
 **Paso 4 – Revisar los 12 puntos en el navegador: hecho el 25/11.** Fallas anotadas en `docs/correcciones-del-angel.md` (sección «Revisión a mano»); falta corregirlas.
 

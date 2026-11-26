@@ -13,6 +13,8 @@ let pool;
 test.before(async () => {
   pool = await crearPoolLocal();
   db.__test.setPool(pool);
+  // La ficha pública ya no crea viajes: los carga el administrador.
+  await pool.query(`insert into viajes (categoria, nivel, destino, titulo, anio, estado) values ('estudiantil', 'Secundaria', 'Bariloche 2027', 'Bariloche 2027', 2027, 'activo')`);
 });
 test.after(async () => { await pool.close(); });
 
@@ -71,4 +73,12 @@ test("una ficha pública no pisa nacimiento ni teléfono de una persona ya carga
   const { rows } = await pool.query(`select nacimiento::text as n, telefono from personas where numero_documento = '45000077'`);
   assert.equal(rows[0].n, "2008-01-01");
   assert.equal(rows[0].telefono, "3794000000");
+});
+
+test("la ficha pública no crea viajes: con un destino que nadie cargó da 400 y no crea ni viaje ni persona", async () => {
+  const antes = (await pool.query(`select (select count(*) from viajes)::int v, (select count(*) from personas)::int p`)).rows[0];
+  const datos = { ...datosPax("45000999"), destino: "Narnia", viajeTexto: undefined };
+  await assert.rejects(db.insertFichaPublica(datos, CTX), (e) => e.statusCode === 400 && /todavía no está habilitado/.test(e.message));
+  const despues = (await pool.query(`select (select count(*) from viajes)::int v, (select count(*) from personas)::int p`)).rows[0];
+  assert.deepEqual(despues, antes);
 });

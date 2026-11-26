@@ -13,6 +13,8 @@ let pool;
 test.before(async () => {
   pool = await crearPoolLocal();
   db.__test.setPool(pool);
+  // La ficha pública ya no crea viajes: los carga el administrador.
+  await pool.query(`insert into viajes (categoria, nivel, destino, titulo, anio, estado) values ('estudiantil', 'Secundaria', 'Bariloche 2027', 'Bariloche 2027', 2027, 'activo')`);
 });
 test.after(async () => { await pool.close(); });
 
@@ -75,4 +77,38 @@ test("'mi colegio no está': la ficha queda sin vincular y el admin la vincula a
   const despues = (await db.listFichasAdmin(id))[0];
   assert.equal(despues.colegio_vinculado, "TRUE");
   assert.equal(despues.colegio, "Colegio Real");
+});
+
+test("auditoría: crear, editar y eliminar dejan rastro con el usuario, sin copiar los valores", async () => {
+  const adminWrite = require("../lib/admin-write");
+  const guardar = async (rows, deleteIds, expectedVersions, actor) => adminWrite.write({
+    pool: db.getPool(), sheet: "COLEGIOS", rows, deleteIds, expectedVersions, actor,
+    list: db.listColegiosAdmin, save: () => db.saveColegiosAdmin(rows, deleteIds)
+  });
+  const eventos = async () => (await pool.query(
+    `select accion, actor_username, entidad, entidad_id::text as entidad_id, detalle from eventos_administrativos where entidad = 'colegios' order by id`
+  )).rows;
+  const id = ID(90);
+  const fila = { id, nombre: "Colegio Auditado Secreto", provincia: "Corrientes", localidad: "Goya", codigo_oficial: "", activo: "TRUE" };
+
+  assert.deepEqual((await guardar([fila], [], {}, "ana")).failed, []);
+  const version = (await db.listColegiosAdmin()).map((r) => adminWrite.versionedRows([r])[0]).find((r) => r.id === id)._version;
+  assert.deepEqual((await guardar([{ ...fila, localidad: "Esquina" }], [], { [id]: version }, "luis")).failed, []);
+  const version2 = adminWrite.versionedRows([(await db.listColegiosAdmin()).find((r) => r.id === id)])[0]._version;
+  assert.deepEqual((await guardar([], [id], { [id]: version2 }, "luis")).failed, []);
+
+  const log = await eventos();
+  assert.deepEqual(log.map((e) => [e.accion, e.actor_username]), [["crear", "ana"], ["editar", "luis"], ["eliminar", "luis"]]);
+  assert.ok(log.every((e) => e.entidad_id === id), "los colegios usan uuid y quedan enlazados");
+  assert.deepEqual(log[1].detalle.campos, ["localidad"]);
+  assert.ok(!JSON.stringify(log).includes("Esquina") && !JSON.stringify(log).includes("Secreto"), "la bitácora guarda nombres de campos, no valores");
+});
+
+test("auditoría: si el guardado falla no queda ningún evento", async () => {
+  const adminWrite = require("../lib/admin-write");
+  const antes = (await pool.query(`select count(*)::int n from eventos_administrativos`)).rows[0].n;
+  const rows = [{ id: ID(91), nombre: "ab" }];
+  const r = await adminWrite.write({ pool: db.getPool(), sheet: "COLEGIOS", rows, deleteIds: [], expectedVersions: {}, actor: "ana", list: db.listColegiosAdmin, save: () => db.saveColegiosAdmin(rows, []) });
+  assert.equal(r.failed.length, 1);
+  assert.equal((await pool.query(`select count(*)::int n from eventos_administrativos`)).rows[0].n, antes);
 });
