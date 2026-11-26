@@ -391,3 +391,49 @@ test("fichas duplicadas: el 409 de la base llega al formulario con su mensaje", 
     db.insertFichaTutor = original.tutor;
   }
 });
+
+// --- IP del visitante (Paso 2) ---------------------------------------------
+
+const reqConIp = (xff, remote = "10.0.0.1") => ({ headers: xff === undefined ? {} : { "x-forwarded-for": xff }, socket: { remoteAddress: remote } });
+
+test("clientIp toma la IP que agregó el último proxy, no la que escribe el cliente", () => {
+  const { clientIp } = __test;
+  assert.equal(clientIp(reqConIp("203.0.113.9")), "203.0.113.9");
+  // El cliente manda una IP inventada y el proxy agrega la real al final.
+  assert.equal(clientIp(reqConIp("1.2.3.4, 203.0.113.9")), "203.0.113.9");
+  assert.equal(clientIp(reqConIp(undefined)), "10.0.0.1");
+  assert.equal(clientIp(reqConIp("")), "10.0.0.1");
+});
+
+test("con dos proxies delante, EAA_PROXY_HOPS=2 recupera la IP del visitante", () => {
+  const { clientIp, proxyHops } = __test;
+  const req = reqConIp("1.2.3.4, 203.0.113.9, 172.16.0.5");
+  assert.equal(clientIp(req, 1), "172.16.0.5", "con 1 salto todos los visitantes compartirían la IP del segundo proxy");
+  assert.equal(clientIp(req, 2), "203.0.113.9");
+  assert.equal(clientIp(reqConIp("203.0.113.9"), 2), "10.0.0.1", "si faltan saltos no se confía en un valor que pudo escribir el cliente");
+  assert.equal(proxyHops({}), 1);
+  assert.equal(proxyHops({ EAA_PROXY_HOPS: "2" }), 2);
+  for (const malo of ["0", "-1", "abc", "9", ""]) assert.equal(proxyHops({ EAA_PROXY_HOPS: malo }), 1, `valor inválido «${malo}» vuelve al valor por defecto`);
+});
+
+test("diagnostico-ip: sin sesión 401, agencia 403, admin ve qué le llega y la IP calculada", async () => {
+  const origin = `http://127.0.0.1:${port}`;
+  const login = (username, password) => request({ method: "POST", path: "/api/admin/login", headers: { origin, "x-forwarded-for": "198.51.100.77" }, body: { username, password } });
+  const cookieDe = (r) => String(r.headers["set-cookie"]?.[0] || "").split(";")[0];
+
+  assert.equal((await request({ path: "/api/admin/diagnostico-ip" })).status, 401);
+
+  const agente = await login("agente1", "test-agent-password");
+  assert.equal(agente.status, 200);
+  assert.equal((await request({ path: "/api/admin/diagnostico-ip", headers: { cookie: cookieDe(agente) } })).status, 403);
+
+  const admin = await login("admin", "test-admin-password");
+  const diag = await request({ path: "/api/admin/diagnostico-ip", headers: { cookie: cookieDe(admin), "x-forwarded-for": "1.2.3.4, 203.0.113.9", "x-real-ip": "203.0.113.9" } });
+  assert.equal(diag.status, 200);
+  assert.equal(diag.json.ipCalculada, "203.0.113.9");
+  assert.equal(diag.json.proxyHops, 1);
+  assert.deepEqual(diag.json.xForwardedFor, ["1.2.3.4", "203.0.113.9"]);
+  assert.equal(diag.json.xRealIp, "203.0.113.9");
+  assert.match(diag.headers["cache-control"], /no-store/);
+  assert.equal((await request({ method: "POST", path: "/api/admin/diagnostico-ip", headers: { origin, cookie: cookieDe(admin) } })).status, 405);
+});

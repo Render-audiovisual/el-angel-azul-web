@@ -69,7 +69,12 @@ Cada paso termina con `npm run check` en verde y un commit chico. Si tocás algo
 - Pruebas: `npm run check` 130/130; prueba HTTP con cuentas admin/agente distintas, envíos simultáneos, lotes, bajas obsoletas y todas las colecciones. Prueba del navegador con dos pestañas de Colegios: el primer cambio persiste, el segundo se bloquea y conserva el borrador. Prueba de 120 fichas: el POST contiene una fila (~12 KB), no la colección (>1 MB).
 - `npm run dev` usa IDs legados en los datos de prueba y fuerza la contraseña local, sin heredar ni imprimir una contraseña real del entorno.
 
-**Paso 2 – IP del visitante en Hostinger** (`clientIp`, `server.js` ~190). Hoy toma la última IP de `X-Forwarded-For`, pensado para Render. Confirmar qué manda Hostinger; si hay un proxy más, todos los visitantes comparten límite (50 fichas por hora para todo el sitio y 5 contraseñas malas bloquean el login de todos).
+**Paso 2 – IP del visitante en Hostinger: código listo (26/11), falta medir en Hostinger.** `clientIp` (`server.js`) cuenta desde la derecha de `X-Forwarded-For` y ahora la cantidad de proxies es configurable con `EAA_PROXY_HOPS` (por defecto 1, igual que antes). Si Hostinger suma un proxy más, todos los visitantes comparten IP: 50 fichas por hora para todo el sitio y 5 contraseñas malas bloquean el login de todos. No hay documentación de Hostinger que confirme cuántos saltos hay; hay que medirlo en el servidor real:
+1. Con la rama desplegada (vista previa o producción) y `EAA_ADMIN_PASSWORD` cargada, entrá al admin como `admin` (los agentes no ven el diagnóstico).
+2. Abrí `/api/admin/diagnostico-ip` en el mismo navegador. Compará `ipCalculada` con tu IP pública (por ejemplo, la que muestra ifconfig.me).
+3. Repetilo desde otra red (datos del celular). Tienen que dar IP distintas, cada una la tuya.
+4. Si `ipCalculada` es la misma en las dos redes o no es la tuya: mirá `xForwardedFor`. Si tu IP aparece una posición antes del final, cargá `EAA_PROXY_HOPS=2` (o el número que corresponda, hasta 5) en Hostinger y repetí.
+5. Si `xForwardedFor` viene vacío, el hosting no manda el encabezado: avisá antes de seguir, porque hace falta otra fuente (por ejemplo `xRealIp`).
 
 **Paso 3 – Seguridad del servidor.**
 - Roles: el servidor nunca mira `role` (`ADMIN_USERS`, `handleSheets` en `server.js`); cualquier agente puede borrar grupos o contratos con curl. Definir qué puede hacer cada rol, chequearlo en el servidor y escribir un test que lo pruebe (el test actual de «Configuración bloqueada» solo lee texto de `app.js`).
