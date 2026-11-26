@@ -36,7 +36,19 @@ colegios → grupos (curso+división, por viaje) → pasajeros → personas; con
 `contextoInscripcion` cruza colegio_id + nivel + `viajes.destino` (texto, ej. "Bariloche 2027") + grado + división. Sin contrato y plan cargados, la ficha no se puede enviar.
 
 ## Estado y plan
-Estado actualizado y pendientes en `docs/HANDOFF-SESION.md`. Plan con tareas, tests y Plan B en `docs/superpowers/plans/2026-11-10-plan-mejora-angel-azul.md`. Rama de trabajo: `integracion/abc`.
+Estado, tablero «En curso» y pasos pendientes en `docs/HANDOFF-CODEX.md`. Reglas y checklist de sesión en `AGENTS.md`. Rama de trabajo: `feat/colegios-padron` (PR #3). `docs/HANDOFF-SESION.md` y el plan del 10/11 quedan como historia.
+
+## Fallas conocidas
+Errores que ya pasaron o que van a pasar si nadie los mira. Cada uno dice qué lo detecta.
+
+| Falla | Detección |
+|---|---|
+| El viaje se guarda como destino + año («Bariloche 2027»). Con «Bariloche» a secas, el contrato no se encuentra y la ficha no se puede enviar. | Manual: datos de prueba de `npm run dev`. Revisar al cargar viajes reales (Paso 5). |
+| Un registro sin `legacy_id` aparece en el admin como `id: null`. | Manual al cargar datos reales (Paso 5). |
+| Si Hostinger agrega un proxy de más, `clientIp` devuelve la misma IP para todos: 50 fichas por hora para todo el sitio y 5 claves malas bloquean el login de todos. | Pendiente: test de `clientIp` con los encabezados reales de Hostinger (Paso 2). |
+| El PDF pierde letras fuera de Latin-1 («Mićić» sale «Mii»). | Pendiente: caso en `scripts/ficha-pdf.test.js` cuando se corrija `textoSeguro`. |
+| Una contraseña vieja del admin quedó en el historial público de git. | `scripts/guardas.test.js` bloquea secretos nuevos. La vieja se rota en el Paso 7. |
+| Deuda de seguridad del Paso 3 (TLS, CDN sin `integrity`, CONFIG pública, viajes creados desde la ficha, roles, auditoría). | `todo` en `scripts/guardas.test.js`; se ven en cada `npm run check`. |
 
 ## Reglas para gastar pocos tokens
 - Leer este archivo y el spec `docs/superpowers/specs/2026-09-15-ficha-adhesion-design.md`; nada más hasta tocar código.
@@ -47,5 +59,5 @@ Estado actualizado y pendientes en `docs/HANDOFF-SESION.md`. Plan con tareas, te
 - Escribir en Supabase de producción solo con confirmación del dueño.
 
 ## Comandos
-- `npm test` (130 tests al 24/11/2026) · `npm run check` · `npm run db:check`.
+- `npm test` (tests y guardas; borra las variables secretas antes de correr) · `npm run check` (sintaxis + `npm test`) · `npm run db:check`.
 - E2E: `PLAYWRIGHT_PATH=<node_modules/playwright> node scripts/e2e/ficha.e2e.js` (no corre en `npm test`).
