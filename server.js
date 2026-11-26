@@ -580,7 +580,8 @@ async function writeSheet(sheet, rows, deleteIds = []) {
 // personales reales (DNI, teléfono, nombre de responsables, muchos
 // de menores de edad) - antes cualquiera podía leerlas sin
 // autenticarse, con solo saber la URL. Ahora exigen sesión de admin.
-const PUBLIC_READ_SHEETS = new Set(["TURISMO", "CONFIG"]);
+// Solo lo que la web pública lee sin sesión. CONFIG no: el frontend nunca la pide por red.
+const PUBLIC_READ_SHEETS = new Set(["TURISMO"]);
 
 // SEGURIDAD: antes CUALQUIERA (sin login) podía escribir en /api/google-sheets
 // para CUALQUIER hoja permitida (GRUPOS, CONTRATOS, PASAJEROS, TURISMO,
@@ -644,6 +645,10 @@ async function handleSheets(req, res, url) {
     if (!PUBLIC_READ_SHEETS.has(sheet) && !adminSession) {
       return json(res, 401, { ok: false, error: "Necesitás iniciar sesión para ver esta información" });
     }
+    // La pantalla Configuración ya es solo para el rol admin: el servidor lo hace valer.
+    if (sheet === "CONFIG" && adminSession.role !== "admin") {
+      return json(res, 403, { ok: false, error: "Esta información es solo para el administrador" });
+    }
     // Auditoría 23/07: las fichas que entran por el formulario público
     // quedan en Supabase (más abajo, POST sin sesión), pero el admin acá
     // solo leía Sheets - una ficha nueva nunca aparecía en su bandeja. Se
@@ -704,7 +709,7 @@ async function handleSheets(req, res, url) {
         : () => POSTGRES_SAVE_FN[sheet](rows, deleteIds, adminSession.user);
       const result = await adminWrite.write({
         pool: db.getPool(), sheet, rows, deleteIds,
-        expectedVersions: payload.expectedVersions, list, save
+        expectedVersions: payload.expectedVersions, list, save, actor: adminSession.user
       });
       if (result.failed.length) {
         return json(res, 200, { ok: false, sheet, error: `No se guardó el pedido: ${result.failed.map((item) => item.error).join(" | ")}` });
@@ -885,7 +890,15 @@ function staticFile(req, res, url) {
     ...securityHeaders(req)
   });
   if (req.method === "HEAD") return res.end();
-  fs.createReadStream(target).pipe(res);
+  const stream = fs.createReadStream(target);
+  // Sin este manejador, un error de lectura (archivo borrado o ilegible entre el
+  // existsSync y la apertura) tira el proceso entero. Los encabezados ya salieron:
+  // solo se corta la conexión.
+  stream.on("error", (error) => {
+    console.error("Error leyendo archivo estático", safeErrorForLog(error));
+    res.destroy();
+  });
+  stream.pipe(res);
 }
 
 // Auditoría 23/07: loginAttempts/fichaSubmitAttempts/apiAttempts solo se

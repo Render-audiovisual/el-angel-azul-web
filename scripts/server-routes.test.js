@@ -391,3 +391,31 @@ test("fichas duplicadas: el 409 de la base llega al formulario con su mensaje", 
     db.insertFichaTutor = original.tutor;
   }
 });
+
+// --- Paso 3: lectura pública y archivos estáticos ----------------------------
+
+test("CONFIG no se lee sin sesión; TURISMO sigue siendo público (lo usa la web)", async () => {
+  assert.equal((await request({ path: "/api/google-sheets?sheet=CONFIG" })).status, 401);
+  assert.equal((await request({ path: "/api/google-sheets?sheet=PASAJEROS" })).status, 401);
+  assert.notEqual((await request({ path: "/api/google-sheets?sheet=TURISMO" })).status, 401);
+});
+
+test("CONFIG con sesión de agencia da 403; con admin no", async () => {
+  const origin = `http://127.0.0.1:${port}`;
+  const entrar = async (username, password) => String((await request({ method: "POST", path: "/api/admin/login", headers: { origin }, body: { username, password } })).headers["set-cookie"]?.[0] || "").split(";")[0];
+  assert.equal((await request({ path: "/api/google-sheets?sheet=CONFIG", headers: { cookie: await entrar("agente1", "test-agent-password") } })).status, 403);
+  assert.notEqual((await request({ path: "/api/google-sheets?sheet=CONFIG", headers: { cookie: await entrar("admin", "test-admin-password") } })).status, 403);
+});
+
+test("un error de lectura de un archivo estático no tira el servidor", async () => {
+  const fs = require("node:fs");
+  const { Readable } = require("node:stream");
+  const original = fs.createReadStream;
+  fs.createReadStream = () => new Readable({ read() { this.destroy(new Error("EIO simulado")); } });
+  try {
+    await assert.rejects(request({ path: "/index.html" }), /socket hang up|aborted|ECONNRESET/);
+  } finally {
+    fs.createReadStream = original;
+  }
+  assert.equal((await request({ path: "/index.html" })).status, 200, "el servidor sigue atendiendo");
+});
