@@ -9,7 +9,7 @@ Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerra
 |---|---|---|---|---|
 | Fran (Claude Code) | `fran/harness` | Harness: guardas, `AGENTS.md`, docs | `AGENTS.md`, `CLAUDE.md`, `package.json`, `scripts/guardas.test.js`, `scripts/helpers/sin-secretos.js`, docs | 25/11 |
 | Fran (Claude Code) | `fran/inicio-hallmark` | Paso 8: rediseño del inicio con la skill Hallmark (el PR #8 de Agustín quedó integrado, con su OK) | `index.html`, `assets/css/home.css`, `assets/css/public-experience.css`, `assets/js/modules/home-motion.js`, `renderHome` en `assets/js/app.js` | 27/11 |
-| Agustín (Codex) | `agustin/integracion-franco-hostinger` | Integrar versión de Franco con admin independiente y publicar vista previa, pedido del dueño | `index.html`, `assets/js/app.js`, `assets/css/styles.css`, `admin/index.html`, `server.js`, pruebas de rutas y frontend, este documento | 27/11 |
+| Agustín (Codex) | `agustin/integracion-franco-hostinger` | Versión de Franco integrada con admin independiente; check: 162 pasan, 2 TODO conocidos (roles/TLS), 0 fallos. Preparada para vista previa de Hostinger por pedido del dueño | `index.html`, `assets/js/app.js`, `assets/css/styles.css`, `admin/index.html`, `server.js`, pruebas de rutas y frontend, este documento | 27/11 |
 
 ## Harness (25/11/2026)
 - Las reglas del repo ahora se chequean en `npm run check` con `scripts/guardas.test.js`: secretos en archivos del repo, `.env` trackeados, docs con referencias rotas y `CLAUDE.md` → `AGENTS.md`.
