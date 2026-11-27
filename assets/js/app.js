@@ -8245,6 +8245,8 @@
           stepBlocks.forEach((block) => {
             block.hidden = Number(block.dataset.macroStep) !== macroStep;
           });
+          // En el tramo 2 la tarjeta de resumen ya muestra las mismas filas.
+          contextSummary.hidden = macroStep === 2;
           macroIndicators.forEach((item) => {
             const step = Number(item.dataset.macroIndicator);
             item.classList.toggle("active", step === macroStep);
