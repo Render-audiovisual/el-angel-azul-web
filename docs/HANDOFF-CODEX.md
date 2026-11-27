@@ -15,7 +15,8 @@ Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerra
 
 - El dueño pidió revisar y corregir cada sector del panel y autorizó preparar el registro manual de pagos (fecha, monto y medio). Trabajo sobre la propuesta local del PR #35, sin publicar en main ni escribir en Supabase.
 - Primera entrega de servidor: `lib/payments-ledger.js`, rutas autenticadas de pagos en `server.js` y migración `supabase/migrations/0008_pagos_manuales.sql`. Registros en ARS y centavos enteros, identificador idempotente, pasajero vinculado, actor y auditoría transaccional. Agencia registra/consulta; solo admin anula con motivo y versión, conservando el movimiento original.
-- Pruebas del servidor: 7 casos HTTP con PGlite (validación, exactitud, reintentos concurrentes, auditoría, permisos, anulación y migración faltante). Check: 176 aprobadas, 0 fallas, 1 TODO conocido. La migración 0008 **solo se ejecutó en memoria**; requiere autorización para la base oficial.
+- Pruebas del servidor: 8 casos HTTP con PGlite (validación, exactitud, reintentos concurrentes, auditoría, permisos, anulación y migración faltante). Check tras la revisión funcional: 181 aprobadas, 0 fallas, 1 TODO conocido. La migración 0008 **solo se ejecutó en memoria**; requiere autorización para la base oficial.
+- Corrección de servidor: editar nombre/apellido/DNI de un pasajero existente conserva su persona, identificador y cobros. Rechaza documentos que ya pertenecen a otra persona y cambios de viaje. Prueba HTTP con PGlite verifica identidad, cantidades de filas y pagos vinculados. El entorno local incluye un pasajero ficticio con tutor y plan para probar cobros.
 - Próxima entrega: conectar la pantalla de Pagos y el perfil del pasajero, retirar importes inventados y corregir búsquedas/guardados; luego revisión funcional y visual completa.
 
 ## Espacio de trabajo del administrador — 27/11/2026

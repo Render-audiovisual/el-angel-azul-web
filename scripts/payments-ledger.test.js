@@ -70,6 +70,27 @@ test('si falla la auditoría, el pago se revierte completo',async()=>{
  try{assert.equal((await req('/api/admin/pagos',pago())).status,500);assert.equal((await ledger.list()).length,before);}
  finally{await pool.query('drop trigger fallo_auditoria on eventos_administrativos');}
 });
+test('corregir DNI y nombre conserva persona, pasajero y cobros; rechaza un DNI ajeno',async()=>{
+ const current=(await pool.query("select * from pasajeros where legacy_id='pasajero-pagos'")).rows[0];
+ const school=(await pool.query("insert into colegios(nombre) values ('Escuela identidad de prueba') returning id")).rows[0].id;
+ const group=(await pool.query("insert into grupos(legacy_id,viaje_id,colegio_id,curso,division) values ('grupo-identidad',$1,$2,'5°','A') returning id",[current.viaje_id,school])).rows[0].id;
+ await pool.query('update pasajeros set grupo_id=$2 where id=$1',[current.id,group]);
+ const count=async table=>Number((await pool.query(`select count(*) as n from ${table}`)).rows[0].n);
+ const persons=await count('personas'), passengers=await count('pasajeros');
+ let row=(await db.listPasajerosAdmin()).find(p=>p.id==='pasajero-pagos');
+ const write=async data=>req('/api/google-sheets',{sheet:'PASAJEROS',rows:[data],expectedVersions:{[row.id]:require("../lib/admin-write").version(row)}});
+ const good=await write({...row,dni:'45111223',nombre:'José corregido',apellido:'Núñez corregido'});
+ assert.equal(good.status,200,await good.text());
+ row=(await db.listPasajerosAdmin()).find(p=>p.id==='pasajero-pagos');
+ assert.equal(row.dni,'45111223');assert.equal(row.nombre,'José corregido');assert.equal(row.apellido,'Núñez corregido');
+ assert.equal(await count('personas'),persons);assert.equal(await count('pasajeros'),passengers);
+ const stored=(await pool.query("select * from pasajeros where legacy_id='pasajero-pagos'")).rows[0];
+ assert.equal(stored.id,current.id);assert.equal(stored.persona_id,current.persona_id);
+ for(const payment of await ledger.list()) {assert.equal(payment.pasajero_id,current.id);assert.equal(payment.pasajero_dni,'45111223');}
+ await pool.query("insert into personas(numero_documento,nombre) values ('99999999','Otra persona')");
+ const bad=await write({...row,dni:'99999999'});assert.equal(bad.status,200);assert.equal((await bad.json()).ok,false);
+ assert.equal((await db.listPasajerosAdmin()).find(p=>p.id==='pasajero-pagos').dni,'45111223');
+});
 test('base sin migración devuelve un mensaje 503 sin exponer configuración',async()=>{
  await pool.query('alter table pagos_manuales rename to pagos_temporales');
  try{const r=await req('/api/admin/pagos');assert.equal(r.status,503);assert.match((await r.json()).error,/todavía no está habilitado/);}
