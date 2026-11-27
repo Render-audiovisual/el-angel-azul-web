@@ -558,3 +558,8 @@ test("el encabezado público es siempre el mismo: transparente, logo claro y men
   assert.doesNotMatch(css, /nav-scrolled[^{]*\.site-header\s*\{[^}]*background:\s*var\(--eaa-paper\)/);
   assert.match(css, /\.site-header :is\(\.brand-link, \.site-nav, \.nav-toggle\) \{ pointer-events: auto/, "el hueco vacío del encabezado deja pasar los clics");
 });
+
+test("la agencia no ve el botón Eliminar de los viajes de Turismo del admin", () => {
+  assert.match(appSource, /function adminCanDelete\(\)[\s\S]{0,160}=== "admin"/);
+  assert.match(appSource, /adminCanDelete\(\) \? `<button type="button" data-admin-delete=/);
+});

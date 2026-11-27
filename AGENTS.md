@@ -53,4 +53,4 @@ Si una regla nueva se puede chequear, agregala a `scripts/guardas.test.js` en ve
 | | Variables de Hostinger, DNS y Resend; rotar contraseñas | |
 | | Dependencias nuevas; cambiar este archivo o las guardas; configuración de GitHub; borrar ramas | |
 
-Decisiones abiertas del dueño: cuándo mergear el PR #3, cuándo escribir en Supabase y qué pueden hacer los agentes de la agencia (rol agencia).
+Decisiones del dueño: cuándo escribir en Supabase y cuándo desplegar. Permisos del rol agencia (definidos el 27/11/2026): crea y edita, no elimina; Configuración y diagnóstico solo del administrador.

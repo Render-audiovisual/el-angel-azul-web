@@ -132,4 +132,7 @@ test("los archivos estáticos manejan errores de lectura", () => {
   assert.doesNotMatch(leer("server.js"), /fs\.createReadStream\([^)]*\)\.pipe\(/);
 });
 
-test.todo("un agente no puede borrar grupos ni contratos (prueba HTTP con sesión de agente) — Paso 3: roles");
+test("la agencia no puede eliminar registros (prueba HTTP en scripts/server-routes.test.js)", () => {
+  assert.match(leer("scripts/server-routes.test.js"), /el rol agencia puede editar pero no eliminar registros/);
+  assert.match(leer("server.js"), /deleteIds\.length && adminSession\?\.role !== "admin"/);
+});
