@@ -268,3 +268,72 @@ body[data-app-entry="admin"] .admin-pasajeros-table--compact td:nth-child(2) { m
 body[data-app-entry="admin"] .admin-pasajeros-table--compact td:nth-child(3) { min-width: 100px; overflow-wrap: normal; }
 body[data-app-entry="admin"] :is(.admin-pasajeros-filters, .admin-fichas-filters) label { text-transform: none; letter-spacing: 0; }
 body[data-app-entry="admin"] .admin-fichas-table tr.is-selected td { box-shadow: none; background: var(--admin-selected); }
+
+/* Acceso completo: identidad a la izquierda y formulario amplio a la derecha. */
+body[data-app-entry="admin"] .admin-login-screen {
+  min-height: 100svh;
+  padding: 32px;
+  align-items: center;
+  background: var(--admin-bg);
+}
+body[data-app-entry="admin"] .admin-login-card {
+  max-width: 1440px;
+  min-height: min(760px, calc(100svh - 64px));
+  grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
+  border: 1px solid var(--admin-line);
+  border-radius: 20px;
+  box-shadow: 0 12px 40px rgb(8 59 122 / .07);
+}
+body[data-app-entry="admin"] .admin-login-panel {
+  display: grid;
+  align-content: space-between;
+  gap: 32px;
+  padding: 48px;
+  min-width: 0;
+  background: var(--admin-accent);
+}
+body[data-app-entry="admin"] .admin-login-panel::before { display: none; }
+body[data-app-entry="admin"] .admin-login-logo-link { border: 0; padding: 0; background: transparent; border-radius: 0; }
+body[data-app-entry="admin"] .admin-login-logo-link img { width: 200px; height: 96px; object-fit: cover; object-position: center; filter: brightness(0) invert(1); }
+body[data-app-entry="admin"] .admin-login-brand { display: grid; gap: 16px; }
+body[data-app-entry="admin"] .admin-login-brand h1 { font: 600 32px/1.2 var(--admin-font); letter-spacing: -.02em; color: white; max-width: 18ch; }
+body[data-app-entry="admin"] .admin-login-brand p { font: 400 16px/1.6 var(--admin-font); color: #e1edfb; max-width: 36ch; }
+body[data-app-entry="admin"] .admin-login-highlights { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+body[data-app-entry="admin"] .admin-login-highlights span { display: flex; align-items: center; gap: 10px; font: 500 14px/1.4 var(--admin-font); color: white; }
+body[data-app-entry="admin"] .admin-login-highlights svg { width: 20px; height: 20px; fill: currentColor; flex: 0 0 20px; }
+body[data-app-entry="admin"] .admin-login-footer { display: block; font-size: 12px; color: #e1edfb; }
+body[data-app-entry="admin"] .admin-login-access { min-width: 0; min-height: 0; padding: 56px; gap: 32px; background: var(--admin-surface); }
+body[data-app-entry="admin"] .admin-login-access-head { gap: 16px; }
+body[data-app-entry="admin"] .admin-login-access-head h2 { color: var(--admin-accent); font: 600 42px/1.1 var(--admin-font); letter-spacing: -.03em; }
+body[data-app-entry="admin"] .admin-login-access-head p { color: var(--admin-muted); font: 400 16px/1.6 var(--admin-font); max-width: none; }
+body[data-app-entry="admin"] .admin-login-access-head > span { color: var(--admin-accent); font: 500 13px/1.4 var(--admin-font); letter-spacing: 0; text-transform: none; }
+body[data-app-entry="admin"] .admin-login-access-head > span i { background: var(--admin-accent); box-shadow: none; }
+body[data-app-entry="admin"] .admin-login-form { gap: 24px; }
+body[data-app-entry="admin"] .admin-login-form label { color: var(--admin-text); font: 500 15px/1.5 var(--admin-font); gap: 8px; }
+body[data-app-entry="admin"] .admin-login-form input { min-height: 56px; border: 1px solid var(--admin-control-line); border-radius: 10px; padding: 14px 16px; color: var(--admin-text); font: 400 17px/1.5 var(--admin-font); }
+body[data-app-entry="admin"] .admin-login-form input::placeholder { color: var(--admin-muted); font-weight: 400; opacity: 1; }
+body[data-app-entry="admin"] .admin-login-password input { padding-right: 88px; }
+body[data-app-entry="admin"] .admin-login-password button { top: 6px; right: 6px; width: 72px; height: 44px; min-height: 44px; font: 500 14px/1.4 var(--admin-font); color: var(--admin-accent) !important; }
+body[data-app-entry="admin"] .admin-login-form > button { min-height: 56px; padding: 14px 24px; border-radius: 10px; box-shadow: none; font: 600 16px/1.5 var(--admin-font); background: var(--admin-accent) !important; border-color: var(--admin-accent) !important; }
+body[data-app-entry="admin"] .admin-login-form > button:hover { filter: brightness(1.1); }
+body[data-app-entry="admin"] .admin-login-form > button:disabled { opacity: .65; cursor: wait; }
+body[data-app-entry="admin"] .admin-login-form :is(input, button):focus-visible { outline: 3px solid var(--color-primary); outline-offset: 3px; box-shadow: none; }
+body[data-app-entry="admin"] .admin-login-note { background: var(--admin-wash); border: 1px solid var(--admin-line); border-radius: 10px; padding: 16px; }
+body[data-app-entry="admin"] .admin-login-note span { font: 400 13px/1.6 var(--admin-font); color: var(--admin-muted); }
+@media (max-width: 1100px) {
+  body[data-app-entry="admin"] .admin-login-panel { padding: 32px; }
+  body[data-app-entry="admin"] .admin-login-access { padding: 40px; }
+  body[data-app-entry="admin"] .admin-login-highlights { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  body[data-app-entry="admin"] .admin-login-brand h1 { font-size: 28px; }
+}
+@media (max-width: 760px) {
+  body[data-app-entry="admin"] .admin-login-screen { padding: 16px; }
+  body[data-app-entry="admin"] .admin-login-card { grid-template-columns: minmax(0, 1fr); border-radius: 16px; min-height: 0; }
+  body[data-app-entry="admin"] .admin-login-panel { gap: 24px; padding: 28px; min-height: 0; }
+  body[data-app-entry="admin"] .admin-login-logo-link img { width: 164px; height: 72px; }
+  body[data-app-entry="admin"] .admin-login-brand h1 { max-width: none; font-size: 26px; }
+  body[data-app-entry="admin"] .admin-login-highlights { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  body[data-app-entry="admin"] .admin-login-highlights span { font-size: 13px; }
+  body[data-app-entry="admin"] .admin-login-access { padding: 28px; gap: 24px; }
+  body[data-app-entry="admin"] .admin-login-access-head h2 { font-size: 32px; }
+}

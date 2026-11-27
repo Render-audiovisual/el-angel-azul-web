@@ -69,6 +69,37 @@ async function capture(page,name) {
   server=createAppServer();await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
   base='http://127.0.0.1:'+server.address().port;
   browser=await chromium.launch(process.env.PLAYWRIGHT_CHANNEL?{channel:process.env.PLAYWRIGHT_CHANNEL}:{});
+  const loginContext=await browser.newContext();
+  await loginContext.route('**/*',route=>new URL(route.request().url()).origin===base?route.continue():route.abort());
+  const loginPage=await loginContext.newPage();
+  loginPage.setDefaultTimeout(8000);
+  for(const width of [1440,1158,390,320]) await caso(`${width}px: acceso completo, logo, campos y botones`,async()=>{
+    await loginPage.setViewportSize({width,height:900});
+    await loginPage.goto(base+'/#/admin');
+    await loginPage.locator('[data-admin-login-form]').waitFor();
+    assert.equal(await loginPage.locator('.admin-login-logo-link img').getAttribute('src'),'assets/img/logo-completo-azul.svg');
+    assert.equal(await loginPage.locator('.admin-login-highlights span').count(),7);
+    const geometry=await loginPage.locator('.admin-login-card').evaluate(el=>({width:el.getBoundingClientRect().width,scroll:document.documentElement.scrollWidth,viewport:innerWidth,small:[...el.querySelectorAll('button,input')].filter(n=>n.getBoundingClientRect().height<44).length}));
+    assert.ok(geometry.scroll<=geometry.viewport+1,JSON.stringify(geometry));
+    assert.equal(geometry.small,0);
+    if(width>=1158) assert.ok(geometry.width>=width-70,'Acceso demasiado estrecho');
+    if(width===1158) await capture(loginPage,'acceso-completo');
+  });
+  await caso('Acceso: mostrar contraseña y entrar al panel completo',async()=>{
+    await loginPage.setViewportSize({width:1440,height:900});
+    await loginPage.locator('[name="usuario"]').fill('admin');
+    await loginPage.locator('[name="password"]').fill(process.env.EAA_ADMIN_PASSWORD);
+    await loginPage.locator('[data-admin-password-toggle]').click();
+    assert.equal(await loginPage.locator('[name="password"]').getAttribute('type'),'text');
+    await loginPage.locator('[data-admin-password-toggle]').click();
+    await loginPage.route('**/api/admin/login',async route=>{await new Promise(r=>setTimeout(r,500));await route.continue();});
+    await loginPage.locator('[type="submit"]').click();
+    assert.equal(await loginPage.locator('[type="submit"]').isDisabled(),true);
+    assert.equal(await loginPage.locator('[data-admin-password-toggle]').isEnabled(),true);
+    await loginPage.locator('.admin-main').waitFor();
+    assert.equal(await loginPage.locator('.admin-sidebar nav a').count(),8);
+  });
+  await loginContext.close();
   const context=await browser.newContext();
   await context.route('**/*',route=>new URL(route.request().url()).origin===base?route.continue():route.abort());
   await auth(context);await seed(context);
@@ -124,9 +155,10 @@ async function capture(page,name) {
     await page.goto(base+'/#/admin/pagos');
     assert.equal(await page.locator('.admin-demo-banner').isVisible(),true);
     const details=page.locator('.admin-payment-architecture');
-    assert.equal(await details.getAttribute('open'),null);
-    await details.locator('summary').focus();await page.keyboard.press('Enter');
+    assert.notEqual(await details.getAttribute('open'),null);
     assert.equal(await details.locator('.admin-payment-architecture-grid').isVisible(),true);
+    await details.locator('summary').focus();await page.keyboard.press('Enter');
+    assert.equal(await details.locator('.admin-payment-architecture-grid').isVisible(),false);
   });
   await caso('Fichas y Turismo: controles de revisión y editor accesibles',async()=>{
     await page.goto(base+'/#/admin/fichas');

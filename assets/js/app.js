@@ -2189,15 +2189,9 @@
           <div class="admin-login-screen">
             <section class="admin-login-card" aria-label="Acceso interno El Ángel Azul">
               <div class="admin-login-panel">
-                <span class="admin-login-orb admin-login-orb-one" aria-hidden="true"></span>
-                <span class="admin-login-orb admin-login-orb-two" aria-hidden="true"></span>
                 <div class="admin-login-panel-top">
                   <a class="admin-login-logo-link" href="#/" aria-label="El Ángel Azul - Inicio">
-                    <img src="assets/img/favicon-esfera-blanca.svg" alt="">
-                    <span>
-                      <strong>El Ángel Azul</strong>
-                      <small>Panel interno</small>
-                    </span>
+                    <img src="assets/img/logo-completo-azul.svg" alt="El Ángel Azul">
                   </a>
                 </div>
                 <div class="admin-login-brand">
@@ -2205,10 +2199,7 @@
                   <p>Operá inscripciones, pasajeros, pagos y turismo desde un panel privado.</p>
                 </div>
                 <div class="admin-login-highlights" aria-label="Módulos disponibles">
-                  <span><strong>✎</strong> Inscripciones</span>
-                  <span><strong>P</strong> Pasajeros</span>
-                  <span><strong>$</strong> Pagos</span>
-                  <span><strong>✈</strong> Turismo</span>
+                  ${adminModules.filter((module) => module.id !== "home").map((module) => `<span>${adminIconSvg(module.icon)}${escapeHtml(module.label)}</span>`).join("")}
                 </div>
                 <p class="admin-login-footer">© El Ángel Azul · Acceso restringido</p>
               </div>
@@ -2263,7 +2254,7 @@
             renderAdminLogin("Completá usuario y contraseña para ingresar.");
             return;
           }
-          const button = form.querySelector("button");
+          const button = form.querySelector('button[type="submit"]');
           if (button) {
             button.disabled = true;
             button.textContent = "Ingresando...";
@@ -6710,7 +6701,7 @@
             </div>
           </section>
 
-          <details class="admin-turismo-panel admin-payment-architecture">
+          <details class="admin-turismo-panel admin-payment-architecture" open>
             <summary>Estructura preparada para pagos reales</summary>
             <p>La pantalla ya separa los datos necesarios para pasar de control manual a registro real.</p>
             <div class="admin-payment-architecture-grid">
