@@ -428,3 +428,23 @@ test("el nombre de sesión del admin y los placeholders mantienen contraste", ()
   assert.match(css, /body\[data-app-entry="admin"\] \.admin-shell-session strong \{\s*color: #ffffff;/);
   assert.match(css, /input::placeholder,\s*textarea::placeholder \{\s*color: var\(--color-muted\);/);
 });
+
+test("los paneles del admin se achican al ancho del celular (columnas minmax(0, 1fr))", () => {
+  const css = fs.readFileSync(path.join(__dirname, "../assets/css/styles.css"), "utf8");
+  // Junta todas las reglas con ese selector exacto (algunos aparecen más de una vez).
+  const regla = (selector) => {
+    const bloques = [];
+    for (let inicio = css.indexOf(`${selector} {`); inicio !== -1; inicio = css.indexOf(`${selector} {`, inicio + 1)) {
+      bloques.push(css.slice(inicio, css.indexOf("}", inicio)));
+    }
+    assert.notEqual(bloques.length, 0, `No se encontró ${selector}`);
+    return bloques.join("\n");
+  };
+  // Con `1fr` o columna implícita, el contenido más ancho (un input, un select, una tabla) estira el panel y se corta a la derecha.
+  assert.match(regla("      .admin-main"), /grid-template-columns: minmax\(0, 1fr\)/);
+  assert.match(regla("      .admin-turismo-panel"), /grid-template-columns: minmax\(0, 1fr\)/);
+  assert.match(regla("      .admin-pasajeros-form fieldset"), /min-width: 0/);
+  assert.match(regla("      .admin-pasajeros-form fieldset:last-of-type"), /minmax\(0, 1fr\)/);
+  assert.match(regla("      .admin-pasajeros-group-form fieldset"), /minmax\(0, 1fr\)/);
+  assert.match(regla("      .admin-pasajeros-form select"), /max-width: 100%/);
+});
