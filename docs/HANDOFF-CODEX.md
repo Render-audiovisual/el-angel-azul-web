@@ -54,7 +54,7 @@ npm run dev       # web local en http://localhost:3057
 **Verificado a mano en el navegador local (ficha PAX):** selector PAX/Tutor, curso/grado/división, nombre y apellido separados con aviso de tildes, validación (bloquea y lista los 20 datos faltantes), CUIL/correo/celular del tutor, plan de pago, dirección, envío 201 y ficha guardada con colegio, contrato y plan; el PDF sale con «APELLIDO, NOMBRE» y el plan.
 **Revisado a mano el 25/11 (Paso 4):** formulario de Tutor, ficha PAX en celular (390 px), pantalla Fichas del admin, aprobación, exportación a Excel y PDF. Resultado y 9 fallas anotadas en `docs/correcciones-del-angel.md`. La principal: el PDF pierde las letras fuera de Latin-1 («Mićić» sale «MII»).
 **Todavía sin revisar:** el buscador con ~2.900 colegios, un correo real y Safari/iPhone reales.
-**Depende de configuración externa:** correo (Resend) apagado: faltan `RESEND_API_KEY`, `EAA_EMAIL_FROM`, `EAA_EMAIL_COPIA` y el DNS de `elangelazul.tur.ar` (la delegación a AWS está muerta). La base real está casi vacía (0 planes, 0 contratos) y faltan las migraciones 0005 y 0006.
+**Depende de configuración externa:** correo (Resend) apagado: faltan `RESEND_API_KEY`, `EAA_EMAIL_FROM`, `EAA_EMAIL_COPIA` y el DNS de `elangelazul.tur.ar` (la delegación a AWS está muerta). La base real está casi vacía (0 planes, 0 contratos, 0 inscripciones). Las migraciones 0005 y 0006 se aplicaron el 26/11.
 
 ## 5. Pasos para seguir (en orden)
 Cada paso termina con `npm run check` en verde y un commit chico. Si tocás algo del admin, probalo con `npm run dev`.
@@ -91,7 +91,7 @@ Cada paso termina con `npm run check` en verde y un commit chico. Si tocás algo
 **Paso 4 – Revisar los 12 puntos en el navegador: hecho el 25/11.** Fallas anotadas en `docs/correcciones-del-angel.md` (sección «Revisión a mano»); falta corregirlas.
 
 **Paso 5 – Datos reales (con OK del dueño).**
-1. Aplicar las migraciones 0005 y 0006 en Supabase.
+1. ~~Aplicar las migraciones 0005 y 0006 en Supabase.~~ Hecho el 26/11/2026 con OK del dueño: bucket `fichas` e índices `inscripciones_vigente_uk` y `fichas_tutor_vigente_uk` verificados, sin duplicados previos.
 2. Importar el Padrón de colegios (ver sección 6): simular primero, `--aplicar` después.
 3. Cargar viajes, grupos, contratos y planes de pago. Todo registro lleva `legacy_id` (sin él el admin muestra `id: null`).
 

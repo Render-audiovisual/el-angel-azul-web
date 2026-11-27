@@ -6,7 +6,7 @@ Leer esto ANTES de abrir código. `assets/js/app.js` pesa ~474 KB: nunca leerlo 
 - Node sin framework (`server.js`, ~1160 líneas) + SPA en `assets/js/app.js` (~9500 líneas) + `assets/css/styles.css`.
 - Base: Postgres en Supabase, proyecto "Angel Azul base" (`gruwkiuswpnbzywcoftz`). Acceso solo por el servidor (`DATABASE_URL`); RLS activo sin políticas.
 - Deploy: Hostinger, automático desde `main`.
-- Migraciones: `supabase/migrations/0001–0006` (0005 = bucket de firmas, 0006 = índices únicos contra doble envío). 0005 y 0006 aún NO aplicadas en producción.
+- Migraciones: `supabase/migrations/0001–0006` (0005 = bucket de firmas, 0006 = índices únicos contra doble envío). 0001 a 0006 están aplicadas en Supabase (0005 y 0006 el 26/11/2026; 0001 y 0002 no figuran en la lista de migraciones de Supabase, ya era así antes).
 
 ## Mapa del código
 | Capa | Archivo | Qué hace |

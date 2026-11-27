@@ -88,7 +88,7 @@ Luego avanzar con las funciones complementarias como historial, exportación y e
 
 # Estado de cada punto (18/11/2026, rama `feat/colegios-padron`)
 
-Criterio: «En código» = está en la rama y lo cubren tests o lo vi en el código. **Ninguno está desplegado** y todavía no se revisó punto por punto en el navegador. Contra la base real de Supabase no se probó nada: hoy está casi vacía y faltan las migraciones 0005 y 0006.
+Criterio: «En código» = está en la rama y lo cubren tests o lo vi en el código. **Ninguno está desplegado** y todavía no se revisó punto por punto en el navegador. Contra la base real de Supabase no se probó nada: hoy está casi vacía. Las migraciones 0005 y 0006 se aplicaron el 26/11.
 
 | # | Punto | Estado | Falta |
 |---|---|---|---|
@@ -101,7 +101,7 @@ Criterio: «En código» = está en la rama y lo cubren tests o lo vi en el cód
 | 7 | Correo | **Implementado pero apagado.** Falta `RESEND_API_KEY`, `EAA_EMAIL_FROM`, `EAA_EMAIL_COPIA` y el DNS del dominio. La ficha de Tutor no envía correo. | Activar Resend y probar que llegue con todos los datos. Hoy sale como `sin_configurar`. |
 | 8 | Plan de pago | En código: se elige en la ficha y se ve en el admin. | Cargar los planes reales por contrato (hoy hay 0 en producción: sin plan nadie puede enviar). |
 | 9 | Dirección | En código: calle, número, barrio, localidad, provincia, código postal. | Revisar el teclado en celular. |
-| 10 | Error de carga | En código: el envío espera confirmación del servidor, 409 por duplicado, índices contra doble envío (migración 0006), borra la firma suelta si falla. | Aplicar 0006 en Supabase. Probar un envío real con la base cargada. |
+| 10 | Error de carga | En código: el envío espera confirmación del servidor, 409 por duplicado, índices contra doble envío (migración 0006), borra la firma suelta si falla. | Probar un envío real con la base cargada (0006 ya aplicada el 26/11). |
 | 11 | Pertenencia en el admin | En código: Colegio → Curso → Grado → División → Plan → Contrato, más Tutor y datos personales. Selector de grupo en Pasajeros corregido. | Verificar en el navegador con datos de prueba. |
 | 12 | Excel | En código: exporta pasajeros filtrados, 28 columnas, orden Colegio → Grado → División → Apellido. | Probar con datos reales. |
 
@@ -142,6 +142,6 @@ Rama `b830cbb` (`feat/colegios-padron` con el PR #4). Servidor local con `npm ru
 
 ## Estado de los puntos tras la revisión
 
-Puntos revisados a mano con datos de prueba, sin fallas bloqueantes: 2, 3, 4, 5, 6, 8, 9, 11 y 12. El 3 tiene la falla 1 en el PDF. Siguen dependiendo de la base real o de configuración externa: 1, 8 (planes reales), 10 (migración 0006) y 7 (Resend).
+Puntos revisados a mano con datos de prueba, sin fallas bloqueantes: 2, 3, 4, 5, 6, 8, 9, 11 y 12. El 3 tiene la falla 1 en el PDF. Siguen dependiendo de la base real o de configuración externa: 1, 8 (planes reales), 10 (envío real con la base cargada) y 7 (Resend).
 
 No se revisó: la ficha con ~2.900 colegios en el buscador (requiere importar el Padrón), un envío real de correo, ni Safari/iPhone reales.
