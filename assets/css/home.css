@@ -75,18 +75,22 @@
 .eaa-button {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--space-md);
   min-height: 52px; padding: 0 var(--space-lg); white-space: nowrap;
+  position: relative; overflow: hidden; isolation: isolate;
   border: 1px solid transparent; border-radius: var(--radius-control);
   font: 500 var(--text-md)/1 var(--h-font-body);
-  transition: background-color var(--dur-micro) ease, color var(--dur-micro) ease, border-color var(--dur-micro) ease;
+  transition: color var(--dur-short) var(--ease-out), border-color var(--dur-short) var(--ease-out), transform var(--dur-micro) ease;
 }
+/* Relleno que sube desde abajo al pasar el mouse o al enfocar (--sweep: color del relleno). */
+.eaa-button::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--sweep, var(--h-navy)); transform: translateY(101%); transition: transform var(--dur-long) var(--ease-out); }
+.eaa-button:hover::before, .eaa-button:focus-visible::before { transform: translateY(0); }
 .eaa-button svg { transition: transform var(--dur-short) var(--ease-out); }
 .eaa-button:hover svg { transform: translateX(4px); }
-.eaa-button-fill { background: var(--h-accent); color: var(--h-accent-ink); }
-.eaa-button-fill:hover { background: var(--h-accent-strong); }
-.eaa-button-line { border-color: currentColor; color: var(--h-on-dark); }
-.eaa-button-line:hover { background: var(--h-on-dark); color: var(--h-navy-deep); border-color: var(--h-on-dark); }
-.eaa-button-ink { border-color: var(--h-navy); color: var(--h-navy); }
-.eaa-button-ink:hover { background: var(--h-navy); color: var(--h-on-dark); }
+.eaa-button-fill { --sweep: var(--h-navy-deep); background: var(--h-accent); color: var(--h-accent-ink); }
+.eaa-button-fill:hover { color: var(--h-on-dark); }
+.eaa-button-line { --sweep: var(--h-on-dark); border-color: currentColor; color: var(--h-on-dark); }
+.eaa-button-line:hover { color: var(--h-navy-deep); border-color: var(--h-on-dark); }
+.eaa-button-ink { --sweep: var(--h-navy); border-color: var(--h-navy); color: var(--h-navy); }
+.eaa-button-ink:hover { color: var(--h-on-dark); }
 .eaa-button:active { transform: translateY(1px); }
 .eaa-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-md); }
 .eaa-link { display: inline-flex; align-items: center; gap: var(--space-sm); min-height: 44px; font-weight: 500; border-bottom: 1px solid currentColor; }

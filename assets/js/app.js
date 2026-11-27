@@ -697,52 +697,38 @@
 
       function renderTurismoPackageCard(packageItem) {
         const gallery = packageItem.gallery?.length ? packageItem.gallery.slice(0, 3) : [packageItem.image];
-        const priceText = packageItem.precioDesde && packageItem.precioDesde !== "Consultar" ? packageItem.precioDesde : "Consultar";
+        const priceText = packageItem.precioDesde && packageItem.precioDesde !== "Consultar" ? packageItem.precioDesde : "";
         const includeItems = Array.isArray(packageItem.incluye) ? packageItem.incluye.slice(0, 3) : [];
         const destination = escapeHtml(packageItem.destino);
         const category = escapeHtml(packageItem.categoria);
+        const fechas = packageItem.fechaSalida ? `${escapeHtml(packageItem.fechaSalida)}${packageItem.fechaRegreso ? ` al ${escapeHtml(packageItem.fechaRegreso)}` : ""}` : "";
+        const arrow = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
         return `
-          <article class="package-card turismo-package-card">
-            <div class="package-image-wrap package-card-carousel" data-card-carousel data-carousel-index="0">
-              <div class="package-carousel-track">
+          <article class="tur-card turismo-package-card">
+            <div class="tur-card-media" data-card-carousel data-carousel-index="0">
+              <div class="tur-card-track">
                 ${gallery.map((image, index) => `
-                  <img class="${index === 0 ? "active" : ""}" src="${escapeHtml(safeMediaUrl(image))}" alt="${destination} ${index + 1}" data-carousel-slide>
+                  <img class="${index === 0 ? "active" : ""}" src="${escapeHtml(safeMediaUrl(image))}" alt="${destination} ${index + 1}" data-carousel-slide${index === 0 ? "" : ' loading="lazy"'}>
                 `).join("")}
               </div>
-              <span data-categoria="${escapeHtml(((packageItem.intenciones && packageItem.intenciones[0]) || "").toLowerCase())}">${category}</span>
-              <button class="package-carousel-arrow package-carousel-prev" type="button" aria-label="Foto anterior de ${destination}" data-carousel-prev>‹</button>
-              <button class="package-carousel-arrow package-carousel-next" type="button" aria-label="Foto siguiente de ${destination}" data-carousel-next>›</button>
-              <div class="package-carousel-count" aria-hidden="true">1/${gallery.length}</div>
+              <span class="tur-card-tag" data-categoria="${escapeHtml(((packageItem.intenciones && packageItem.intenciones[0]) || "").toLowerCase())}">${packageItem.destacado ? "Destacado" : category}</span>
+              ${gallery.length > 1 ? `
+              <button class="tur-card-arrow tur-card-prev" type="button" aria-label="Foto anterior de ${destination}" data-carousel-prev>${arrow}</button>
+              <button class="tur-card-arrow tur-card-next" type="button" aria-label="Foto siguiente de ${destination}" data-carousel-next>${arrow}</button>
+              <div class="package-carousel-count" aria-hidden="true">1/${gallery.length}</div>` : ""}
             </div>
-            <div class="package-card-body">
-              <div class="package-card-head">
-                <p class="package-meta">${escapeHtml(packageItem.tipo)} · ${escapeHtml(packageItem.temporada)}</p>
-                <h3>${destination}</h3>
-              </div>
-              <div class="package-quick-info">
-                <span>${escapeHtml(packageItem.duracion)}</span>
-                <span>${category}</span>
-              </div>
-              ${packageItem.fechaSalida ? `
-                <p class="package-fecha-salida">
-                  ${escapeHtml(packageItem.fechaSalida)}${packageItem.fechaRegreso ? ` al ${escapeHtml(packageItem.fechaRegreso)}` : ""}
-                  ${packageItem.salidaGarantizada ? `<span class="package-badge-garantizada">Salida garantizada</span>` : ""}
-                </p>
-              ` : ""}
-              <p class="package-summary">${escapeHtml(packageItem.resumen)}</p>
-              <div class="package-price" aria-label="Precio desde ${escapeHtml(priceText)}">
-                <span>Precio de referencia</span>
-                <strong>${escapeHtml(priceText)}</strong>
-              </div>
-              ${includeItems.length ? `<div class="package-includes" aria-label="Incluye">
-                <strong>Incluye</strong>
-                <div>
-                  ${includeItems.map((item) => `<span>${escapeHtml(item)}</span>`).join("")}
+            <div class="tur-card-body">
+              <p class="tur-card-meta"><span>${escapeHtml(packageItem.tipo)}</span><span>${escapeHtml(packageItem.temporada)}</span></p>
+              <h3>${destination}</h3>
+              <p class="tur-card-facts"><span>${escapeHtml(packageItem.duracion)}</span>${fechas ? `<span>${fechas}</span>` : ""}${packageItem.salidaGarantizada ? `<span class="tur-card-garantizada">Salida garantizada</span>` : ""}</p>
+              <p class="tur-card-summary">${escapeHtml(packageItem.resumen)}</p>
+              ${includeItems.length ? `<ul class="tur-card-includes" aria-label="Incluye">${includeItems.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>` : ""}
+              <div class="tur-card-foot">
+                <p class="tur-price" aria-label="${priceText ? `Precio desde ${escapeHtml(priceText)}` : "Precio a consultar"}"><span>${priceText ? "Desde" : "Precio"}</span><strong>${priceText ? escapeHtml(priceText) : "A consultar"}</strong></p>
+                <div class="tur-card-actions">
+                  <a class="eaa-button eaa-button-fill" href="#/turismo/${encodeURIComponent(String(packageItem.slug || ""))}">Ver detalles ${arrow}</a>
+                  <a class="eaa-button eaa-button-ink" href="${escapeHtml(turismoWhatsappForPackage(packageItem))}" target="_blank" rel="noopener" aria-label="Consultar por ${destination} por WhatsApp">WhatsApp</a>
                 </div>
-              </div>` : ""}
-              <div class="package-actions">
-                <a href="#/turismo/${encodeURIComponent(String(packageItem.slug || ""))}">Ver detalles</a>
-                <a class="package-whatsapp" href="${escapeHtml(turismoWhatsappForPackage(packageItem))}" target="_blank" rel="noopener">WhatsApp</a>
               </div>
             </div>
           </article>
@@ -778,11 +764,11 @@
 
       function renderTurismoEmptyState(sinViajes = false) {
         return `
-          <div class="turismo-empty-state">
+          <div class="tur-empty">
             <p>${sinViajes
               ? "Estamos preparando nuestros próximos viajes de turismo. Escribinos por WhatsApp y te asesoramos con las opciones disponibles."
               : "No encontramos viajes para esta categoría por ahora. Consultanos por WhatsApp y te ayudamos a encontrar una opción."}</p>
-            <a class="package-whatsapp" href="${whatsappLink("Hola, quiero consultar por una categoría de viaje que no encontré en la web de El Ángel Azul.")}" target="_blank" rel="noopener">Consultar</a>
+            <a class="eaa-button eaa-button-fill" href="${whatsappLink("Hola, quiero consultar por una categoría de viaje que no encontré en la web de El Ángel Azul.")}" target="_blank" rel="noopener">Consultar por WhatsApp</a>
           </div>
         `;
       }
@@ -846,69 +832,12 @@
         setTimeout(() => { if (animation.progress() < 1) animation.progress(1); }, 1200);
       }
 
-      function bindTurismoCardReveal() {
-        turismoCardTriggers.forEach((trigger) => trigger.kill());
-        turismoCardTriggers = [];
-        if (typeof gsap === "undefined" || typeof ScrollTrigger === "undefined") return;
-        const cards = [...document.querySelectorAll("[data-turismo-package-grid] .turismo-package-card")];
-        if (!cards.length) return;
-        const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-        gsap.set(cards, { autoAlpha: 0, y: reduceMotion ? 0 : 22 });
-        const batchTriggers = ScrollTrigger.batch(cards, {
-          start: "top 92%",
-          onEnter: (elements) => gsap.to(elements, {
-            autoAlpha: 1,
-            y: 0,
-            duration: reduceMotion ? 0.25 : 0.5,
-            stagger: reduceMotion ? 0.02 : 0.08,
-            ease: "power2.out",
-            overwrite: true
-          })
-        });
-        turismoCardTriggers.push(...batchTriggers);
-        setTimeout(() => {
-          cards.forEach((card) => { if (getComputedStyle(card).opacity === "0") gsap.set(card, { autoAlpha: 1, y: 0 }); });
-        }, 1300);
-      }
+      // Las tarjetas del listado quedan siempre visibles (antes se escondían con autoAlpha hasta el scroll y salían del orden de Tab).
+      function bindTurismoCardReveal() {}
 
+      // Movimiento de Turismo: el mismo módulo que el inicio (titulares, textos que suben, hero con fotos, pasos, cierre).
       function bindTurismoAnimations() {
-        if (typeof gsap === "undefined") return;
-        killTurismoAnimations();
-        const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-        if (typeof ScrollTrigger !== "undefined") gsap.registerPlugin(ScrollTrigger);
-
-        // Hero de Turismo: entrada simple al cargar (fade+leve subida), sin
-        // split de palabras ni blur - ese efecto queda reservado para el
-        // Home, que es la primera impresión.
-        const heroContent = document.querySelector(".turismo-hero-content");
-        if (heroContent) {
-          const heroIntro = gsap.timeline({ defaults: { ease: "power2.out" } })
-            .from(heroContent.children, {
-              autoAlpha: 0,
-              y: reduceMotion ? 0 : 16,
-              duration: reduceMotion ? 0.3 : 0.6,
-              stagger: reduceMotion ? 0.03 : 0.08
-            });
-          setTimeout(() => { if (heroIntro.progress() < 1) heroIntro.progress(1); }, 1200);
-        }
-
-        if (typeof ScrollTrigger === "undefined") return;
-
-        // Encabezados de sección (Buscá por destino, Opciones disponibles, Te
-        // ayudamos a elegir): fade-up simple al entrar en viewport.
-        gsap.utils.toArray("[data-reveal-light]").forEach((el) => {
-          if (el === heroContent) return;
-          const tween = gsap.from(el, {
-            autoAlpha: 0,
-            y: reduceMotion ? 0 : 18,
-            duration: reduceMotion ? 0.3 : 0.5,
-            ease: "power2.out",
-            scrollTrigger: { trigger: el, start: "top 88%", toggleActions: "play none none reverse", onEnter: () => turismoAntiBlankFallback(tween) }
-          });
-          if (tween.scrollTrigger) turismoScrollTriggers.push(tween.scrollTrigger);
-        });
-
-        bindTurismoCardReveal();
+        if (window.EAAHomeMotion) window.EAAHomeMotion.init(document.querySelector(".eaa-turismo-page"));
       }
 
       function bindTurismoIntentions() {
@@ -920,7 +849,7 @@
         };
         chips.forEach((chip) => {
           chip.addEventListener("click", () => {
-            chips.forEach((item) => item.classList.toggle("active", item === chip));
+            chips.forEach((item) => { item.classList.toggle("active", item === chip); item.setAttribute("aria-pressed", String(item === chip)); });
             applyFilters();
           });
         });
@@ -930,8 +859,21 @@
       async function renderTurismo() {
         const packages = await loadTurismoPublicPackages();
         const previewMode = isTurismoPublicPreviewMode();
+        const arrow = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
+        const heroSlides = [
+          ["cataratas-iguazu", "Las Cataratas del Iguazú rodeadas de selva", "Cataratas del Iguazú"],
+          ["playa-rio", "Playa de Río de Janeiro al atardecer", "Playas de Brasil"],
+          ["montana-patagonia", "Montañas y lagos de la Patagonia", "Patagonia"],
+          ["nieve-montana", "Montaña nevada en la Cordillera", "Nieve y montaña"],
+          ["ciudad-rio", "Vista de Río de Janeiro y el Pan de Azúcar", "Río de Janeiro"]
+        ];
+        const pasos = [
+          ["001", "Contanos la idea", "Fecha tentativa, cantidad de personas y estilo de viaje."],
+          ["002", "Filtramos opciones", "Revisamos destinos, cupos y condiciones actuales."],
+          ["003", "Decidís con claridad", "Comparás precio, duración e incluidos antes de reservar."]
+        ];
         document.getElementById("app").innerHTML = `
-          <div class="layout turismo-layout">
+          <div class="eaa-home eaa-turismo-page">
             ${previewMode ? `
               <section class="turismo-preview-mode-banner">
                 <div>
@@ -941,86 +883,107 @@
                 <button type="button" data-disable-turismo-preview>Volver al JSON público</button>
               </section>
             ` : ""}
-            <section class="turismo-hero">
-              <div class="turismo-hero-carousel" aria-hidden="true">
-                <span></span>
-                <span></span>
-                <span></span>
-                <span></span>
-                <span></span>
+            <section class="eaa-hero eaa-dark" aria-label="Turismo" data-hero>
+              <div class="eaa-hero-slides" data-hero-slides>
+                ${heroSlides.map(([name, alt, caption], i) => `<figure class="eaa-hero-slide${i === 0 ? " is-active" : ""}" data-hero-slide data-caption="${escapeHtml(caption)}"><img src="assets/img/turismo/hero/${name}.webp" alt="${escapeHtml(alt)}" width="2000" height="1333"${i === 0 ? ' fetchpriority="high"' : ' loading="lazy"'}></figure>`).join("")}
               </div>
-              <div class="turismo-hero-content" data-reveal-light>
-                <p class="turismo-kicker">Turismo nacional e internacional</p>
-                <h1>Tu próximo viaje, planificado y acompañado</h1>
-                <p>Escapadas en familia, en pareja o en grupo, con asesoramiento claro antes de reservar y alguien que responde en cada paso.</p>
-                <div class="turismo-proof-list" aria-label="Beneficios principales">
-                  <span>Destinos nacionales e internacionales</span>
-                  <span>Asesoramiento directo</span>
-                  <span>Pagos y fechas a confirmar</span>
+              <div class="eaa-grain" aria-hidden="true"></div>
+              <div class="eaa-hero-shade" aria-hidden="true"></div>
+              <div class="eaa-hero-inner">
+                <h1 class="eaa-wordmark" data-fit aria-label="Turismo El Ángel Azul">Turismo El Ángel Azul</h1>
+                <div class="eaa-hero-foot">
+                  <div class="eaa-hero-tag">
+                    <p class="eaa-hero-claim" data-rise>Tu próximo viaje,<br>planificado y acompañado.</p>
+                    <p class="eaa-hero-sub" data-rise>Escapadas en familia, en pareja o en grupo, con asesoramiento claro antes de reservar y alguien que responde en cada paso.</p>
+                    <div class="eaa-actions" data-rise>
+                      <a class="eaa-button eaa-button-fill" href="#/turismo" data-scroll-target="turismo-catalogo">Ver viajes ${arrow}</a>
+                      <a class="eaa-button eaa-button-line" href="${whatsappLink("Hola, quiero que me asesoren para elegir un viaje turístico con El Ángel Azul.")}" target="_blank" rel="noopener">Pedir asesoramiento ${arrow}</a>
+                    </div>
+                  </div>
+                  <div class="eaa-hero-panel" role="group" aria-label="Fotos de destinos">
+                    <div class="eaa-hero-progress" aria-hidden="true"><span data-hero-bar></span></div>
+                    <div class="eaa-hero-controls">
+                      <button type="button" data-hero-prev aria-label="Foto anterior">${arrow}</button>
+                      <button type="button" data-hero-next aria-label="Foto siguiente">${arrow}</button>
+                      <span class="eaa-hero-count" data-hero-count aria-live="off">01/0${heroSlides.length}</span>
+                    </div>
+                    <p class="eaa-hero-caption" data-hero-caption aria-live="polite">${heroSlides[0][2]}</p>
+                  </div>
                 </div>
-                <div class="turismo-hero-actions">
-                  <a href="#/turismo" data-scroll-target="turismo-catalogo">Ver viajes</a>
-                  <a class="btn-icon-pair" href="${whatsappLink("Hola, quiero que me asesoren para elegir un viaje turístico con El Ángel Azul.")}" target="_blank" rel="noopener">
-                    <span>Pedir asesoramiento</span>
-                    <span class="btn-icon-circle" aria-hidden="true"><span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">chat</span></span>
-                  </a>
+              </div>
+            </section>
+
+            <section class="tur-benefits eaa-soft" aria-label="Por qué viajar con El Ángel Azul">
+              <div class="eaa-wrap"><ul>
+                <li data-rise><span class="eaa-n" aria-hidden="true">01</span><strong>Destinos nacionales e internacionales</strong><p>Compará destino, duración e incluidos en un solo lugar.</p></li>
+                <li data-rise><span class="eaa-n" aria-hidden="true">02</span><strong>Asesoramiento directo</strong><p>Una persona de la agencia responde en cada paso, antes y después de reservar.</p></li>
+                <li data-rise><span class="eaa-n" aria-hidden="true">03</span><strong>Pagos y fechas claros</strong><p>Fechas, cupos y condiciones se confirman por WhatsApp antes de reservar.</p></li>
+              </ul></div>
+            </section>
+
+            <section class="tur-catalog" id="turismo-catalogo" aria-labelledby="tur-catalog-title">
+              <div class="eaa-wrap">
+                <div class="eaa-section-head">
+                  <h2 id="tur-catalog-title" data-split>Viajes disponibles</h2>
+                  <p data-rise>Compará destino, duración, precio de referencia e incluidos. La reserva final siempre se confirma con asesoramiento personalizado.</p>
+                </div>
+                ${packages.length ? `<div class="tur-toolbar" data-rise>
+                  <label class="tur-search" for="turismo-search">
+                    <span>Buscar destino</span>
+                    <input id="turismo-search" type="search" placeholder="Ej: Bariloche, Cataratas, playa" data-turismo-search autocomplete="off">
+                  </label>
+                  <div class="tur-chips" role="group" aria-label="Filtrar por tipo de viaje">
+                    ${turismoIntentionFilters.map(([value, label], index) => `
+                      <button class="tur-chip${index === 0 ? " active" : ""}" type="button" data-turismo-intention="${value}" aria-pressed="${index === 0 ? "true" : "false"}">${label}</button>
+                    `).join("")}
+                  </div>
+                  <p class="tur-count" data-turismo-results-count aria-live="polite">${packages.length === 1 ? "1 opción encontrada" : `${packages.length} opciones encontradas`}</p>
+                </div>` : ""}
+                <div class="tur-grid" data-turismo-package-grid data-result-count="${packages.length}">
+                  ${packages.length ? packages.map(renderTurismoPackageCard).join("") : renderTurismoEmptyState(true)}
                 </div>
               </div>
             </section>
 
-            <section class="turismo-intention-section">
-              <div class="catalog-heading" data-reveal-light>
-                <h2>Buscá por destino o tipo de experiencia</h2>
-                <p>Filtrá las opciones disponibles. La reserva final siempre se confirma con asesoramiento personalizado.</p>
-              </div>
-              <label class="turismo-search" for="turismo-search">
-                <span>Buscar destino</span>
-                <input id="turismo-search" type="search" placeholder="Ej: Bariloche, Cataratas, playa..." data-turismo-search>
-              </label>
-              <div class="intention-chip-row" aria-label="Selector de intención visual">
-                ${turismoIntentionFilters.map(([value, label], index) => `
-                  <button class="intention-chip${index === 0 ? " active" : ""}" type="button" data-turismo-intention="${value}">${label}</button>
-                `).join("")}
+            <section class="eaa-process eaa-dark" aria-labelledby="tur-process-title">
+              <div class="eaa-wrap">
+                <h2 id="tur-process-title" data-split>Te ayudamos a elegir sin vueltas</h2>
+                <ol class="eaa-process-list">
+                  ${pasos.map(([n, titulo, texto]) => `<li data-process-row><span class="eaa-n" aria-hidden="true">${n}</span><div><h3>${titulo}</h3><p>${texto}</p></div><span class="eaa-process-note">Con la agencia</span></li>`).join("")}
+                </ol>
+                <div class="eaa-actions" data-rise><a class="eaa-button eaa-button-fill" href="${whatsappLink("Hola, quiero consultar por un viaje turístico con El Ángel Azul. Busco opciones según fecha, presupuesto y cantidad de personas.")}" target="_blank" rel="noopener">Consultar por un viaje ${arrow}</a></div>
               </div>
             </section>
 
-            <section class="catalog-section" id="turismo-catalogo">
-              <div class="catalog-heading" data-reveal-light>
-                <h2>Opciones disponibles</h2>
-                <p>Compará destino, duración, precio de referencia e incluidos. Fechas, cupos y condiciones se confirman por WhatsApp.</p>
-                <strong class="turismo-results-count" data-turismo-results-count>${packages.length} opciones encontradas</strong>
-              </div>
-              <div class="package-grid" data-turismo-package-grid data-result-count="${packages.length}">
-                ${packages.length ? packages.map(renderTurismoPackageCard).join("") : renderTurismoEmptyState(true)}
+            <section class="tur-agency eaa-soft" aria-labelledby="tur-agency-title">
+              <div class="eaa-wrap tur-agency-grid">
+                <div>
+                  <h2 id="tur-agency-title" data-split>Una agencia de Corrientes, a tu lado</h2>
+                  <p data-rise>Turismo con acompañamiento cercano, organización clara y atención personalizada en cada etapa.</p>
+                </div>
+                <dl class="tur-agency-list" data-rise>
+                  <div><dt>Dirección</dt><dd>Córdoba 6660, Corrientes Capital</dd></div>
+                  <div><dt>WhatsApp</dt><dd><a href="${whatsappLink("Hola, quiero consultar por un viaje turístico con El Ángel Azul.")}" target="_blank" rel="noopener">+54 9 3794 33-1380</a></dd></div>
+                  <div><dt>Viajes estudiantiles</dt><dd><a href="#/">Ver viajes de curso</a></dd></div>
+                </dl>
               </div>
             </section>
 
-            <section class="turismo-trust">
-              <div class="catalog-heading" data-reveal-light>
-                <p class="section-kicker">Antes de viajar</p>
-                <h2>Te ayudamos a elegir sin vueltas</h2>
-                <p>Si no encontrás el viaje exacto, te orientamos con fechas, cantidad de personas y presupuesto aproximado.</p>
+            <section class="eaa-cta eaa-dark" aria-labelledby="tur-final-title">
+              <p class="eaa-corner eaa-corner-tl">Turismo nacional e internacional</p>
+              <p class="eaa-corner eaa-corner-tr">Desde Corrientes</p>
+              <div class="eaa-cta-stage">
+                <div class="eaa-cta-head">
+                  <div class="eaa-cta-photo" data-cta-photo><img src="assets/img/turismo/hero/playa-rio.webp" alt="Playa de Río de Janeiro al atardecer" width="1600" height="1067" loading="lazy"></div>
+                  <h2 id="tur-final-title" class="eaa-wordmark eaa-cta-title" data-fit data-split>¿Armamos tu viaje?</h2>
+                </div>
+                <div class="eaa-actions" data-rise>
+                  <a class="eaa-button eaa-button-fill" href="${whatsappLink("Hola, quiero que me asesoren para elegir un viaje turístico con El Ángel Azul.")}" target="_blank" rel="noopener">Pedir asesoramiento ${arrow}</a>
+                  <a class="eaa-button eaa-button-line" href="#/turismo" data-scroll-target="turismo-catalogo">Ver viajes</a>
+                </div>
               </div>
-              <div class="turismo-trust-grid">
-                <article>
-                  <span>01</span>
-                  <strong>Contanos la idea</strong>
-                  <p>Fecha tentativa, cantidad de personas y estilo de viaje.</p>
-                </article>
-                <article>
-                  <span>02</span>
-                  <strong>Filtramos opciones</strong>
-                  <p>Revisamos destinos, cupos y condiciones actuales.</p>
-                </article>
-                <article>
-                  <span>03</span>
-                  <strong>Decidís con claridad</strong>
-                  <p>Comparás precio, duración e incluidos antes de reservar.</p>
-                </article>
-              </div>
-              <div class="turismo-trust-actions">
-                <a class="package-whatsapp" href="${whatsappLink("Hola, quiero consultar por un viaje turístico con El Ángel Azul. Busco opciones según fecha, presupuesto y cantidad de personas.")}" target="_blank" rel="noopener">Consultar por WhatsApp</a>
-              </div>
+              <p class="eaa-corner eaa-corner-bl">Asesoramiento directo</p>
+              <p class="eaa-corner eaa-corner-br">Córdoba 6660, Corrientes</p>
             </section>
           </div>
         `;
@@ -9330,6 +9293,8 @@
         const page = routes[path] || routes["/"];
         document.body.classList.toggle("home-page", path === "/");
         document.body.classList.toggle("turismo-page", path.startsWith("/turismo"));
+        document.body.classList.toggle("turismo-hero-page", path === "/turismo");
+        if (path !== "/" && path !== "/turismo" && window.EAAHomeMotion) window.EAAHomeMotion.kill();
         closeMobileNav();
         if (path !== "/" && heroCarouselInterval) {
           clearInterval(heroCarouselInterval);

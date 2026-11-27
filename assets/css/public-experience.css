@@ -27,25 +27,26 @@ body:not([data-app-entry="admin"]) .site-nav .eaa-nav-enroll { background: var(-
 body:not([data-app-entry="admin"]) .site-nav a:hover { background: var(--eaa-ice); color: var(--eaa-navy); }
 body:not([data-app-entry="admin"]) .site-nav .eaa-nav-enroll:hover { background: var(--color-primary-strong); color: var(--eaa-on-dark); }
 body:not([data-app-entry="admin"]) .site-header :is(a, button):focus-visible { outline: 3px solid var(--eaa-accent); outline-offset: 3px; }
-body.home-page:not([data-app-entry="admin"]) main { padding: 0; }
+body:is(.home-page, .turismo-hero-page):not([data-app-entry="admin"]) main { padding: 0; }
 body:not([data-app-entry="admin"]) #app :is(h1,h2,h3) { font-family: var(--font-display); font-weight: 400; font-variation-settings: normal; letter-spacing: .005em; }
 /* Encabezado: sobre el hero de la portada es transparente y con letras claras; al scrollear vuelve a ser una barra clara. */
-body.home-page:not(.nav-scrolled):not(.nav-open) .site-header { background: transparent; border-color: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; }
-body.home-page:not(.nav-scrolled):not(.nav-open) .brand-logo { filter: brightness(0) invert(1); }
+body:is(.home-page, .turismo-hero-page):not(.nav-scrolled):not(.nav-open) .site-header { background: transparent; border-color: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; }
+body:is(.home-page, .turismo-hero-page):not(.nav-scrolled):not(.nav-open) .brand-logo { filter: brightness(0) invert(1); }
 @media (min-width: 1050px) {
-  body.home-page:not(.nav-scrolled):not(.nav-open) .site-nav { padding: 4px; border-radius: 999px; background: color-mix(in oklab, var(--h-night) 92%, transparent); }
-  body.home-page:not(.nav-scrolled):not(.nav-open) .site-nav a { border-radius: 999px; }
+  body:is(.home-page, .turismo-hero-page):not(.nav-scrolled):not(.nav-open) .site-nav { padding: 4px; border-radius: 999px; background: color-mix(in oklab, var(--h-night) 92%, transparent); }
+  body:is(.home-page, .turismo-hero-page):not(.nav-scrolled):not(.nav-open) .site-nav a { border-radius: 999px; }
 }
-body.home-page:not(.nav-scrolled):not(.nav-open) .site-nav a:not(.eaa-nav-enroll) { color: var(--eaa-on-dark); }
-body.home-page:not(.nav-scrolled):not(.nav-open) .site-nav a:not(.eaa-nav-enroll):hover { background: color-mix(in oklab, var(--eaa-on-dark) 16%, transparent); color: var(--eaa-on-dark); }
-body.home-page:not(.nav-scrolled):not(.nav-open) .site-nav .eaa-nav-enroll { background: var(--eaa-on-dark); color: var(--eaa-navy); }
-body.home-page:not(.nav-scrolled):not(.nav-open) .nav-toggle span { background: var(--eaa-on-dark); }
-body.home-page:not(.nav-scrolled):not(.nav-open) .nav-toggle { border-color: color-mix(in oklab, var(--eaa-on-dark) 50%, transparent); background: transparent; }
-body.home-page:not(.nav-scrolled):not(.nav-open) .site-header :is(a, button):focus-visible { outline-color: var(--eaa-on-dark); }
+body:is(.home-page, .turismo-hero-page):not(.nav-scrolled):not(.nav-open) .site-nav a:not(.eaa-nav-enroll) { color: var(--eaa-on-dark); }
+body:is(.home-page, .turismo-hero-page):not(.nav-scrolled):not(.nav-open) .site-nav a:not(.eaa-nav-enroll):hover { background: color-mix(in oklab, var(--eaa-on-dark) 16%, transparent); color: var(--eaa-on-dark); }
+body:is(.home-page, .turismo-hero-page):not(.nav-scrolled):not(.nav-open) .site-nav .eaa-nav-enroll { background: var(--eaa-on-dark); color: var(--eaa-navy); }
+body:is(.home-page, .turismo-hero-page):not(.nav-scrolled):not(.nav-open) .nav-toggle span { background: var(--eaa-on-dark); }
+body:is(.home-page, .turismo-hero-page):not(.nav-scrolled):not(.nav-open) .nav-toggle { border-color: color-mix(in oklab, var(--eaa-on-dark) 50%, transparent); background: transparent; }
+body:is(.home-page, .turismo-hero-page):not(.nav-scrolled):not(.nav-open) .site-header :is(a, button):focus-visible { outline-color: var(--eaa-on-dark); }
 
 /* Pie: claro, con enlaces grandes y el nombre de la agencia como marca de agua de ancho completo (como la web de referencia). */
 body:not([data-app-entry="admin"]) .site-footer { background: var(--h-paper-2); border: 0; color: var(--h-ink); padding: 96px 0 0; overflow: clip; }
-body:not([data-app-entry="admin"]) .footer-inner { gap: 64px; padding-bottom: 64px; }
+body:not([data-app-entry="admin"]) .footer-inner { gap: 64px; padding: 0 20px 64px; }
+body:not([data-app-entry="admin"]) .footer-bottom { padding-inline: 20px; }
 body:not([data-app-entry="admin"]) .footer-logo { filter: none; background: none; padding: 0; border-radius: 0; width: 200px; height: 96px; object-fit: contain; object-position: left center; }
 body:not([data-app-entry="admin"]) .footer-brand p { color: var(--h-muted); max-width: 46ch; font-size: 1.125rem; line-height: 1.5; }
 body:not([data-app-entry="admin"]) .footer-column h2 { color: var(--h-muted); font: 500 14px var(--font-body); letter-spacing: 0; text-transform: none; margin-bottom: 16px; }

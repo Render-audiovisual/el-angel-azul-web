@@ -1,0 +1,109 @@
+/* Hallmark · shape: Cinematic journey applied to a sales page (full-bleed hero, benefits, searchable catalogue of trip cards, numbered process, agency block, closing headline) · genre: editorial · theme: brand · redesign: full
+ * paper: oklch(98.5% 0.008 240) · accent: oklch(52% 0.19 0) · display: Bebas Neue · body: Poppins · hero: Stage · nav: transparent over the hero · footer: light with a wordmark · signature: the photo hero with a wordmark as wide as the screen, then trip cards with the price in display type
+ * axes: light/display-condensed/chromatic-pink · posture: full-screen scenes, scroll-driven · contrast: pass · fold: pass · v2.0.0 */
+/* Hallmark · pre-emit critique: P4 H4 E4 S4 R4 V4 · weakest: E, until the owners publish trips from the admin the catalogue shows a designed empty state */
+/* Turismo: misma línea que el inicio (tokens --h-* de home.css, hero y proceso compartidos), enfocada en vender:
+   tarjetas de viaje claras, precio visible y botones que se rellenan al pasar el mouse. */
+
+/* ------------------------------------------------------------ beneficios ---- */
+.tur-benefits { padding-block: var(--space-3xl); }
+.tur-benefits ul { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-xl); }
+.tur-benefits li { padding-top: var(--space-lg); border-top: 1px solid var(--h-navy); }
+.tur-benefits .eaa-n { display: block; font: 400 clamp(3rem, 5vw, 4.5rem)/0.9 var(--h-font-display); color: var(--h-blue); font-variant-numeric: tabular-nums; }
+.tur-benefits strong { display: block; margin-top: var(--space-md); font: 500 var(--text-lg)/1.35 var(--h-font-body); color: var(--h-navy); }
+.tur-benefits p { margin-top: var(--space-xs); color: var(--h-muted); max-width: 46ch; }
+
+/* -------------------------------------------------------------- catálogo ---- */
+.eaa-section-head { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); align-items: end; gap: var(--space-xl); margin-bottom: var(--space-2xl); }
+.eaa-section-head h2 { font-size: var(--text-section); max-width: 8em; color: var(--h-navy); text-wrap: balance; }
+.eaa-section-head p { color: var(--h-muted); font-size: var(--text-lg); max-width: 46ch; padding-bottom: var(--space-xs); }
+.tur-catalog { padding-block: var(--section-gap); background: var(--h-paper); scroll-margin-top: 96px; }
+.tur-toolbar { display: grid; gap: var(--space-lg); margin-bottom: var(--space-2xl); }
+.tur-search { display: grid; gap: var(--space-xs); max-width: 640px; }
+.tur-search span { color: var(--h-muted); font-size: var(--text-sm); font-weight: 500; }
+.tur-search input { width: 100%; min-height: 56px; padding: 0 var(--space-md); border: 1px solid var(--h-rule); border-bottom: 2px solid var(--h-navy); border-radius: var(--radius-control); background: var(--h-paper); color: var(--h-ink); font: 400 var(--text-md)/1 var(--h-font-body); transition: border-color var(--dur-micro) ease, background-color var(--dur-micro) ease; }
+.tur-search input::placeholder { color: var(--h-muted); }
+.tur-search input:hover { background: var(--h-paper-2); }
+.tur-search input:focus-visible { outline: 3px solid var(--h-focus); outline-offset: 2px; border-color: var(--h-navy); }
+.tur-chips { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
+.tur-chip { position: relative; overflow: hidden; isolation: isolate; min-height: 44px; padding: 0 var(--space-lg) !important; border: 1px solid var(--h-navy) !important; border-radius: 999px !important; color: var(--h-navy) !important; font: 500 var(--text-sm)/1 var(--h-font-body); transition: color var(--dur-short) var(--ease-out); }
+.tur-chip::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--h-navy); transform: translateY(101%); transition: transform var(--dur-short) var(--ease-out); }
+.tur-chip:hover::before, .tur-chip.active::before { transform: translateY(0); }
+.tur-chip:hover, .tur-chip.active { color: var(--h-on-dark) !important; }
+.tur-chip:active { transform: scale(0.97); }
+.tur-count { color: var(--h-muted); font-size: var(--text-sm); }
+.tur-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-lg); align-items: stretch; }
+
+/* --------------------------------------------------------------- tarjeta ---- */
+.tur-card { display: flex; flex-direction: column; min-width: 0; background: var(--h-paper); border: 1px solid var(--h-rule); border-radius: var(--radius-card); overflow: clip; transition: transform var(--dur-long) var(--ease-out), border-color var(--dur-short) ease, box-shadow var(--dur-long) var(--ease-out); }
+.tur-card:hover { transform: translateY(-8px); border-color: var(--h-navy); box-shadow: 0 24px 48px color-mix(in oklab, var(--h-navy-deep) 16%, transparent); }
+.tur-card-media { position: relative; aspect-ratio: 4 / 3; overflow: clip; background: var(--h-navy); color: var(--h-on-dark); }
+.tur-card-track { position: absolute; inset: 0; }
+.tur-card-media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.6s ease, transform 1.2s var(--ease-out); }
+.tur-card-media img.active { opacity: 1; }
+.tur-card:hover .tur-card-media img.active { transform: scale(1.05); }
+.tur-card-tag { position: absolute; top: var(--space-md); left: var(--space-md); z-index: 2; padding: var(--space-xs) var(--space-md); border-radius: 999px; background: var(--h-paper); color: var(--h-navy); font-size: var(--text-sm); font-weight: 500; line-height: 1.4; }
+.tur-card-arrow { position: absolute; bottom: var(--space-md); z-index: 2; display: grid; place-items: center; width: 44px; height: 44px; border: 0 !important; border-radius: 50% !important; padding: 0 !important; background: var(--h-paper) !important; color: var(--h-navy) !important; transition: transform var(--dur-short) var(--ease-out), background-color var(--dur-micro) ease, color var(--dur-micro) ease; }
+.tur-card-prev { right: calc(var(--space-md) + 52px); }
+.tur-card-next { right: var(--space-md); }
+.tur-card-prev svg { transform: rotate(180deg); }
+.tur-card-arrow:hover { background: var(--h-accent) !important; color: var(--h-accent-ink) !important; transform: scale(1.08); }
+.tur-card .package-carousel-count { position: absolute; left: var(--space-md); right: auto; top: auto; bottom: var(--space-md); width: auto; height: auto; z-index: 2; padding: 4px var(--space-sm); border-radius: 999px; background: color-mix(in oklab, var(--h-night) 70%, transparent); color: var(--h-on-dark); font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
+.tur-card-body { display: flex; flex-direction: column; gap: var(--space-sm); flex: 1; padding: var(--space-lg); }
+.tur-card-meta { display: flex; flex-wrap: wrap; gap: var(--space-xs) var(--space-md); color: var(--h-muted); font-size: var(--text-sm); }
+.tur-card-meta span + span::before { content: ""; display: inline-block; width: 4px; height: 4px; margin-right: var(--space-md); border-radius: 50%; background: var(--h-blue); vertical-align: middle; }
+.tur-card h3 { font: 400 clamp(2.25rem, 3vw, 3rem)/0.95 var(--h-font-display); color: var(--h-navy); }
+.tur-card-facts { display: flex; flex-wrap: wrap; gap: var(--space-xs) var(--space-md); font-weight: 500; font-size: var(--text-sm); color: var(--h-ink-2); }
+.tur-card-garantizada { color: var(--h-accent-strong); }
+.tur-card-summary { color: var(--h-muted); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.tur-card-includes { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
+.tur-card-includes li { padding: 4px var(--space-sm); border-radius: 999px; background: var(--h-paper-2); color: var(--h-navy); font-size: var(--text-sm); }
+.tur-card-foot { display: grid; gap: var(--space-md); margin-top: auto; padding-top: var(--space-lg); border-top: 1px solid var(--h-rule); }
+.tur-price { display: flex; align-items: baseline; gap: var(--space-sm); }
+.tur-price span { color: var(--h-muted); font-size: var(--text-sm); }
+.tur-price strong { font: 400 clamp(2rem, 2.6vw, 2.5rem)/1 var(--h-font-display); color: var(--h-ink); font-variant-numeric: tabular-nums; }
+.tur-card-actions { display: grid; grid-template-columns: 1fr auto; gap: var(--space-sm); }
+.tur-card-actions .eaa-button { min-height: 48px; padding: 0 var(--space-md); }
+
+/* ----------------------------------------------------------- estado vacío ---- */
+.tur-empty { grid-column: 1 / -1; display: grid; justify-items: start; gap: var(--space-lg); padding: var(--space-2xl); background: var(--h-paper-2); border-radius: var(--radius-card); }
+.tur-empty p { font: 400 clamp(1.75rem, 3vw, 3rem)/1.1 var(--h-font-display); color: var(--h-navy); max-width: 22em; text-wrap: balance; }
+
+/* --------------------------------------------------------------- agencia ---- */
+.tur-agency { padding-block: var(--section-gap); }
+.tur-agency-grid { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: var(--space-3xl); align-items: start; }
+.tur-agency h2 { font-size: var(--text-section); color: var(--h-navy); max-width: 8em; }
+.tur-agency-grid > div > p { margin-top: var(--space-lg); color: var(--h-muted); font-size: var(--text-lead); max-width: 46ch; }
+.tur-agency-list { margin: 0; border-top: 1px solid var(--h-rule); }
+.tur-agency-list > div { display: grid; grid-template-columns: 10rem minmax(0, 1fr); gap: var(--space-md); padding-block: var(--space-lg); border-bottom: 1px solid var(--h-rule); }
+.tur-agency-list dt { color: var(--h-muted); font-size: var(--text-sm); font-weight: 500; }
+.tur-agency-list dd { margin: 0; font: 500 var(--text-lg)/1.4 var(--h-font-body); color: var(--h-navy); }
+.tur-agency-list a { background: linear-gradient(currentColor, currentColor) 0 100% / 0 2px no-repeat; transition: background-size var(--dur-short) var(--ease-out), color var(--dur-micro) ease; }
+.tur-agency-list a:hover { background-size: 100% 2px; color: var(--h-accent-strong); }
+
+@media (max-width: 62rem) {
+  .eaa-section-head { grid-template-columns: 1fr; gap: var(--space-md); margin-bottom: var(--space-xl); }
+  .tur-benefits ul, .tur-agency-grid { grid-template-columns: 1fr; gap: var(--space-xl); }
+  .tur-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tur-agency-list > div { grid-template-columns: 1fr; gap: var(--space-xs); }
+}
+@media (max-width: 40rem) {
+  .tur-grid { grid-template-columns: 1fr; }
+  .tur-card-actions { grid-template-columns: 1fr; }
+  .tur-empty { padding: var(--space-xl) var(--space-lg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tur-card, .tur-card *, .tur-chip, .tur-chip::before, .tur-agency-list a { transition: none !important; }
+  .tur-card:hover { transform: none; }
+}
+
+/* -------------------------------------------- detalle del viaje (retoque) ---- */
+/* La página de un viaje conserva su estructura; acá se alinea con la tipografía y los botones del resto. */
+.turismo-layout .package-detail-hero h1, .turismo-layout .package-detail-summary h2, .turismo-layout .package-detail-section-head h2, .turismo-layout .package-detail-content h2, .turismo-layout .package-detail-itinerario h2 { font-family: var(--h-font-display); font-weight: 400; letter-spacing: 0.005em; }
+.turismo-layout .package-detail-precio-cta, .turismo-layout .package-back-link { position: relative; overflow: hidden; isolation: isolate; border-radius: var(--radius-control); transition: color var(--dur-short) var(--ease-out), background-color var(--dur-micro) ease; }
+.turismo-layout .package-detail-precio-cta::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--h-navy-deep); transform: translateY(101%); transition: transform var(--dur-short) var(--ease-out); }
+.turismo-layout .package-detail-precio-cta:hover::before { transform: translateY(0); }
+.turismo-layout .package-detail-precio-cta:hover { color: var(--h-on-dark); }
+
+/* En la página de un viaje la barra inferior ya trae el botón de WhatsApp: el flotante lo tapaba. */
+body.turismo-page:not(.turismo-hero-page) .whatsapp-fab { display: none; }
