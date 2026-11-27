@@ -10,7 +10,7 @@ body[data-app-entry="admin"] .eaa-login {
   color: var(--color-deep-blue, #083b7a);
   font: 400 16px/1.6 "Poppins", sans-serif;
 }
-.eaa-login .eaa-login-brand { display: block; margin-bottom: 20px; }
+.eaa-login .eaa-login-brand { display: block; margin-bottom: 20px; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
 .eaa-login .eaa-login-brand img { display: block; width: 112px; height: auto; }
 .eaa-login .eaa-login-card {
   width: 100%;
