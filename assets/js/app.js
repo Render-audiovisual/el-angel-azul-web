@@ -2224,65 +2224,34 @@
       function renderAdminLogin(errorMessage = "") {
         document.body?.setAttribute("data-app-entry", "admin");
         document.getElementById("app").innerHTML = `
-          <div class="admin-login-screen">
-            <section class="admin-login-card" aria-label="Acceso interno El Ángel Azul">
-              <div class="admin-login-panel">
-                <span class="admin-login-orb admin-login-orb-one" aria-hidden="true"></span>
-                <span class="admin-login-orb admin-login-orb-two" aria-hidden="true"></span>
-                <div class="admin-login-panel-top">
-                  <a class="admin-login-logo-link" href="#/" aria-label="El Ángel Azul - Inicio">
-                    <img src="assets/img/favicon-esfera-blanca.svg" alt="">
-                    <span>
-                      <strong>El Ángel Azul</strong>
-                      <small>Panel interno</small>
-                    </span>
-                  </a>
+          <div class="eaa-login">
+            <a class="eaa-login-brand" href="/#/" aria-label="El Ángel Azul - Inicio">
+              <img src="assets/img/logo-completo-azul.svg" alt="El Ángel Azul" width="180" height="90">
+            </a>
+            <section class="eaa-login-card" aria-labelledby="login-title">
+              <p class="eaa-login-eyebrow">Administración</p>
+              <h1 id="login-title">Ingresá al panel</h1>
+              <p class="eaa-login-intro">Tu lugar para organizar cada viaje.</p>
+              <form class="eaa-login-form" data-admin-login-form>
+                <label for="admin-usuario">Usuario</label>
+                <input id="admin-usuario" name="usuario" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+                <label for="admin-password">Contraseña</label>
+                <div class="eaa-login-password">
+                  <input id="admin-password" name="password" type="password" autocomplete="current-password" required>
+                  <button type="button" data-admin-password-toggle aria-label="Mostrar contraseña" aria-controls="admin-password" aria-pressed="false">Ver</button>
                 </div>
-                <div class="admin-login-brand">
-                  <h1>Gestión completa de tus viajes</h1>
-                  <p>Operá inscripciones, pasajeros, pagos y turismo desde un panel privado.</p>
-                </div>
-                <div class="admin-login-highlights" aria-label="Módulos disponibles">
-                  <span><strong>✎</strong> Inscripciones</span>
-                  <span><strong>P</strong> Pasajeros</span>
-                  <span><strong>$</strong> Pagos</span>
-                  <span><strong>✈</strong> Turismo</span>
-                </div>
-                <p class="admin-login-footer">© El Ángel Azul · Acceso restringido</p>
-              </div>
-
-              <div class="admin-login-access">
-                <div class="admin-login-access-head">
-                  <span><i aria-hidden="true"></i>Ingreso seguro</span>
-                  <h2>Bienvenido de nuevo</h2>
-                  <p>Ingresá con tus credenciales para acceder al panel.</p>
-                </div>
-                <form class="admin-login-form" data-admin-login-form>
-                  <label>
-                    Usuario
-                    <input name="usuario" autocomplete="username" placeholder="admin" required>
-                  </label>
-                  <label>
-                    Contraseña
-                    <span class="admin-login-password">
-                      <input name="password" type="password" autocomplete="current-password" placeholder="Contraseña" required>
-                      <button type="button" data-admin-password-toggle aria-label="Mostrar contraseña" aria-pressed="false">Ver</button>
-                    </span>
-                  </label>
-                  ${errorMessage || adminLoginNotice ? `<p class="admin-login-error" role="alert">${escapeHtml(errorMessage || adminLoginNotice)}</p>` : ""}
-                  <button type="submit">Ingresar al panel</button>
-                </form>
-                <div class="admin-login-note">
-                  <span>Sesión protegida de 8 horas. Se cierra automáticamente por seguridad.</span>
-                </div>
-              </div>
+                ${errorMessage || adminLoginNotice ? `<p class="eaa-login-error" role="alert">${escapeHtml(errorMessage || adminLoginNotice)}</p>` : ""}
+                <button class="eaa-login-submit" type="submit">Ingresar</button>
+              </form>
+              <p class="eaa-login-note">Solo personal autorizado.</p>
             </section>
+            <a class="eaa-login-back" href="/#/">← Volver a la web</a>
           </div>
         `;
 
         document.querySelector("[data-admin-password-toggle]")?.addEventListener("click", (event) => {
           const toggle = event.currentTarget;
-          const input = toggle.closest(".admin-login-password")?.querySelector("input");
+          const input = toggle.closest(".eaa-login-password")?.querySelector("input");
           if (!input) return;
           const shouldShow = input.type === "password";
           input.type = shouldShow ? "text" : "password";
@@ -2301,7 +2270,7 @@
             renderAdminLogin("Completá usuario y contraseña para ingresar.");
             return;
           }
-          const button = form.querySelector("button");
+          const button = form.querySelector('button[type="submit"]');
           if (button) {
             button.disabled = true;
             button.textContent = "Ingresando...";

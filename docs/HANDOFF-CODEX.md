@@ -24,6 +24,8 @@ Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerra
 
 ## Página pública (25/11/2026)
 
+- 27/11: login simplificado a pedido del dueño: una tarjeta con logo, Bebas Neue/Poppins y paleta de la web. CSS propio en `assets/css/admin-login.css`, sin cambiar tablas del admin. Comprobados ingreso, cierre de sesión y mostrar contraseña en local, y 390 × 844 sin desborde. Check: 162 pasan, 2 TODO conocidos, 0 fallos. Base de pruebas de Supabase aún pendiente de creación; no se conectó Hostinger a una base real.
+
 - 27/11: el dueño pidió retirar «Acceso interno» de la web pública. Eliminado del footer y la navegación; acceso independiente en `/admin/`, con login y `noindex`. Los enlaces hash antiguos del admin redirigen a esa entrada. Los endpoints privados mantienen la sesión obligatoria. Repositorio transferido a `el-angel-azul/el-angel-azul-web`; `frannook` tiene rol Admin en GitHub.
 
 - Propuesta pedida por el dueño con referencia Maxdream en `feat/publica-experiencia`, basada en `fix/admin-guardado-concurrente`. Dirección y validación en `docs/DISENO-PUBLICO.md`.
