@@ -465,3 +465,23 @@ test("diagnostico-ip: sin sesión 401, agencia 403, admin ve qué le llega y la 
   assert.match(diag.headers["cache-control"], /no-store/);
   assert.equal((await request({ method: "POST", path: "/api/admin/diagnostico-ip", headers: { origin, cookie: cookieDe(admin) } })).status, 405);
 });
+
+test("el rol agencia puede editar pero no eliminar registros; el administrador sí puede", async () => {
+  const origin = `http://127.0.0.1:${port}`;
+  const entrar = async (username, password) => String((await request({ method: "POST", path: "/api/admin/login", headers: { origin }, body: { username, password } })).headers["set-cookie"]?.[0] || "").split(";")[0];
+  const escribir = (cookie, body) => request({ method: "POST", path: "/api/google-sheets", headers: { origin, cookie }, body });
+  const agente = await entrar("agente1", "test-agent-password");
+  // Eliminar grupos, contratos, pasajeros, planes, viajes y colegios: 403 para la agencia.
+  for (const sheet of ["GRUPOS", "CONTRATOS", "PASAJEROS", "PLANES_PAGO", "TURISMO", "COLEGIOS"]) {
+    const respuesta = await escribir(agente, { sheet, rows: [], deleteIds: ["00000000-0000-0000-0000-000000000001"] });
+    assert.equal(respuesta.status, 403, `${sheet}: la agencia no puede eliminar`);
+    assert.match(String(respuesta.json?.error), /administrador/);
+  }
+  // Editar o crear no se bloquea por permisos (sin base en el test responde otro código, nunca 403).
+  assert.notEqual((await escribir(agente, { sheet: "GRUPOS", rows: [], deleteIds: [] })).status, 403);
+  // Sin sesión tampoco se elimina (la hoja pública de fichas no acepta bajas).
+  assert.equal((await escribir("", { sheet: "GRUPOS", rows: [], deleteIds: ["x1"] })).status, 401);
+  // El administrador pasa el control de permisos (si falla después es por la base, no por el rol).
+  const admin = await entrar("admin", "test-admin-password");
+  assert.notEqual((await escribir(admin, { sheet: "GRUPOS", rows: [], deleteIds: ["00000000-0000-0000-0000-000000000001"] })).status, 403);
+});

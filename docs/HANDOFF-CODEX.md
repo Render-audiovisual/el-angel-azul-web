@@ -92,7 +92,7 @@ Cada paso termina con `npm run check` en verde y un commit chico. Si tocás algo
   - `server.js`: el stream de archivos estáticos tiene manejador de error (antes un error de lectura tiraba el proceso).
   - Aviso en el log al arrancar en producción si el certificado de la base no se verifica.
 - **Falta (necesita tu decisión o configuración):**
-  - **Roles:** hoy solo Configuración es exclusiva del admin. Un agente (rol `agencia`) puede borrar grupos, contratos, colegios y viajes con la API. Hay que definir la matriz de permisos y chequearla en el servidor con un test (propuesta en el PR #11).
+  - **Roles: resuelto el 27/11/2026** (decisión del dueño). La agencia (`agente1` a `agente5`) crea y edita todo (colegios, grupos, contratos, planes, pasajeros, fichas, Turismo) y puede dar de baja un colegio (es una edición reversible). **Solo el administrador elimina registros** y entra a Configuración y al diagnóstico de IP. El servidor responde 403 a cualquier eliminación de la agencia (`handleSheets`, `deleteIds`); el botón «Eliminar» de Turismo no se muestra a la agencia. Test: `scripts/server-routes.test.js`.
   - **Certificado de Supabase:** cargar `SUPABASE_DB_CA_CERT` (CA descargado del panel de Supabase) y `EAA_POSTGRES_TLS_VERIFY_FULL=true` en Hostinger. Es configuración, no código; hasta entonces `lib/db.js` conserva `rejectUnauthorized: false` por defecto.
 
 **Paso 4 – Revisar los 12 puntos en el navegador: hecho el 25/11.** Fallas anotadas en `docs/correcciones-del-angel.md` (sección «Revisión a mano»); falta corregirlas.
