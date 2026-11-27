@@ -8,7 +8,7 @@ Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerra
 | Quién | Rama | Paso | Archivos que toca | Actualizado |
 |---|---|---|---|---|
 | Fran (Claude Code) | `fran/harness` | Harness: guardas, `AGENTS.md`, docs | `AGENTS.md`, `CLAUDE.md`, `package.json`, `scripts/guardas.test.js`, `scripts/helpers/sin-secretos.js`, docs | 25/11 |
-| Fran (Claude Code) | `fran/inicio-hallmark` | Paso 8: rediseño del inicio con la skill Hallmark (el PR #8 de Agustín quedó integrado, con su OK) | `index.html`, `assets/css/home.css`, `assets/css/public-experience.css`, `assets/js/modules/home-motion.js`, `renderHome` en `assets/js/app.js` | 27/11 |
+| Fran (Claude Code) | `fran/inicio-aldena` | Paso 8: rediseño del inicio inspirado en la web de referencia (Agustín dio su OK sobre el PR #8) | `index.html`, `assets/css/home.css`, `assets/css/public-experience.css`, `assets/js/modules/home-motion.js`, `renderHome` en `assets/js/app.js` | 27/11 |
 | Agustín (Codex) | — | Sin asignar (propuesto: Paso 3, servidor y base; lo define el dueño) | — | — |
 
 ## Harness (25/11/2026)
@@ -143,10 +143,11 @@ Ramas, reparto, checklist de inicio y cierre y qué puede hacer un agente: ver `
 | `feat/colegios-admin`, `feat/storage-firma`, `feat/db-doble-envio`, `feat/frontend-pasajeros-a11y` | Ya incluidas en `integracion/abc`. |
 | `fix/migracion-supabase-segura`, `feat/ficha-adhesion-v2`, `fix/ficha-v2-release` | Anteriores a noviembre; ignorar. |
 
-## Inicio rediseñado con Hallmark (27/11/2026)
-- **Marca intacta:** paleta (`#083b7a`, `#0d69a1`, rosa de botones `#c42774` para contraste 5,2:1 con texto claro, fondo `#f7fbfe`) y tipografía (Bebas Neue en titulares, Poppins en textos), como pidió el dueño.
-- **Estructura (8 secciones):** hero con dos entradas (viajes estudiantiles y turismo), destinos (Bariloche, Carlos Paz y Camboriú para egresados), «Vos vivís el viaje» (tramo fijo con tres fotos), Turismo, momentos reales, cómo te inscribís, preguntas y cierre. Se quitó la franja de tres afirmaciones y el pedido de contacto duplicado.
-- **Turismo en el inicio:** muestra hasta 3 viajes **activos de la base** (`loadTurismoPublicPackages`); sin viajes activos no inventa ninguno y deja la invitación a consultar.
-- **Fotos del dueño:** `homePhotos` en `renderHome` (`assets/js/app.js`) tiene dos huecos, `camboriu` y `turismo`. Subí la foto (por ejemplo `assets/img/home/camboriu.webp`, ~1600×2100 vertical para Camboriú y ~1600×1280 para Turismo) y poné la ruta; mientras tanto se ven como paneles de la marca. La biblioteca de Hallmark no tenía fotos de Camboriú ni de viajes familiares. Las fotos actuales del inicio son las reales de los grupos.
-- **Movimiento:** Lenis afinado (más inercia, anclas con Lenis), titulares que suben palabra por palabra, parallax suave en las fotos y tramo fijo con cambio de foto. Todo es visible sin JS; con «reducir movimiento» no hay tramo fijo ni scroll suave. Cargado desde `assets/js/modules/home-motion.js`.
-- **Hallmark:** `sloplint --render` sobre `home.css` y `public-experience.css`: 0 FAIL, 0 REFLEX (un hallazgo, las fotos vacías, queda justificado en el sello). Falta la revisión final en contexto limpio y mirarlo en Safari/iPhone reales.
+## Inicio rediseñado, segunda versión (27/11/2026)
+Se reemplazó la primera versión (PR #24) porque al dueño no le gustó. La nueva copia el **comportamiento y la estructura** de la web de referencia (https://aldena.framer.media/, una plantilla de agencia creativa), no sus textos, imágenes ni código. Marca intacta: paleta del sitio y Bebas Neue + Poppins.
+- **Estructura:** hero con foto a pantalla completa, grano de película y el nombre «El Ángel Azul» ocupando todo el ancho · presentación con texto que se llena palabra por palabra al scrollear · tres destinos (Bariloche, Carlos Paz, Camboriú) como pantallas completas con el nombre gigante deslizándose detrás de una foto central · Turismo (tarjeta grande y, si hay viajes activos en la base, hasta 4 tarjetas) · inscripción en tres filas numeradas que se resaltan · cinta de destinos · momentos reales como tarjetas apiladas · preguntas · cierre con el titular sobre una foto.
+- **Movimiento** (`assets/js/modules/home-motion.js`): Lenis afinado, hero que queda quieto mientras el resto lo cubre, titulares que suben palabra por palabra, parallax suave, tarjetas que se apilan. Todo es visible sin JS; con «reducir movimiento» no hay scroll suave ni apilado ni autoavance; nada sale del orden de Tab.
+- **Encabezado** transparente sobre el hero (menú en píldora azul noche) y **pie** claro con el nombre como marca de agua de ancho completo (`assets/css/public-experience.css`, `index.html`). El pie es el mismo en todas las páginas públicas.
+- **Fotos de reemplazo:** `homePhotos` en `renderHome` (`assets/js/app.js`) usa dos fotos de Brasil y de Cataratas que ya estaban en `assets/img/turismo/hero/` para Camboriú y Turismo. **No son de tus grupos**: cambialas por las tuyas poniendo la ruta del archivo.
+- **Turismo en el inicio:** muestra viajes **activos de la base**; sin viajes no inventa ninguno.
+- **Hallmark:** `sloplint --render` sobre `home.css` y `public-experience.css`: 0 FAIL, 0 REFLEX (2 excepciones registradas en el sello de `home.css`: fotos grandes a propósito y el nombre decorativo que se sale de la pantalla). Falta Safari/iPhone reales y VoiceOver.

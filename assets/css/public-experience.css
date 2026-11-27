@@ -13,6 +13,7 @@ body:not([data-app-entry="admin"]) {
   --eaa-line: var(--color-border);
   --eaa-on-dark: var(--color-background);
   --eaa-on-dark-2: var(--h-on-dark-2);
+  --footer-pad: 40px;
   font-family: var(--font-body);
 }
 .eaa-skip-link { position: fixed; top: -100px; left: 24px; padding: 16px 24px; background: var(--eaa-paper); color: var(--eaa-navy); z-index: 200; }
@@ -28,14 +29,35 @@ body:not([data-app-entry="admin"]) .site-nav .eaa-nav-enroll:hover { background:
 body:not([data-app-entry="admin"]) .site-header :is(a, button):focus-visible { outline: 3px solid var(--eaa-accent); outline-offset: 3px; }
 body.home-page:not([data-app-entry="admin"]) main { padding: 0; }
 body:not([data-app-entry="admin"]) #app :is(h1,h2,h3) { font-family: var(--font-display); font-weight: 400; font-variation-settings: normal; letter-spacing: .005em; }
-body:not([data-app-entry="admin"]) .site-footer { background: var(--eaa-navy); border: 0; color: var(--eaa-on-dark-2); padding-top: 120px; }
-body:not([data-app-entry="admin"]) .footer-logo { filter: none; background: var(--eaa-paper); padding: 8px 16px; border-radius: 8px; width: 150px; height: 80px; object-fit: cover; }
-body:not([data-app-entry="admin"]) .footer-inner { gap: 36px; }
-body:not([data-app-entry="admin"]) .footer-column h2 { color: var(--eaa-on-dark); font: 600 14px var(--font-body); letter-spacing: 0; text-transform: none; }
-body:not([data-app-entry="admin"]) .footer-links a, body:not([data-app-entry="admin"]) .footer-contact-list a, body:not([data-app-entry="admin"]) .footer-socials a { color: var(--eaa-on-dark-2); font-size: 14px; }
-body:not([data-app-entry="admin"]) .footer-links a:hover, body:not([data-app-entry="admin"]) .footer-contact-list a:hover, body:not([data-app-entry="admin"]) .footer-socials a:hover { color: var(--eaa-on-dark); }
-body:not([data-app-entry="admin"]) .site-footer :is(a, button):focus-visible { outline: 3px solid var(--eaa-on-dark); outline-offset: 3px; }
-body:not([data-app-entry="admin"]) .footer-bottom { border-color: color-mix(in oklab, var(--h-on-dark) 16%, transparent); }
+/* Encabezado: sobre el hero de la portada es transparente y con letras claras; al scrollear vuelve a ser una barra clara. */
+body.home-page:not(.nav-scrolled):not(.nav-open) .site-header { background: transparent; border-color: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; }
+body.home-page:not(.nav-scrolled):not(.nav-open) .brand-logo { filter: brightness(0) invert(1); }
+@media (min-width: 1050px) {
+  body.home-page:not(.nav-scrolled):not(.nav-open) .site-nav { padding: 4px; border-radius: 999px; background: color-mix(in oklab, var(--h-night) 92%, transparent); }
+  body.home-page:not(.nav-scrolled):not(.nav-open) .site-nav a { border-radius: 999px; }
+}
+body.home-page:not(.nav-scrolled):not(.nav-open) .site-nav a:not(.eaa-nav-enroll) { color: var(--eaa-on-dark); }
+body.home-page:not(.nav-scrolled):not(.nav-open) .site-nav a:not(.eaa-nav-enroll):hover { background: color-mix(in oklab, var(--eaa-on-dark) 16%, transparent); color: var(--eaa-on-dark); }
+body.home-page:not(.nav-scrolled):not(.nav-open) .site-nav .eaa-nav-enroll { background: var(--eaa-on-dark); color: var(--eaa-navy); }
+body.home-page:not(.nav-scrolled):not(.nav-open) .nav-toggle span { background: var(--eaa-on-dark); }
+body.home-page:not(.nav-scrolled):not(.nav-open) .nav-toggle { border-color: color-mix(in oklab, var(--eaa-on-dark) 50%, transparent); background: transparent; }
+body.home-page:not(.nav-scrolled):not(.nav-open) .site-header :is(a, button):focus-visible { outline-color: var(--eaa-on-dark); }
+
+/* Pie: claro, con enlaces grandes y el nombre de la agencia como marca de agua de ancho completo (como la web de referencia). */
+body:not([data-app-entry="admin"]) .site-footer { background: var(--h-paper-2); border: 0; color: var(--h-ink); padding: 96px 0 0; overflow: clip; }
+body:not([data-app-entry="admin"]) .footer-inner { gap: 64px; padding-bottom: 64px; }
+body:not([data-app-entry="admin"]) .footer-logo { filter: none; background: none; padding: 0; border-radius: 0; width: 200px; height: 96px; object-fit: contain; object-position: left center; }
+body:not([data-app-entry="admin"]) .footer-brand p { color: var(--h-muted); max-width: 46ch; font-size: 1.125rem; line-height: 1.5; }
+body:not([data-app-entry="admin"]) .footer-column h2 { color: var(--h-muted); font: 500 14px var(--font-body); letter-spacing: 0; text-transform: none; margin-bottom: 16px; }
+body:not([data-app-entry="admin"]) .footer-links a, body:not([data-app-entry="admin"]) .footer-contact-list a, body:not([data-app-entry="admin"]) .footer-socials a { color: var(--h-ink); font: 500 1.125rem/1.4 var(--font-body); }
+body:not([data-app-entry="admin"]) .footer-links a:hover, body:not([data-app-entry="admin"]) .footer-contact-list a:hover, body:not([data-app-entry="admin"]) .footer-socials a:hover { color: var(--h-accent); }
+body:not([data-app-entry="admin"]) .footer-socials a { white-space: nowrap; }
+body:not([data-app-entry="admin"]) .footer-social-icon { background: var(--h-navy); color: var(--h-on-dark); }
+body:not([data-app-entry="admin"]) .site-footer :is(a, button):focus-visible { outline: 3px solid var(--h-focus); outline-offset: 3px; }
+body:not([data-app-entry="admin"]) .footer-bottom { border-color: var(--h-rule); }
+body:not([data-app-entry="admin"]) .footer-bottom p { color: var(--h-muted); }
+body:not([data-app-entry="admin"]) .footer-internal-access { color: var(--h-muted); border-color: var(--h-rule); }
+.footer-wordmark { display: block; width: calc(100% - 2 * var(--footer-pad, 40px)); max-width: none; margin: 32px auto 0; height: auto; fill: var(--h-paper-3); }
 @media (min-width: 1050px) {
   body:not([data-app-entry="admin"]) .site-nav { display: flex; position: static; padding: 0; }
   body:not([data-app-entry="admin"]) .mobile-header-actions { display: none; }

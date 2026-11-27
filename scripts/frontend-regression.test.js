@@ -491,22 +491,21 @@ test("Turismo público no muestra viajes de demostración cuando no hay viajes a
   }
 });
 
-test("el inicio rediseñado conserva sus decisiones: dos entradas, Camboriú, huecos de foto y movimiento accesible", () => {
+test("el inicio rediseñado conserva sus decisiones: dos entradas, Camboriú, fotos propias y movimiento accesible", () => {
   const inicio = functionSource("renderHome", "bindHeroCarousel");
   // Hero con las dos entradas (estudiantil y turismo) que llevan a su sección.
   assert.match(inicio, /data-scroll-target="eaa-destinos"/);
   assert.match(inicio, /data-scroll-target="eaa-turismo"/);
-  // Tres destinos, con Camboriú (egresados, Brasil) y su hueco para la foto del dueño.
-  for (const destino of ["Bariloche", "Carlos Paz", "Camboriú"]) assert.match(inicio, new RegExp(`<h3>${destino}</h3>`));
-  assert.match(inicio, /data-slot="camboriu"/);
-  assert.match(inicio, /data-slot="turismo"/);
+  // Tres destinos, con Camboriú (egresados, Brasil) por WhatsApp, y fotos de reemplazo configurables.
+  for (const destino of ["Bariloche", "Carlos Paz", "Camboriú"]) assert.match(inicio, new RegExp(`name: "${destino}"`));
+  assert.match(inicio, /const homePhotos = \{/);
   // Sin rótulos en mayúsculas ni viajes inventados: los de Turismo salen de la base.
   assert.doesNotMatch(inicio, /eaa-eyebrow/);
   assert.match(inicio, /loadTurismoPublicPackages\(\)/);
 
   const movimiento = fs.readFileSync(path.join(__dirname, "../assets/js/modules/home-motion.js"), "utf8");
   // Nada de visibility:hidden ni autoAlpha: los bloques siguen en el orden de Tab y en el lector de pantalla.
-  assert.doesNotMatch(movimiento.replace(/^\s*\/\/.*$/gm, ""), /autoAlpha|visibility/);
+  assert.doesNotMatch(movimiento.replace(/^\s*\/\/.*$/gm, ""), /autoAlpha|visibility\s*[:=]\s*["']?hidden/);
   assert.match(movimiento, /focusin/);
   assert.match(movimiento, /prefers-reduced-motion: reduce/);
 
