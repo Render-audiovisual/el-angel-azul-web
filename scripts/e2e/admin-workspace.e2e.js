@@ -91,7 +91,11 @@ async function capture(page,name) {
     await loginPage.locator('[name="password"]').fill(process.env.EAA_ADMIN_PASSWORD);
     await loginPage.locator('[data-admin-password-toggle]').click();
     assert.equal(await loginPage.locator('[name="password"]').getAttribute('type'),'text');
+    assert.equal(await loginPage.locator('[data-admin-password-toggle]').getAttribute('aria-label'),'Ocultar contraseña');
+    assert.equal(await loginPage.locator('.admin-password-eye-slash').isVisible(),true);
     await loginPage.locator('[data-admin-password-toggle]').click();
+    assert.equal(await loginPage.locator('[name="password"]').getAttribute('type'),'password');
+    assert.equal(await loginPage.locator('.admin-password-eye-slash').isVisible(),false);
     await loginPage.route('**/api/admin/login',async route=>{await new Promise(r=>setTimeout(r,500));await route.continue();});
     await loginPage.locator('[type="submit"]').click();
     assert.equal(await loginPage.locator('[type="submit"]').isDisabled(),true);

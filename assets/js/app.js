@@ -2218,8 +2218,14 @@
                   <label>
                     Contraseña
                     <span class="admin-login-password">
-                      <input name="password" type="password" autocomplete="current-password" placeholder="Contraseña" required>
-                      <button type="button" data-admin-password-toggle aria-label="Mostrar contraseña" aria-pressed="false">Ver</button>
+                      <input id="admin-password-field" name="password" type="password" autocomplete="current-password" placeholder="Contraseña" required>
+                      <button type="button" data-admin-password-toggle aria-label="Mostrar contraseña" aria-controls="admin-password-field" aria-pressed="false" title="Mostrar contraseña">
+                        <svg class="admin-password-eye" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+                          <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/>
+                          <circle cx="12" cy="12" r="3"/>
+                          <path class="admin-password-eye-slash" d="m3 3 18 18"/>
+                        </svg>
+                      </button>
                     </span>
                   </label>
                   ${errorMessage || adminLoginNotice ? `<p class="admin-login-error" role="alert">${escapeHtml(errorMessage || adminLoginNotice)}</p>` : ""}
@@ -2241,7 +2247,7 @@
           input.type = shouldShow ? "text" : "password";
           toggle.setAttribute("aria-pressed", shouldShow ? "true" : "false");
           toggle.setAttribute("aria-label", shouldShow ? "Ocultar contraseña" : "Mostrar contraseña");
-          toggle.textContent = shouldShow ? "Ocultar" : "Ver";
+          toggle.title = shouldShow ? "Ocultar contraseña" : "Mostrar contraseña";
         });
 
         document.querySelector("[data-admin-login-form]")?.addEventListener("submit", async (event) => {

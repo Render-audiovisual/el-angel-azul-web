@@ -312,8 +312,8 @@ body[data-app-entry="admin"] .admin-login-form { gap: 24px; }
 body[data-app-entry="admin"] .admin-login-form label { color: var(--admin-text); font: 500 15px/1.5 var(--admin-font); gap: 8px; }
 body[data-app-entry="admin"] .admin-login-form input { min-height: 56px; border: 1px solid var(--admin-control-line); border-radius: 10px; padding: 14px 16px; color: var(--admin-text); font: 400 17px/1.5 var(--admin-font); }
 body[data-app-entry="admin"] .admin-login-form input::placeholder { color: var(--admin-muted); font-weight: 400; opacity: 1; }
-body[data-app-entry="admin"] .admin-login-password input { padding-right: 88px; }
-body[data-app-entry="admin"] .admin-login-password button { top: 6px; right: 6px; width: 72px; height: 44px; min-height: 44px; font: 500 14px/1.4 var(--admin-font); color: var(--admin-accent) !important; }
+body[data-app-entry="admin"] .admin-login-password input { padding-right: 64px; }
+body[data-app-entry="admin"] .admin-login-password button { top: 6px; right: 6px; width: 44px; height: 44px; min-height: 44px; font: 500 14px/1.4 var(--admin-font); color: var(--admin-accent) !important; }
 body[data-app-entry="admin"] .admin-login-form > button { min-height: 56px; padding: 14px 24px; border-radius: 10px; box-shadow: none; font: 600 16px/1.5 var(--admin-font); background: var(--admin-accent) !important; border-color: var(--admin-accent) !important; }
 body[data-app-entry="admin"] .admin-login-form > button:hover { filter: brightness(1.1); }
 body[data-app-entry="admin"] .admin-login-form > button:disabled { opacity: .65; cursor: wait; }
@@ -337,3 +337,8 @@ body[data-app-entry="admin"] .admin-login-note span { font: 400 13px/1.6 var(--a
   body[data-app-entry="admin"] .admin-login-access { padding: 28px; gap: 24px; }
   body[data-app-entry="admin"] .admin-login-access-head h2 { font-size: 32px; }
 }
+
+body[data-app-entry="admin"] .admin-password-eye { width: 22px; height: 22px; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+body[data-app-entry="admin"] .admin-password-eye-slash { display: none; }
+body[data-app-entry="admin"] [data-admin-password-toggle][aria-pressed="true"] .admin-password-eye-slash { display: block; }
+body[data-app-entry="admin"] .admin-login-password button:hover { background: var(--admin-selected) !important; }
