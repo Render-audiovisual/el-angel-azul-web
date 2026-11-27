@@ -130,18 +130,22 @@ Rama `b830cbb` (`feat/colegios-padron` con el PR #4). Servidor local con `npm ru
 
 | # | Gravedad | Qué pasa | Dónde |
 |---|---|---|---|
-| 1 | **Media** | El PDF pierde las letras fuera de Latin-1: «Fernández Mićić» sale **«FERNÁNDEZ MII»**. El admin y el Excel conservan el nombre bien. Afecta apellidos croatas, polacos, etc. | `textoSeguro` en `lib/ficha-pdf.js` (ya estaba en la limpieza menor del HANDOFF; ahora está confirmado). |
-| 2 | Media | Si la sesión del admin se pierde (vence, o alguien inicia sesión con el mismo usuario), el guardado devuelve 401. La pantalla muestra el aviso «No se pudo guardar en la base de datos: Necesitás iniciar sesión…», pero el selector sigue mostrando el valor nuevo (sin guardar) y no manda al login. Quien no lea el aviso cree que quedó guardado. Al recargar vuelve el valor anterior. | Frontend del admin (`assets/js/app.js`). |
-| 3 | Baja | Iniciar sesión borra las demás sesiones del mismo usuario. Dos personas que comparten `admin` se echan entre sí. Con un usuario por persona no pasa. | `server.js` ~793. Definirlo junto con los roles (Paso 3). |
-| 4 | Baja | Cabecera del admin: la etiqueta «Admin» sale en negro sobre azul oscuro (poco contraste). | CSS del admin. |
-| 5 | Baja | En celular, las tablas de Fichas y Pasajeros obligan a scrollear de costado dentro de la tabla. Sirve, pero es incómodo. Mejor decidirlo con el rediseño (Paso 8). | Frontend del admin. |
-| 6 | Baja | Los placeholders (`20-12345678-6`, `3794 123456`, `1234`, `3400`) son gris oscuro (`rgb(92,108,118)`, contraste suficiente) y pueden parecer datos cargados. | CSS de la ficha. |
-| 7 | Baja | «Limpiar firma» mide 34 px de alto (menos de 40 px). | CSS de la ficha. |
+| 1 | **Media** (corregida parcialmente el 26/11: «Mićić» sale «Micic»; lo exacto pide embeber una fuente con fontkit, dependencia nueva) | El PDF pierde las letras fuera de Latin-1: «Fernández Mićić» sale **«FERNÁNDEZ MII»**. El admin y el Excel conservan el nombre bien. Afecta apellidos croatas, polacos, etc. | `textoSeguro` en `lib/ficha-pdf.js` (ya estaba en la limpieza menor del HANDOFF; ahora está confirmado). |
+| 2 | Media (**corregida** el 26/11, PR #9: recarga y el login avisa que el cambio no se guardó) | Si la sesión del admin se pierde (vence, o alguien inicia sesión con el mismo usuario), el guardado devuelve 401. La pantalla muestra el aviso «No se pudo guardar en la base de datos: Necesitás iniciar sesión…», pero el selector sigue mostrando el valor nuevo (sin guardar) y no manda al login. Quien no lea el aviso cree que quedó guardado. Al recargar vuelve el valor anterior. | Frontend del admin (`assets/js/app.js`). |
+| 3 | Baja (pendiente: se define con los roles) | Iniciar sesión borra las demás sesiones del mismo usuario. Dos personas que comparten `admin` se echan entre sí. Con un usuario por persona no pasa. | `server.js` ~793. Definirlo junto con los roles (Paso 3). |
+| 4 | Baja (**corregida** el 26/11, PR #16: ahora 8,3:1) | Cabecera del admin: la etiqueta «Admin» sale en negro sobre azul oscuro (poco contraste). | CSS del admin. |
+| 5 | Baja (Colegios se cortaba a la derecha: **corregido**, PR #17; las tablas siguen con scroll lateral, queda como decisión de diseño del dueño) | En celular, las tablas de Fichas y Pasajeros obligan a scrollear de costado dentro de la tabla. Sirve, pero es incómodo. Mejor decidirlo con el rediseño (Paso 8). | Frontend del admin. |
+| 6 | Baja (**corregida** el 26/11, PR #16: oscurecidos; ya pasaban AA) | Los placeholders (`20-12345678-6`, `3794 123456`, `1234`, `3400`) son gris oscuro (`rgb(92,108,118)`, contraste suficiente) y pueden parecer datos cargados. | CSS de la ficha. |
+| 7 | Baja (**corregida** el 26/11, PR #18: 44 px) | «Limpiar firma» mide 34 px de alto (menos de 40 px). | CSS de la ficha. |
 | 8 | Ya conocida | El footer mostraba `contacto@elangelazul.com.ar`, que no existe. | Corregida el 26/11: se sacó la línea del footer. Falta el mail oficial para volver a ponerla (Paso 6). |
-| 9 | A verificar | Las secciones de la ficha PAX están en `visibility: hidden` hasta que el scroll las revela (GSAP). No se probó la navegación solo con teclado ni con lector de pantalla: si el foco salta campos ocultos, es un problema de accesibilidad. | `bindFichaAdhesionAnimations` en `assets/js/app.js`. |
+| 9 | **Confirmada y corregida** el 26/11 (PR #19: sin teclado no se podía completar Domicilio, Condiciones ni Firma). Falta la portada y probar con VoiceOver | Las secciones de la ficha PAX están en `visibility: hidden` hasta que el scroll las revela (GSAP). No se probó la navegación solo con teclado ni con lector de pantalla: si el foco salta campos ocultos, es un problema de accesibilidad. | `bindFichaAdhesionAnimations` en `assets/js/app.js`. |
 
 ## Estado de los puntos tras la revisión
 
 Puntos revisados a mano con datos de prueba, sin fallas bloqueantes: 2, 3, 4, 5, 6, 8, 9, 11 y 12. El 3 tiene la falla 1 en el PDF. Siguen dependiendo de la base real o de configuración externa: 1, 8 (planes reales), 10 (envío real con la base cargada) y 7 (Resend).
 
 No se revisó: la ficha con ~2.900 colegios en el buscador (requiere importar el Padrón), un envío real de correo, ni Safari/iPhone reales.
+
+## Actualización 27/11/2026
+
+Corregidas las fallas 1 (en parte), 2, 4, 6, 7 y 9 y lo urgente de la 5. Quedan abiertas la 3 (sesiones y roles), la 5 (tablas con scroll lateral, decisión de diseño) y la 8 (falta el mail oficial). Para los puntos 1, 8 y 10 del cliente falta la base real: Padrón sin aplicar, 0 viajes estudiantiles, 0 grupos, 0 contratos y 0 planes.
