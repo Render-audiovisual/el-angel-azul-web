@@ -9,7 +9,7 @@ Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerra
 |---|---|---|---|---|
 | Fran (Claude Code) | `fran/harness` | Harness: guardas, `AGENTS.md`, docs | `AGENTS.md`, `CLAUDE.md`, `package.json`, `scripts/guardas.test.js`, `scripts/helpers/sin-secretos.js`, docs | 25/11 |
 | Fran (Claude Code) | `fran/inicio-aldena` | Paso 8: rediseño del inicio inspirado en la web de referencia (Agustín dio su OK sobre el PR #8) | `index.html`, `assets/css/home.css`, `assets/css/public-experience.css`, `assets/js/modules/home-motion.js`, `renderHome` en `assets/js/app.js` | 27/11 |
-| Agustín (Codex) | `agustin/admin-espacios-botones` | Panel interno mejorado y verificado: 67/67 casos de navegador, 167 pruebas + 1 TODO conocido. Pendiente integración y publicación | `assets/css/admin-workspace.css`, HTML de entrada del panel, controles en `assets/js/app.js`, pruebas E2E y este documento | 27/11 |
+| Agustín (Codex) | `agustin/admin-espacios-botones` | Panel interno mejorado y verificado: Acceso local libre solicitado por el dueño; solo PGlite y loopback. Panel: 67/67 casos de navegador, 167 pruebas + 1 TODO conocido. Pendiente integración y publicación | `assets/css/admin-workspace.css`, HTML del panel, controles en `assets/js/app.js`, `scripts/dev-local.js`, pruebas E2E y este documento | 27/11 |
 
 ## Espacio de trabajo del administrador — 27/11/2026
 
@@ -21,6 +21,9 @@ Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerra
 - En Pagos, la explicación de la estructura futura está en un desplegable abierto por defecto y el aviso de datos de ejemplo sigue visible: este cambio no incorpora cobranza real.
 - Verificación: `npm run check`, 167 aprobadas, 0 fallas y 1 TODO conocido de TLS. `scripts/e2e/admin-workspace.e2e.js`: 67/67 casos, nueve rutas en 1920/1440/1024/768/390/320 px, botones, importes, navegación móvil, guardado local de colegio, filtros, editor de contratos, alta de pasajeros, fichas, Turismo y permisos de agencia. Solo PGlite en memoria, sin servicios reales. Requiere Playwright externo indicado con `PLAYWRIGHT_PATH`; admite `PLAYWRIGHT_CHANNEL=chrome`.
 - Observación previa fuera del alcance visual: el buscador de Pasajeros no incluye `passenger.apellido` cuando llega separado del nombre (módulo `assets/js/modules/passengers.js`). La prueba de esta mejora filtra por nombre; no se modificó esa lógica.
+
+- Acceso libre local (pedido del dueño): `npm run dev -- --libre`. El servidor de revisión está en el puerto 3058 con esa opción, enlazado únicamente a 127.0.0.1 y con PGlite. Añade una sesión ficticia en memoria del servidor sin pedir contraseña al navegador. No toca `server.js`, el login de producción ni las variables de Hostinger. Sin `--libre`, el modo local conserva el acceso normal. Las variables reales se eliminan al arrancar y no se imprimen credenciales.
+- `scripts/dev-local-access.test.js` comprueba el modo normal protegido, acceso libre sin cookie, cookies viejas, peticiones simultáneas, protección de origen y reingreso. `npm run check`: 169 aprobadas, 0 fallas y 1 TODO conocido. Navegador local: panel abierto, ocho secciones y ningún formulario de acceso.
 
 ## Ficha de Adhesión pública — 27/11/2026
 
