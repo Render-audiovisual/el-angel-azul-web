@@ -1,0 +1,222 @@
+/* Ficha de Adhesión: superficie de tarea, con la identidad de la web pública. */
+.adhesion-page {
+  --adhesion-ink: var(--color-deep-blue);
+  --adhesion-rule: var(--color-border);
+  --adhesion-paper: var(--color-surface);
+  --adhesion-wash: var(--color-background);
+  --adhesion-muted: var(--color-muted);
+  width: calc(100% - 48px);
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 40px 0 80px;
+  gap: 28px;
+  background: none;
+  caret-color: var(--color-primary);
+}
+.adhesion-page ::selection { background: var(--color-deep-blue); color: white; }
+.adhesion-page :is(a, button, input, select):focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 3px;
+}
+.adhesion-page :is(input, select, button, a) { scroll-margin-top: 128px; }
+.adhesion-page :is(.adhesion-intro, .ficha-adhesion-hero) {
+  background: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+body:not([data-app-entry="admin"]) #app .adhesion-page h1 {
+  color: var(--adhesion-ink);
+  font: 400 3rem/1.05 var(--font-display);
+  letter-spacing: 0;
+  margin: 0;
+}
+.adhesion-page :is(.adhesion-intro, .ficha-adhesion-hero) p {
+  color: var(--adhesion-muted);
+  font: 400 1rem/1.7 var(--font-body);
+  letter-spacing: 0;
+  text-transform: none;
+  max-width: 70ch;
+  margin: 0;
+}
+.adhesion-page :is(.public-inscripcion-card, .ficha-adhesion-panel) {
+  background: var(--adhesion-paper);
+  border: 1px solid var(--adhesion-rule);
+  border-radius: 16px;
+  box-shadow: none;
+  padding: 32px;
+  gap: 24px;
+  min-width: 0;
+}
+body:not([data-app-entry="admin"]) #app .adhesion-page h2 {
+  font: 600 1.125rem/1.5 var(--font-body);
+  color: var(--adhesion-ink);
+  letter-spacing: 0;
+  margin: 0;
+}
+.adhesion-page .inscripcion-section-heading { margin: 0; padding: 0; }
+.adhesion-page .inscripcion-tipo-grid { gap: 12px; margin: 0; }
+.adhesion-page .inscripcion-tipo-grid :is(button, a) {
+  display: grid;
+  align-content: start;
+  text-align: left;
+  gap: 8px;
+  min-height: 116px;
+  background: var(--adhesion-paper);
+  border: 1px solid var(--color-border-strong);
+  border-radius: 12px;
+  box-shadow: none;
+  padding: 20px;
+  color: var(--adhesion-ink);
+  text-decoration: none;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+.adhesion-page .inscripcion-tipo-grid :is(button, a):hover { background: var(--adhesion-wash); border-color: var(--color-primary); }
+.adhesion-page .inscripcion-tipo-grid .selected { background: var(--color-surface-soft); border: 2px solid var(--color-primary); padding: 19px; }
+.adhesion-page .inscripcion-tipo-grid strong { color: var(--adhesion-ink); font: 600 1rem/1.5 var(--font-body); }
+.adhesion-page .inscripcion-tipo-grid span { color: var(--adhesion-muted); font: 400 .875rem/1.65 var(--font-body); }
+.adhesion-page .adhesion-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  list-style: none;
+  padding: 0 0 20px;
+  margin: 8px 0 0;
+  border-bottom: 1px solid var(--adhesion-rule);
+}
+.adhesion-steps li { display: flex; align-items: center; gap: 8px; color: var(--adhesion-muted); font-size: .875rem; }
+.adhesion-steps li span { display: grid; place-items: center; width: 28px; height: 28px; border: 1px solid var(--color-border-strong); border-radius: 50%; font-weight: 600; }
+.adhesion-steps li[aria-current="step"] { color: var(--adhesion-ink); font-weight: 600; }
+.adhesion-steps li[aria-current="step"] span { background: var(--adhesion-ink); border-color: var(--adhesion-ink); color: white; }
+.adhesion-page .adhesion-selection-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  border: 0;
+  margin: 0;
+  padding: 20px 0 0;
+  gap: 20px;
+  min-width: 0;
+}
+.adhesion-page :is(.adhesion-selection-fields legend, .ficha-adhesion-form legend) {
+  color: var(--adhesion-ink);
+  font: 600 1.125rem/1.5 var(--font-body);
+  padding: 0;
+  float: left;
+  width: 100%;
+  margin: 0 0 4px;
+}
+.adhesion-page .adhesion-trip-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+.adhesion-page .public-inscripcion-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.adhesion-page :is(.public-inscripcion-card, .ficha-adhesion-form) label {
+  display: grid;
+  gap: 8px;
+  font: 500 .875rem/1.6 var(--font-body);
+  color: var(--color-text);
+  min-width: 0;
+}
+.adhesion-page :is(input:not([type="checkbox"]):not([type="radio"]), select) {
+  background: var(--adhesion-paper);
+  border: 1px solid var(--color-border-strong);
+  border-radius: 8px;
+  color: var(--color-text);
+  min-height: 48px;
+  width: 100%;
+  max-width: 100%;
+  padding: 11px 12px;
+  font: 400 1rem/1.5 var(--font-body);
+}
+.adhesion-page input::placeholder { color: var(--adhesion-muted); opacity: 1; }
+.adhesion-page :is(input[type="checkbox"], input[type="radio"]) { accent-color: var(--color-primary); }
+.adhesion-page .ficha-adhesion-check { min-height: 44px; align-items: start; gap: 12px; }
+.adhesion-page .ficha-adhesion-check input { margin: 0; }
+.adhesion-page :is(.adhesion-required-note, .inscripcion-field-hint, .ficha-fieldset-note) {
+  color: var(--adhesion-muted);
+  font-size: .875rem;
+  line-height: 1.7;
+  margin: 0;
+}
+.adhesion-page .inscripcion-contract-result { padding: 0; background: none; border: 0; font-size: .875rem; line-height: 1.65; }
+.adhesion-page .inscripcion-contract-result:empty { display: none; }
+.adhesion-page .inscripcion-contract-result p { margin: 4px 0 8px; }
+.adhesion-page .inscripcion-contract-result a { background: none; border: 0; padding: 0; text-decoration: underline; text-underline-offset: 3px; }
+.adhesion-page .inscripcion-step-actions {
+  position: static;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  width: 100%;
+  padding: 24px 0 0;
+  border-top: 1px solid var(--adhesion-rule);
+  margin: 8px 0 0;
+  background: none;
+  box-shadow: none;
+}
+.adhesion-page .inscripcion-step-actions p { margin: 0; font-size: .8125rem; line-height: 1.6; max-width: 30ch; }
+.adhesion-page :is(.inscripcion-step-actions button, .ficha-adhesion-submit) {
+  background: var(--adhesion-ink);
+  border: 1px solid var(--adhesion-ink);
+  border-radius: 8px;
+  box-shadow: none;
+  color: white;
+  font: 600 .9375rem/1.5 var(--font-body);
+  min-height: 50px;
+  padding: 14px 22px;
+  width: auto;
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+.adhesion-page :is(.inscripcion-step-actions button, .ficha-adhesion-submit):hover { background: var(--color-primary-strong); }
+.adhesion-page button:disabled { opacity: .6; cursor: wait; }
+.adhesion-page .ficha-adhesion-context { background: var(--adhesion-wash); border: 0; border-radius: 8px; padding: 20px; gap: 8px; }
+.adhesion-page .ficha-adhesion-context span { font-size: .8125rem; text-transform: none; font-weight: 500; }
+.adhesion-page .ficha-adhesion-context strong { line-height: 1.6; }
+.adhesion-page .ficha-adhesion-context p { font-size: .875rem; line-height: 1.7; }
+.adhesion-page :is(.ficha-adhesion-context-edit, .adhesion-back-link) { background: none; font-size: .875rem; font-weight: 500; text-decoration: underline; text-underline-offset: 3px; }
+.adhesion-page .ficha-adhesion-help { background: none; border: 0; border-radius: 0; padding: 0; gap: 6px; }
+.adhesion-page .ficha-adhesion-help strong { color: var(--adhesion-ink); text-transform: none; font-weight: 600; font-size: .9375rem; }
+.adhesion-page .ficha-adhesion-help p { color: var(--adhesion-muted); font-size: .875rem; line-height: 1.7; }
+.adhesion-page .ficha-adhesion-form { gap: 28px; }
+.adhesion-page .ficha-adhesion-form fieldset { border: 0; border-top: 1px solid var(--adhesion-rule); border-radius: 0; box-shadow: none; padding: 24px 0 0; gap: 20px 16px; }
+.adhesion-page .ficha-fieldset-note { margin: 0; }
+.adhesion-page .ficha-nombre-aviso { border: 0; background: var(--color-surface-soft); border-radius: 8px; color: var(--color-primary-strong); font-size: .8125rem; line-height: 1.7; padding: 12px; }
+.adhesion-page .ficha-opcional { color: var(--adhesion-muted); }
+.adhesion-page .ficha-adhesion-signature { border: 0; padding: 0; gap: 16px; }
+.adhesion-page .ficha-adhesion-signature > span { display: none; }
+.adhesion-page .ficha-adhesion-signature canvas { border: 1px dashed var(--color-primary); border-radius: 8px; background: var(--adhesion-wash); }
+.adhesion-page .ficha-adhesion-signature button { min-height: 44px; padding: 8px 14px; border-radius: 8px; background: var(--adhesion-paper); border: 1px solid var(--color-border-strong); box-shadow: none; }
+.adhesion-page .ficha-adhesion-submit { justify-self: end; min-width: 200px; }
+.adhesion-page .ficha-planes-opciones label:has(input:checked) { background: var(--color-surface-soft); border-color: var(--color-primary); }
+.adhesion-page .ficha-adhesion-error { scroll-margin-top: 128px; }
+.adhesion-page .ficha-adhesion-context-edit { border: 0; border-radius: 0; padding: 0; justify-self: start; }
+.adhesion-page .ficha-planes-opciones label { display: flex; align-items: center; gap: 12px; }
+.adhesion-page .ficha-planes-opciones input[type="radio"] { min-height: 22px; width: 22px; height: 22px; flex: 0 0 22px; margin: 0; padding: 0; }
+.adhesion-page .adhesion-optional-address { grid-column: 1 / -1; }
+.adhesion-page .adhesion-optional-address summary { color: var(--color-primary-strong); cursor: pointer; padding: 12px 0; min-height: 44px; font-size: .875rem; line-height: 1.6; }
+.adhesion-page .adhesion-optional-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; padding: 12px 0; }
+@media (max-width: 640px) {
+  .adhesion-page { width: calc(100% - 32px); padding: 24px 0 56px; gap: 20px; }
+  body:not([data-app-entry="admin"]) #app .adhesion-page h1 { font-size: 2.5rem; }
+  .adhesion-page :is(.public-inscripcion-card, .ficha-adhesion-panel) { padding: 20px; gap: 20px; }
+  .adhesion-page .inscripcion-tipo-grid { grid-template-columns: 1fr; }
+  .adhesion-page .inscripcion-tipo-grid :is(button, a) { min-height: 0; padding: 16px; }
+  .adhesion-page .inscripcion-tipo-grid .selected { padding: 15px; }
+  .adhesion-page .adhesion-trip-grid { grid-template-columns: 1fr; }
+  .adhesion-page .ficha-adhesion-form fieldset { grid-template-columns: minmax(0, 1fr); }
+  .adhesion-page .adhesion-steps { gap: 14px; }
+  .adhesion-page .adhesion-steps li { font-size: .8125rem; }
+  .adhesion-page .inscripcion-step-actions { flex-direction: column; align-items: stretch; }
+  .adhesion-page .inscripcion-step-actions p { max-width: none; }
+  .adhesion-page :is(.inscripcion-step-actions button, .ficha-adhesion-submit) { width: 100%; min-width: 0; }
+  .adhesion-page .ficha-adhesion-context { padding: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .adhesion-page * { transition: none !important; }
+}
+
+/* El formulario necesita el espacio de pantalla para sus propios controles. */
+body:has(.adhesion-page) .whatsapp-fab { display: none; }

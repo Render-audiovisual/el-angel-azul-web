@@ -9,7 +9,16 @@ Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerra
 |---|---|---|---|---|
 | Fran (Claude Code) | `fran/harness` | Harness: guardas, `AGENTS.md`, docs | `AGENTS.md`, `CLAUDE.md`, `package.json`, `scripts/guardas.test.js`, `scripts/helpers/sin-secretos.js`, docs | 25/11 |
 | Fran (Claude Code) | `fran/inicio-aldena` | Paso 8: rediseño del inicio inspirado en la web de referencia (Agustín dio su OK sobre el PR #8) | `index.html`, `assets/css/home.css`, `assets/css/public-experience.css`, `assets/js/modules/home-motion.js`, `renderHome` en `assets/js/app.js` | 27/11 |
-| Agustín (Codex) | `agustin/pdf-aclaracion-centrada` | Aclaración del PDF centrada sobre su línea; verificada con nombres largos y cortos. Check: 167 pasan, 0 fallos, 1 TODO previo de TLS. Pendiente autorización para integrar a main y publicar | `lib/ficha-pdf.js`, este documento | 27/11 |
+| Agustín (Codex) | `agustin/ficha-adhesion-clara` | Ficha de Adhesión simplificada y verificada: 58/58 pruebas de navegador, 167 aprobadas + 1 TODO en check. Pendiente integración y publicación; PR #33 de portada separado | `assets/js/app.js`, `assets/css/adhesion.css`, `index.html`, pruebas E2E y este documento | 27/11 |
+
+## Ficha de Adhesión pública — 27/11/2026
+
+- Rama `agustin/ficha-adhesion-clara`, creada desde la rama de integración y actualizada con los cambios ya integrados a main. No incluye el PR #33 de portada.
+- El acceso público se llama «Ficha de adhesión». Distingue ficha del pasajero y tutor adicional; elimina el resumen intermedio duplicado y los porcentajes de avance inventados. Conserva las rutas públicas y el envío existente.
+- Selección con controles nativos: nivel educativo, destino, año del viaje, colegio, grado/año y división. La vuelta desde la ficha conserva esa selección. La carga de colegios y la verificación del contrato tienen mensajes diferenciados de carga/error.
+- Diseño con Poppins/Bebas y paleta existente, estilos aislados en `assets/css/adhesion.css`. Campos visibles sin animación de entrada, firma dibujada o escrita, campos de domicilio opcionales dentro de un desplegable y CTA sin solapamientos con WhatsApp.
+- Verificación local: `npm run check` (167 aprobadas, 0 fallas, 1 TODO conocido de TLS), 58/58 casos en `scripts/e2e/ficha.e2e.js` con Chrome (`PLAYWRIGHT_CHANNEL=chrome`, Playwright instalado fuera del repo). Revisión visual con tipografías cargadas en escritorio y celular; pruebas de selección en 1280, 768, 390 y 320 px, validaciones, errores de red, reintentos, firma y tutor.
+- Solo PGlite y dobles locales; no se accedió a Supabase real. Sin dependencias nuevas, cambios al backend ni publicación en Hostinger. La integración y el despliegue los decide el dueño.
 
 ## Harness (25/11/2026)
 - Las reglas del repo ahora se chequean en `npm run check` con `scripts/guardas.test.js`: secretos en archivos del repo, `.env` trackeados, docs con referencias rotas y `CLAUDE.md` → `AGENTS.md`.

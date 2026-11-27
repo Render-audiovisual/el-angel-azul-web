@@ -416,11 +416,10 @@ test("si un guardado del admin recibe 401, se recarga y el login avisa que el ca
   assert.match(functionSource("renderAdminLogin", "renderAdminShell"), /adminLoginNotice/);
 });
 
-test("el resumen de la inscripción no se muestra dos veces en el segundo tramo", () => {
-  const source = appSource.slice(appSource.indexOf("const renderStep = () => {"));
-  const renderStep = source.slice(0, source.indexOf("const goNext"));
-  assert.match(renderStep, /contextSummary\.hidden = macroStep === 2/);
-  assert.match(fs.readFileSync(path.join(__dirname, "../assets/css/styles.css"), "utf8"), /\.inscripcion-context-summary\[hidden\]\s*\{\s*display:\s*none/);
+test("la selección abre la ficha sin un resumen intermedio duplicado", () => {
+  const source = functionSource("bindInscripcion", "fichaAdhesionContextFromParams");
+  assert.match(source, /location.hash = `\/inscripcion\/ficha-adhesion\?/);
+  assert.doesNotMatch(source, /data-inscripcion-summary|currentStep|macroStep/);
 });
 
 test("el nombre de sesión del admin y los placeholders mantienen contraste", () => {
@@ -457,14 +456,10 @@ test("el botón Limpiar firma tiene área táctil de 44 px", () => {
   assert.match(css.slice(inicio, css.indexOf("}", inicio)), /min-height: 44px/);
 });
 
-test("la ficha y la selección de curso no esconden campos con visibility:hidden hasta el scroll", () => {
-  // autoAlpha deja visibility:hidden: el bloque sale del orden de Tab y del lector de pantalla.
-  for (const [nombre, siguiente] of [["bindInscripcionAnimations", "renderInscripcion"], ["bindFichaAdhesionAnimations", "fichaOpciones"]]) {
+test("la ficha y la selección no dependen de animaciones para mostrar sus campos", () => {
+  for (const [nombre, siguiente] of [["renderInscripcion", "bindInscripcion"], ["renderFichaAdhesion", "bindFichaAdhesion"], ["renderFichaTutor", "bindFichaTutor"]]) {
     const fuente = functionSource(nombre, siguiente);
-    const reveal = fuente.slice(fuente.indexOf('toArray("[data-reveal-light]")')).replace(/^\s*\/\/.*$/gm, "");
-    assert.match(reveal, /gsap\.from\(el, \{\s*opacity: 0/, `${nombre}: el reveal con scroll tiene que animar opacity, no autoAlpha`);
-    assert.doesNotMatch(reveal, /autoAlpha/, `${nombre}: autoAlpha esconde los campos del teclado`);
-    assert.match(reveal, /addEventListener\("focusin", \(\) => tween\.progress\(1\)\)/, `${nombre}: el foco tiene que mostrar el bloque completo`);
+    assert.doesNotMatch(fuente, /bind(?:Inscripcion|FichaAdhesion)Animations|autoAlpha|visibility:\s*hidden/);
   }
 });
 
@@ -539,12 +534,12 @@ test("Turismo: seis destacados, página con todos los paquetes y filtros, detall
   for (const admin of ["admin/index.html", "admin-turismo/index.html"]) assert.match(fs.readFileSync(path.join(__dirname, "..", admin), "utf8"), /turismo\.css/, `${admin} carga los estilos de la tarjeta (vista previa del editor)`);
 });
 
-test("el menú público tiene Inicio, Turismo e Inscripción online, y la inscripción dice Pasajero sin «PAX»", () => {
+test("el menú público identifica la Ficha de adhesión y distingue al pasajero sin «PAX»", () => {
   const html = fs.readFileSync(path.join(__dirname, "../index.html"), "utf8");
   const nav = html.slice(html.indexOf('<nav class="site-nav"'), html.indexOf("</nav>", html.indexOf('<nav class="site-nav"')));
   const enlaces = [...nav.matchAll(/<a [^>]*href="([^"]+)"[^>]*>([^<]+)/g)].map(([, href, texto]) => `${href} ${texto.trim()}`);
-  assert.deepEqual(enlaces, ["#/ Inicio", "#/turismo Turismo", "#/inscripcion Inscripción online", "/admin/ Iniciar sesión"]);
-  assert.match(appSource, /<strong>Pasajero<\/strong>/);
+  assert.deepEqual(enlaces, ["#/ Inicio", "#/turismo Turismo", "#/inscripcion Ficha de adhesión", "/admin/ Iniciar sesión"]);
+  assert.match(appSource, /<strong>Ficha del pasajero<\/strong>/);
   assert.doesNotMatch(appSource, /Pasajero \(PAX\)/);
 });
 

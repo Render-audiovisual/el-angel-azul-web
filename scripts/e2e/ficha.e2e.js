@@ -25,13 +25,17 @@ db.insertFichaTutor = async (datos) => {
   guardadas.tutor.push(datos); return { id: String(guardadas.tutor.length) };
 };
 db.setFichaEmailResultado = async () => {};
-db.listColegiosPublicos = async () => [];
+db.listColegiosPublicos = async () => [{ id: COLEGIO, nombre: "Escuela Normal N° 1", localidad: "Goya" }];
 
 const PAX_URL = (extra = "") => `/#/inscripcion/ficha-adhesion?nivel=Secundaria&destino=Bariloche&anio=2027&colegioId=${COLEGIO}&grado=5%C2%B0&division=B${extra}`;
 const results = [];
 async function caso(nombre, fn) {
+  if (process.env.E2E_FILTER && !nombre.includes(process.env.E2E_FILTER)) return;
   try { await fn(); results.push(["ok", nombre]); }
-  catch (error) { results.push(["FALLA", nombre, error.message.split("\n")[0]]); }
+  catch (error) { results.push(["FALLA", nombre, error.message.replace(/\s+/g, " ")]); }
+  finally {
+    for (const context of browser.contexts()) await context.close();
+  }
 }
 async function llenar(page, valores) {
   for (const [name, valor] of Object.entries(valores)) {
@@ -78,15 +82,109 @@ const okTexto = (page) => page.getByText("Recibimos tu ficha correctamente.").wa
   server = createAppServer();
   await new Promise((r) => server.listen(0, "127.0.0.1", r));
   base = `http://127.0.0.1:${server.address().port}`;
-  browser = await chromium.launch();
+  browser = await chromium.launch(process.env.PLAYWRIGHT_CHANNEL ? { channel: process.env.PLAYWRIGHT_CHANNEL } : {});
   const nuevaPagina = async (opts = {}) => {
     const ctx = await browser.newContext(opts);
     const page = await ctx.newPage();
+    page.setDefaultTimeout(8000);
     page.on("response", async (r) => { if (process.env.DBG && r.url().includes("/api/public/fichas")) console.log("RESP", r.status(), (await r.text()).slice(0, 300)); });
     await page.route("**/cdn.jsdelivr.net/**", (route) => route.abort());
+    await page.route("**/fonts.googleapis.com/**", (route) => route.abort());
     await page.route("**/apis.datos.gob.ar/**", (route) => route.fulfill({ json: { localidades: [{ nombre: "Corrientes" }, { nombre: "Capital" }] } }));
     return page;
   };
+
+  for (const width of [1280, 768, 390, 320]) {
+    await caso(`Ficha (${width}px): selección directa, errores, edición y campos accesibles`, async () => {
+      const page = await nuevaPagina({ viewport: { width, height: 900 }, reducedMotion: "reduce" });
+      const errores = [];
+      page.on("pageerror", (error) => errores.push(error.message));
+      await page.goto(`${base}/#/inscripcion`);
+      await page.locator("[data-inscripcion-tipo-pax]").click();
+      assert.equal(await page.locator("[data-inscripcion-heading]").evaluate((el) => el === document.activeElement), true);
+      await page.locator("[data-inscripcion-next]").click();
+      await page.locator("[data-inscripcion-error]:not([hidden])").waitFor();
+      assert.equal(new URL(page.url()).hash, "#/inscripcion");
+      await page.locator("[data-inscripcion-nivel]").selectOption("Primaria");
+      assert.deepEqual(await page.locator("[data-inscripcion-destino] option").allTextContents(), ["Carlos Paz"]);
+      await page.locator("[data-inscripcion-nivel]").selectOption("Secundaria");
+      await page.locator("#colegios-lista option").waitFor({ state: "attached" });
+      await page.locator("[data-inscripcion-anio]").selectOption("2027");
+      await page.locator("[data-inscripcion-colegio-buscar]").fill("Escuela Normal N° 1 — Goya");
+      await page.locator("[data-inscripcion-grado]").selectOption("5°");
+      await page.locator("[data-inscripcion-division]").fill("b");
+      await page.locator("[data-inscripcion-next]").click();
+      await page.locator("[data-ficha-adhesion-form]").waitFor();
+      assert.match(page.url(), /inscripcion\/ficha-adhesion\?/);
+      assert.match(await page.locator(".ficha-adhesion-context").innerText(), /Escuela Normal N° 1/);
+      assert.equal((await page.locator('.adhesion-steps [aria-current="step"]').innerText()).replace(/\s+/g, " "), "2 Datos y firma");
+      assert.equal(await page.getByText("90% completado").count(), 0);
+      assert.equal(await page.locator('[name="pasajeroNombre"]').isVisible(), true);
+      await page.locator('[name="firmaTexto"]').scrollIntoViewIfNeeded();
+      assert.equal(await page.locator('[name="firmaTexto"]').isVisible(), true);
+      const ancho = await page.evaluate(() => [document.documentElement.scrollWidth, innerWidth]);
+      assert.ok(ancho[0] <= ancho[1] + 1, `scroll horizontal ${ancho}`);
+      await page.locator(".ficha-adhesion-context-edit").click();
+      await page.locator("[data-inscripcion-form]:not([hidden])").waitFor();
+      assert.equal(await page.locator("[data-inscripcion-anio]").inputValue(), "2027");
+      assert.equal(await page.locator("[data-inscripcion-grado]").inputValue(), "5°");
+      assert.equal(await page.locator("[data-inscripcion-division]").inputValue(), "B");
+      assert.equal(await page.locator("[data-inscripcion-colegio-buscar]").inputValue(), "Escuela Normal N° 1");
+      assert.deepEqual(errores, []);
+      await page.close();
+    });
+  }
+  await caso("Selección: lista de colegios caída explica cómo continuar", async () => {
+    const page = await nuevaPagina();
+    await page.route("**/api/public/colegios", (route) => route.fulfill({ status: 500, json: { ok: false } }));
+    await page.goto(`${base}/#/inscripcion`);
+    await page.locator("[data-inscripcion-tipo-pax]").click();
+    await page.getByText("No pudimos cargar la lista de colegios.", { exact: false }).waitFor();
+    await page.locator("[data-inscripcion-colegio-no-esta]").check();
+    await page.locator("[data-inscripcion-colegio-texto]").fill("Colegio cargado a mano");
+    await page.locator("[data-inscripcion-grado]").selectOption("5°");
+    await page.locator("[data-inscripcion-division]").fill("B");
+    await page.locator("[data-inscripcion-next]").click();
+    await page.locator("[data-ficha-adhesion-form]").waitFor();
+  });
+  await caso("Domicilio: campos opcionales se abren por teclado y conservan valores", async () => {
+    const page = await nuevaPagina(); await abrirPax(page);
+    const details = page.locator(".adhesion-optional-address");
+    assert.equal(await page.locator('[name="domicilioPiso"]').isVisible(), false);
+    await details.locator("summary").focus();
+    await page.keyboard.press("Enter");
+    await page.locator('[name="domicilioPiso"]').fill("2");
+    await details.locator("summary").click();
+    await details.locator("summary").click();
+    assert.equal(await page.locator('[name="domicilioPiso"]').inputValue(), "2");
+    const radios = page.locator('input[name="planPagoId"]');
+    await radios.first().waitFor();
+    assert.ok((await radios.first().boundingBox()).width <= 24);
+  });
+  await caso("Selección: colegio manual continúa sin contrato", async () => {
+    const page = await nuevaPagina();
+    await page.goto(`${base}/#/inscripcion`);
+    await page.locator("[data-inscripcion-tipo-pax]").click();
+    await page.locator("[data-inscripcion-colegio-no-esta]").check();
+    await page.locator("[data-inscripcion-colegio-texto]").fill("Colegio de prueba manual");
+    await page.locator("[data-inscripcion-grado]").selectOption("5°");
+    await page.locator("[data-inscripcion-division]").fill("A");
+    await page.locator("[data-inscripcion-next]").click();
+    await page.locator("[data-ficha-adhesion-form]").waitFor();
+    assert.match(await page.locator(".ficha-adhesion-context").innerText(), /Colegio de prueba manual/);
+    await page.close();
+  });
+  await caso("Firma por texto: envío accesible sin dibujar en canvas", async () => {
+    const page = await nuevaPagina(); await abrirPax(page);
+    await llenar(page, PAX);
+    await fecha(page, "pasajeroNacimiento", "14", "03", "2009");
+    await fecha(page, "responsableNacimiento", "02", "05", "1980");
+    await page.locator('input[name="planPagoId"]').first().check();
+    await page.locator('[name="aceptaCondiciones"]').check();
+    await page.locator('[name="firmaTexto"]').fill("María Núñez");
+    await submit(page); await okTexto(page);
+    await page.close();
+  });
 
   await caso("PAX: envío válido → 201, éxito y datos normalizados", async () => {
     const page = await nuevaPagina(); await abrirPax(page); await completarPax(page); await submit(page);
