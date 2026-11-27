@@ -7952,7 +7952,7 @@
               </div>
               <div class="inscripcion-tipo-grid" data-inscripcion-tipo>
                 <button type="button" data-inscripcion-tipo-pax aria-pressed="false">
-                  <strong>Pasajero (PAX)</strong>
+                  <strong>Pasajero</strong>
                   <span>Ficha de adhesión del alumno que viaja. La completa su padre, madre o tutor.</span>
                 </button>
                 <a href="#/inscripcion/tutor">
