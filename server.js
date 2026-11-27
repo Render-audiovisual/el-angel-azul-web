@@ -729,6 +729,12 @@ async function handleSheets(req, res, url) {
 
     rows = sanitizeRows(rows, SCHEMA[sheet]);
     deleteIds = sanitizeDeleteIds(deleteIds);
+    // Permisos: el rol agencia crea y edita, pero solo el administrador elimina registros
+    // (grupos, contratos, pasajeros, planes, viajes de Turismo, etc.). La baja de un colegio
+    // es una edición (activo = false) y se puede revertir, por eso la agencia sí puede.
+    if (deleteIds.length && adminSession?.role !== "admin") {
+      return json(res, 403, { ok: false, error: "Solo el administrador puede eliminar registros. Podés editarlos o darlos de baja." });
+    }
 
     if (POSTGRES_MIGRATION_ENABLED && (sheet === "FICHAS_ADHESION" || POSTGRES_SAVE_FN[sheet])) {
       const list = sheet === "FICHAS_ADHESION" ? db.listFichasAdmin : POSTGRES_LIST_FN[sheet];

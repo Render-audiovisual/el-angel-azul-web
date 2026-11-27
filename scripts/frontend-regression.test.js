@@ -547,3 +547,8 @@ test("el menú público tiene Inicio, Turismo e Inscripción online, y la inscri
   assert.match(appSource, /<strong>Pasajero<\/strong>/);
   assert.doesNotMatch(appSource, /Pasajero \(PAX\)/);
 });
+
+test("la agencia no ve el botón Eliminar de los viajes de Turismo del admin", () => {
+  assert.match(appSource, /function adminCanDelete\(\)[\s\S]{0,160}=== "admin"/);
+  assert.match(appSource, /adminCanDelete\(\) \? `<button type="button" data-admin-delete=/);
+});

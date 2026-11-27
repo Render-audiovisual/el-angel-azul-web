@@ -1843,7 +1843,7 @@
               </div>
               <div class="admin-turismo-row-actions">
                 <button type="button" data-admin-edit="${trip.id}">Editar viaje</button>
-                <button type="button" data-admin-delete="${trip.id}">Eliminar</button>
+                ${adminCanDelete() ? `<button type="button" data-admin-delete="${trip.id}">Eliminar</button>` : ""}
               </div>
             </div>
           </article>
@@ -2131,6 +2131,11 @@
         return `<svg class="admin-inline-icon ${extraClass}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${path}</svg>`;
       }
 
+
+      // Solo el administrador elimina registros (el servidor también lo exige); la agencia crea y edita.
+      function adminCanDelete() {
+        return String(adminSession?.role || "").toLowerCase() === "admin";
+      }
 
       function adminVisibleModules() {
         const role = String(adminSession?.role || "admin").toLowerCase();
