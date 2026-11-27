@@ -695,42 +695,43 @@
         return whatsappLink(`Hola, quiero consultar por ${title} (${packageItem.duracion})${price}. Lo vi en la web de El Angel Azul. ¿Me pasan disponibilidad y formas de pago?`);
       }
 
+      // Tarjeta compacta de viaje: toda la tarjeta lleva al detalle (pensada para elegir rápido entre muchos paquetes).
+      function turismoPrecioNumero(packageItem) {
+        const valor = Number(packageItem.precioValor);
+        if (Number.isFinite(valor) && valor > 0) return valor;
+        const digitos = String(packageItem.precioDesde || "").replace(/[^\d]/g, "");
+        return digitos ? Number(digitos) : null;
+      }
+
+      function turismoDias(packageItem) {
+        const match = String(packageItem.duracion || "").match(/\d+/);
+        return match ? Number(match[0]) : null;
+      }
+
+      const TURISMO_ARROW_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
+
       function renderTurismoPackageCard(packageItem) {
-        const gallery = packageItem.gallery?.length ? packageItem.gallery.slice(0, 3) : [packageItem.image];
         const priceText = packageItem.precioDesde && packageItem.precioDesde !== "Consultar" ? packageItem.precioDesde : "";
-        const includeItems = Array.isArray(packageItem.incluye) ? packageItem.incluye.slice(0, 3) : [];
         const destination = escapeHtml(packageItem.destino);
-        const category = escapeHtml(packageItem.categoria);
-        const fechas = packageItem.fechaSalida ? `${escapeHtml(packageItem.fechaSalida)}${packageItem.fechaRegreso ? ` al ${escapeHtml(packageItem.fechaRegreso)}` : ""}` : "";
-        const arrow = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
+        const dias = turismoDias(packageItem);
+        const image = escapeHtml(safeMediaUrl((packageItem.gallery && packageItem.gallery[0]) || packageItem.image));
         return `
           <article class="tur-card turismo-package-card">
-            <div class="tur-card-media" data-card-carousel data-carousel-index="0">
-              <div class="tur-card-track">
-                ${gallery.map((image, index) => `
-                  <img class="${index === 0 ? "active" : ""}" src="${escapeHtml(safeMediaUrl(image))}" alt="${destination} ${index + 1}" data-carousel-slide${index === 0 ? "" : ' loading="lazy"'}>
-                `).join("")}
-              </div>
-              <span class="tur-card-tag" data-categoria="${escapeHtml(((packageItem.intenciones && packageItem.intenciones[0]) || "").toLowerCase())}">${packageItem.destacado ? "Destacado" : category}</span>
-              ${gallery.length > 1 ? `
-              <button class="tur-card-arrow tur-card-prev" type="button" aria-label="Foto anterior de ${destination}" data-carousel-prev>${arrow}</button>
-              <button class="tur-card-arrow tur-card-next" type="button" aria-label="Foto siguiente de ${destination}" data-carousel-next>${arrow}</button>
-              <div class="package-carousel-count" aria-hidden="true">1/${gallery.length}</div>` : ""}
-            </div>
-            <div class="tur-card-body">
-              <p class="tur-card-meta"><span>${escapeHtml(packageItem.tipo)}</span><span>${escapeHtml(packageItem.temporada)}</span></p>
-              <h3>${destination}</h3>
-              <p class="tur-card-facts"><span>${escapeHtml(packageItem.duracion)}</span>${fechas ? `<span>${fechas}</span>` : ""}${packageItem.salidaGarantizada ? `<span class="tur-card-garantizada">Salida garantizada</span>` : ""}</p>
-              <p class="tur-card-summary">${escapeHtml(packageItem.resumen)}</p>
-              ${includeItems.length ? `<ul class="tur-card-includes" aria-label="Incluye">${includeItems.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>` : ""}
-              <div class="tur-card-foot">
-                <p class="tur-price" aria-label="${priceText ? `Precio desde ${escapeHtml(priceText)}` : "Precio a consultar"}"><span>${priceText ? "Desde" : "Precio"}</span><strong>${priceText ? escapeHtml(priceText) : "A consultar"}</strong></p>
-                <div class="tur-card-actions">
-                  <a class="eaa-button eaa-button-fill" href="#/turismo/${encodeURIComponent(String(packageItem.slug || ""))}">Ver detalles ${arrow}</a>
-                  <a class="eaa-button eaa-button-ink" href="${escapeHtml(turismoWhatsappForPackage(packageItem))}" target="_blank" rel="noopener" aria-label="Consultar por ${destination} por WhatsApp">WhatsApp</a>
-                </div>
-              </div>
-            </div>
+            <a class="tur-card-link" href="#/turismo/${encodeURIComponent(String(packageItem.slug || ""))}">
+              <span class="tur-card-media">
+                <img src="${image}" alt="" loading="lazy" width="800" height="600">
+                <span class="tur-card-tag">${packageItem.destacado ? "Destacado" : escapeHtml(packageItem.categoria)}</span>
+                ${dias ? `<span class="tur-card-days">${dias} ${dias === 1 ? "día" : "días"}</span>` : ""}
+              </span>
+              <span class="tur-card-body">
+                <span class="tur-card-meta">${escapeHtml(packageItem.temporada || packageItem.tipo || "")}</span>
+                <h3>${destination}</h3>
+                <span class="tur-card-foot">
+                  <span class="tur-price"><span>${priceText ? "Desde" : "Precio"}</span><strong>${priceText ? escapeHtml(priceText) : "A consultar"}</strong>${priceText ? "<small>por persona</small>" : ""}</span>
+                  <span class="tur-card-go" aria-hidden="true">${TURISMO_ARROW_SVG}</span>
+                </span>
+              </span>
+            </a>
           </article>
         `;
       }
@@ -776,96 +777,147 @@
       function turismoPackageMatchesSearch(packageItem, query = "") {
         const normalizedQuery = String(query || "").trim().toLowerCase();
         if (!normalizedQuery) return true;
-        const searchable = [
-          packageItem.destino,
-          packageItem.titulo,
-          packageItem.tipo,
-          packageItem.temporada,
-          packageItem.categoria,
-          packageItem.duracion,
-          packageItem.resumen,
-          ...(Array.isArray(packageItem.incluye) ? packageItem.incluye : [])
-        ].join(" ").toLowerCase();
-        return searchable.includes(normalizedQuery);
+        return [packageItem.destino, packageItem.titulo, packageItem.tipo, packageItem.categoria, packageItem.resumen, packageItem.temporada]
+          .filter(Boolean).join(" ").toLowerCase().includes(normalizedQuery);
       }
 
-      function updateTurismoPackages(filter = "todos", query = "") {
-        const grid = document.querySelector("[data-turismo-package-grid]");
-        const count = document.querySelector("[data-turismo-results-count]");
-        if (!grid) return;
-        const packages = turismoPackages().filter((packageItem) => {
-          const matchesFilter = filter === "todos" || packageItem.intenciones?.includes(filter);
-          return matchesFilter && turismoPackageMatchesSearch(packageItem, query);
-        });
-        if (count) {
-          count.textContent = packages.length === 1 ? "1 opción encontrada" : `${packages.length} opciones encontradas`;
-        }
-        grid.dataset.resultCount = String(packages.length);
-        grid.innerHTML = packages.length
-          ? packages.map(renderTurismoPackageCard).join("")
-          : renderTurismoEmptyState(!turismoPackages().length);
-        bindTurismoCardCarousels(grid);
-        bindTurismoCardReveal();
-      }
-
-      // Animaciones de Turismo: deliberadamente más livianas que las del Home
-      // (fade-up simple, sin blur ni split de palabras) - Home es la primera
-      // impresión cinematográfica, Turismo es la sección funcional donde el
-      // cliente compara viajes. Dos listas separadas de ScrollTriggers: una
-      // para encabezados/hero (se limpia solo al re-renderizar toda la
-      // página) y otra para las cards del listado (se limpia y rearma cada
-      // vez que cambian los filtros, porque el grid se reemplaza entero).
-      let turismoScrollTriggers = [];
-      let turismoCardTriggers = [];
-
-      function killTurismoAnimations() {
-        turismoScrollTriggers.forEach((trigger) => trigger.kill());
-        turismoScrollTriggers = [];
-        turismoCardTriggers.forEach((trigger) => trigger.kill());
-        turismoCardTriggers = [];
-      }
-
-      // Mismo resguardo que en Home: si a los 1.2/1.3s la animación no avanzó
-      // (ticker de GSAP pausado - pestaña oculta, renderer headless sin rAF),
-      // se fuerza el estado final para que nunca quede contenido invisible.
-      function turismoAntiBlankFallback(animation) {
-        setTimeout(() => { if (animation.progress() < 1) animation.progress(1); }, 1200);
-      }
-
-      // Las tarjetas del listado quedan siempre visibles (antes se escondían con autoAlpha hasta el scroll y salían del orden de Tab).
-      function bindTurismoCardReveal() {}
-
-      // Movimiento de Turismo: el mismo módulo que el inicio (titulares, textos que suben, hero con fotos, pasos, cierre).
+      // Movimiento de Turismo: el mismo módulo que el inicio (titulares, textos que suben, hero con fotos, pasos).
       function bindTurismoAnimations() {
         if (window.EAAHomeMotion) window.EAAHomeMotion.init(document.querySelector(".eaa-turismo-page"));
       }
 
-      function bindTurismoIntentions() {
-        const chips = [...document.querySelectorAll("[data-turismo-intention]")];
-        const search = document.querySelector("[data-turismo-search]");
-        const applyFilters = () => {
-          const activeChip = document.querySelector("[data-turismo-intention].active");
-          updateTurismoPackages(activeChip?.dataset.turismoIntention || "todos", search?.value || "");
-        };
-        chips.forEach((chip) => {
-          chip.addEventListener("click", () => {
-            chips.forEach((item) => { item.classList.toggle("active", item === chip); item.setAttribute("aria-pressed", String(item === chip)); });
-            applyFilters();
-          });
+      const TURISMO_FILTRO_QUIEN = [["", "Todos"], ["pareja", "Pareja"], ["familiar", "Familia"], ["grupo", "Grupo"]];
+      const TURISMO_FILTRO_TIPO = [["", "Todos"], ["playa", "Playa"], ["nieve", "Nieve"], ["escapada", "Escapada"], ["nacional", "Nacional"], ["internacional", "Internacional"]];
+      const TURISMO_FILTRO_DURACION = [["", "Cualquiera"], ["corto", "Hasta 4 días"], ["medio", "5 a 8 días"], ["largo", "9 días o más"]];
+      const TURISMO_ORDENES = [["destacados", "Destacados primero"], ["precio-asc", "Precio: de menor a mayor"], ["precio-desc", "Precio: de mayor a menor"], ["dias-asc", "Duración: más corta primero"], ["dias-desc", "Duración: más larga primero"]];
+      const TURISMO_PAGINA = 24;
+
+      function filtrarOrdenarTurismo(packages, filtros) {
+        const valida = (lista, valor) => lista.some(([clave]) => clave === valor) ? valor : "";
+        const quien = valida(TURISMO_FILTRO_QUIEN, filtros.quien);
+        const tipo = valida(TURISMO_FILTRO_TIPO, filtros.tipo);
+        const duracion = valida(TURISMO_FILTRO_DURACION, filtros.dur);
+        const orden = TURISMO_ORDENES.some(([clave]) => clave === filtros.orden) ? filtros.orden : "destacados";
+        const resultado = packages.filter((p) => {
+          const intenciones = Array.isArray(p.intenciones) ? p.intenciones : [];
+          const dias = turismoDias(p);
+          if (quien && !intenciones.includes(quien)) return false;
+          if (tipo && !intenciones.includes(tipo)) return false;
+          if (duracion === "corto" && !(dias !== null && dias <= 4)) return false;
+          if (duracion === "medio" && !(dias !== null && dias >= 5 && dias <= 8)) return false;
+          if (duracion === "largo" && !(dias !== null && dias >= 9)) return false;
+          return turismoPackageMatchesSearch(p, filtros.q);
         });
-        search?.addEventListener("input", applyFilters);
+        // El orden de entrada ya es «destacados primero»; los viajes sin precio o sin duración van al final.
+        const clave = (p, fn) => { const v = fn(p); return v === null || v === undefined ? Infinity : v; };
+        if (orden === "precio-asc") resultado.sort((a, b) => clave(a, turismoPrecioNumero) - clave(b, turismoPrecioNumero));
+        if (orden === "precio-desc") resultado.sort((a, b) => (turismoPrecioNumero(b) ?? -1) - (turismoPrecioNumero(a) ?? -1));
+        if (orden === "dias-asc") resultado.sort((a, b) => clave(a, turismoDias) - clave(b, turismoDias));
+        if (orden === "dias-desc") resultado.sort((a, b) => (turismoDias(b) ?? -1) - (turismoDias(a) ?? -1));
+        return { resultado, filtros: { q: String(filtros.q || ""), quien, tipo, dur: duracion, orden } };
+      }
+
+      // Página con todos los paquetes: filtros a la izquierda, tarjetas a la derecha, estado en la URL.
+      async function renderTurismoPaquetes() {
+        const packages = await loadTurismoPublicPackages();
+        const params = currentHashParams();
+        const estado = { q: params.get("q") || "", quien: params.get("quien") || "", tipo: params.get("tipo") || "", dur: params.get("dur") || "", orden: params.get("orden") || "destacados", visibles: TURISMO_PAGINA };
+        const abierto = window.matchMedia("(min-width: 62rem)").matches;
+        const radios = (nombre, opciones, actual) => opciones.map(([valor, etiqueta]) => `
+          <label class="tur-radio"><input type="radio" name="${nombre}" value="${valor}"${valor === actual ? " checked" : ""}><span>${etiqueta}</span></label>`).join("");
+        const inicial = filtrarOrdenarTurismo(packages, estado).filtros;
+        document.getElementById("app").innerHTML = `
+          <div class="eaa-home eaa-turismo-page tur-all">
+            <section class="tur-all-head eaa-dark" aria-labelledby="tur-all-title">
+              <div class="eaa-grain" aria-hidden="true"></div>
+              <div class="eaa-wrap">
+                <nav class="tur-crumbs" aria-label="Ruta"><a href="#/turismo">Turismo</a><span aria-hidden="true">/</span><span aria-current="page">Todos los paquetes</span></nav>
+                <h1 id="tur-all-title" class="tur-all-title">Todos los paquetes</h1>
+                <p>Filtrá por cantidad de personas, tipo de viaje, duración y precio. Elegí el que más te guste y consultanos.</p>
+              </div>
+            </section>
+            <section class="tur-shop" aria-label="Paquetes de viaje">
+              <div class="eaa-wrap tur-shop-grid">
+                <details class="tur-filters"${abierto ? " open" : ""}>
+                  <summary>Filtros</summary>
+                  <form class="tur-filters-form" data-tur-filtros autocomplete="off">
+                    <label class="tur-search" for="tur-q"><span>Buscar destino</span>
+                      <input id="tur-q" name="q" type="search" value="${escapeHtml(inicial.q)}" placeholder="Ej: Bariloche, Cataratas, playa">
+                    </label>
+                    <fieldset><legend>¿Cuántos viajan?</legend>${radios("quien", TURISMO_FILTRO_QUIEN, inicial.quien)}</fieldset>
+                    <fieldset><legend>Tipo de viaje</legend>${radios("tipo", TURISMO_FILTRO_TIPO, inicial.tipo)}</fieldset>
+                    <fieldset><legend>Duración</legend>${radios("dur", TURISMO_FILTRO_DURACION, inicial.dur)}</fieldset>
+                    <button type="button" class="eaa-button eaa-button-ink" data-tur-limpiar>Limpiar filtros</button>
+                  </form>
+                </details>
+                <div class="tur-results">
+                  <div class="tur-results-bar">
+                    <p class="tur-count" data-tur-count aria-live="polite"></p>
+                    <label class="tur-sort"><span>Ordenar por</span>
+                      <select name="orden" data-tur-orden>${TURISMO_ORDENES.map(([valor, etiqueta]) => `<option value="${valor}"${valor === inicial.orden ? " selected" : ""}>${etiqueta}</option>`).join("")}</select>
+                    </label>
+                  </div>
+                  <div class="tur-grid tur-grid-all" data-tur-resultados></div>
+                  <div class="tur-more"><button type="button" class="eaa-button eaa-button-ink" data-tur-mas hidden>Mostrar más viajes</button></div>
+                </div>
+              </div>
+            </section>
+          </div>
+        `;
+        const form = document.querySelector("[data-tur-filtros]");
+        const ordenSelect = document.querySelector("[data-tur-orden]");
+        const contenedor = document.querySelector("[data-tur-resultados]");
+        const contador = document.querySelector("[data-tur-count]");
+        const botonMas = document.querySelector("[data-tur-mas]");
+        const leer = () => {
+          const datos = new FormData(form);
+          return { q: datos.get("q") || "", quien: datos.get("quien") || "", tipo: datos.get("tipo") || "", dur: datos.get("dur") || "", orden: ordenSelect.value };
+        };
+        const pintar = () => {
+          const { resultado, filtros } = filtrarOrdenarTurismo(packages, leer());
+          const url = new URLSearchParams();
+          Object.entries(filtros).forEach(([clave, valor]) => { if (valor && !(clave === "orden" && valor === "destacados")) url.set(clave, valor); });
+          history.replaceState(null, "", `#/turismo/paquetes${url.toString() ? `?${url}` : ""}`);
+          const total = resultado.length;
+          contador.textContent = !packages.length ? "Todavía no hay viajes publicados" : total === 1 ? "1 viaje" : `${total} viajes`;
+          const visibles = resultado.slice(0, estado.visibles);
+          contenedor.innerHTML = visibles.length ? visibles.map(renderTurismoPackageCard).join("") : renderTurismoEmptyState(!packages.length);
+          botonMas.hidden = total <= estado.visibles;
+        };
+        form.addEventListener("change", () => { estado.visibles = TURISMO_PAGINA; pintar(); });
+        form.addEventListener("input", (event) => { if (event.target.name === "q") { estado.visibles = TURISMO_PAGINA; pintar(); } });
+        form.addEventListener("submit", (event) => event.preventDefault());
+        ordenSelect.addEventListener("change", () => { estado.visibles = TURISMO_PAGINA; pintar(); });
+        botonMas.addEventListener("click", () => { estado.visibles += TURISMO_PAGINA; pintar(); });
+        document.querySelector("[data-tur-limpiar]").addEventListener("click", () => {
+          form.reset();
+          form.querySelectorAll('input[type="radio"][value=""]').forEach((radio) => { radio.checked = true; });
+          form.querySelector('input[name="q"]').value = "";
+          ordenSelect.value = "destacados";
+          estado.visibles = TURISMO_PAGINA;
+          pintar();
+        });
+        pintar();
+        bindTurismoAnimations();
       }
 
       async function renderTurismo() {
         const packages = await loadTurismoPublicPackages();
         const previewMode = isTurismoPublicPreviewMode();
-        const arrow = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
+        const arrow = TURISMO_ARROW_SVG;
+        const destacados = packages.slice(0, 6);
         const heroSlides = [
           ["cataratas-iguazu", "Las Cataratas del Iguazú rodeadas de selva", "Cataratas del Iguazú"],
           ["playa-rio", "Playa de Río de Janeiro al atardecer", "Playas de Brasil"],
           ["montana-patagonia", "Montañas y lagos de la Patagonia", "Patagonia"],
           ["nieve-montana", "Montaña nevada en la Cordillera", "Nieve y montaña"],
           ["ciudad-rio", "Vista de Río de Janeiro y el Pan de Azúcar", "Río de Janeiro"]
+        ];
+        const beneficios = [
+          ["flight_takeoff", "Destinos nacionales e internacionales", "Escapadas y viajes largos para elegir."],
+          ["support_agent", "Asesoramiento directo", "Una persona de la agencia responde en cada paso."],
+          ["event_available", "Fechas y cupos claros", "Se confirman por WhatsApp antes de reservar."],
+          ["payments", "Pagos a confirmar", "Te contamos las opciones antes de que decidas."]
         ];
         const pasos = [
           ["001", "Contanos la idea", "Fecha tentativa, cantidad de personas y estilo de viaje."],
@@ -913,35 +965,28 @@
               </div>
             </section>
 
-            <section class="tur-benefits eaa-soft" aria-label="Por qué viajar con El Ángel Azul">
-              <div class="eaa-wrap"><ul>
-                <li data-rise><span class="eaa-n" aria-hidden="true">01</span><strong>Destinos nacionales e internacionales</strong><p>Compará destino, duración e incluidos en un solo lugar.</p></li>
-                <li data-rise><span class="eaa-n" aria-hidden="true">02</span><strong>Asesoramiento directo</strong><p>Una persona de la agencia responde en cada paso, antes y después de reservar.</p></li>
-                <li data-rise><span class="eaa-n" aria-hidden="true">03</span><strong>Pagos y fechas claros</strong><p>Fechas, cupos y condiciones se confirman por WhatsApp antes de reservar.</p></li>
-              </ul></div>
+            <section class="tur-intro" aria-labelledby="tur-intro-title">
+              <div class="eaa-wrap">
+                <div class="tur-intro-head">
+                  <h2 id="tur-intro-title" data-split>Viajes de turismo, con alguien que te acompaña</h2>
+                  <p data-rise>Paquetes de viaje seleccionados por la agencia para disfrutar en familia, en pareja o en grupo.</p>
+                </div>
+                <ul class="tur-intro-list">
+                  ${beneficios.map(([icono, titulo, texto]) => `<li data-rise><span class="tur-intro-icon" aria-hidden="true"><span class="material-symbols-outlined">${icono}</span></span><strong>${titulo}</strong><p>${texto}</p></li>`).join("")}
+                </ul>
+              </div>
             </section>
 
-            <section class="tur-catalog" id="turismo-catalogo" aria-labelledby="tur-catalog-title">
+            <section class="tur-featured" id="turismo-catalogo" aria-labelledby="tur-featured-title">
               <div class="eaa-wrap">
-                <div class="eaa-section-head">
-                  <h2 id="tur-catalog-title" data-split>Viajes disponibles</h2>
-                  <p data-rise>Compará destino, duración, precio de referencia e incluidos. La reserva final siempre se confirma con asesoramiento personalizado.</p>
+                <div class="tur-featured-head">
+                  <h2 id="tur-featured-title" data-split>Paquetes destacados</h2>
+                  ${packages.length ? `<a class="eaa-link tur-featured-all" href="#/turismo/paquetes">Ver todos los paquetes ${arrow}</a>` : ""}
                 </div>
-                ${packages.length ? `<div class="tur-toolbar" data-rise>
-                  <label class="tur-search" for="turismo-search">
-                    <span>Buscar destino</span>
-                    <input id="turismo-search" type="search" placeholder="Ej: Bariloche, Cataratas, playa" data-turismo-search autocomplete="off">
-                  </label>
-                  <div class="tur-chips" role="group" aria-label="Filtrar por tipo de viaje">
-                    ${turismoIntentionFilters.map(([value, label], index) => `
-                      <button class="tur-chip${index === 0 ? " active" : ""}" type="button" data-turismo-intention="${value}" aria-pressed="${index === 0 ? "true" : "false"}">${label}</button>
-                    `).join("")}
-                  </div>
-                  <p class="tur-count" data-turismo-results-count aria-live="polite">${packages.length === 1 ? "1 opción encontrada" : `${packages.length} opciones encontradas`}</p>
-                </div>` : ""}
-                <div class="tur-grid" data-turismo-package-grid data-result-count="${packages.length}">
-                  ${packages.length ? packages.map(renderTurismoPackageCard).join("") : renderTurismoEmptyState(true)}
+                <div class="tur-grid" data-turismo-package-grid>
+                  ${destacados.length ? destacados.map(renderTurismoPackageCard).join("") : renderTurismoEmptyState(true)}
                 </div>
+                ${packages.length ? `<div class="tur-more"><a class="eaa-button eaa-button-ink" href="#/turismo/paquetes">Ver todos los paquetes ${arrow}</a></div>` : ""}
               </div>
             </section>
 
@@ -954,45 +999,12 @@
                 <div class="eaa-actions" data-rise><a class="eaa-button eaa-button-fill" href="${whatsappLink("Hola, quiero consultar por un viaje turístico con El Ángel Azul. Busco opciones según fecha, presupuesto y cantidad de personas.")}" target="_blank" rel="noopener">Consultar por un viaje ${arrow}</a></div>
               </div>
             </section>
-
-            <section class="tur-agency eaa-soft" aria-labelledby="tur-agency-title">
-              <div class="eaa-wrap tur-agency-grid">
-                <div>
-                  <h2 id="tur-agency-title" data-split>Una agencia de Corrientes, a tu lado</h2>
-                  <p data-rise>Turismo con acompañamiento cercano, organización clara y atención personalizada en cada etapa.</p>
-                </div>
-                <dl class="tur-agency-list" data-rise>
-                  <div><dt>Dirección</dt><dd>Córdoba 6660, Corrientes Capital</dd></div>
-                  <div><dt>WhatsApp</dt><dd><a href="${whatsappLink("Hola, quiero consultar por un viaje turístico con El Ángel Azul.")}" target="_blank" rel="noopener">+54 9 3794 33-1380</a></dd></div>
-                  <div><dt>Viajes estudiantiles</dt><dd><a href="#/">Ver viajes de curso</a></dd></div>
-                </dl>
-              </div>
-            </section>
-
-            <section class="eaa-cta eaa-dark" aria-labelledby="tur-final-title">
-              <p class="eaa-corner eaa-corner-tl">Turismo nacional e internacional</p>
-              <p class="eaa-corner eaa-corner-tr">Desde Corrientes</p>
-              <div class="eaa-cta-stage">
-                <div class="eaa-cta-head">
-                  <div class="eaa-cta-photo" data-cta-photo><img src="assets/img/turismo/hero/playa-rio.webp" alt="Playa de Río de Janeiro al atardecer" width="1600" height="1067" loading="lazy"></div>
-                  <h2 id="tur-final-title" class="eaa-wordmark eaa-cta-title" data-fit data-split>¿Armamos tu viaje?</h2>
-                </div>
-                <div class="eaa-actions" data-rise>
-                  <a class="eaa-button eaa-button-fill" href="${whatsappLink("Hola, quiero que me asesoren para elegir un viaje turístico con El Ángel Azul.")}" target="_blank" rel="noopener">Pedir asesoramiento ${arrow}</a>
-                  <a class="eaa-button eaa-button-line" href="#/turismo" data-scroll-target="turismo-catalogo">Ver viajes</a>
-                </div>
-              </div>
-              <p class="eaa-corner eaa-corner-bl">Asesoramiento directo</p>
-              <p class="eaa-corner eaa-corner-br">Córdoba 6660, Corrientes</p>
-            </section>
           </div>
         `;
         document.querySelector("[data-disable-turismo-preview]")?.addEventListener("click", () => {
           setTurismoPublicPreviewMode(false);
           renderTurismo();
         });
-        bindTurismoIntentions();
-        bindTurismoCardCarousels();
         bindTurismoAnimations();
       }
 
@@ -1001,164 +1013,121 @@
         const whatsappHref = turismoWhatsappForPackage(packageItem);
         const itinerario = Array.isArray(packageItem.itinerario) ? packageItem.itinerario : [];
         const formasPago = Array.isArray(packageItem.formasPago) ? packageItem.formasPago : [];
+        const incluye = Array.isArray(packageItem.incluye) ? packageItem.incluye : [];
+        const noIncluye = Array.isArray(packageItem.noIncluye) ? packageItem.noIncluye : [];
         const fechasSalida = [packageItem.fechaSalida, packageItem.fechaRegreso].filter(Boolean).join(" al ");
-        const heroImage = packageItem.image?.startsWith("http") || packageItem.image?.startsWith("/")
-          ? packageItem.image
-          : `/${packageItem.image}`;
+        const titulo = packageItem.titulo || packageItem.destino;
+        const precio = packageItem.precioDesde && packageItem.precioDesde !== "Consultar" ? packageItem.precioDesde : "";
+        const moneda = escapeHtml(packageItem.moneda || "");
+        const relacionados = turismoPackages().filter((item) => item.slug !== packageItem.slug).slice(0, 3);
+        const arrow = TURISMO_ARROW_SVG;
+        const heroImage = escapeHtml(safeMediaUrl(packageItem.image || gallery[0]));
+        const desglose = [
+          packageItem.precioBaseDoble ? ["Base doble", `${moneda} ${escapeHtml(packageItem.precioBaseDoble)}`] : null,
+          packageItem.suplementoSingle ? ["Suplemento single", `+ ${moneda} ${escapeHtml(packageItem.suplementoSingle)}`] : null,
+          packageItem.precioMenor ? ["Precio menor", `${moneda} ${escapeHtml(packageItem.precioMenor)}`] : null
+        ].filter(Boolean);
+        const datos = [
+          fechasSalida ? ["Fechas", fechasSalida] : null,
+          ["Duración", packageItem.duracion || "A confirmar"],
+          ["Destino", packageItem.destino],
+          ["Temporada", packageItem.temporada],
+          ["Tipo", packageItem.tipo],
+          packageItem.salidaGarantizada ? ["Estado", "Salida garantizada"] : null
+        ].filter(Boolean);
 
         document.getElementById("app").innerHTML = `
-          <div class="layout turismo-layout">
-
-            <!-- HERO con imagen de portada -->
-            <section class="package-detail-hero" style="--package-hero-image: url('${heroImage}')">
-              <div class="package-detail-hero-content">
-                <a class="package-back-link" href="#/turismo">← Volver a Turismo</a>
-                <p class="turismo-kicker">${escapeHtml(packageItem.tipo)} · ${escapeHtml(packageItem.temporada)}</p>
-                <h1>${escapeHtml(packageItem.titulo || packageItem.destino)}</h1>
-                ${fechasSalida ? `<p class="package-detail-fechas">${escapeHtml(fechasSalida)}</p>` : ""}
-                ${packageItem.salidaGarantizada ? `<span class="package-detail-badge">Salida garantizada</span>` : ""}
-                <div class="package-detail-hero-highlights" aria-label="Datos principales del viaje">
-                  <span>${escapeHtml(packageItem.duracion || "Duración a confirmar")}</span>
-                  <span>${escapeHtml(packageItem.precioDesde || "Precio a consultar")}</span>
-                  <span>${escapeHtml(packageItem.tipo || "Turismo")}</span>
-                </div>
-                <div class="turismo-hero-actions">
-                  <a href="${whatsappHref}" target="_blank" rel="noopener">Consultar por WhatsApp</a>
-                </div>
-              </div>
-            </section>
-
-            <!-- PRECIO DESTACADO -->
-            <section class="package-detail-precio-section">
-              <div class="package-detail-precio-card">
-                <div class="package-detail-precio-main">
-                  <span>Desde</span>
-                  <strong>${escapeHtml(packageItem.precioDesde || "Consultar")}</strong>
-                  <small>por persona</small>
-                </div>
-                ${packageItem.precioBaseDoble || packageItem.suplementoSingle || packageItem.precioMenor ? `
-                  <div class="package-detail-precio-desglose">
-                    ${packageItem.precioBaseDoble ? `<div><span>Base doble</span><strong>${escapeHtml(packageItem.moneda || "")} ${escapeHtml(packageItem.precioBaseDoble)}</strong></div>` : ""}
-                    ${packageItem.suplementoSingle ? `<div><span>Suplemento single</span><strong>+ ${escapeHtml(packageItem.moneda || "")} ${escapeHtml(packageItem.suplementoSingle)}</strong></div>` : ""}
-                    ${packageItem.precioMenor ? `<div><span>Precio menor</span><strong>${escapeHtml(packageItem.moneda || "")} ${escapeHtml(packageItem.precioMenor)}</strong></div>` : ""}
-                  </div>
-                ` : ""}
-                <a class="package-detail-precio-cta" href="${whatsappHref}" target="_blank" rel="noopener">Consultar disponibilidad</a>
-              </div>
-
-              <div class="package-detail-facts">
-                ${fechasSalida ? `<div><span>Fechas</span><strong>${escapeHtml(fechasSalida)}</strong></div>` : ""}
-                <div><span>Duración</span><strong>${escapeHtml(packageItem.duracion || "A confirmar")}</strong></div>
-                <div><span>Destino</span><strong>${escapeHtml(packageItem.destino)}</strong></div>
-                <div><span>Temporada</span><strong>${escapeHtml(packageItem.temporada)}</strong></div>
-                <div><span>Tipo</span><strong>${escapeHtml(packageItem.tipo)}</strong></div>
-                ${packageItem.salidaGarantizada ? `<div><span>Estado</span><strong class="package-detail-garantizada">Salida garantizada</strong></div>` : ""}
-              </div>
-            </section>
-
-            <!-- GALERÍA -->
-            ${gallery.length > 1 ? `
-              <section class="package-detail-gallery" aria-label="Galería de ${escapeHtml(packageItem.destino)}">
-                <div class="package-detail-section-head">
-                  <p class="section-kicker">Fotos del destino</p>
-                  <h2>Un vistazo al viaje</h2>
-                </div>
-                <img class="package-gallery-main" src="${escapeHtml(safeMediaUrl(gallery[0]))}" alt="${escapeHtml(packageItem.destino)}">
-                <div class="package-gallery-strip">
-                  ${gallery.slice(1).map((image, index) => `
-                    <img src="${escapeHtml(safeMediaUrl(image))}" alt="${escapeHtml(packageItem.destino)} ${index + 2}">
-                  `).join("")}
-                </div>
-              </section>
-            ` : ""}
-
-            <!-- DESCRIPCIÓN -->
-            <section class="package-detail-summary">
-              <p class="section-kicker">Sobre el viaje</p>
-              <h2>${escapeHtml(packageItem.titulo || packageItem.destino)}</h2>
-              <p>${escapeHtml(packageItem.descripcion)}</p>
-            </section>
-
-            <!-- INCLUYE / NO INCLUYE -->
-            <section class="package-detail-content">
-              <div class="package-detail-list-card package-detail-list-card--positive">
-                <h2>Qué incluye</h2>
-                <ul class="package-detail-check-list">
-                  ${packageItem.incluye.map(item => `<li>${escapeHtml(item)}</li>`).join("")}
+          <div class="eaa-home eaa-turismo-page tur-d">
+            <section class="tur-d-hero eaa-dark" aria-labelledby="tur-d-title">
+              <img class="tur-d-hero-img" src="${heroImage}" alt="">
+              <div class="eaa-grain" aria-hidden="true"></div>
+              <div class="tur-d-hero-shade" aria-hidden="true"></div>
+              <div class="eaa-wrap tur-d-hero-inner">
+                <nav class="tur-crumbs" aria-label="Ruta"><a href="#/turismo">Turismo</a><span aria-hidden="true">/</span><a href="#/turismo/paquetes">Paquetes</a><span aria-hidden="true">/</span><span aria-current="page">${escapeHtml(packageItem.destino)}</span></nav>
+                <h1 id="tur-d-title" class="tur-d-title">${escapeHtml(titulo)}</h1>
+                <ul class="tur-d-pills" aria-label="Datos principales">
+                  ${packageItem.duracion ? `<li>${escapeHtml(packageItem.duracion)}</li>` : ""}
+                  ${fechasSalida ? `<li>${escapeHtml(fechasSalida)}</li>` : ""}
+                  ${packageItem.temporada ? `<li>${escapeHtml(packageItem.temporada)}</li>` : ""}
+                  ${packageItem.salidaGarantizada ? `<li class="is-accent">Salida garantizada</li>` : ""}
                 </ul>
               </div>
-              ${packageItem.noIncluye?.length ? `
-                <div class="package-detail-list-card package-detail-list-card--neutral">
-                  <h2>Qué no incluye</h2>
-                  <ul class="package-detail-check-list">
-                    ${packageItem.noIncluye.map(item => `<li>${escapeHtml(item)}</li>`).join("")}
-                  </ul>
-                </div>
-              ` : ""}
             </section>
 
-            <!-- ITINERARIO (acordeón: primer día expandido, resto colapsado) -->
-            ${itinerario.length ? `
-              <section class="package-detail-itinerario">
-                <p class="section-kicker">Programa</p>
-                <h2>Itinerario día por día</h2>
-                <div class="package-itinerario-list" data-itinerario-accordion>
-                  ${itinerario.map((dia, index) => `
-                    <div class="package-itinerario-item${index === 0 ? " is-open" : ""}" data-itinerario-item>
-                      <button type="button" class="package-itinerario-toggle" data-itinerario-toggle aria-expanded="${index === 0 ? "true" : "false"}">
-                        <span class="package-itinerario-num">${escapeHtml(String(dia.dia || index + 1).padStart(2, "0"))}</span>
-                        <span class="package-itinerario-toggle-text">
-                          <strong>${escapeHtml(dia.titulo)}</strong>
-                          <small>Actividad principal</small>
-                        </span>
-                        <span class="material-symbols-outlined package-itinerario-chevron">expand_more</span>
-                      </button>
-                      ${dia.descripcion ? `<div class="package-itinerario-body"><p>${escapeHtml(dia.descripcion)}</p></div>` : ""}
+            <section class="tur-d-body">
+              <div class="eaa-wrap tur-d-grid">
+                <div class="tur-d-main">
+                  <section class="tur-d-block" aria-labelledby="tur-d-about">
+                    <h2 id="tur-d-about">Sobre el viaje</h2>
+                    <p class="tur-d-lead">${escapeHtml(packageItem.descripcion || packageItem.resumen || "")}</p>
+                  </section>
+
+                  ${gallery.length > 1 ? `
+                  <section class="tur-d-block" aria-label="Fotos de ${escapeHtml(packageItem.destino)}">
+                    <div class="tur-d-gallery">
+                      ${gallery.slice(0, 5).map((image, index) => `<img class="${index === 0 ? "is-main" : ""}" src="${escapeHtml(safeMediaUrl(image))}" alt="${escapeHtml(packageItem.destino)} ${index + 1}" loading="lazy">`).join("")}
                     </div>
-                  `).join("")}
+                  </section>` : ""}
+
+                  ${incluye.length || noIncluye.length ? `
+                  <section class="tur-d-block tur-d-lists">
+                    ${incluye.length ? `<div><h2>Qué incluye</h2><ul class="tur-d-checks">${incluye.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></div>` : ""}
+                    ${noIncluye.length ? `<div><h2>Qué no incluye</h2><ul class="tur-d-checks is-off">${noIncluye.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></div>` : ""}
+                  </section>` : ""}
+
+                  ${itinerario.length ? `
+                  <section class="tur-d-block" aria-labelledby="tur-d-prog">
+                    <h2 id="tur-d-prog">Itinerario día por día</h2>
+                    <div class="tur-d-days" data-itinerario-accordion>
+                      ${itinerario.map((dia, index) => `
+                        <div class="package-itinerario-item${index === 0 ? " is-open" : ""}" data-itinerario-item>
+                          <button type="button" class="package-itinerario-toggle" data-itinerario-toggle aria-expanded="${index === 0 ? "true" : "false"}">
+                            <span class="package-itinerario-num">${escapeHtml(String(dia.dia || index + 1).padStart(2, "0"))}</span>
+                            <span class="package-itinerario-toggle-text"><strong>${escapeHtml(dia.titulo)}</strong></span>
+                            <span class="tur-d-chevron" aria-hidden="true">+</span>
+                          </button>
+                          ${dia.descripcion ? `<div class="package-itinerario-body"><p>${escapeHtml(dia.descripcion)}</p></div>` : ""}
+                        </div>`).join("")}
+                    </div>
+                  </section>` : ""}
+
+                  ${formasPago.length || packageItem.condicionVenta ? `
+                  <section class="tur-d-block" aria-labelledby="tur-d-pago">
+                    <h2 id="tur-d-pago">Reserva y pago</h2>
+                    ${formasPago.length ? `<ul class="tur-d-checks">${formasPago.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>` : ""}
+                    ${packageItem.condicionVenta ? `<p class="tur-d-note"><strong>Condición de venta.</strong> ${escapeHtml(packageItem.condicionVenta)}</p>` : ""}
+                  </section>` : ""}
                 </div>
-              </section>
-            ` : ""}
 
-            <!-- FORMAS DE PAGO -->
-            ${formasPago.length ? `
-              <section class="package-detail-payment">
-                <div class="package-detail-section-head">
-                  <p class="section-kicker">Reserva y pago</p>
-                  <h2>Formas de pago</h2>
-                </div>
-                <ul class="package-detail-payment-list">
-                  ${formasPago.map(item => `<li>${escapeHtml(item)}</li>`).join("")}
-                </ul>
-              </section>
-            ` : ""}
-
-            <!-- CONDICIÓN DE VENTA -->
-            ${packageItem.condicionVenta ? `
-              <section class="package-detail-condicion">
-                <strong>Condición de venta</strong>
-                <p>${escapeHtml(packageItem.condicionVenta)}</p>
-              </section>
-            ` : ""}
-
-            <!-- CTA FINAL -->
-            <section class="turismo-cta package-detail-cta">
-              <h2>¿Querés reservar este viaje?</h2>
-              <p>Consultanos por WhatsApp y te pasamos disponibilidad, precio actualizado y próximas salidas.</p>
-              <div class="turismo-hero-actions">
-                <a href="${whatsappHref}" target="_blank" rel="noopener">Consultar por WhatsApp</a>
-                <a href="#/turismo">Ver más viajes</a>
+                <aside class="tur-d-aside" aria-label="Precio y reserva">
+                  <div class="tur-d-card">
+                    <p class="tur-d-from">${precio ? "Desde" : "Precio"}</p>
+                    <p class="tur-d-price">${precio ? escapeHtml(precio) : "A consultar"}</p>
+                    ${precio ? `<p class="tur-d-per">por persona</p>` : ""}
+                    ${desglose.length ? `<dl class="tur-d-breakdown">${desglose.map(([etiqueta, valor]) => `<div><dt>${etiqueta}</dt><dd>${valor}</dd></div>`).join("")}</dl>` : ""}
+                    <dl class="tur-d-facts">${datos.map(([etiqueta, valor]) => `<div><dt>${etiqueta}</dt><dd>${escapeHtml(valor)}</dd></div>`).join("")}</dl>
+                    <a class="eaa-button eaa-button-fill" href="${whatsappHref}" target="_blank" rel="noopener">Consultar disponibilidad ${arrow}</a>
+                    <a class="eaa-button eaa-button-ink" href="#/turismo/paquetes">Ver todos los paquetes</a>
+                  </div>
+                </aside>
               </div>
             </section>
 
+            ${relacionados.length ? `
+            <section class="tur-related" aria-labelledby="tur-related-title">
+              <div class="eaa-wrap">
+                <div class="tur-featured-head">
+                  <h2 id="tur-related-title">Otros viajes que te pueden gustar</h2>
+                  <a class="eaa-link tur-featured-all" href="#/turismo/paquetes">Ver todos los paquetes ${arrow}</a>
+                </div>
+                <div class="tur-grid">${relacionados.map(renderTurismoPackageCard).join("")}</div>
+              </div>
+            </section>` : ""}
           </div>
 
-          <!-- Barra fija inferior: precio + WhatsApp siempre accesible al scrollear -->
+          <!-- Barra fija inferior (solo en pantallas chicas): precio + WhatsApp siempre a mano -->
           <div class="package-sticky-bar">
-            <div>
-              <span>Desde</span>
-              <strong>${escapeHtml(packageItem.precioDesde || "Consultar")}</strong>
-            </div>
+            <div><span>${precio ? "Desde" : "Precio"}</span><strong>${precio ? escapeHtml(precio) : "A consultar"}</strong></div>
             <a href="${whatsappHref}" target="_blank" rel="noopener">Consultar por WhatsApp</a>
           </div>
         `;
@@ -1737,7 +1706,7 @@
                   </div>
                   <span>#/turismo/${escapeHtml(normalizedTrip.slug || adminTurismoSlug(normalizedTrip.titulo || normalizedTrip.destino))}</span>
                 </div>
-                <div class="admin-turismo-real-card-preview">
+                <div class="admin-turismo-real-card-preview eaa-home">
                   ${renderTurismoPackageCard(previewPackage)}
                 </div>
               </div>
@@ -9293,8 +9262,8 @@
         const page = routes[path] || routes["/"];
         document.body.classList.toggle("home-page", path === "/");
         document.body.classList.toggle("turismo-page", path.startsWith("/turismo"));
-        document.body.classList.toggle("turismo-hero-page", path === "/turismo");
-        if (path !== "/" && path !== "/turismo" && window.EAAHomeMotion) window.EAAHomeMotion.kill();
+        document.body.classList.toggle("turismo-hero-page", path.startsWith("/turismo"));
+        if (path !== "/" && path !== "/turismo" && path !== "/turismo/paquetes" && window.EAAHomeMotion) window.EAAHomeMotion.kill();
         closeMobileNav();
         if (path !== "/" && heroCarouselInterval) {
           clearInterval(heroCarouselInterval);
@@ -9306,6 +9275,10 @@
         }
         if (path === "/turismo") {
           await renderTurismo();
+          return;
+        }
+        if (path === "/turismo/paquetes") {
+          await renderTurismoPaquetes();
           return;
         }
         if (path.startsWith("/turismo/")) {

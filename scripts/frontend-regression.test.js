@@ -198,6 +198,7 @@ test("el catálogo de Turismo escapa texto y URLs antes de usar innerHTML", () =
     ${escapeSource}
     ${safeUrlSource}
     function turismoWhatsappForPackage() { return "#"; }
+    ${functionSource("turismoDias", "renderTurismoPackageCard")}
     ${renderSource}
     return renderTurismoPackageCard;
   `)();
@@ -514,17 +515,28 @@ test("el inicio rediseñado conserva sus decisiones: dos entradas, Camboriú, fo
   assert.doesNotMatch(css, /transition:\s*all|100vw/);
 });
 
-test("Turismo rediseñado: tarjetas de venta, filtros conectados, sin viajes inventados y sin esconder contenido", () => {
-  const pagina = functionSource("renderTurismo", "renderPackageDetail");
-  for (const gancho of ["data-turismo-package-grid", "data-turismo-search", "data-turismo-intention", "data-turismo-results-count", "data-hero-slide", "data-fit"]) assert.match(pagina, new RegExp(gancho));
-  assert.match(pagina, /renderTurismoEmptyState\(true\)/, "sin viajes se ve el estado vacío, no viajes de demostración");
-  assert.doesNotMatch(pagina, /autoAlpha|data-reveal-light/, "nada se esconde hasta el scroll");
+test("Turismo: seis destacados, página con todos los paquetes y filtros, detalle de ficha, sin viajes inventados ni contenido escondido", () => {
+  const landing = functionSource("renderTurismo", "renderPackageDetail");
+  assert.match(landing, /packages\.slice\(0, 6\)/, "la landing muestra 6 paquetes destacados");
+  assert.match(landing, /href="#\/turismo\/paquetes"/, "y lleva a la página con todos");
+  assert.match(landing, /renderTurismoEmptyState\(true\)/, "sin viajes se ve el estado vacío, no viajes de demostración");
+  for (const gancho of ["data-hero-slide", "data-fit", "data-process-row"]) assert.match(landing, new RegExp(gancho));
+  assert.doesNotMatch(landing, /autoAlpha|data-reveal-light/, "nada se esconde hasta el scroll");
+
+  const paquetes = functionSource("renderTurismoPaquetes", "renderTurismo");
+  for (const gancho of ["data-tur-filtros", "data-tur-orden", "data-tur-resultados", "data-tur-mas", 'radios\\("quien"', 'radios\\("tipo"', 'radios\\("dur"', "history.replaceState"]) assert.match(paquetes, new RegExp(gancho));
+  assert.match(appSource, /path === "\/turismo\/paquetes"/, "la ruta existe antes de la del detalle");
+
   const tarjeta = functionSource("renderTurismoPackageCard", "bindTurismoCardCarousels");
-  for (const gancho of ["data-card-carousel", "data-carousel-prev", "data-carousel-next", "data-carousel-slide", "tur-price", "Ver detalles"]) assert.match(tarjeta, new RegExp(gancho));
-  assert.doesNotMatch(functionSource("bindTurismoCardReveal", "bindTurismoIntentions"), /autoAlpha/);
+  for (const gancho of ["tur-card-link", "tur-price", "tur-card-go", "#/turismo/"]) assert.match(tarjeta, new RegExp(gancho));
+
+  const detalle = functionSource("renderPackageDetail", "bindPackageDetailItinerario");
+  for (const gancho of ["tur-d-card", "data-itinerario-toggle", "tur-related", "package-sticky-bar", "turismoWhatsappForPackage"]) assert.match(detalle, new RegExp(gancho));
+
   const css = fs.readFileSync(path.join(__dirname, "../assets/css/turismo.css"), "utf8");
   assert.match(css.split("\n").find((linea) => linea.trim()), /^\/\* Hallmark ·/, "la primera línea del CSS es el sello de Hallmark");
   assert.doesNotMatch(css, /transition:\s*all|100vw/);
+  for (const admin of ["admin/index.html", "admin-turismo/index.html"]) assert.match(fs.readFileSync(path.join(__dirname, "..", admin), "utf8"), /turismo\.css/, `${admin} carga los estilos de la tarjeta (vista previa del editor)`);
 });
 
 test("el menú público tiene Inicio, Turismo e Inscripción online, y la inscripción dice Pasajero sin «PAX»", () => {
