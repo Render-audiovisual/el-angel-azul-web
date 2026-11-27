@@ -2311,9 +2311,14 @@
 
             <div class="admin-shell">
               <aside class="admin-sidebar" aria-label="Navegación interna">
-                <nav>
+                <button type="button" class="admin-nav-toggle" data-admin-nav-toggle aria-expanded="false" aria-controls="admin-module-nav">
+                  <span>${escapeHtml(adminVisibleModules().find((module) => module.id === moduleId)?.label || "Navegación")}</span>
+                  <span class="admin-nav-toggle-hint">Cambiar sección</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <nav id="admin-module-nav">
                   ${adminVisibleModules().map((module) => `
-                    <a class="${module.id === moduleId ? "active" : ""}" href="${adminRouteHref(module.path)}">
+                    <a class="${module.id === moduleId ? "active" : ""}" ${module.id === moduleId ? 'aria-current="page"' : ""} href="${adminRouteHref(module.path)}">
                       ${adminIconSvg(module.icon, "admin-nav-icon")}
                       <span>${module.label}</span>
                     </a>
@@ -2329,6 +2334,19 @@
       }
 
       function bindAdminShell() {
+        const sidebar = document.querySelector(".admin-sidebar");
+        const toggle = sidebar?.querySelector("[data-admin-nav-toggle]");
+        toggle?.addEventListener("click", () => {
+          const open = toggle.getAttribute("aria-expanded") !== "true";
+          toggle.setAttribute("aria-expanded", String(open));
+          sidebar.classList.toggle("is-open", open);
+        });
+        sidebar?.addEventListener("keydown", (event) => {
+          if (event.key !== "Escape" || toggle?.getAttribute("aria-expanded") !== "true") return;
+          toggle.setAttribute("aria-expanded", "false");
+          sidebar.classList.remove("is-open");
+          toggle.focus();
+        });
         document.querySelector("[data-admin-logout]")?.addEventListener("click", async () => {
           try {
             await fetch("/api/admin/logout", {
@@ -2814,7 +2832,7 @@
               </div>
             </form>
             <div class="admin-pasajeros-table-wrap">
-              <table class="admin-pasajeros-table">
+              <table class="admin-pasajeros-table admin-colegios-table">
                 <thead><tr><th>Nombre</th><th>Provincia</th><th>Localidad</th><th>Estado</th><th><span class="sr-only">Acciones</span></th></tr></thead>
                 <tbody>
                   ${filas.length ? filas.map((colegio) => `
@@ -5341,8 +5359,10 @@
               ${renderAdminPasajerosSelect("colegio", adminPasajerosFilterColegio, allColegios, "Colegio")}
               ${renderAdminPasajerosSelect("curso", adminPasajerosFilterCurso, allCursos, "Curso")}
               ${renderAdminPasajerosSelect("estado", adminPasajerosFilterEstado, allEstados, "Estado")}
-              <button type="button" class="admin-pasajeros-secondary-button" data-admin-pasajeros-clear-filters>Limpiar</button>
-              <button type="button" class="admin-pasajeros-secondary-button" data-admin-pasajeros-export>Exportar a Excel</button>
+              <div class="admin-filter-actions">
+                <button type="button" class="admin-pasajeros-secondary-button" data-admin-pasajeros-clear-filters>Limpiar</button>
+                <button type="button" class="admin-pasajeros-secondary-button" data-admin-pasajeros-export>Exportar a Excel</button>
+              </div>
             </div>
           </section>
 
@@ -6649,7 +6669,6 @@
             <h1>Pagos y cuotas</h1>
             <p>Control de cobranza conectado a Pasajeros. Mantiene resumen, cuotas e historial preparado para registrar pagos reales más adelante.</p>
             <div class="admin-demo-banner" role="note">
-              <span class="admin-demo-banner-icon material-symbols-outlined" aria-hidden="true">info</span>
               <div>
                 <strong>Datos de ejemplo</strong>
                 <p>Los montos, cuotas, vencimientos y estados de pago que se ven acá son de muestra: <strong>no reflejan la cobranza real</strong>. Esta sección se conectará a los datos reales más adelante.</p>
@@ -6691,11 +6710,9 @@
             </div>
           </section>
 
-          <section class="admin-turismo-panel admin-payment-architecture">
-            <div>
-              <h2>Estructura preparada para pagos reales</h2>
-              <p>La pantalla ya separa los datos necesarios para pasar de control manual a registro real.</p>
-            </div>
+          <details class="admin-turismo-panel admin-payment-architecture">
+            <summary>Estructura preparada para pagos reales</summary>
+            <p>La pantalla ya separa los datos necesarios para pasar de control manual a registro real.</p>
             <div class="admin-payment-architecture-grid">
               <article>
                 <span>Resumen</span>
@@ -6714,7 +6731,7 @@
                 <strong>Comprobante, Mercado Pago, transferencia o caja</strong>
               </article>
             </div>
-          </section>
+          </details>
 
           <section class="admin-turismo-panel admin-pasajeros-table-panel">
             <div class="admin-pasajeros-table-head">

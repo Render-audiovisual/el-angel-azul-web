@@ -9,7 +9,17 @@ Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerra
 |---|---|---|---|---|
 | Fran (Claude Code) | `fran/harness` | Harness: guardas, `AGENTS.md`, docs | `AGENTS.md`, `CLAUDE.md`, `package.json`, `scripts/guardas.test.js`, `scripts/helpers/sin-secretos.js`, docs | 25/11 |
 | Fran (Claude Code) | `fran/inicio-aldena` | Paso 8: rediseño del inicio inspirado en la web de referencia (Agustín dio su OK sobre el PR #8) | `index.html`, `assets/css/home.css`, `assets/css/public-experience.css`, `assets/js/modules/home-motion.js`, `renderHome` en `assets/js/app.js` | 27/11 |
-| Agustín (Codex) | `agustin/ficha-adhesion-clara` | Ficha de Adhesión simplificada y verificada: 58/58 pruebas de navegador, 167 aprobadas + 1 TODO en check. Pendiente integración y publicación; PR #33 de portada separado | `assets/js/app.js`, `assets/css/adhesion.css`, `index.html`, pruebas E2E y este documento | 27/11 |
+| Agustín (Codex) | `agustin/admin-espacios-botones` | Panel interno mejorado y verificado: 62/62 casos de navegador, 167 pruebas + 1 TODO conocido. Pendiente integración y publicación | `assets/css/admin-workspace.css`, HTML de entrada del panel, controles en `assets/js/app.js`, pruebas E2E y este documento | 27/11 |
+
+## Espacio de trabajo del administrador — 27/11/2026
+
+- Rama `agustin/admin-espacios-botones`, actualizada con main hasta `77098e4` (PR #34 integrado y ficha pública verificada en el dominio principal). Este cambio del administrador todavía no está publicado.
+- Sistema interno aislado en `assets/css/admin-workspace.css`, cargado en todos los HTML de entrada. Tipografía del sistema, paleta de El Ángel Azul, ancho útil hasta 1920 px, lateral de 200 px y espaciado consistente. Los estilos públicos permanecen separados.
+- Botones primarios, secundarios, destructivos, de foco y deshabilitados uniformes, con área mínima de 44 px. Menú compacto para celular con apertura/cierre, Escape y sección actual accesible. Acciones de filtros agrupadas.
+- Tablas con anchos según su contenido: Colegios ya no hereda 2200 px; las tablas más densas conservan desplazamiento dentro de su contenedor. Importes y acciones no se parten. Formulario de colegio en columnas; formularios y ventanas de edición adaptados al celular. Biblioteca de Turismo con miniaturas compactas.
+- En Pagos, la explicación de la estructura futura está en un desplegable y el aviso de datos de ejemplo sigue visible: este cambio no incorpora cobranza real.
+- Verificación: `npm run check`, 167 aprobadas, 0 fallas y 1 TODO conocido de TLS. `scripts/e2e/admin-workspace.e2e.js`: 62/62 casos, nueve rutas en 1920/1440/1024/768/390/320 px, botones, importes, navegación móvil, guardado local de colegio, filtros, editor de contratos, alta de pasajeros, fichas, Turismo y permisos de agencia. Solo PGlite en memoria, sin servicios reales. Requiere Playwright externo indicado con `PLAYWRIGHT_PATH`; admite `PLAYWRIGHT_CHANNEL=chrome`.
+- Observación previa fuera del alcance visual: el buscador de Pasajeros no incluye `passenger.apellido` cuando llega separado del nombre (módulo `assets/js/modules/passengers.js`). La prueba de esta mejora filtra por nombre; no se modificó esa lógica.
 
 ## Ficha de Adhesión pública — 27/11/2026
 
@@ -18,7 +28,7 @@ Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerra
 - Selección con controles nativos: nivel educativo, destino, año del viaje, colegio, grado/año y división. La vuelta desde la ficha conserva esa selección. La carga de colegios y la verificación del contrato tienen mensajes diferenciados de carga/error.
 - Diseño con Poppins/Bebas y paleta existente, estilos aislados en `assets/css/adhesion.css`. Campos visibles sin animación de entrada, firma dibujada o escrita, campos de domicilio opcionales dentro de un desplegable y CTA sin solapamientos con WhatsApp.
 - Verificación local: `npm run check` (167 aprobadas, 0 fallas, 1 TODO conocido de TLS), 58/58 casos en `scripts/e2e/ficha.e2e.js` con Chrome (`PLAYWRIGHT_CHANNEL=chrome`, Playwright instalado fuera del repo). Revisión visual con tipografías cargadas en escritorio y celular; pruebas de selección en 1280, 768, 390 y 320 px, validaciones, errores de red, reintentos, firma y tutor.
-- Solo PGlite y dobles locales; no se accedió a Supabase real. Sin dependencias nuevas, cambios al backend ni publicación en Hostinger. La integración y el despliegue los decide el dueño.
+- Solo PGlite y dobles locales; no se accedió a Supabase real. Sin dependencias nuevas ni cambios al backend. Actualización posterior: el dueño autorizó integrar el PR #34 a main y publicarlo; se verificaron los archivos del commit `77098e4` y el formulario en el dominio principal, sin escrituras en la base oficial.
 
 ## Harness (25/11/2026)
 - Las reglas del repo ahora se chequean en `npm run check` con `scripts/guardas.test.js`: secretos en archivos del repo, `.env` trackeados, docs con referencias rotas y `CLAUDE.md` → `AGENTS.md`.

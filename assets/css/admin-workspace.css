@@ -1,0 +1,249 @@
+/* Espacio de trabajo interno. Estilos aislados del sitio y de la ficha pública. */
+body[data-app-entry="admin"] {
+  --admin-font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+  --font-body: var(--admin-font);
+  --font-ui: var(--admin-font);
+  --font-display: var(--admin-font);
+  --admin-bg: #f4f6f9;
+  --admin-surface: #fff;
+  --admin-wash: #f7f9fc;
+  --admin-text: #172b3a;
+  --admin-muted: #526575;
+  --admin-line: #dce4ec;
+  --admin-control-line: #aebdcc;
+  --admin-accent: var(--color-deep-blue);
+  --admin-accent-hover: var(--color-primary-strong);
+  --admin-selected: #eaf2fb;
+  --admin-danger: #a82d3a;
+  color-scheme: light;
+  background: var(--admin-bg);
+  color: var(--admin-text);
+  font-family: var(--admin-font);
+  font-size: 15px;
+  line-height: 1.5;
+}
+body[data-app-entry="admin"] .admin-layout {
+  width: 100%;
+  max-width: 1920px;
+  margin: 0 auto;
+  padding: 24px;
+  gap: 24px;
+}
+body[data-app-entry="admin"] .admin-shell {
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  align-items: start;
+}
+body[data-app-entry="admin"] .admin-main { padding: 0; min-width: 0; gap: 24px; background: transparent; }
+body[data-app-entry="admin"] .admin-shell-header,
+body[data-app-entry="admin"] .admin-layout > .admin-shell-header:first-child {
+  background: var(--admin-accent);
+  padding: 12px 20px;
+  min-height: 72px;
+  gap: 16px;
+  border-radius: 14px;
+  box-shadow: 0 4px 16px rgb(8 59 122 / .08);
+}
+body[data-app-entry="admin"] .admin-shell-brand { border: 0; background: none; padding: 0; border-radius: 0; gap: 12px; }
+body[data-app-entry="admin"] .admin-shell-brand img { width: 36px; height: 36px; }
+body[data-app-entry="admin"] .admin-shell-brand strong { font: 600 15px/1.3 var(--admin-font); text-transform: none; letter-spacing: 0; }
+body[data-app-entry="admin"] .admin-shell-brand small { font: 400 12px/1.4 var(--admin-font); text-transform: none; letter-spacing: 0; opacity: .85; }
+body[data-app-entry="admin"] .admin-shell-session { border: 0; background: none; box-shadow: none; padding: 0; gap: 12px; }
+body[data-app-entry="admin"] .admin-shell-session strong { font-weight: 500; }
+body[data-app-entry="admin"] .admin-sidebar { border: 1px solid var(--admin-line); border-radius: 14px; box-shadow: none; padding: 8px; background: var(--admin-surface); top: 24px; }
+body[data-app-entry="admin"] .admin-sidebar a { min-height: 44px; padding: 10px; gap: 10px; border-radius: 8px; }
+body[data-app-entry="admin"] .admin-sidebar a > span:last-child { font-size: 14px; font-weight: 500; line-height: 1.4; }
+body[data-app-entry="admin"] .admin-sidebar a.active { background: var(--admin-selected); color: var(--admin-accent); }
+body[data-app-entry="admin"] .admin-sidebar a.active > .admin-nav-icon { color: var(--admin-accent); }
+body[data-app-entry="admin"] .admin-sidebar a:hover { background: var(--admin-wash); }
+body[data-app-entry="admin"] .admin-sidebar a.active:hover { background: var(--admin-selected); }
+body[data-app-entry="admin"] .admin-sidebar .admin-nav-toggle { display: none; }
+body[data-app-entry="admin"] .admin-turismo-layout { max-width: none; margin: 0; gap: 24px; }
+body[data-app-entry="admin"] :is(.admin-turismo-panel, .admin-turismo-hero) {
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-line);
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: none;
+  gap: 20px;
+  min-width: 0;
+}
+body[data-app-entry="admin"] .admin-overview { min-height: 0; }
+body[data-app-entry="admin"] .admin-layout :is(h1, h2, h3, h4) { font-family: var(--admin-font); font-weight: 600; color: var(--admin-text); text-transform: none; letter-spacing: -.02em; line-height: 1.25; margin: 0; }
+body[data-app-entry="admin"] .admin-layout h1 { font-size: 28px; }
+body[data-app-entry="admin"] .admin-layout h2 { font-size: 22px; }
+body[data-app-entry="admin"] .admin-layout h3 { font-size: 17px; }
+body[data-app-entry="admin"] .admin-layout p { margin: 0; line-height: 1.6; color: var(--admin-muted); }
+body[data-app-entry="admin"] .admin-layout :is(button, input, select, textarea) { font-family: var(--admin-font); font-size: 14px; font-weight: 500; }
+body[data-app-entry="admin"] .admin-layout button,
+body[data-app-entry="admin"] .admin-layout a.admin-secondary-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  min-width: 44px;
+  max-width: 100%;
+  border: 1px solid var(--admin-control-line);
+  border-radius: 10px;
+  padding: 10px 16px;
+  margin: 0;
+  line-height: 1.4;
+  text-align: center;
+  text-decoration: none;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--admin-accent);
+  background: var(--admin-surface);
+  box-shadow: none;
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+body[data-app-entry="admin"] .admin-layout button:hover,
+body[data-app-entry="admin"] .admin-layout a.admin-secondary-action:hover { background: var(--admin-selected); border-color: var(--admin-accent); transform: none; filter: none; }
+body[data-app-entry="admin"] .admin-layout :is(.admin-pasajeros-primary-button, .admin-action-primary, .admin-turismo-btn-guardar, [data-admin-new], [data-ficha-aprobar], button[type="submit"]) {
+  background: var(--admin-accent); border-color: var(--admin-accent); color: #fff; font-weight: 600;
+}
+body[data-app-entry="admin"] .admin-layout :is(.admin-pasajeros-primary-button, .admin-action-primary, .admin-turismo-btn-guardar, [data-admin-new], [data-ficha-aprobar], button[type="submit"]):hover { background: var(--admin-accent-hover); border-color: var(--admin-accent-hover); }
+body[data-app-entry="admin"] .admin-layout :is([data-admin-delete], [data-ficha-rechazar], .admin-action-danger) { background: var(--admin-surface); border-color: #d49ba3; color: var(--admin-danger); }
+body[data-app-entry="admin"] .admin-layout :is([data-admin-delete], [data-ficha-rechazar], .admin-action-danger):hover { background: #fff1f3; border-color: var(--admin-danger); }
+body[data-app-entry="admin"] .admin-layout button:disabled { background: #edf0f4; border-color: var(--admin-line); color: #627383; cursor: not-allowed; opacity: 1; transform: none; }
+body[data-app-entry="admin"] .admin-layout :is(button, a, input, select, textarea, summary):focus-visible { outline: 3px solid var(--color-primary); outline-offset: 3px; box-shadow: none; }
+body[data-app-entry="admin"] .admin-shell-session button { min-height: 44px; background: transparent; color: white; border-color: #8caac8; }
+body[data-app-entry="admin"] .admin-shell-session button:hover { background: #174d8b; border-color: white; }
+body[data-app-entry="admin"] .admin-layout :is(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), select, textarea) {
+  width: 100%; max-width: 100%; min-width: 0; min-height: 44px;
+  border: 1px solid var(--admin-control-line); border-radius: 8px;
+  background: var(--admin-surface); color: var(--admin-text);
+  padding: 10px 12px; font-weight: 400; line-height: 1.4;
+}
+body[data-app-entry="admin"] .admin-layout input::placeholder,
+body[data-app-entry="admin"] .admin-layout textarea::placeholder { color: var(--admin-muted); opacity: 1; }
+body[data-app-entry="admin"] .admin-layout :is(input[type="checkbox"], input[type="radio"]) { accent-color: var(--admin-accent); width: 20px; height: 20px; min-height: 20px; flex: 0 0 20px; }
+body[data-app-entry="admin"] :is(.admin-pasajeros-filters, .admin-fichas-filters) {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  align-items: end; gap: 16px; min-width: 0;
+}
+body[data-app-entry="admin"] .admin-pasajeros-filter-panel { position: static; }
+body[data-app-entry="admin"] :is(.admin-pasajeros-filters, .admin-fichas-filters) label { min-width: 0; font-size: 13px; font-weight: 500; line-height: 1.5; gap: 8px; }
+body[data-app-entry="admin"] .admin-pasajeros-filters label:first-child input { font-size: 14px; min-height: 44px; }
+body[data-app-entry="admin"] .admin-filter-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; }
+body[data-app-entry="admin"] :is(.admin-dashboard-head, .admin-pasajeros-section-head, .admin-pasajeros-table-head, .admin-turismo-section-head, .admin-fichas-detail-head) { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+body[data-app-entry="admin"] :is(.admin-dashboard-head, .admin-pasajeros-section-head, .admin-pasajeros-table-head, .admin-turismo-section-head) > div { min-width: 0; }
+body[data-app-entry="admin"] :is(.admin-dashboard-head, .admin-pasajeros-section-head, .admin-pasajeros-table-head, .admin-turismo-section-head) p { margin-top: 6px; font-size: 14px; }
+body[data-app-entry="admin"] :is(.admin-pasajeros-form-actions, .admin-pasajeros-row-actions, .admin-fichas-actions, .admin-turismo-row-actions, .admin-actions-row, .admin-colegios-actions, .admin-contrato-modal-actions, .admin-turismo-action-buttons) { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+body[data-app-entry="admin"] .admin-pasajeros-form-actions { padding-top: 16px; border-top: 1px solid var(--admin-line); justify-content: flex-start; }
+body[data-app-entry="admin"] .admin-pasajeros-form { gap: 20px; }
+body[data-app-entry="admin"] .admin-pasajeros-form fieldset { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 16px; padding: 20px; border-radius: 12px; min-width: 0; margin: 0; box-shadow: none; }
+body[data-app-entry="admin"] .admin-pasajeros-form legend { padding: 0 8px; font-size: 15px; font-weight: 600; }
+body[data-app-entry="admin"] .admin-pasajeros-form label { display: block; min-width: 0; color: var(--admin-text); font-size: 14px; font-weight: 500; }
+body[data-app-entry="admin"] .admin-pasajeros-form label :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) { display: block; margin-top: 8px; }
+body[data-app-entry="admin"] .admin-colegios-form fieldset { grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr)); }
+body[data-app-entry="admin"] :is(.admin-colegios-toggle, .admin-fichas-sin-vincular) { display: flex; align-items: center; gap: 8px; min-height: 44px; font-size: 14px; font-weight: 500; }
+body[data-app-entry="admin"] .admin-pasajeros-table-wrap { max-height: 68vh; border-color: var(--admin-line); border-radius: 10px; scrollbar-color: var(--admin-control-line) var(--admin-wash); scrollbar-width: auto; }
+body[data-app-entry="admin"] .admin-pasajeros-table { min-width: 720px; width: 100%; font-size: 14px; }
+body[data-app-entry="admin"] .admin-pasajeros-table :is(th, td) { white-space: normal; overflow-wrap: anywhere; padding: 12px 16px; line-height: 1.5; border-right: 0; vertical-align: middle; }
+body[data-app-entry="admin"] .admin-pasajeros-table th { color: var(--admin-muted); background: var(--admin-wash); font-size: 12px; font-weight: 600; }
+body[data-app-entry="admin"] .admin-pasajeros-table :is(td strong, td span) { font-weight: 500; }
+body[data-app-entry="admin"] .admin-pasajeros-table td > span { font-size: 13px; line-height: 1.5; }
+body[data-app-entry="admin"] .admin-pasajeros-table tbody tr:nth-child(even) { background: transparent; }
+body[data-app-entry="admin"] .admin-pasajeros-table tbody tr:hover { background: var(--admin-wash); }
+body[data-app-entry="admin"] .admin-colegios-table { min-width: 680px; }
+body[data-app-entry="admin"] .admin-colegios-table td:first-child { width: 32%; font-weight: 500; }
+body[data-app-entry="admin"] .admin-colegios-table .admin-colegios-actions { min-width: 220px; }
+body[data-app-entry="admin"] .admin-pasajeros-table.admin-pasajeros-table--compact { min-width: 1120px; }
+body[data-app-entry="admin"] :is(.admin-grupos-table, .admin-contratos-table, .admin-fichas-table) { min-width: 920px; }
+body[data-app-entry="admin"] .admin-payment-table { min-width: 1080px; font-variant-numeric: tabular-nums; }
+body[data-app-entry="admin"] .admin-payment-history { min-width: 200px; }
+body[data-app-entry="admin"] .admin-installments-strip { max-width: 240px; flex-wrap: wrap; }
+body[data-app-entry="admin"] :is(.admin-pasajeros-dashboard, .admin-payment-dashboard, .admin-dashboard-grid, .admin-turismo-hero-stats) { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+body[data-app-entry="admin"] :is(.admin-pasajeros-dashboard article, .admin-payment-dashboard article, .admin-dashboard-card, .admin-turismo-hero-stats article) { background: var(--admin-wash); border: 1px solid var(--admin-line); border-radius: 12px; box-shadow: none; min-height: 0; padding: 16px; gap: 6px; }
+body[data-app-entry="admin"] :is(.admin-pasajeros-dashboard strong, .admin-payment-dashboard strong, .admin-dashboard-card > strong) { color: var(--admin-text); font-size: 28px; font-weight: 600; font-variant-numeric: tabular-nums; }
+body[data-app-entry="admin"] :is(.admin-pasajeros-dashboard span, .admin-payment-dashboard span, .admin-dashboard-card > span) { color: var(--admin-muted); font-size: 12px; font-weight: 500; text-transform: none; }
+body[data-app-entry="admin"] .admin-dashboard-card small { color: var(--admin-muted); font-size: 13px; font-weight: 400; }
+body[data-app-entry="admin"] .admin-payment-architecture { display: block; }
+body[data-app-entry="admin"] .admin-payment-architecture summary { cursor: pointer; color: var(--admin-accent); font-size: 15px; font-weight: 500; min-height: 44px; padding-block: 10px; }
+body[data-app-entry="admin"] .admin-payment-architecture[open] > p { margin-block: 12px 20px; }
+body[data-app-entry="admin"] .admin-demo-banner { margin: 0; }
+body[data-app-entry="admin"] .admin-fichas-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+body[data-app-entry="admin"] .admin-fichas-tabs button { min-height: 44px; padding: 10px 14px; }
+body[data-app-entry="admin"] .admin-fichas-tabs button.is-active { background: var(--admin-selected); border-color: var(--admin-accent); color: var(--admin-accent); }
+body[data-app-entry="admin"] .admin-fichas-tabs button span { background: transparent; color: inherit; font-weight: 600; }
+body[data-app-entry="admin"] :is(.admin-pasajeros-breadcrumb, .admin-fichas-flow-summary) { gap: 8px; padding: 12px; border-radius: 10px; }
+body[data-app-entry="admin"] .admin-pasajeros-breadcrumb span { padding: 4px 8px; font-size: 13px; font-weight: 400; }
+body[data-app-entry="admin"] .admin-turismo-create-panel { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+body[data-app-entry="admin"] :is(.admin-turismo-form-grid, .admin-turismo-form-grid--compact) { grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 16px; }
+body[data-app-entry="admin"] :is(.admin-turismo-modal-close, .admin-fichas-detail-head-actions button[aria-label]) { width: 44px; padding: 8px; flex: 0 0 44px; }
+body[data-app-entry="admin"] .admin-layout [hidden] { display: none !important; }
+@media (max-width: 1100px) {
+  body[data-app-entry="admin"] .admin-layout { padding: 16px; gap: 16px; }
+  body[data-app-entry="admin"] .admin-shell { grid-template-columns: 184px minmax(0, 1fr); gap: 16px; }
+  body[data-app-entry="admin"] :is(.admin-turismo-panel, .admin-turismo-hero) { padding: 20px; }
+  body[data-app-entry="admin"] .admin-sidebar nav { grid-template-columns: minmax(0, 1fr); }
+  body[data-app-entry="admin"] .admin-sidebar { position: sticky; top: 16px; }
+  body[data-app-entry="admin"] :is(.admin-pasajeros-dashboard, .admin-payment-dashboard, .admin-dashboard-grid, .admin-turismo-hero-stats) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 900px) {
+  body[data-app-entry="admin"] .admin-shell { grid-template-columns: minmax(0, 1fr); }
+  body[data-app-entry="admin"] .admin-sidebar { position: static; padding: 8px; }
+  body[data-app-entry="admin"] .admin-sidebar .admin-nav-toggle { display: flex; justify-content: space-between; width: 100%; border: 0; background: transparent; text-align: left; }
+  body[data-app-entry="admin"] .admin-nav-toggle-hint { margin-left: auto; color: var(--admin-muted); font-size: 12px; font-weight: 400; }
+  body[data-app-entry="admin"] .admin-sidebar:not(.is-open) nav { display: none; }
+  body[data-app-entry="admin"] .admin-sidebar.is-open nav { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding-top: 8px; }
+  body[data-app-entry="admin"] .admin-colegios-form fieldset { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 540px) {
+  body[data-app-entry="admin"] .admin-layout { padding: 12px; }
+  body[data-app-entry="admin"] .admin-shell-header,
+  body[data-app-entry="admin"] .admin-layout > .admin-shell-header:first-child { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 16px; }
+  body[data-app-entry="admin"] .admin-shell-session { width: 100%; justify-content: space-between; }
+  body[data-app-entry="admin"] .admin-shell-session > .admin-session-icon { display: none; }
+  body[data-app-entry="admin"] .admin-shell-brand strong { font-size: 15px; }
+  body[data-app-entry="admin"] :is(.admin-turismo-panel, .admin-turismo-hero) { padding: 16px; gap: 16px; }
+  body[data-app-entry="admin"] .admin-layout h1 { font-size: 25px; }
+  body[data-app-entry="admin"] .admin-layout h2 { font-size: 20px; }
+  body[data-app-entry="admin"] .admin-layout :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) { font-size: 16px; }
+  body[data-app-entry="admin"] :is(.admin-pasajeros-filters, .admin-fichas-filters) { grid-template-columns: minmax(0, 1fr); }
+  body[data-app-entry="admin"] .admin-pasajeros-form fieldset { grid-template-columns: minmax(0, 1fr); padding: 16px; }
+  body[data-app-entry="admin"] .admin-filter-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  body[data-app-entry="admin"] .admin-pasajeros-form-actions > button { flex: 1 1 auto; }
+  body[data-app-entry="admin"] .admin-turismo-create-panel { grid-template-columns: minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) {
+  body[data-app-entry="admin"] .admin-layout :is(button, a) { transition: none; }
+}
+body[data-app-entry="admin"] > #app { padding: 0; max-width: none; width: 100%; margin: 0; }
+body[data-app-entry="admin"] .admin-pasajeros-table .admin-pasajeros-status { display: inline-flex; width: fit-content; min-width: 0; white-space: nowrap; }
+body[data-app-entry="admin"] .admin-pasajeros-table th { white-space: nowrap; overflow-wrap: normal; }
+body[data-app-entry="admin"] .admin-colegios-table :is(th, td):nth-child(2),
+body[data-app-entry="admin"] .admin-colegios-table :is(th, td):nth-child(3) { min-width: 110px; }
+body[data-app-entry="admin"] .admin-colegios-table :is(th, td):nth-child(4) { min-width: 80px; }
+body[data-app-entry="admin"] .admin-payment-summary-cell { min-width: 160px; }
+body[data-app-entry="admin"] .admin-payment-summary-cell :is(strong, span) { white-space: nowrap; }
+body[data-app-entry="admin"] .admin-filter-actions { grid-column: 1 / -1; justify-content: flex-end; }
+body[data-app-entry="admin"] .admin-turismo-hero-stats span { font: 400 12px/1.5 var(--admin-font); text-transform: none; letter-spacing: 0; overflow-wrap: normal; }
+body[data-app-entry="admin"] .admin-turismo-trip-card { display: grid; grid-template-columns: 112px minmax(0, 1fr); padding: 0; border-radius: 12px; border-color: var(--admin-line); box-shadow: none; }
+body[data-app-entry="admin"] .admin-turismo-trip-card .admin-turismo-trip-cover { aspect-ratio: auto; height: 100%; min-height: 152px; border-radius: 0; }
+body[data-app-entry="admin"] .admin-turismo-trip-card .admin-turismo-trip-cover > .admin-turismo-status { top: 8px; left: 8px; right: auto; padding: 4px 8px; font-size: 11px; }
+body[data-app-entry="admin"] .admin-turismo-trip-card .admin-turismo-trip-body { padding: 16px; gap: 16px; }
+body[data-app-entry="admin"] .admin-turismo-trip-card .admin-turismo-row-actions button { width: auto; flex: 0 1 auto; }
+@media (max-width: 540px) {
+  body[data-app-entry="admin"] .admin-payment-dashboard { grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr)); }
+  body[data-app-entry="admin"] .admin-payment-dashboard strong { font-size: 20px; white-space: nowrap; }
+  body[data-app-entry="admin"] .admin-turismo-trip-card { grid-template-columns: 88px minmax(0, 1fr); }
+  body[data-app-entry="admin"] .admin-turismo-trip-card .admin-turismo-trip-body { padding: 12px; }
+}
+
+/* Acciones y valores que deben leerse como una unidad dentro de las tablas. */
+body[data-app-entry="admin"] .admin-layout button { overflow-wrap: normal; word-break: normal; }
+body[data-app-entry="admin"] .admin-pasajeros-table button { white-space: nowrap; min-width: max-content; }
+body[data-app-entry="admin"] .admin-pasajeros-table.admin-pasajeros-table--compact { min-width: 1240px; }
+body[data-app-entry="admin"] .admin-pasajeros-table--compact td:nth-child(2) { min-width: 96px; white-space: nowrap; }
+body[data-app-entry="admin"] .admin-pasajeros-table--compact td:nth-child(3) { min-width: 100px; overflow-wrap: normal; }
+body[data-app-entry="admin"] :is(.admin-pasajeros-filters, .admin-fichas-filters) label { text-transform: none; letter-spacing: 0; }
+body[data-app-entry="admin"] .admin-fichas-table tr.is-selected td { box-shadow: none; background: var(--admin-selected); }
