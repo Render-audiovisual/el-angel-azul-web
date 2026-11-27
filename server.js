@@ -7,6 +7,8 @@ const db = require("./lib/db");
 const fichaValidation = require("./assets/js/modules/ficha-validation.js");
 const fichaPdf = require("./lib/ficha-pdf");
 const email = require("./lib/email");
+const storage = require("./lib/storage");
+const adminWrite = require("./lib/admin-write");
 
 const PORT = Number(process.env.PORT || 8080);
 const ROOT = __dirname;
@@ -81,6 +83,9 @@ const adminSessions = new Map();
 // No es un rate-limiter distribuido (se resetea si el proceso reinicia),
 // pero corta un ataque de fuerza bruta automatizado básico.
 const LOGIN_ATTEMPT_LIMIT = 5;
+// Además del límite por IP (evadible si el proxy no fija X-Forwarded-For), cada
+// usuario tiene un tope propio más alto, para frenar la fuerza bruta rotando IP.
+const LOGIN_USER_ATTEMPT_LIMIT = 20;
 const LOGIN_ATTEMPT_WINDOW_MS = 15 * 60 * 1000;
 const loginAttempts = new Map();
 
@@ -156,14 +161,14 @@ function registerFichaSubmit(ip) {
   record.count += 1;
 }
 
-function loginRateLimited(ip) {
-  const record = loginAttempts.get(ip);
+function loginRateLimited(key, limit = LOGIN_ATTEMPT_LIMIT) {
+  const record = loginAttempts.get(key);
   if (!record) return false;
   if (Date.now() - record.firstAttemptAt > LOGIN_ATTEMPT_WINDOW_MS) {
-    loginAttempts.delete(ip);
+    loginAttempts.delete(key);
     return false;
   }
-  return record.count >= LOGIN_ATTEMPT_LIMIT;
+  return record.count >= limit;
 }
 
 function registerFailedLogin(ip) {
@@ -183,15 +188,43 @@ function clearLoginAttempts(ip) {
   loginAttempts.delete(ip);
 }
 
-function clientIp(req) {
-  const forwarded = String(req.headers["x-forwarded-for"] || "")
+// Cantidad de proxies de confianza delante del servidor (los que agregan una
+// IP al final de X-Forwarded-For). Hostinger no lo documenta: medirlo (ver HANDOFF, Paso 2). Por defecto 1.
+// Si el hosting suma un proxy más (CDN, balanceador), subir EAA_PROXY_HOPS; si
+// no, todos los visitantes comparten IP y los límites (fichas por hora, intentos
+// de login) se pegan entre sí. Medirlo con GET /api/admin/diagnostico-ip.
+function proxyHops(env = process.env) {
+  const hops = Number.parseInt(env.EAA_PROXY_HOPS, 10);
+  return Number.isInteger(hops) && hops >= 1 && hops <= 5 ? hops : 1;
+}
+
+function forwardedForList(req) {
+  return String(req.headers["x-forwarded-for"] || "")
     .split(",")
     .map((value) => value.trim())
     .filter(Boolean);
-  // Render agrega la IP real al final de X-Forwarded-For. Tomar el primer
-  // valor permitía que el cliente eligiera su IP aparente y eludiera todos
-  // los límites. El último salto es el que agregó el proxy más cercano.
-  return forwarded.at(-1) || req.socket.remoteAddress || "unknown";
+}
+
+// Se cuenta desde la derecha: lo que está más a la izquierda lo puede escribir
+// el cliente y permitiría elegir su IP aparente para eludir los límites.
+function clientIp(req, hops = proxyHops()) {
+  return forwardedForList(req).at(-hops) || req.socket.remoteAddress || "unknown";
+}
+
+// Solo para el rol admin: muestra qué le llega al servidor y qué IP calcula,
+// para confirmar el hosting sin adivinar. Compará "ipCalculada" con tu IP pública.
+function diagnosticoIp(req) {
+  const h = req.headers;
+  return {
+    ipCalculada: clientIp(req),
+    proxyHops: proxyHops(),
+    xForwardedFor: forwardedForList(req),
+    xRealIp: h["x-real-ip"] || null,
+    forwarded: h.forwarded || null,
+    cfConnectingIp: h["cf-connecting-ip"] || null,
+    via: h.via || null,
+    remoteAddress: req.socket.remoteAddress || null
+  };
 }
 
 const SCHEMA = {
@@ -273,8 +306,17 @@ function parseCookies(req) {
     .map((part) => {
       const index = part.indexOf("=");
       if (index === -1) return [part, ""];
-      return [decodeURIComponent(part.slice(0, index)), decodeURIComponent(part.slice(index + 1))];
+      return [safeDecode(part.slice(0, index)), safeDecode(part.slice(index + 1))];
     }));
+}
+
+// Una cookie o ruta con % mal formado no debe tumbar el pedido con un 500.
+function safeDecode(value) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
 }
 
 function sessionCookie(token, maxAgeSeconds, isSecureRequest = false) {
@@ -295,14 +337,14 @@ function safeErrorForLog(error) {
   };
 }
 
-// Railway (y la mayoría de los hosts con proxy) terminan HTTPS en el borde y
+// Los hosts con proxy (Hostinger incluido) terminan HTTPS en el borde y
 // reenvían por HTTP puro al contenedor, seteando x-forwarded-proto=https.
 // En localhost (npm start) no hay proxy, así que esto da false correctamente
 // y la cookie funciona igual en desarrollo sin el flag Secure (que el
 // navegador ignoraría/bloquearía sobre HTTP de todos modos).
 function isHttpsRequest(req) {
   if (!req || !req.headers) return false;
-  // En producción Render siempre termina TLS antes de llegar al proceso.
+  // En producción el hosting siempre termina TLS antes de llegar al proceso.
   // No depender de una cabecera que un cliente puede intentar falsificar.
   if (process.env.NODE_ENV === "production") return true;
   return Boolean(req.socket?.encrypted);
@@ -452,7 +494,7 @@ function credentials() {
   }
   if (!fs.existsSync(CREDENTIALS_PATH)) {
     throw new Error(
-      "Credenciales de Google Sheets no configuradas. En Railway cargar GOOGLE_SHEETS_CREDENTIALS o GOOGLE_SHEETS_SERVICE_ACCOUNT_JSON con el JSON completo de la service account."
+      "Credenciales de Google Sheets no configuradas. En el hosting cargar GOOGLE_SHEETS_CREDENTIALS o GOOGLE_SHEETS_SERVICE_ACCOUNT_JSON con el JSON completo de la service account."
     );
   }
   return JSON.parse(fs.readFileSync(CREDENTIALS_PATH, "utf8"));
@@ -566,7 +608,8 @@ async function writeSheet(sheet, rows, deleteIds = []) {
 // personales reales (DNI, teléfono, nombre de responsables, muchos
 // de menores de edad) - antes cualquiera podía leerlas sin
 // autenticarse, con solo saber la URL. Ahora exigen sesión de admin.
-const PUBLIC_READ_SHEETS = new Set(["TURISMO", "CONFIG"]);
+// Solo lo que la web pública lee sin sesión. CONFIG no: el frontend nunca la pide por red.
+const PUBLIC_READ_SHEETS = new Set(["TURISMO"]);
 
 // SEGURIDAD: antes CUALQUIERA (sin login) podía escribir en /api/google-sheets
 // para CUALQUIER hoja permitida (GRUPOS, CONTRATOS, PASAJEROS, TURISMO,
@@ -630,6 +673,10 @@ async function handleSheets(req, res, url) {
     if (!PUBLIC_READ_SHEETS.has(sheet) && !adminSession) {
       return json(res, 401, { ok: false, error: "Necesitás iniciar sesión para ver esta información" });
     }
+    // La pantalla Configuración ya es solo para el rol admin: el servidor lo hace valer.
+    if (sheet === "CONFIG" && adminSession.role !== "admin") {
+      return json(res, 403, { ok: false, error: "Esta información es solo para el administrador" });
+    }
     // Auditoría 23/07: las fichas que entran por el formulario público
     // quedan en Supabase (más abajo, POST sin sesión), pero el admin acá
     // solo leía Sheets - una ficha nueva nunca aparecía en su bandeja. Se
@@ -648,13 +695,13 @@ async function handleSheets(req, res, url) {
     // de Hostinger antes de tocar ningún dato real.
     if (sheet === "FICHAS_ADHESION" && adminSession) {
       if (POSTGRES_MIGRATION_ENABLED) {
-        return json(res, 200, { ok: true, sheet, rows: await db.listFichasAdmin() });
+        return json(res, 200, { ok: true, sheet, rows: conFirmaPorUrl(adminWrite.versionedRows(await db.listFichasAdmin())) });
       }
       const [sheetsRows, postgresRows] = await Promise.all([readSheet(sheet), db.listFichasAdmin()]);
-      return json(res, 200, { ok: true, sheet, rows: [...postgresRows, ...sheetsRows] });
+      return json(res, 200, { ok: true, sheet, rows: [...conFirmaPorUrl(postgresRows), ...sheetsRows] });
     }
     if (POSTGRES_SHEETS.has(sheet)) {
-      return json(res, 200, { ok: true, sheet, rows: await POSTGRES_LIST_FN[sheet]() });
+      return json(res, 200, { ok: true, sheet, rows: adminWrite.versionedRows(await POSTGRES_LIST_FN[sheet]()) });
     }
     return json(res, 200, { ok: true, sheet, rows: await readSheet(sheet) });
   }
@@ -682,6 +729,21 @@ async function handleSheets(req, res, url) {
 
     rows = sanitizeRows(rows, SCHEMA[sheet]);
     deleteIds = sanitizeDeleteIds(deleteIds);
+
+    if (POSTGRES_MIGRATION_ENABLED && (sheet === "FICHAS_ADHESION" || POSTGRES_SAVE_FN[sheet])) {
+      const list = sheet === "FICHAS_ADHESION" ? db.listFichasAdmin : POSTGRES_LIST_FN[sheet];
+      const save = sheet === "FICHAS_ADHESION"
+        ? () => db.updateFichasAdmin(rows, adminSession.user)
+        : () => POSTGRES_SAVE_FN[sheet](rows, deleteIds, adminSession.user);
+      const result = await adminWrite.write({
+        pool: db.getPool(), sheet, rows, deleteIds,
+        expectedVersions: payload.expectedVersions, list, save, actor: adminSession.user
+      });
+      if (result.failed.length) {
+        return json(res, 200, { ok: false, sheet, error: `No se guardó el pedido: ${result.failed.map((item) => item.error).join(" | ")}` });
+      }
+      return json(res, 200, { ok: true, sheet, updated: result.updated, versions: result.versions });
+    }
 
     // Auditoría 23/07: la edición/aprobación de fichas desde el admin
     // manda TODAS las fichas conocidas por el navegador en un solo POST
@@ -743,19 +805,22 @@ async function handleAdminAuth(req, res, url) {
   if (url.pathname === "/api/admin/login" && req.method === "POST") {
     if (requireSameOrigin(req, res)) return;
     const ip = clientIp(req);
-    if (loginRateLimited(ip)) {
-      return json(res, 429, { ok: false, error: "Demasiados intentos fallidos. Esperá unos minutos antes de volver a intentar." });
-    }
     const payload = await readJsonBody(req, 20_000);
     const username = String(payload.username || "").trim().toLowerCase().slice(0, 100);
+    const userKey = `user:${username}`;
+    if (loginRateLimited(ip) || loginRateLimited(userKey, LOGIN_USER_ATTEMPT_LIMIT)) {
+      return json(res, 429, { ok: false, error: "Demasiados intentos fallidos. Esperá unos minutos antes de volver a intentar." });
+    }
     const password = String(payload.password || "").slice(0, 1000);
     const user = ADMIN_USERS[username];
     const configuredPassword = user?.password || "disabled-account-placeholder";
     if (!user?.password || !safePasswordEqual(configuredPassword, password)) {
       registerFailedLogin(ip);
+      registerFailedLogin(userKey);
       return json(res, 401, { ok: false, error: "Usuario o contraseña incorrectos" });
     }
     clearLoginAttempts(ip);
+    clearLoginAttempts(userKey);
     // Una cuenta mantiene una sola sesión activa. Un nuevo ingreso invalida
     // tokens anteriores (útil al rotar claves o cerrar una sesión olvidada).
     for (const [existingToken, existingSession] of adminSessions) {
@@ -782,7 +847,13 @@ async function handleAdminAuth(req, res, url) {
       "Set-Cookie": sessionCookie("", 0, isHttpsRequest(req))
     });
   }
-  if (["/api/admin/me", "/api/admin/login", "/api/admin/logout"].includes(url.pathname)) {
+  if (url.pathname === "/api/admin/diagnostico-ip" && req.method === "GET") {
+    const session = currentAdminSession(req);
+    if (!session) return json(res, 401, { ok: false, error: "Necesitás iniciar sesión para ver esta información" });
+    if (session.role !== "admin") return json(res, 403, { ok: false, error: "Solo el administrador puede ver este diagnóstico" });
+    return jsonWithHeaders(req, res, 200, { ok: true, ...diagnosticoIp(req) }, { "Cache-Control": "no-store" });
+  }
+  if (["/api/admin/me", "/api/admin/login", "/api/admin/logout", "/api/admin/diagnostico-ip"].includes(url.pathname)) {
     return json(res, 405, { ok: false, error: "Método no permitido" });
   }
   json(res, 404, { ok: false, error: "Endpoint no encontrado" });
@@ -803,7 +874,7 @@ function staticFile(req, res, url) {
       return res.end();
     }
   }
-  const cleanPath = decodeURIComponent(url.pathname === "/" ? "/index.html" : url.pathname);
+  const cleanPath = safeDecode(url.pathname === "/" ? "/index.html" : url.pathname);
   const publicPath = cleanPath.replace(/^\/+/, "");
   const normalizedPublicPath = path.posix.normalize(publicPath);
   const isPublicAsset = normalizedPublicPath.startsWith("assets/") && !normalizedPublicPath.includes("../");
@@ -853,7 +924,15 @@ function staticFile(req, res, url) {
     ...securityHeaders(req)
   });
   if (req.method === "HEAD") return res.end();
-  fs.createReadStream(target).pipe(res);
+  const stream = fs.createReadStream(target);
+  // Sin este manejador, un error de lectura (archivo borrado o ilegible entre el
+  // existsSync y la apertura) tira el proceso entero. Los encabezados ya salieron:
+  // solo se corta la conexión.
+  stream.on("error", (error) => {
+    console.error("Error leyendo archivo estático", safeErrorForLog(error));
+    res.destroy();
+  });
+  stream.pipe(res);
 }
 
 // Auditoría 23/07: loginAttempts/fichaSubmitAttempts/apiAttempts solo se
@@ -893,6 +972,20 @@ const MAX_FICHA_BODY_BYTES = 400_000;
 
 // Genera el PDF y envía el correo de una ficha ya guardada. Nunca lanza: el
 // resultado queda en fichas_adhesion.email_estado para verlo en el admin.
+// El PDF espera la firma como data URL: si está en Storage se descarga acá.
+async function conFirmaEmbebida(fila) {
+  const bytes = await storage.bytesFirma(fila.firma_data_url);
+  fila.firma_data_url = bytes ? `data:image/png;base64,${bytes.toString("base64")}` : "";
+  return fila;
+}
+
+// El listado del admin no trae los bytes: las firmas de Storage se sirven por URL.
+function conFirmaPorUrl(filas) {
+  return filas.map((fila) => (
+    storage.esRutaStorage(fila.firma_data_url) ? { ...fila, firma_data_url: `/api/admin/fichas/${fila.id}/firma` } : fila
+  ));
+}
+
 async function procesarCorreoFicha(id, idempotencyKey) {
   try {
     if (!email.correoConfigurado()) {
@@ -901,6 +994,7 @@ async function procesarCorreoFicha(id, idempotencyKey) {
     }
     const [fila] = await db.listFichasAdmin(id);
     if (!fila) return;
+    await conFirmaEmbebida(fila);
     const pdf = await fichaPdf.generarPdfFicha(fila);
     await email.enviarCorreoFicha(fila, pdf, idempotencyKey ? { idempotencyKey } : {});
     await db.setFichaEmailResultado(id, { estado: "enviado" });
@@ -967,19 +1061,36 @@ async function handlePublicFicha(req, res) {
   }
   registerFichaSubmit(ip);
   let guardada;
+  let firmaSubida = null;
   try {
+    if (storage.storageConfigurado()) {
+      firmaSubida = await storage.subirFirma(validacion.datos.firma, crypto.randomUUID());
+      validacion.datos.firma = firmaSubida;
+    }
     guardada = await db.insertFichaPublica(validacion.datos, contexto);
   } catch (error) {
+    // La ficha no se guardó: la firma ya subida quedaría huérfana en el bucket.
+    if (firmaSubida) {
+      await storage.borrarFirma(firmaSubida).catch((e) => console.error("No se pudo borrar la firma huérfana:", safeErrorForLog(e)));
+    }
     if (error.statusCode === 400) {
       return json(res, 400, { ok: false, error: error.message, errores: error.errores || {} });
     }
+    if (error.statusCode === 409) return json(res, 409, { ok: false, error: error.message });
     console.error("Error al guardar ficha de adhesión:", safeErrorForLog(error));
     return json(res, 500, {
       ok: false,
       error: "No se pudo guardar la ficha. Tus datos siguen cargados: intentá de nuevo en unos minutos o consultanos por WhatsApp."
     });
   }
-  json(res, 201, { ok: true, id: guardada.id, emailDestino: email.enmascararEmail(validacion.datos.responsableEmail) });
+  // Guardar la ficha y enviar el correo son resultados distintos: el correo
+  // se procesa después de responder y todavía puede fallar.
+  json(res, 201, {
+    ok: true,
+    id: guardada.id,
+    emailDestino: email.enmascararEmail(validacion.datos.responsableEmail),
+    emailEstado: email.correoConfigurado() ? "pendiente" : "sin_configurar"
+  });
   setImmediate(() => procesarCorreoFicha(guardada.id));
 }
 
@@ -999,6 +1110,7 @@ async function handlePublicFichaTutor(req, res) {
     const guardada = await db.insertFichaTutor(validacion.datos);
     return json(res, 201, { ok: true, id: guardada.id });
   } catch (error) {
+    if (error.statusCode === 409) return json(res, 409, { ok: false, error: error.message });
     console.error("Error al guardar ficha de tutor:", safeErrorForLog(error));
     return json(res, 500, { ok: false, error: "No se pudo guardar el registro. Intentá de nuevo en unos minutos." });
   }
@@ -1007,7 +1119,7 @@ async function handlePublicFichaTutor(req, res) {
 // /api/admin/fichas/:id/pdf y /api/admin/fichas/:id/reenviar-correo.
 // Devuelve false si la ruta no es de este handler.
 async function handleAdminFicha(req, res, url) {
-  const match = /^\/api\/admin\/fichas\/([^/]+)\/(pdf|reenviar-correo)$/.exec(url.pathname);
+  const match = /^\/api\/admin\/fichas\/([^/]+)\/(pdf|reenviar-correo|firma)$/.exec(url.pathname);
   if (!match) return false;
   if (!currentAdminSession(req)) {
     json(res, 401, { ok: false, error: "Necesitás iniciar sesión." });
@@ -1024,7 +1136,7 @@ async function handleAdminFicha(req, res, url) {
       json(res, 404, { ok: false, error: "Ficha no encontrada." });
       return true;
     }
-    const pdf = await fichaPdf.generarPdfFicha(fila);
+    const pdf = await fichaPdf.generarPdfFicha(await conFirmaEmbebida(fila));
     res.writeHead(200, {
       "Content-Type": "application/pdf",
       "Content-Disposition": `attachment; filename="${fichaPdf.nombreArchivoPdf(fila)}"`,
@@ -1032,6 +1144,17 @@ async function handleAdminFicha(req, res, url) {
       ...securityHeaders(req)
     });
     res.end(Buffer.from(pdf));
+    return true;
+  }
+  if (accion === "firma" && req.method === "GET") {
+    const [fila] = await db.listFichasAdmin(id);
+    const bytes = fila && await storage.bytesFirma(fila.firma_data_url);
+    if (!bytes) {
+      json(res, 404, { ok: false, error: "Firma no encontrada." });
+      return true;
+    }
+    res.writeHead(200, { "Content-Type": "image/png", "Cache-Control": "no-store", ...securityHeaders(req) });
+    res.end(bytes);
     return true;
   }
   if (accion === "reenviar-correo" && req.method === "POST") {
@@ -1103,6 +1226,8 @@ module.exports = {
     sessionCookie,
     safePasswordEqual,
     safeErrorForLog,
-    recuperarCorreosPendientes
+    recuperarCorreosPendientes,
+    clientIp,
+    proxyHops
   }
 };

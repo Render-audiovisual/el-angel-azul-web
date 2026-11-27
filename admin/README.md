@@ -7,6 +7,7 @@ El panel interno funciona como SPA y requiere una sesión válida del servidor.
 - Panel: `/admin/` o `/#/admin`
 - Inscripciones: `/admin/fichas/`
 - Grupos y contratos: `/admin/grupos/`
+- Colegios: `/admin/colegios/`
 - Pasajeros: `/admin/pasajeros/`
 - Pagos: `/admin/pagos/`
 - Turismo: `/admin/turismo/`

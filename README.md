@@ -13,7 +13,7 @@ El servidor escucha en `PORT` o, si no está definido, en `8080`.
 
 ## Producción
 
-- Hosting: Render (`el-angel-azul-web`).
+- Hosting: Hostinger, con despliegue automático desde `main` y una vista previa por cada push.
 - Rama desplegada: `main`.
 - Entrada: `server.js` mediante `npm start`.
 - Base activa: PostgreSQL/Supabase.
@@ -32,6 +32,9 @@ EAA_AGENTE3_PASSWORD=...
 EAA_AGENTE4_PASSWORD=...
 EAA_AGENTE5_PASSWORD=...
 NODE_ENV=production
+# Proxies de confianza delante del servidor (por defecto 1). Subir a 2 solo si el diagnóstico
+# /api/admin/diagnostico-ip muestra la IP de un proxy en vez de la del visitante.
+EAA_PROXY_HOPS=1
 # Activar juntos después de descargar el certificado CA desde Supabase:
 EAA_POSTGRES_TLS_VERIFY_FULL=true
 SUPABASE_DB_CA_CERT="-----BEGIN CERTIFICATE-----\\n...\\n-----END CERTIFICATE-----"
@@ -40,13 +43,17 @@ SUPABASE_DB_CA_CERT="-----BEGIN CERTIFICATE-----\\n...\\n-----END CERTIFICATE---
 RESEND_API_KEY=...
 EAA_EMAIL_FROM="El Ángel Azul <fichas@DOMINIO-VERIFICADO>"
 EAA_EMAIL_COPIA=agencia@DOMINIO   # opcional, copia oculta
+# Firma de la ficha en Supabase Storage (bucket privado "fichas", migración 0005).
+# Sin estas dos variables la firma sigue guardándose como data URL en la base.
+SUPABASE_URL=https://<proyecto>.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=...   # solo servidor; nunca en el frontend
 ```
 
 El correo necesita el dominio de la agencia verificado en Resend (registros DNS).
 Hoy `elangelazul.tur.ar` no tiene DNS operativos: ver
 `docs/superpowers/specs/2026-09-15-ficha-adhesion-design.md` §9.
 
-Render define `PORT` automáticamente. No configurar variables de Google
+Hostinger define `PORT` automáticamente. No configurar variables de Google
 Sheets: el adaptador legado se conserva temporalmente como rollback, pero no es
 la fuente activa de producción.
 
@@ -54,7 +61,7 @@ Nunca subir a Git ni compartir por chat `DATABASE_URL`, contraseñas, archivos
 `.env` o credenciales de servicios.
 
 Para validación TLS completa, descargar el certificado CA desde Database >
-SSL Configuration en Supabase, cargarlo como `SUPABASE_DB_CA_CERT` en Render y
+SSL Configuration en Supabase, cargarlo como `SUPABASE_DB_CA_CERT` en Hostinger y
 recién entonces activar `EAA_POSTGRES_TLS_VERIFY_FULL=true`.
 El adaptador elimina automáticamente `sslmode`, `sslcert`, `sslkey` y
 `sslrootcert` de `DATABASE_URL` cuando la validación completa está activa para
@@ -145,10 +152,28 @@ HTML, CSS, JavaScript y JSON se sirven con revalidación obligatoria. Así, un
 deploy nuevo no depende de cambiar manualmente el sufijo `?v=` para que el
 navegador reciba la versión actual.
 
+## Importar el Padrón de colegios
+
+El Padrón Oficial de Establecimientos Educativos se baja de
+argentina.gob.ar (Ministerio de Educación → Padrón Oficial). Se importan los
+establecimientos comunes con primario o secundario de Corrientes y Misiones
+(`--provincias=` cambia la lista), con el CUE como `codigo_oficial`.
+
+```bash
+node scripts/import-padron-colegios.js padron.xlsx            # solo lee el archivo
+DATABASE_URL=... node scripts/import-padron-colegios.js padron.xlsx            # simula y revierte
+DATABASE_URL=... node scripts/import-padron-colegios.js padron.xlsx --aplicar  # guarda
+```
+
+Reglas: el código oficial manda; un colegio cargado a mano con el mismo nombre
+se vincula en vez de duplicarse; si el nombre ya existe con otro código se agrega
+la localidad; reimportar no pisa nombres editados ni reactiva colegios dados de baja.
+Aplicar en producción solo con OK del dueño.
+
 ## Pendientes de producto
 
 - Pagos todavía usa datos de demostración; no representa cobranza real.
-- Sección Colegios del admin e importación del Padrón oficial (Fase 2).
+- Cargar los colegios del Padrón en la base real (ver «Importar el Padrón de colegios»).
 - Exportación de pasajeros a Excel y Supabase Storage (Fase 3).
 - Retirar el adaptador muerto de Google Sheets solo después de un período
   estable en PostgreSQL.

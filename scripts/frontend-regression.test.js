@@ -198,6 +198,7 @@ test("el catálogo de Turismo escapa texto y URLs antes de usar innerHTML", () =
     ${escapeSource}
     ${safeUrlSource}
     function turismoWhatsappForPackage() { return "#"; }
+    ${functionSource("turismoDias", "renderTurismoPackageCard")}
     ${renderSource}
     return renderTurismoPackageCard;
   `)();
@@ -339,4 +340,210 @@ test("la tabla de pasajeros muestra colegio, grado, división, plan y tutor", ()
 test("los grupos eligen el colegio de la lista", () => {
   assert.match(functionSource("renderAdminGruposCreateForm", "renderAdminGrupos"), /renderAdminColegioSelect\(\)/);
   assert.match(functionSource("renderAdminPasajerosGroupModal", "renderAdminPasajeros"), /renderAdminColegioSelect\(/);
+});
+
+test("Colegios admin: ruta registrada, carpeta física y baja lógica (sin borrar)", () => {
+  assert.match(appSource, /path: "\/admin\/colegios"/);
+  assert.match(appSource, /path === "\/admin\/colegios"/);
+  assert.match(appSource, /endsWith\("\/admin\/colegios"\)/);
+  assert.ok(fs.existsSync(path.join(__dirname, "..", "admin", "colegios", "index.html")));
+  const source = functionSource("renderAdminColegios", "renderAdminConfiguracion");
+  assert.match(source, /activo: baja \? "FALSE" : "TRUE"/);
+  assert.doesNotMatch(source, /deleteIds|DELETE/i);
+});
+
+test("la pertenencia de la ficha y del pasajero llega hasta el Tutor", () => {
+  const ficha = functionSource("renderAdminFichaDetail", "approveFichaAdhesionAndCreatePassenger");
+  assert.match(ficha, /renderFichaValue\("Tutor"/);
+  const pasajero = functionSource("renderAdminPasajerosProfile", "renderAdminPasajerosGroupModal");
+  assert.match(pasajero, /renderFichaValue\("Tutor"/);
+});
+
+test("el alta de pasajero guarda en el grupo elegido y sin grupo no guarda", () => {
+  const render = functionSource("renderAdminPasajeros", "adminContratosFilteredRows");
+  assert.match(render, /<label>Grupo[^<]*<span[^>]*>\*<\/span>\s*<select name="grupoId"/);
+  const bind = functionSource("bindAdminPasajeros", "bindAdminFichasRecibidas");
+  const submit = bind.slice(bind.indexOf("[data-admin-pasajeros-form]\")?.addEventListener(\"submit\""));
+  assert.match(submit, /group\.id === String\(formData\.get\("grupoId"\) \|\| ""\)\)/);
+  assert.doesNotMatch(submit.slice(0, submit.indexOf("selectedGroup.pasajeros.push")), /adminPasajerosDemo\[0\]|formData\.get\("grupoId"\) \|\| adminPasajerosGrupoId/);
+  assert.match(submit, /if \(!selectedGroup\) \{\s*adminPasajerosFormError = "Elegí un grupo\.";\s*renderAdminPasajeros\(\);\s*return;/);
+  assert.match(submit, /selectedGroup\.pasajeros\.push\(passenger\)/);
+});
+
+test("la firma de la ficha tiene alternativa por teclado con el mismo PNG", () => {
+  const render = functionSource("renderFichaAdhesion", "bindFichaAdhesion");
+  assert.match(render, /<label>[^<]*firma\s*<input name="firmaTexto"[^>]*data-error-target="firma"[^>]*data-ficha-signature-text>\s*<\/label>/);
+  const bind = functionSource("bindFichaAdhesion", "renderFichaTutor");
+  assert.match(bind, /const firmaDesdeTexto = [\s\S]*?fillText\([\s\S]*?return lienzo\.toDataURL\("image\/png"\);/);
+  assert.match(bind, /firma: nombreFirmaValido\(\) \? firmaDesdeTexto\(textoFirma\.value\.trim\(\)\) : hasSignature \? canvas\.toDataURL\("image\/png"\) : ""/);
+  // "Limpiar firma" borra el trazo y el nombre escrito.
+  assert.match(bind, /clearButton\?\.addEventListener\("click", \(\) => \{\s*context\.clearRect[^;]*;\s*hasSignature = false;\s*textoFirma\.value = "";/);
+  // El servidor no cambia: sigue recibiendo firma como PNG base64 (CAMPOS no incluye firmaTexto).
+  assert.doesNotMatch(bind, /"firmaTexto"/);
+});
+
+test("la pantalla de éxito de la ficha recibe el foco", () => {
+  const render = functionSource("renderFichaAdhesion", "bindFichaAdhesion");
+  assert.match(render, /class="ficha-adhesion-success[^"]*" role="status" tabindex="-1" data-ficha-exito/);
+  const tutor = functionSource("renderFichaTutor", "bindFichaTutor");
+  assert.match(tutor, /role="status" tabindex="-1" data-ficha-exito/);
+  const exito = /\s*window\.scrollTo\(\{ top: 0 \}\);\s*document\.querySelector\("\[data-ficha-exito\]"\)\?\.focus\(/;
+  assert.match(functionSource("bindFichaAdhesion", "renderFichaTutor"), new RegExp(/renderFichaAdhesion\(\{[^\n]*\);/.source + exito.source));
+  assert.match(functionSource("bindFichaTutor", "renderNotFound"), new RegExp(/renderFichaTutor\(true\);/.source + exito.source));
+});
+
+test("los errores de la ficha salen del label y se enlazan con aria-describedby", () => {
+  const limpiar = functionSource("limpiarErrorAlEditar", "renderFichaAdhesion");
+  assert.match(limpiar, /querySelectorAll\("label \[data-error-for\]"\)[\s\S]*?label\.replaceWith\(campo\);\s*campo\.append\(label, nodo\);/);
+  const mostrar = functionSource("mostrarErroresFormulario", "limpiarErrorAlEditar");
+  assert.match(mostrar, /\[data-error-target="\$\{campo\}"\]/);
+  assert.match(mostrar, /setAttribute\("aria-describedby", nodo\.id\)/);
+  // Ambos formularios aplican el arreglo antes de validar.
+  assert.match(functionSource("bindFichaAdhesion", "renderFichaTutor"), /limpiarErrorAlEditar\(form\)/);
+  assert.match(functionSource("bindFichaTutor", "renderNotFound"), /limpiarErrorAlEditar\(form\)/);
+  assert.match(stylesSource, /\.ficha-campo \{/);
+});
+
+test("si un guardado del admin recibe 401, se recarga y el login avisa que el cambio no se guardó", () => {
+  const perdida = functionSource("handleAdminSessionLost", "fetchAdminSession");
+  assert.match(perdida, /sessionStorage\.setItem\(ADMIN_SESION_PERDIDA_KEY/);
+  assert.match(perdida, /location\.reload\(\)/, "dibujar el login acá lo tapa el código que llamó al guardado");
+  assert.match(appSource, /sessionStorage\.getItem\(ADMIN_SESION_PERDIDA_KEY\)/);
+  const cola = functionSource("queueGoogleSheetsWrite", "adminFichasSaveMessage");
+  assert.match(cola, /error\.status === 401\) handleAdminSessionLost\(\)/);
+  const turismo = functionSource("saveAdminTurismoTripsWithFeedback", "importAdminTurismoPublicDefaults");
+  assert.match(turismo, /error\.status === 401\) handleAdminSessionLost\(\)/);
+  assert.match(functionSource("renderAdminLogin", "renderAdminShell"), /adminLoginNotice/);
+});
+
+test("el resumen de la inscripción no se muestra dos veces en el segundo tramo", () => {
+  const source = appSource.slice(appSource.indexOf("const renderStep = () => {"));
+  const renderStep = source.slice(0, source.indexOf("const goNext"));
+  assert.match(renderStep, /contextSummary\.hidden = macroStep === 2/);
+  assert.match(fs.readFileSync(path.join(__dirname, "../assets/css/styles.css"), "utf8"), /\.inscripcion-context-summary\[hidden\]\s*\{\s*display:\s*none/);
+});
+
+test("el nombre de sesión del admin y los placeholders mantienen contraste", () => {
+  const css = fs.readFileSync(path.join(__dirname, "../assets/css/styles.css"), "utf8");
+  // Una regla genérica `.admin-shell-session strong { color: var(--color-text) }` lo dejaba en 2:1 sobre el azul.
+  assert.match(css, /body\[data-app-entry="admin"\] \.admin-shell-session strong \{\s*color: #ffffff;/);
+  assert.match(css, /input::placeholder,\s*textarea::placeholder \{\s*color: var\(--color-muted\);/);
+});
+
+test("los paneles del admin se achican al ancho del celular (columnas minmax(0, 1fr))", () => {
+  const css = fs.readFileSync(path.join(__dirname, "../assets/css/styles.css"), "utf8");
+  // Junta todas las reglas con ese selector exacto (algunos aparecen más de una vez).
+  const regla = (selector) => {
+    const bloques = [];
+    for (let inicio = css.indexOf(`${selector} {`); inicio !== -1; inicio = css.indexOf(`${selector} {`, inicio + 1)) {
+      bloques.push(css.slice(inicio, css.indexOf("}", inicio)));
+    }
+    assert.notEqual(bloques.length, 0, `No se encontró ${selector}`);
+    return bloques.join("\n");
+  };
+  // Con `1fr` o columna implícita, el contenido más ancho (un input, un select, una tabla) estira el panel y se corta a la derecha.
+  assert.match(regla("      .admin-main"), /grid-template-columns: minmax\(0, 1fr\)/);
+  assert.match(regla("      .admin-turismo-panel"), /grid-template-columns: minmax\(0, 1fr\)/);
+  assert.match(regla("      .admin-pasajeros-form fieldset"), /min-width: 0/);
+  assert.match(regla("      .admin-pasajeros-form fieldset:last-of-type"), /minmax\(0, 1fr\)/);
+  assert.match(regla("      .admin-pasajeros-group-form fieldset"), /minmax\(0, 1fr\)/);
+  assert.match(regla("      .admin-pasajeros-form select"), /max-width: 100%/);
+});
+
+test("el botón Limpiar firma tiene área táctil de 44 px", () => {
+  const css = fs.readFileSync(path.join(__dirname, "../assets/css/styles.css"), "utf8");
+  const inicio = css.indexOf("      .ficha-adhesion-signature button {\n        justify-self: start;");
+  assert.notEqual(inicio, -1, "No se encontró la regla base del botón de firma");
+  assert.match(css.slice(inicio, css.indexOf("}", inicio)), /min-height: 44px/);
+});
+
+test("la ficha y la selección de curso no esconden campos con visibility:hidden hasta el scroll", () => {
+  // autoAlpha deja visibility:hidden: el bloque sale del orden de Tab y del lector de pantalla.
+  for (const [nombre, siguiente] of [["bindInscripcionAnimations", "renderInscripcion"], ["bindFichaAdhesionAnimations", "fichaOpciones"]]) {
+    const fuente = functionSource(nombre, siguiente);
+    const reveal = fuente.slice(fuente.indexOf('toArray("[data-reveal-light]")')).replace(/^\s*\/\/.*$/gm, "");
+    assert.match(reveal, /gsap\.from\(el, \{\s*opacity: 0/, `${nombre}: el reveal con scroll tiene que animar opacity, no autoAlpha`);
+    assert.doesNotMatch(reveal, /autoAlpha/, `${nombre}: autoAlpha esconde los campos del teclado`);
+    assert.match(reveal, /addEventListener\("focusin", \(\) => tween\.progress\(1\)\)/, `${nombre}: el foco tiene que mostrar el bloque completo`);
+  }
+});
+
+test("Turismo público no muestra viajes de demostración cuando no hay viajes activos", async () => {
+  const fuente = appSource.slice(appSource.indexOf("async function loadTurismoPublicPackages()"), appSource.indexOf("async function turismoPackageBySlug"));
+  assert.doesNotMatch(fuente, /turismoFallbackPackages|TURISMO_PUBLIC_JSON_URL/, "la web pública no puede caer a viajes de demostración");
+  assert.match(functionSource("turismoPackages", "turismoFallbackPackages"), /turismoPublicPackagesCache \|\| \[\]/);
+
+  // Control de flujo con la función real: filas inactivas -> vacío; servidor caído -> vacío sin guardarlo.
+  const cargar = new Function("fetch", "turismoRowToTrip", "adminTripToPublicPackage", "isTurismoPublicPreviewMode", "state", `
+    ${fuente.replace("turismoPublicPackagesCache", "state.cache").replaceAll("turismoPublicPackagesCache", "state.cache")}
+    return loadTurismoPublicPackages;`);
+  const respuesta = (rows) => async () => ({ ok: true, json: async () => ({ ok: true, rows }) });
+  const comoPublico = (fila) => (fila.estado === "activo" ? { ...fila, orden: 1, destacado: false } : null);
+  for (const [nombre, fetchFalso, esperado, cacheado] of [
+    ["todas inactivas", respuesta([{ estado: "inactivo" }, { estado: "borrador" }]), 0, true],
+    ["una activa", respuesta([{ estado: "activo", id: "x" }, { estado: "inactivo" }]), 1, true],
+    ["sin filas", respuesta([]), 0, true],
+    ["servidor caído", async () => { throw new Error("sin red"); }, 0, false]
+  ]) {
+    const state = { cache: null };
+    const resultado = await cargar(fetchFalso, (fila) => fila, comoPublico, () => false, state)();
+    assert.equal(resultado.length, esperado, nombre);
+    assert.equal(state.cache !== null, cacheado, `${nombre}: cache`);
+  }
+});
+
+test("el inicio rediseñado conserva sus decisiones: dos entradas, Camboriú, fotos propias y movimiento accesible", () => {
+  const inicio = functionSource("renderHome", "bindHeroCarousel");
+  // Hero con las dos entradas (estudiantil y turismo) que llevan a su sección.
+  assert.match(inicio, /data-scroll-target="eaa-destinos"/);
+  assert.match(inicio, /data-scroll-target="eaa-turismo"/);
+  // Tres destinos, con Camboriú (egresados, Brasil) por WhatsApp, y fotos de reemplazo configurables.
+  for (const destino of ["Bariloche", "Carlos Paz", "Camboriú"]) assert.match(inicio, new RegExp(`name: "${destino}"`));
+  assert.match(inicio, /const homePhotos = \{/);
+  // Sin rótulos en mayúsculas ni viajes inventados: los de Turismo salen de la base.
+  assert.doesNotMatch(inicio, /eaa-eyebrow/);
+  assert.match(inicio, /loadTurismoPublicPackages\(\)/);
+
+  const movimiento = fs.readFileSync(path.join(__dirname, "../assets/js/modules/home-motion.js"), "utf8");
+  // Nada de visibility:hidden ni autoAlpha: los bloques siguen en el orden de Tab y en el lector de pantalla.
+  assert.doesNotMatch(movimiento.replace(/^\s*\/\/.*$/gm, ""), /autoAlpha|visibility\s*[:=]\s*["']?hidden/);
+  assert.match(movimiento, /focusin/);
+  assert.match(movimiento, /prefers-reduced-motion: reduce/);
+
+  const css = fs.readFileSync(path.join(__dirname, "../assets/css/home.css"), "utf8");
+  assert.match(css.split("\n").find((linea) => linea.trim()), /^\/\* Hallmark ·/, "la primera línea del CSS es el sello de Hallmark");
+  assert.doesNotMatch(css, /transition:\s*all|100vw/);
+});
+
+test("Turismo: seis destacados, página con todos los paquetes y filtros, detalle de ficha, sin viajes inventados ni contenido escondido", () => {
+  const landing = functionSource("renderTurismo", "renderPackageDetail");
+  assert.match(landing, /packages\.slice\(0, 6\)/, "la landing muestra 6 paquetes destacados");
+  assert.match(landing, /href="#\/turismo\/paquetes"/, "y lleva a la página con todos");
+  assert.match(landing, /renderTurismoEmptyState\(true\)/, "sin viajes se ve el estado vacío, no viajes de demostración");
+  for (const gancho of ["data-hero-slide", "data-fit", "data-process-row"]) assert.match(landing, new RegExp(gancho));
+  assert.doesNotMatch(landing, /autoAlpha|data-reveal-light/, "nada se esconde hasta el scroll");
+
+  const paquetes = functionSource("renderTurismoPaquetes", "renderTurismo");
+  for (const gancho of ["data-tur-filtros", "data-tur-orden", "data-tur-resultados", "data-tur-mas", 'radios\\("quien"', 'radios\\("tipo"', 'radios\\("dur"', "history.replaceState"]) assert.match(paquetes, new RegExp(gancho));
+  assert.match(appSource, /path === "\/turismo\/paquetes"/, "la ruta existe antes de la del detalle");
+
+  const tarjeta = functionSource("renderTurismoPackageCard", "bindTurismoCardCarousels");
+  for (const gancho of ["tur-card-link", "tur-price", "tur-card-go", "#/turismo/"]) assert.match(tarjeta, new RegExp(gancho));
+
+  const detalle = functionSource("renderPackageDetail", "bindPackageDetailItinerario");
+  for (const gancho of ["tur-d-card", "data-itinerario-toggle", "tur-related", "package-sticky-bar", "turismoWhatsappForPackage"]) assert.match(detalle, new RegExp(gancho));
+
+  const css = fs.readFileSync(path.join(__dirname, "../assets/css/turismo.css"), "utf8");
+  assert.match(css.split("\n").find((linea) => linea.trim()), /^\/\* Hallmark ·/, "la primera línea del CSS es el sello de Hallmark");
+  assert.doesNotMatch(css, /transition:\s*all|100vw/);
+  for (const admin of ["admin/index.html", "admin-turismo/index.html"]) assert.match(fs.readFileSync(path.join(__dirname, "..", admin), "utf8"), /turismo\.css/, `${admin} carga los estilos de la tarjeta (vista previa del editor)`);
+});
+
+test("el menú público tiene Inicio, Turismo e Inscripción online, y la inscripción dice Pasajero sin «PAX»", () => {
+  const html = fs.readFileSync(path.join(__dirname, "../index.html"), "utf8");
+  const nav = html.slice(html.indexOf('<nav class="site-nav"'), html.indexOf("</nav>", html.indexOf('<nav class="site-nav"')));
+  const enlaces = [...nav.matchAll(/<a [^>]*href="([^"]+)"[^>]*>([^<]+)/g)].map(([, href, texto]) => `${href} ${texto.trim()}`);
+  assert.deepEqual(enlaces, ["#/ Inicio", "#/turismo Turismo", "#/inscripcion Inscripción online", "/admin/ Iniciar sesión"]);
+  assert.match(appSource, /<strong>Pasajero<\/strong>/);
+  assert.doesNotMatch(appSource, /Pasajero \(PAX\)/);
 });

@@ -309,3 +309,159 @@ test("HTML, CSS y JavaScript se revalidan para evitar versiones viejas", async (
     assert.equal(response.headers["cross-origin-resource-policy"], "same-origin");
   }
 });
+
+test("bug: POST fichas con cuerpo JSON null responde 400, no 500", async () => {
+  const origin = `http://127.0.0.1:${port}`;
+  for (const path of ["/api/public/fichas", "/api/public/fichas-tutor"]) {
+    const response = await request({ method: "POST", path, headers: { origin }, rawBody: "null" });
+    assert.equal(response.status, 400, path);
+    assert.equal(response.json.ok, false);
+  }
+});
+
+// Reenvío de la misma ficha (doble toque, reintento desde otro equipo): la base
+// avisa con 409 y el formulario muestra el mensaje en vez de guardar un duplicado.
+const PNG_1X1 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
+const cuilConDigitoVerificador = (base) => {
+  const pesos = [5, 4, 3, 2, 7, 6, 5, 4, 3, 2];
+  const resto = 11 - ([...base].reduce((suma, digito, i) => suma + Number(digito) * pesos[i], 0) % 11);
+  return `${base}${resto === 11 ? 0 : resto === 10 ? 9 : resto}`;
+};
+
+test("cookie y ruta con % mal formado no dan 500", async () => {
+  const cookie = await request({ path: "/api/admin/me", headers: { cookie: "eaa_session=%E0%A4%A" } });
+  assert.equal(cookie.status, 200);
+  const ruta = await request({ path: "/%E0%A4%A" });
+  assert.notEqual(ruta.status, 500);
+});
+
+test("login: el límite por usuario frena la fuerza bruta aunque rote la IP", async () => {
+  const origin = `http://127.0.0.1:${port}`;
+  let ultimo;
+  for (let i = 0; i < 21; i++) {
+    ultimo = await request({
+      method: "POST",
+      path: "/api/admin/login",
+      headers: { origin, "x-forwarded-for": `9.9.9.${i}` },
+      body: { username: "victima-fuerza-bruta", password: "x" }
+    });
+  }
+  assert.equal(ultimo.status, 429);
+});
+
+test("fichas duplicadas: el 409 de la base llega al formulario con su mensaje", async () => {
+  const db = require("../lib/db");
+  const original = { pax: db.insertFichaPublica, tutor: db.insertFichaTutor };
+  const duplicado = Object.assign(new Error("Ya recibimos esta ficha."), { statusCode: 409 });
+  db.insertFichaPublica = async () => { throw duplicado; };
+  db.insertFichaTutor = async () => { throw duplicado; };
+  try {
+    const origin = `http://127.0.0.1:${port}`;
+    const cuil = cuilConDigitoVerificador("2720123456");
+    const pax = await request({
+      method: "POST",
+      path: "/api/public/fichas",
+      headers: { origin },
+      body: {
+        nivel: "Secundaria", destino: "Bariloche", anio: "2027", colegioTexto: "Escuela Normal 2", grado: "5°", division: "B",
+        pasajeroNombre: "Lucía", pasajeroApellido: "Ibáñez", pasajeroTipoDocumento: "DNI", pasajeroNumeroDocumento: "48000111", pasajeroNacimiento: "2010-05-20", pasajeroSexo: "Femenino",
+        responsableNombre: "Marta", responsableApellido: "Ibáñez", responsableTipoDocumento: "DNI", responsableNumeroDocumento: "20123456", responsableNacimiento: "1980-07-02",
+        responsableParentesco: "Madre", responsableCuilCuit: cuil, responsableEmail: "marta@gmail.com", responsableCelular: "3794123456",
+        domicilioCalle: "San Martín", domicilioNumero: "123", domicilioLocalidad: "Corrientes", domicilioProvincia: "Corrientes", domicilioCodigoPostal: "3400",
+        aceptaCondiciones: true, firma: PNG_1X1
+      }
+    });
+    assert.equal(pax.status, 409);
+    assert.equal(pax.json.ok, false);
+    assert.equal(pax.json.error, "Ya recibimos esta ficha.");
+    const tutor = await request({
+      method: "POST",
+      path: "/api/public/fichas-tutor",
+      headers: { origin },
+      body: {
+        pasajeroNombre: "Lucía", pasajeroApellido: "Ibáñez", pasajeroNumeroDocumento: "48000111",
+        nombre: "Raúl", apellido: "Ibáñez", tipoDocumento: "DNI", numeroDocumento: "20123456", cuilCuit: cuil,
+        parentesco: "Padre", celular: "3794555666", email: "raul@gmail.com", aceptaCondiciones: true
+      }
+    });
+    assert.equal(tutor.status, 409);
+    assert.equal(tutor.json.error, "Ya recibimos esta ficha.");
+  } finally {
+    db.insertFichaPublica = original.pax;
+    db.insertFichaTutor = original.tutor;
+  }
+});
+
+// --- Paso 3: lectura pública y archivos estáticos ----------------------------
+
+test("CONFIG no se lee sin sesión; TURISMO sigue siendo público (lo usa la web)", async () => {
+  assert.equal((await request({ path: "/api/google-sheets?sheet=CONFIG" })).status, 401);
+  assert.equal((await request({ path: "/api/google-sheets?sheet=PASAJEROS" })).status, 401);
+  assert.notEqual((await request({ path: "/api/google-sheets?sheet=TURISMO" })).status, 401);
+});
+
+test("CONFIG con sesión de agencia da 403; con admin no", async () => {
+  const origin = `http://127.0.0.1:${port}`;
+  const entrar = async (username, password) => String((await request({ method: "POST", path: "/api/admin/login", headers: { origin }, body: { username, password } })).headers["set-cookie"]?.[0] || "").split(";")[0];
+  assert.equal((await request({ path: "/api/google-sheets?sheet=CONFIG", headers: { cookie: await entrar("agente1", "test-agent-password") } })).status, 403);
+  assert.notEqual((await request({ path: "/api/google-sheets?sheet=CONFIG", headers: { cookie: await entrar("admin", "test-admin-password") } })).status, 403);
+});
+
+test("un error de lectura de un archivo estático no tira el servidor", async () => {
+  const fs = require("node:fs");
+  const { Readable } = require("node:stream");
+  const original = fs.createReadStream;
+  fs.createReadStream = () => new Readable({ read() { this.destroy(new Error("EIO simulado")); } });
+  try {
+    await assert.rejects(request({ path: "/index.html" }), /socket hang up|aborted|ECONNRESET/);
+  } finally {
+    fs.createReadStream = original;
+  }
+  assert.equal((await request({ path: "/index.html" })).status, 200, "el servidor sigue atendiendo");
+});
+
+// --- IP del visitante (Paso 2) ---------------------------------------------
+
+const reqConIp = (xff, remote = "10.0.0.1") => ({ headers: xff === undefined ? {} : { "x-forwarded-for": xff }, socket: { remoteAddress: remote } });
+
+test("clientIp toma la IP que agregó el último proxy, no la que escribe el cliente", () => {
+  const { clientIp } = __test;
+  assert.equal(clientIp(reqConIp("203.0.113.9")), "203.0.113.9");
+  // El cliente manda una IP inventada y el proxy agrega la real al final.
+  assert.equal(clientIp(reqConIp("1.2.3.4, 203.0.113.9")), "203.0.113.9");
+  assert.equal(clientIp(reqConIp(undefined)), "10.0.0.1");
+  assert.equal(clientIp(reqConIp("")), "10.0.0.1");
+});
+
+test("con dos proxies delante, EAA_PROXY_HOPS=2 recupera la IP del visitante", () => {
+  const { clientIp, proxyHops } = __test;
+  const req = reqConIp("1.2.3.4, 203.0.113.9, 172.16.0.5");
+  assert.equal(clientIp(req, 1), "172.16.0.5", "con 1 salto todos los visitantes compartirían la IP del segundo proxy");
+  assert.equal(clientIp(req, 2), "203.0.113.9");
+  assert.equal(clientIp(reqConIp("203.0.113.9"), 2), "10.0.0.1", "si faltan saltos no se confía en un valor que pudo escribir el cliente");
+  assert.equal(proxyHops({}), 1);
+  assert.equal(proxyHops({ EAA_PROXY_HOPS: "2" }), 2);
+  for (const malo of ["0", "-1", "abc", "9", ""]) assert.equal(proxyHops({ EAA_PROXY_HOPS: malo }), 1, `valor inválido «${malo}» vuelve al valor por defecto`);
+});
+
+test("diagnostico-ip: sin sesión 401, agencia 403, admin ve qué le llega y la IP calculada", async () => {
+  const origin = `http://127.0.0.1:${port}`;
+  const login = (username, password) => request({ method: "POST", path: "/api/admin/login", headers: { origin, "x-forwarded-for": "198.51.100.77" }, body: { username, password } });
+  const cookieDe = (r) => String(r.headers["set-cookie"]?.[0] || "").split(";")[0];
+
+  assert.equal((await request({ path: "/api/admin/diagnostico-ip" })).status, 401);
+
+  const agente = await login("agente1", "test-agent-password");
+  assert.equal(agente.status, 200);
+  assert.equal((await request({ path: "/api/admin/diagnostico-ip", headers: { cookie: cookieDe(agente) } })).status, 403);
+
+  const admin = await login("admin", "test-admin-password");
+  const diag = await request({ path: "/api/admin/diagnostico-ip", headers: { cookie: cookieDe(admin), "x-forwarded-for": "1.2.3.4, 203.0.113.9", "x-real-ip": "203.0.113.9" } });
+  assert.equal(diag.status, 200);
+  assert.equal(diag.json.ipCalculada, "203.0.113.9");
+  assert.equal(diag.json.proxyHops, 1);
+  assert.deepEqual(diag.json.xForwardedFor, ["1.2.3.4", "203.0.113.9"]);
+  assert.equal(diag.json.xRealIp, "203.0.113.9");
+  assert.match(diag.headers["cache-control"], /no-store/);
+  assert.equal((await request({ method: "POST", path: "/api/admin/diagnostico-ip", headers: { origin, cookie: cookieDe(admin) } })).status, 405);
+});

@@ -2,7 +2,7 @@
 const assert = require("node:assert/strict");
 const test = require("node:test");
 const { PDFDocument } = require("pdf-lib");
-const { generarPdfFicha, nombreArchivoPdf } = require("../lib/ficha-pdf");
+const { generarPdfFicha, nombreArchivoPdf, textoSeguro } = require("../lib/ficha-pdf");
 
 const fila = {
   id: "3f1c2a8e-5b6d-4c7e-8f9a-0b1c2d3e4f5a", codigo_contrato: "C-2027-01", viaje: "Bariloche 2027",
@@ -32,6 +32,36 @@ test("no falla con caracteres fuera de WinAnsi", async () => {
   await generarPdfFicha({ ...fila, domicilio_barrio: "Barrio 🏠 Ñandú" });
 });
 
+test("las letras fuera de Latin-1 se transliteran en vez de perderse («Mićić» salía «Mii»)", () => {
+  assert.equal(textoSeguro("Fernández Mićić"), "Fernández Micic");
+  assert.equal(textoSeguro("Łukasz Wójcik"), "Lukasz Wójcik");
+  assert.equal(textoSeguro("Đorđe Šimić"), "Dorde Simic");
+  assert.equal(textoSeguro("D’Angelo – Núñez"), "D'Angelo - Núñez");
+});
+
+test("lo que no se puede escribir se ve como «?» y no desaparece, y tildes y ñ no se tocan", () => {
+  assert.equal(textoSeguro("李明"), "??");
+  assert.equal(textoSeguro("José 😀"), "José ?");
+  assert.equal(textoSeguro("  Núñez   Peña  "), "Núñez Peña");
+  assert.equal(textoSeguro(null), "");
+});
+
+test("nombres con letras de otros alfabetos no rompen el PDF", async () => {
+  const bytes = await generarPdfFicha({
+    ...fila,
+    pasajero_apellido: "Mićić", pasajero_nombre: "Đorđe", responsable_apellido: "µÿ Łukasz", domicilio_calle: "Дмитрий 李明"
+  });
+  assert.equal((await PDFDocument.load(bytes)).getPageCount(), 1);
+});
+
 test("nombre de archivo sin tildes ni espacios", () => {
   assert.equal(nombreArchivoPdf(fila), "ficha-fernandez-nunez-jose-maria-45123456.pdf");
+});
+
+test("la fecha de inscripción del PDF es la de Argentina, no la UTC", () => {
+  const { fechaArgentina } = require("../lib/ficha-pdf");
+  // 22:30 del 15/09 en Argentina (UTC-3) ya es 16/09 en UTC.
+  assert.equal(fechaArgentina("2026-09-16T01:30:00Z"), "2026-09-15");
+  assert.equal(fechaArgentina("2026-09-15T12:00:00Z"), "2026-09-15");
+  assert.equal(fechaArgentina(""), "");
 });

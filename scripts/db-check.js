@@ -1,7 +1,7 @@
 // Chequeo rápido de conexión a Postgres/Supabase. No imprime ni loguea el
 // valor de DATABASE_URL en ningún momento.
 // Uso local: node --env-file=.env scripts/db-check.js
-// Uso con la variable ya exportada en el entorno (Railway, CI): node scripts/db-check.js
+// Uso con la variable ya exportada en el entorno (Hostinger, CI): node scripts/db-check.js
 const { Pool } = require("pg");
 
 const REQUIRED_TABLES = [
@@ -34,7 +34,7 @@ async function main() {
       "DATABASE_URL no está configurada.\n" +
       "Local: creá un archivo .env con DATABASE_URL=... y corré\n" +
       "  node --env-file=.env scripts/db-check.js\n" +
-      "Railway: confirmá que la variable esté cargada en el servicio."
+      "Hostinger: confirmá que la variable esté cargada en el sitio."
     );
     process.exitCode = 1;
     return;

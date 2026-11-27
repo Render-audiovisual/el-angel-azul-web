@@ -12,6 +12,7 @@
         if (pathname.endsWith("/admin/turismo") || pathname.endsWith("/admin-turismo")) return "/admin/turismo";
         if (pathname.endsWith("/admin/fichas")) return "/admin/fichas";
         if (pathname.endsWith("/admin/grupos")) return "/admin/grupos";
+        if (pathname.endsWith("/admin/colegios")) return "/admin/colegios";
         if (pathname.endsWith("/admin/pasajeros")) return "/admin/pasajeros";
         if (pathname.endsWith("/admin/contratos")) return "/admin/contratos";
         if (pathname.endsWith("/admin/pagos")) return "/admin/pagos";
@@ -49,6 +50,7 @@
           path === "/admin/turismo" ||
           path === "/admin/fichas" ||
           path === "/admin/grupos" ||
+          path === "/admin/colegios" ||
           path === "/admin/pasajeros" ||
           path === "/admin/contratos" ||
           path === "/admin/pagos" ||
@@ -62,135 +64,215 @@
 
 
       async function renderHome() {
+        killHomeAnimations();
+        const arrow = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
+        // Fotos de reemplazo para Camboriú y Turismo (son de Brasil y de turismo en general, no de tus grupos):
+        // cambialas por las tuyas poniendo acá la ruta del archivo que subas (por ejemplo "assets/img/home/camboriu.webp").
+        const homePhotos = {
+          camboriu: "assets/img/turismo/hero/playa-rio.webp",
+          turismo: "assets/img/turismo/hero/cataratas-iguazu.webp"
+        };
         const heroSlides = [
-          { src: "assets/img/home/hero-carousel/bariloche-atardecer-grupo-hero.webp", pos: "center 42%" },
-          { src: "assets/img/home/hero-carousel/bariloche-nieve-cerro-grupo-hero.webp", pos: "center 30%" },
-          { src: "assets/img/home/hero-carousel/bariloche-cartel-brc-grupo-hero.webp", pos: "center 38%" },
-          { src: "assets/img/home/hero-carousel/bariloche-centro-civico-grupo-hero.webp", pos: "center 40%" },
-          { src: "assets/img/home/hero-carousel/carlos-paz-reloj-cucu-grupo-hero.webp", pos: "center 40%" }
+          ["bariloche-atardecer-grupo-hero", "Nuestro grupo de estudiantes junto al Nahuel Huapi, en Bariloche", "Bariloche, el grupo y el lago al atardecer"],
+          ["bariloche-nieve-cerro-grupo-hero", "Estudiantes de El Ángel Azul en la nieve del cerro, en Bariloche", "Bariloche, la primera vez en la nieve"],
+          ["carlos-paz-reloj-cucu-grupo-hero", "Grupo de primaria frente al reloj cucú de Villa Carlos Paz", "Carlos Paz, el viaje de primaria"],
+          ["bariloche-centro-civico-grupo-hero", "Grupo de El Ángel Azul en el Centro Cívico de Bariloche", "Bariloche, una foto en el Centro Cívico"]
         ];
-        const carouselPhotos = [
-          { name: "bariloche-atardecer-grupo", alt: "Grupo de estudiantes al atardecer frente al lago en Bariloche", cap: "Bariloche · atardecer sobre el lago" },
-          { name: "bariloche-centro-civico-grupo", alt: "Grupo con las camperas de El Ángel Azul en el Centro Cívico de Bariloche", cap: "Bariloche · Centro Cívico" },
-          { name: "bariloche-nieve-cerro-grupo", alt: "Grupo de egresados en la nieve al pie del cerro en Bariloche", cap: "Bariloche · día de nieve" },
-          { name: "bariloche-cartel-brc-grupo", alt: "Grupo posando en el cartel de Bariloche a la orilla del lago", cap: "Bariloche · a la orilla del Nahuel Huapi" },
-          { name: "carlos-paz-reloj-cucu-grupo", alt: "Grupo frente al reloj cucú de Villa Carlos Paz", cap: "Carlos Paz · el reloj cucú" },
-          { name: "bariloche-nieve-panoramica-grupo", alt: "Grupo de estudiantes con vista panorámica de las montañas nevadas", cap: "Bariloche · panorámica de montaña" },
-          { name: "bariloche-lago-montana-grupo", alt: "Grupo de estudiantes frente al lago y la montaña nevada", cap: "Bariloche · lago y cordillera" },
-          { name: "carlos-paz-escape-room-grupo", alt: "Grupo de primaria en una actividad de escape room en Carlos Paz", cap: "Carlos Paz · viaje de primaria" }
+        const works = [
+          { id: "bariloche", name: "Bariloche", tag: "Secundaria", text: "Nieve, lagos y tu grupo. El viaje que se espera todo el año.", href: "#/estudiantil/secundaria-bariloche", cta: "Conocé la experiencia", bg: "assets/img/home/carrusel-viajes/bariloche-lago-montana-grupo.webp", thumb: "assets/img/home/carrusel-viajes/bariloche-nieve-panoramica-grupo.webp", alt: "Estudiantes en las montañas nevadas de Bariloche" },
+          { id: "carlos-paz", name: "Carlos Paz", tag: "Primaria", text: "La aventura de viajar juntos, con cuidado en cada detalle.", href: "#/estudiantil/primaria-carlos-paz", cta: "Conocé la experiencia", bg: "assets/img/home/carrusel-viajes/carlos-paz-escape-room-grupo.webp", thumb: "assets/img/home/carrusel-viajes/carlos-paz-reloj-cucu-grupo.webp", alt: "Nuestro grupo de primaria en Villa Carlos Paz" },
+          { id: "camboriu", name: "Camboriú", tag: "Egresados", text: "El viaje de egresados, en Brasil.", href: whatsappLink("Hola, quiero consultar por el viaje de egresados a Camboriú, Brasil, con El Ángel Azul."), external: true, cta: "Consultá por WhatsApp", bg: homePhotos.camboriu, thumb: homePhotos.camboriu, alt: "Costa de Brasil, foto de reemplazo para el viaje de egresados a Camboriú" }
         ];
+        const moments = [
+          ["bariloche-atardecer-grupo", "El grupo, el lago y un atardecer en Bariloche", "Atardeceres que quedan"],
+          ["bariloche-nieve-cerro-grupo", "Estudiantes de El Ángel Azul disfrutando un día de nieve", "La primera vez en la nieve"],
+          ["carlos-paz-reloj-cucu-grupo", "Grupo de primaria frente al reloj cucú de Carlos Paz", "Juntos en Carlos Paz"],
+          ["bariloche-lago-montana-grupo", "Compañeros de viaje frente al lago y las montañas", "Mucho más que compañeros"],
+          ["bariloche-centro-civico-grupo", "Grupo de El Ángel Azul en el Centro Cívico", "Una foto, mil historias"]
+        ];
+        const img = (src, alt, extra = "") => `<img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" ${extra}>`;
         document.getElementById("app").innerHTML = `
-          <div class="layout home-layout-v2">
-
-            <!-- HERO -->
-            <section class="hero-clean hero-cine">
-              <div class="hero-clean-carousel" aria-hidden="true">
-                ${heroSlides.map((slide, index) => `
-                  <div class="hero-clean-slide${index === 0 ? " is-active" : ""}" style="background-image: url('${slide.src}'); background-position: ${slide.pos}"></div>
-                `).join("")}
+          <div class="eaa-home">
+            <section class="eaa-hero eaa-dark" aria-label="El Ángel Azul" data-hero>
+              <div class="eaa-hero-slides" data-hero-slides>
+                ${heroSlides.map(([name, alt, caption], i) => `<figure class="eaa-hero-slide${i === 0 ? " is-active" : ""}" data-hero-slide data-caption="${escapeHtml(caption)}">${img(`assets/img/home/hero-carousel/${name}.webp`, alt, `width="2000" height="1333"${i === 0 ? ' fetchpriority="high"' : ' loading="lazy"'}`)}</figure>`).join("")}
               </div>
-              <div class="hero-clean-overlay" aria-hidden="true"></div>
-              <div class="hero-clean-content">
-                <p class="hero-clean-kicker">El Ángel Azul · Turismo estudiantil</p>
-                <h1 class="hero-clean-title" data-hero-title>El mejor viaje de <span class="ht-accent">tu vida</span></h1>
-                <p class="hero-clean-subtitle">Organizamos cada detalle y viajamos con el grupo. Las familias quedan tranquilas y los chicos vuelven con la historia de su vida.</p>
-                <div class="hero-clean-actions">
-                  <a class="btn-whatsapp btn-icon-pair" href="${whatsappLink("Hola, quiero consultar por un viaje con El Ángel Azul.")}" target="_blank" rel="noopener">
-                    <span>Hablar con El Ángel Azul</span>
-                    <span class="btn-icon-circle" aria-hidden="true"><span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">chat</span></span>
-                  </a>
-                  <a class="btn-ghost-light" href="#/turismo">Ver destinos</a>
-                </div>
-                <div class="hero-clean-benefits">
-                  ${[["verified_user", "Acompañamiento en destino"], ["payments", "Financiación disponible"], ["support_agent", "Atención personalizada"], ["diversity_3", "Primaria y secundaria"]].map(([icon, label]) => `
-                    <span class="hero-clean-benefit">
-                      <span class="material-symbols-outlined">${icon}</span>
-                      ${escapeHtml(label)}
-                    </span>
-                  `).join("")}
-                </div>
-              </div>
-              <div class="hero-clean-scroll" aria-hidden="true">
-                <span class="material-symbols-outlined">expand_more</span>
-              </div>
-            </section>
-
-            <!-- QUIÉNES SOMOS -->
-            <section class="quienes-somos" data-reveal-section>
-              <div class="quienes-somos-inner">
-                <div class="quienes-somos-photo-wrap" data-reveal>
-                  <div class="quienes-somos-photo-shell">
-                    <div class="quienes-somos-photo" style="background-image: url('assets/img/home/experiencia/bariloche-lago-companeros.webp')" role="img" aria-label="Grupo de estudiantes de El Ángel Azul frente al lago en Bariloche"></div>
-                  </div>
-                  <div class="quienes-somos-badge">
-                    <div class="quienes-somos-badge-head">
-                      <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">volunteer_activism</span>
-                      <p>Cerca en todo el viaje</p>
+              <div class="eaa-grain" aria-hidden="true"></div>
+              <div class="eaa-hero-shade" aria-hidden="true"></div>
+              <div class="eaa-hero-inner">
+                <h1 class="eaa-wordmark" data-fit data-hero-title aria-label="El Ángel Azul">El Ángel Azul</h1>
+                <div class="eaa-hero-foot">
+                  <div class="eaa-hero-tag">
+                    <p class="eaa-hero-claim" data-rise>El viaje pasa.<br>La historia queda.</p>
+                    <p class="eaa-hero-sub" data-rise>Viajes estudiantiles y turismo, organizados desde Corrientes con acompañamiento real.</p>
+                    <div class="eaa-actions" data-rise>
+                      <a class="eaa-button eaa-button-fill" href="#/estudiantil" data-scroll-target="eaa-destinos">Viajes estudiantiles ${arrow}</a>
+                      <a class="eaa-button eaa-button-line" href="#/turismo" data-scroll-target="eaa-turismo">Turismo ${arrow}</a>
                     </div>
-                    <p class="quienes-somos-quote">"Acompañamos al grupo antes, durante y después."</p>
                   </div>
-                </div>
-                <div class="quienes-somos-body">
-                  <div class="quienes-somos-heading" data-reveal>
-                    <p class="section-kicker">Quiénes somos</p>
-                    <h2>Una agencia que acompaña de verdad, en cada etapa</h2>
-                    <p>Somos una empresa de Corrientes especializada en turismo y viajes estudiantiles. Estamos cerca desde la primera consulta hasta que el grupo vuelve a casa, con organización clara y trato humano.</p>
-                  </div>
-                  <div class="quienes-somos-values" data-reveal>
-                    ${trustSectionData.cards.slice(0, 3).map((card) => {
-                      const icons = { "Experiencia": "workspace_premium", "Acompañamiento": "support_agent", "Financiación": "payments" };
-                      return `
-                        <div class="quienes-somos-value">
-                          <span class="quienes-somos-value-icon"><span class="material-symbols-outlined">${icons[card.title] || "check_circle"}</span></span>
-                          <div>
-                            <strong>${escapeHtml(card.title)}</strong>
-                            <p>${escapeHtml(card.text)}</p>
-                          </div>
-                        </div>
-                      `;
-                    }).join("")}
+                  <div class="eaa-hero-panel" role="group" aria-label="Fotos del inicio">
+                    <div class="eaa-hero-progress" aria-hidden="true"><span data-hero-bar></span></div>
+                    <div class="eaa-hero-controls">
+                      <button type="button" data-hero-prev aria-label="Foto anterior">${arrow}</button>
+                      <button type="button" data-hero-next aria-label="Foto siguiente">${arrow}</button>
+                      <span class="eaa-hero-count" data-hero-count aria-live="off">01/0${heroSlides.length}</span>
+                    </div>
+                    <p class="eaa-hero-caption" data-hero-caption aria-live="polite">${heroSlides[0][2]}</p>
                   </div>
                 </div>
               </div>
             </section>
 
-            <!-- CARRUSEL DE VIAJES -->
-            <section class="viajes-carousel-section" data-reveal-section>
-              <div class="viajes-carousel-heading" data-reveal>
-                <p class="section-kicker">Momentos reales</p>
-                <h2>Viajes que ya quedaron para siempre</h2>
-                <p>Fotos de nuestros grupos en destino. Así se ve un viaje organizado y acompañado por El Ángel Azul.</p>
-              </div>
-              <div class="viajes-carousel" data-viajes-carousel data-reveal>
-                <div class="swiper">
-                  <div class="swiper-wrapper">
-                    ${carouselPhotos.map((photo) => `
-                      <div class="swiper-slide">
-                        <figure class="viajes-slide">
-                          <img src="assets/img/home/carrusel-viajes/${photo.name}.webp" srcset="assets/img/home/carrusel-viajes/${photo.name}-800.webp 800w, assets/img/home/carrusel-viajes/${photo.name}.webp 1600w" sizes="(max-width: 720px) 90vw, 60vw" alt="${escapeHtml(photo.alt)}" loading="lazy">
-                          <figcaption>${escapeHtml(photo.cap)}</figcaption>
-                        </figure>
-                      </div>
-                    `).join("")}
+            <section class="eaa-intro eaa-dark" aria-labelledby="eaa-intro-title">
+              <div class="eaa-wrap eaa-intro-grid">
+                <div class="eaa-intro-side" data-rise>
+                  <div class="eaa-intro-photo">${img("assets/img/home/experiencia/bariloche-retrato-lago.webp", "Estudiante de El Ángel Azul frente al lago, en Bariloche", 'width="560" height="700" loading="lazy"')}</div>
+                  <a class="eaa-button eaa-button-line" href="#/nosotros">Conocé a El Ángel Azul</a>
+                </div>
+                <div class="eaa-intro-main">
+                  <h2 id="eaa-intro-title" class="visually-hidden">Quiénes somos</h2>
+                  <p class="eaa-statement" data-scrub-words>Somos una agencia de Corrientes. Nos gusta conocer a cada grupo, escuchar a las familias y acompañar el viaje desde la primera consulta. Viajes estudiantiles y turismo, con alguien que responde en cada paso.</p>
+                  <div class="eaa-signature" data-rise>
+                    <img src="assets/img/favicon-esfera-blanca.svg" alt="" width="44" height="44">
+                    <div><strong>Equipo de El Ángel Azul</strong><span>Agencia de viajes, Corrientes Capital</span></div>
                   </div>
                 </div>
-                <button class="viajes-carousel-nav viajes-carousel-prev" type="button" aria-label="Foto anterior"><span class="material-symbols-outlined">arrow_back</span></button>
-                <button class="viajes-carousel-nav viajes-carousel-next" type="button" aria-label="Foto siguiente"><span class="material-symbols-outlined">arrow_forward</span></button>
-                <div class="viajes-carousel-pagination" data-viajes-pagination></div>
               </div>
-              <div class="viajes-carousel-cta" data-reveal>
-                <a class="btn-whatsapp btn-icon-pair" href="${whatsappLink("Hola, quiero que mi grupo viva un viaje así con El Ángel Azul.")}" target="_blank" rel="noopener">
-                  <span>Quiero un viaje así</span>
-                  <span class="btn-icon-circle" aria-hidden="true"><span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">chat</span></span>
+            </section>
+
+            <section class="eaa-works" id="eaa-destinos" aria-labelledby="eaa-works-title">
+              <h2 id="eaa-works-title" class="visually-hidden">Destinos de viajes estudiantiles</h2>
+              ${works.map((w, i) => `
+              <article class="eaa-work eaa-dark" data-work>
+                <div class="eaa-work-bg" aria-hidden="true"><img src="${escapeHtml(w.bg)}" alt="" loading="lazy" data-work-bg></div>
+                <div class="eaa-grain" aria-hidden="true"></div>
+                <p class="eaa-work-type" aria-hidden="true" data-work-type>${w.name} ${w.name} ${w.name}</p>
+                <div class="eaa-work-head eaa-wrap">
+                  <div><h3 data-split>${w.name}</h3><p>${w.text}</p></div>
+                  <span class="eaa-work-tag">${w.tag}</span>
+                </div>
+                <a class="eaa-work-thumb" href="${escapeHtml(w.href)}"${w.external ? ' target="_blank" rel="noopener"' : ""} aria-label="${w.name}: ${w.cta}">
+                  ${img(w.thumb, w.alt, `width="1600" height="1067" loading="lazy" data-work-thumb`)}
                 </a>
+                <a class="eaa-work-link eaa-link" href="${escapeHtml(w.href)}"${w.external ? ' target="_blank" rel="noopener"' : ""}>${w.cta} ${arrow}</a>
+                <p class="eaa-work-index" aria-hidden="true">0${i + 1}/0${works.length}</p>
+              </article>`).join("")}
+            </section>
+
+            <section class="eaa-tourism eaa-soft" id="eaa-turismo" aria-labelledby="eaa-turismo-title">
+              <div class="eaa-wrap">
+                <div class="eaa-tourism-card">
+                  <div class="eaa-tourism-media" data-rise>${img(homePhotos.turismo, "Cataratas del Iguazú, foto de reemplazo para la sección de turismo", 'width="1600" height="1067" loading="lazy" data-parallax')}</div>
+                  <div class="eaa-tourism-copy">
+                    <h2 id="eaa-turismo-title" data-split>También viajamos en familia</h2>
+                    <p data-rise>Escapadas en familia, en pareja o en grupo, con asesoramiento claro antes de reservar.</p>
+                    <div class="eaa-actions" data-rise>
+                      <a class="eaa-button eaa-button-fill" href="#/turismo">Ver turismo ${arrow}</a>
+                      <a class="eaa-button eaa-button-ink" href="${whatsappLink("Hola, quiero que me asesoren para elegir un viaje turístico con El Ángel Azul.")}" target="_blank" rel="noopener">Pedir asesoramiento</a>
+                    </div>
+                  </div>
+                </div>
+                <ul class="eaa-trips" data-eaa-trips aria-label="Viajes de turismo disponibles"></ul>
               </div>
             </section>
 
+            <section class="eaa-process eaa-dark" aria-labelledby="eaa-process-title">
+              <div class="eaa-wrap">
+                <h2 id="eaa-process-title" data-split>Inscribirte es simple y está claro</h2>
+                <ol class="eaa-process-list">
+                  <li data-process-row><span class="eaa-n" aria-hidden="true">001</span><div><h3>Elegí tu viaje</h3><p>Seleccioná el curso, el destino y el año desde la inscripción online.</p></div><span class="eaa-process-note">Online</span></li>
+                  <li data-process-row><span class="eaa-n" aria-hidden="true">002</span><div><h3>Completá la ficha</h3><p>Datos del pasajero y del tutor, domicilio y firma, desde el celular o la computadora.</p></div><span class="eaa-process-note">Online</span></li>
+                  <li data-process-row><span class="eaa-n" aria-hidden="true">003</span><div><h3>Administración la revisa</h3><p>El plan de pago corresponde al contrato de tu grupo y se confirma con la agencia.</p></div><span class="eaa-process-note">Con la agencia</span></li>
+                </ol>
+                <div class="eaa-actions" data-rise><a class="eaa-button eaa-button-fill" href="#/inscripcion">Inscripción online ${arrow}</a></div>
+              </div>
+            </section>
+
+            <div class="eaa-ticker eaa-dark" aria-hidden="true">
+              <div class="eaa-ticker-track" data-ticker>${Array.from({ length: 4 }, () => `<span>Bariloche</span><i></i><span>Carlos Paz</span><i></i><span>Camboriú</span><i></i><span>Turismo</span><i></i>`).join("")}</div>
+            </div>
+
+            <section class="eaa-moments eaa-dark" aria-labelledby="eaa-moments-title">
+              <div class="eaa-wrap">
+                <h2 id="eaa-moments-title" data-split>Momentos reales, recuerdos para siempre</h2>
+                <div class="eaa-stack">
+                  ${moments.map(([name, alt, caption], i) => `
+                  <figure class="eaa-stack-card" data-stack-card style="--i:${i}">
+                    <div class="eaa-frame">${img(`assets/img/home/carrusel-viajes/${name}.webp`, alt, 'loading="lazy"')}</div>
+                    <figcaption><span class="eaa-n" aria-hidden="true">0${i + 1}</span>${caption}</figcaption>
+                  </figure>`).join("")}
+                </div>
+              </div>
+            </section>
+
+            <section class="eaa-faq-section" aria-labelledby="eaa-family-title">
+              <div class="eaa-wrap eaa-faq-grid">
+                <div><h2 id="eaa-family-title" data-split>Las preguntas también viajan</h2><p data-rise>Lo que las familias quieren saber antes de preparar la valija.</p></div>
+                <div class="eaa-faq" data-rise>
+                  <details><summary>¿Cómo conocemos la propuesta del viaje?<span aria-hidden="true">+</span></summary><p>Escribinos por WhatsApp para coordinar una reunión. Contanos el colegio, el curso y el destino que les interesa, y revisamos la propuesta para el grupo.</p></details>
+                  <details><summary>¿Dónde veo los servicios y las formas de pago?<span aria-hidden="true">+</span></summary><p>Los servicios, fechas, condiciones y planes se detallan en la propuesta y el contrato de cada grupo. Consultalos con la agencia antes de confirmar la inscripción.</p></details>
+                  <details><summary>¿Puedo registrar a otro tutor?<span aria-hidden="true">+</span></summary><p>Sí. En <a href="#/inscripcion">Inscripción online</a>, elegí Tutor para completar el formulario corto con sus datos y el DNI del pasajero al que acompaña.</p></details>
+                </div>
+              </div>
+            </section>
+
+            <section class="eaa-cta eaa-dark" aria-labelledby="eaa-final-title">
+              <p class="eaa-corner eaa-corner-tl">Desde Corrientes</p>
+              <p class="eaa-corner eaa-corner-tr">Viajes estudiantiles y turismo</p>
+              <div class="eaa-cta-stage">
+                <div class="eaa-cta-head">
+                  <div class="eaa-cta-photo" data-cta-photo>${img("assets/img/home/experiencia/bariloche-retrato-mirador.webp", "Estudiante de El Ángel Azul en un mirador de Bariloche", 'width="900" height="1100" loading="lazy"')}</div>
+                  <h2 id="eaa-final-title" class="eaa-wordmark eaa-cta-title" data-fit data-split>¿Y si nos vamos juntos?</h2>
+                </div>
+                <div class="eaa-actions" data-rise>
+                  <a class="eaa-button eaa-button-fill" href="${whatsappLink("Hola, queremos viajar con El Ángel Azul. ¿Nos cuentan las propuestas para nuestro grupo?")}" target="_blank" rel="noopener">Armemos el viaje ${arrow}</a>
+                  <a class="eaa-button eaa-button-line" href="#/inscripcion">Quiero inscribirme</a>
+                </div>
+              </div>
+              <p class="eaa-corner eaa-corner-bl">Acompañamiento real</p>
+              <p class="eaa-corner eaa-corner-br">Córdoba 6660, Corrientes</p>
+            </section>
           </div>
         `;
-        bindHeroCarousel();
-        bindViajesCarousel();
-        bindHomeAnimations();
+        // Viajes de turismo publicados desde el admin (ninguno inventado: sin viajes activos la lista no aparece).
+        const tripList = document.querySelector("[data-eaa-trips]");
+        loadTurismoPublicPackages().then((packages) => {
+          if (!tripList.isConnected) return;
+          packages.slice(0, 4).forEach((trip) => {
+            const item = document.createElement("li");
+            const link = document.createElement("a");
+            link.className = "eaa-trip";
+            link.href = `#/turismo/${encodeURIComponent(trip.slug)}`;
+            if (trip.image) {
+              const photo = document.createElement("img");
+              photo.src = trip.image;
+              photo.alt = "";
+              photo.loading = "lazy";
+              link.appendChild(photo);
+            }
+            const text = document.createElement("div");
+            const name = document.createElement("strong");
+            name.textContent = trip.titulo || trip.destino;
+            text.appendChild(name);
+            const duration = String(trip.duracion || "");
+            if (duration && duration !== "A confirmar") {
+              const meta = document.createElement("span");
+              meta.textContent = duration;
+              text.appendChild(meta);
+            }
+            const price = String(trip.precioDesde || "");
+            if (price && price !== "Consultar") {
+              const priceEl = document.createElement("em");
+              priceEl.textContent = `Desde ${price}`;
+              text.appendChild(priceEl);
+            }
+            link.appendChild(text);
+            item.appendChild(link);
+            tripList.appendChild(item);
+          });
+          if (tripList.children.length && window.EAAHomeMotion) window.EAAHomeMotion.refresh();
+        }).catch(() => {});
+        if (window.EAAHomeMotion) window.EAAHomeMotion.init(document.querySelector(".eaa-home"));
       }
 
       // Carrusel automático del hero: rota las fotos cada 3 segundos con
@@ -225,6 +307,7 @@
       let homeHeroZoomTween = null;
 
       function killHomeAnimations() {
+        if (window.EAAHomeMotion) window.EAAHomeMotion.kill();
         homeScrollTriggers.forEach((trigger) => trigger.kill());
         homeScrollTriggers = [];
         if (homeHeroZoomTween) {
@@ -480,8 +563,10 @@
       const ADMIN_TURISMO_PREVIEW_MODE_KEY = "angelAzulTurismoPublicPreviewModeV1";
       let turismoPublicPackagesCache = null;
 
+      // Sin viajes cargados la web muestra el estado vacío: nunca viajes de demostración
+      // con precios inventados (los viajes los carga el dueño desde el admin).
       function turismoPackages() {
-        return turismoPublicPackagesCache || turismoFallbackPackages();
+        return turismoPublicPackagesCache || [];
       }
 
       function turismoFallbackPackages() {
@@ -576,44 +661,25 @@
           return turismoPublicPackagesCache;
         }
 
-        // 1. Intentar leer desde Google Sheets (fuente de verdad en vivo)
+        // La base es la fuente de verdad: si responde, lo que devuelve es lo que se publica,
+        // aunque no haya ningún viaje activo (entonces la web muestra el estado vacío).
         try {
           const response = await fetch("/api/google-sheets?sheet=TURISMO", { cache: "no-store" });
           if (response.ok) {
             const payload = await response.json();
-            if (payload.ok && Array.isArray(payload.rows) && payload.rows.length) {
-              const publicPackages = payload.rows
+            if (payload.ok && Array.isArray(payload.rows)) {
+              turismoPublicPackagesCache = payload.rows
                 .map(turismoRowToTrip)
                 .map(adminTripToPublicPackage)
                 .filter(Boolean)
                 .sort((a, b) => Number(b.destacado) - Number(a.destacado) || a.orden - b.orden);
-              if (publicPackages.length) {
-                turismoPublicPackagesCache = publicPackages;
-                return turismoPublicPackagesCache;
-              }
+              return turismoPublicPackagesCache;
             }
           }
         } catch (error) {
-          // Google Sheets no disponible, seguir al fallback JSON
+          // Sin conexión con el servidor: se devuelve vacío sin guardarlo, así el próximo intento vuelve a consultar.
         }
-
-        // 2. Fallback: JSON estático
-        try {
-          const response = await fetch(TURISMO_PUBLIC_JSON_URL, { cache: "no-store" });
-          if (!response.ok) throw new Error("No se pudo cargar turismo-paquetes.json");
-          const adminTrips = await response.json();
-          if (!Array.isArray(adminTrips)) throw new Error("El JSON de Turismo no es un array");
-          const publicPackages = adminTrips
-            .map(adminTripToPublicPackage)
-            .filter(Boolean)
-            .sort((a, b) => Number(b.destacado) - Number(a.destacado) || a.orden - b.orden);
-          if (!publicPackages.length) throw new Error("El JSON no tiene viajes activos");
-          turismoPublicPackagesCache = publicPackages;
-        } catch (error) {
-          // 3. Último fallback: paquetes de demostración
-          turismoPublicPackagesCache = turismoFallbackPackages();
-        }
-        return turismoPublicPackagesCache;
+        return [];
       }
 
       async function turismoPackageBySlug(slug) {
@@ -629,56 +695,43 @@
         return whatsappLink(`Hola, quiero consultar por ${title} (${packageItem.duracion})${price}. Lo vi en la web de El Angel Azul. ¿Me pasan disponibilidad y formas de pago?`);
       }
 
+      // Tarjeta compacta de viaje: toda la tarjeta lleva al detalle (pensada para elegir rápido entre muchos paquetes).
+      function turismoPrecioNumero(packageItem) {
+        const valor = Number(packageItem.precioValor);
+        if (Number.isFinite(valor) && valor > 0) return valor;
+        const digitos = String(packageItem.precioDesde || "").replace(/[^\d]/g, "");
+        return digitos ? Number(digitos) : null;
+      }
+
+      function turismoDias(packageItem) {
+        const match = String(packageItem.duracion || "").match(/\d+/);
+        return match ? Number(match[0]) : null;
+      }
+
+      const TURISMO_ARROW_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
+
       function renderTurismoPackageCard(packageItem) {
-        const gallery = packageItem.gallery?.length ? packageItem.gallery.slice(0, 3) : [packageItem.image];
-        const priceText = packageItem.precioDesde && packageItem.precioDesde !== "Consultar" ? packageItem.precioDesde : "Consultar";
-        const includeItems = Array.isArray(packageItem.incluye) ? packageItem.incluye.slice(0, 3) : [];
+        const priceText = packageItem.precioDesde && packageItem.precioDesde !== "Consultar" ? packageItem.precioDesde : "";
         const destination = escapeHtml(packageItem.destino);
-        const category = escapeHtml(packageItem.categoria);
+        const dias = turismoDias(packageItem);
+        const image = escapeHtml(safeMediaUrl((packageItem.gallery && packageItem.gallery[0]) || packageItem.image));
         return `
-          <article class="package-card turismo-package-card">
-            <div class="package-image-wrap package-card-carousel" data-card-carousel data-carousel-index="0">
-              <div class="package-carousel-track">
-                ${gallery.map((image, index) => `
-                  <img class="${index === 0 ? "active" : ""}" src="${escapeHtml(safeMediaUrl(image))}" alt="${destination} ${index + 1}" data-carousel-slide>
-                `).join("")}
-              </div>
-              <span data-categoria="${escapeHtml(((packageItem.intenciones && packageItem.intenciones[0]) || "").toLowerCase())}">${category}</span>
-              <button class="package-carousel-arrow package-carousel-prev" type="button" aria-label="Foto anterior de ${destination}" data-carousel-prev>‹</button>
-              <button class="package-carousel-arrow package-carousel-next" type="button" aria-label="Foto siguiente de ${destination}" data-carousel-next>›</button>
-              <div class="package-carousel-count" aria-hidden="true">1/${gallery.length}</div>
-            </div>
-            <div class="package-card-body">
-              <div class="package-card-head">
-                <p class="package-meta">${escapeHtml(packageItem.tipo)} · ${escapeHtml(packageItem.temporada)}</p>
+          <article class="tur-card turismo-package-card">
+            <a class="tur-card-link" href="#/turismo/${encodeURIComponent(String(packageItem.slug || ""))}">
+              <span class="tur-card-media">
+                <img src="${image}" alt="" loading="lazy" width="800" height="600">
+                <span class="tur-card-tag">${packageItem.destacado ? "Destacado" : escapeHtml(packageItem.categoria)}</span>
+                ${dias ? `<span class="tur-card-days">${dias} ${dias === 1 ? "día" : "días"}</span>` : ""}
+              </span>
+              <span class="tur-card-body">
+                <span class="tur-card-meta">${escapeHtml(packageItem.temporada || packageItem.tipo || "")}</span>
                 <h3>${destination}</h3>
-              </div>
-              <div class="package-quick-info">
-                <span>${escapeHtml(packageItem.duracion)}</span>
-                <span>${category}</span>
-              </div>
-              ${packageItem.fechaSalida ? `
-                <p class="package-fecha-salida">
-                  ${escapeHtml(packageItem.fechaSalida)}${packageItem.fechaRegreso ? ` al ${escapeHtml(packageItem.fechaRegreso)}` : ""}
-                  ${packageItem.salidaGarantizada ? `<span class="package-badge-garantizada">Salida garantizada</span>` : ""}
-                </p>
-              ` : ""}
-              <p class="package-summary">${escapeHtml(packageItem.resumen)}</p>
-              <div class="package-price" aria-label="Precio desde ${escapeHtml(priceText)}">
-                <span>Precio de referencia</span>
-                <strong>${escapeHtml(priceText)}</strong>
-              </div>
-              ${includeItems.length ? `<div class="package-includes" aria-label="Incluye">
-                <strong>Incluye</strong>
-                <div>
-                  ${includeItems.map((item) => `<span>${escapeHtml(item)}</span>`).join("")}
-                </div>
-              </div>` : ""}
-              <div class="package-actions">
-                <a href="#/turismo/${encodeURIComponent(String(packageItem.slug || ""))}">Ver detalles</a>
-                <a class="package-whatsapp" href="${escapeHtml(turismoWhatsappForPackage(packageItem))}" target="_blank" rel="noopener">WhatsApp</a>
-              </div>
-            </div>
+                <span class="tur-card-foot">
+                  <span class="tur-price"><span>${priceText ? "Desde" : "Precio"}</span><strong>${priceText ? escapeHtml(priceText) : "A consultar"}</strong>${priceText ? "<small>por persona</small>" : ""}</span>
+                  <span class="tur-card-go" aria-hidden="true">${TURISMO_ARROW_SVG}</span>
+                </span>
+              </span>
+            </a>
           </article>
         `;
       }
@@ -710,11 +763,13 @@
         });
       }
 
-      function renderTurismoEmptyState() {
+      function renderTurismoEmptyState(sinViajes = false) {
         return `
-          <div class="turismo-empty-state">
-            <p>No encontramos viajes para esta categoría por ahora. Consultanos por WhatsApp y te ayudamos a encontrar una opción.</p>
-            <a class="package-whatsapp" href="${whatsappLink("Hola, quiero consultar por una categoría de viaje que no encontré en la web de El Ángel Azul.")}" target="_blank" rel="noopener">Consultar</a>
+          <div class="tur-empty">
+            <p>${sinViajes
+              ? "Estamos preparando nuestros próximos viajes de turismo. Escribinos por WhatsApp y te asesoramos con las opciones disponibles."
+              : "No encontramos viajes para esta categoría por ahora. Consultanos por WhatsApp y te ayudamos a encontrar una opción."}</p>
+            <a class="eaa-button eaa-button-fill" href="${whatsappLink("Hola, quiero consultar por una categoría de viaje que no encontré en la web de El Ángel Azul.")}" target="_blank" rel="noopener">Consultar por WhatsApp</a>
           </div>
         `;
       }
@@ -722,148 +777,155 @@
       function turismoPackageMatchesSearch(packageItem, query = "") {
         const normalizedQuery = String(query || "").trim().toLowerCase();
         if (!normalizedQuery) return true;
-        const searchable = [
-          packageItem.destino,
-          packageItem.titulo,
-          packageItem.tipo,
-          packageItem.temporada,
-          packageItem.categoria,
-          packageItem.duracion,
-          packageItem.resumen,
-          ...(Array.isArray(packageItem.incluye) ? packageItem.incluye : [])
-        ].join(" ").toLowerCase();
-        return searchable.includes(normalizedQuery);
+        return [packageItem.destino, packageItem.titulo, packageItem.tipo, packageItem.categoria, packageItem.resumen, packageItem.temporada]
+          .filter(Boolean).join(" ").toLowerCase().includes(normalizedQuery);
       }
 
-      function updateTurismoPackages(filter = "todos", query = "") {
-        const grid = document.querySelector("[data-turismo-package-grid]");
-        const count = document.querySelector("[data-turismo-results-count]");
-        if (!grid) return;
-        const packages = turismoPackages().filter((packageItem) => {
-          const matchesFilter = filter === "todos" || packageItem.intenciones?.includes(filter);
-          return matchesFilter && turismoPackageMatchesSearch(packageItem, query);
-        });
-        if (count) {
-          count.textContent = packages.length === 1 ? "1 opción encontrada" : `${packages.length} opciones encontradas`;
-        }
-        grid.dataset.resultCount = String(packages.length);
-        grid.innerHTML = packages.length
-          ? packages.map(renderTurismoPackageCard).join("")
-          : renderTurismoEmptyState();
-        bindTurismoCardCarousels(grid);
-        bindTurismoCardReveal();
-      }
-
-      // Animaciones de Turismo: deliberadamente más livianas que las del Home
-      // (fade-up simple, sin blur ni split de palabras) - Home es la primera
-      // impresión cinematográfica, Turismo es la sección funcional donde el
-      // cliente compara viajes. Dos listas separadas de ScrollTriggers: una
-      // para encabezados/hero (se limpia solo al re-renderizar toda la
-      // página) y otra para las cards del listado (se limpia y rearma cada
-      // vez que cambian los filtros, porque el grid se reemplaza entero).
-      let turismoScrollTriggers = [];
-      let turismoCardTriggers = [];
-
-      function killTurismoAnimations() {
-        turismoScrollTriggers.forEach((trigger) => trigger.kill());
-        turismoScrollTriggers = [];
-        turismoCardTriggers.forEach((trigger) => trigger.kill());
-        turismoCardTriggers = [];
-      }
-
-      // Mismo resguardo que en Home: si a los 1.2/1.3s la animación no avanzó
-      // (ticker de GSAP pausado - pestaña oculta, renderer headless sin rAF),
-      // se fuerza el estado final para que nunca quede contenido invisible.
-      function turismoAntiBlankFallback(animation) {
-        setTimeout(() => { if (animation.progress() < 1) animation.progress(1); }, 1200);
-      }
-
-      function bindTurismoCardReveal() {
-        turismoCardTriggers.forEach((trigger) => trigger.kill());
-        turismoCardTriggers = [];
-        if (typeof gsap === "undefined" || typeof ScrollTrigger === "undefined") return;
-        const cards = [...document.querySelectorAll("[data-turismo-package-grid] .turismo-package-card")];
-        if (!cards.length) return;
-        const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-        gsap.set(cards, { autoAlpha: 0, y: reduceMotion ? 0 : 22 });
-        const batchTriggers = ScrollTrigger.batch(cards, {
-          start: "top 92%",
-          onEnter: (elements) => gsap.to(elements, {
-            autoAlpha: 1,
-            y: 0,
-            duration: reduceMotion ? 0.25 : 0.5,
-            stagger: reduceMotion ? 0.02 : 0.08,
-            ease: "power2.out",
-            overwrite: true
-          })
-        });
-        turismoCardTriggers.push(...batchTriggers);
-        setTimeout(() => {
-          cards.forEach((card) => { if (getComputedStyle(card).opacity === "0") gsap.set(card, { autoAlpha: 1, y: 0 }); });
-        }, 1300);
-      }
-
+      // Movimiento de Turismo: el mismo módulo que el inicio (titulares, textos que suben, hero con fotos, pasos).
       function bindTurismoAnimations() {
-        if (typeof gsap === "undefined") return;
-        killTurismoAnimations();
-        const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-        if (typeof ScrollTrigger !== "undefined") gsap.registerPlugin(ScrollTrigger);
-
-        // Hero de Turismo: entrada simple al cargar (fade+leve subida), sin
-        // split de palabras ni blur - ese efecto queda reservado para el
-        // Home, que es la primera impresión.
-        const heroContent = document.querySelector(".turismo-hero-content");
-        if (heroContent) {
-          const heroIntro = gsap.timeline({ defaults: { ease: "power2.out" } })
-            .from(heroContent.children, {
-              autoAlpha: 0,
-              y: reduceMotion ? 0 : 16,
-              duration: reduceMotion ? 0.3 : 0.6,
-              stagger: reduceMotion ? 0.03 : 0.08
-            });
-          setTimeout(() => { if (heroIntro.progress() < 1) heroIntro.progress(1); }, 1200);
-        }
-
-        if (typeof ScrollTrigger === "undefined") return;
-
-        // Encabezados de sección (Buscá por destino, Opciones disponibles, Te
-        // ayudamos a elegir): fade-up simple al entrar en viewport.
-        gsap.utils.toArray("[data-reveal-light]").forEach((el) => {
-          if (el === heroContent) return;
-          const tween = gsap.from(el, {
-            autoAlpha: 0,
-            y: reduceMotion ? 0 : 18,
-            duration: reduceMotion ? 0.3 : 0.5,
-            ease: "power2.out",
-            scrollTrigger: { trigger: el, start: "top 88%", toggleActions: "play none none reverse", onEnter: () => turismoAntiBlankFallback(tween) }
-          });
-          if (tween.scrollTrigger) turismoScrollTriggers.push(tween.scrollTrigger);
-        });
-
-        bindTurismoCardReveal();
+        if (window.EAAHomeMotion) window.EAAHomeMotion.init(document.querySelector(".eaa-turismo-page"));
       }
 
-      function bindTurismoIntentions() {
-        const chips = [...document.querySelectorAll("[data-turismo-intention]")];
-        const search = document.querySelector("[data-turismo-search]");
-        const applyFilters = () => {
-          const activeChip = document.querySelector("[data-turismo-intention].active");
-          updateTurismoPackages(activeChip?.dataset.turismoIntention || "todos", search?.value || "");
-        };
-        chips.forEach((chip) => {
-          chip.addEventListener("click", () => {
-            chips.forEach((item) => item.classList.toggle("active", item === chip));
-            applyFilters();
-          });
+      const TURISMO_FILTRO_QUIEN = [["", "Todos"], ["pareja", "Pareja"], ["familiar", "Familia"], ["grupo", "Grupo"]];
+      const TURISMO_FILTRO_TIPO = [["", "Todos"], ["playa", "Playa"], ["nieve", "Nieve"], ["escapada", "Escapada"], ["nacional", "Nacional"], ["internacional", "Internacional"]];
+      const TURISMO_FILTRO_DURACION = [["", "Cualquiera"], ["corto", "Hasta 4 días"], ["medio", "5 a 8 días"], ["largo", "9 días o más"]];
+      const TURISMO_ORDENES = [["destacados", "Destacados primero"], ["precio-asc", "Precio: de menor a mayor"], ["precio-desc", "Precio: de mayor a menor"], ["dias-asc", "Duración: más corta primero"], ["dias-desc", "Duración: más larga primero"]];
+      const TURISMO_PAGINA = 24;
+
+      function filtrarOrdenarTurismo(packages, filtros) {
+        const valida = (lista, valor) => lista.some(([clave]) => clave === valor) ? valor : "";
+        const quien = valida(TURISMO_FILTRO_QUIEN, filtros.quien);
+        const tipo = valida(TURISMO_FILTRO_TIPO, filtros.tipo);
+        const duracion = valida(TURISMO_FILTRO_DURACION, filtros.dur);
+        const orden = TURISMO_ORDENES.some(([clave]) => clave === filtros.orden) ? filtros.orden : "destacados";
+        const resultado = packages.filter((p) => {
+          const intenciones = Array.isArray(p.intenciones) ? p.intenciones : [];
+          const dias = turismoDias(p);
+          if (quien && !intenciones.includes(quien)) return false;
+          if (tipo && !intenciones.includes(tipo)) return false;
+          if (duracion === "corto" && !(dias !== null && dias <= 4)) return false;
+          if (duracion === "medio" && !(dias !== null && dias >= 5 && dias <= 8)) return false;
+          if (duracion === "largo" && !(dias !== null && dias >= 9)) return false;
+          return turismoPackageMatchesSearch(p, filtros.q);
         });
-        search?.addEventListener("input", applyFilters);
+        // El orden de entrada ya es «destacados primero»; los viajes sin precio o sin duración van al final.
+        const clave = (p, fn) => { const v = fn(p); return v === null || v === undefined ? Infinity : v; };
+        if (orden === "precio-asc") resultado.sort((a, b) => clave(a, turismoPrecioNumero) - clave(b, turismoPrecioNumero));
+        if (orden === "precio-desc") resultado.sort((a, b) => (turismoPrecioNumero(b) ?? -1) - (turismoPrecioNumero(a) ?? -1));
+        if (orden === "dias-asc") resultado.sort((a, b) => clave(a, turismoDias) - clave(b, turismoDias));
+        if (orden === "dias-desc") resultado.sort((a, b) => (turismoDias(b) ?? -1) - (turismoDias(a) ?? -1));
+        return { resultado, filtros: { q: String(filtros.q || ""), quien, tipo, dur: duracion, orden } };
+      }
+
+      // Página con todos los paquetes: filtros a la izquierda, tarjetas a la derecha, estado en la URL.
+      async function renderTurismoPaquetes() {
+        const packages = await loadTurismoPublicPackages();
+        const params = currentHashParams();
+        const estado = { q: params.get("q") || "", quien: params.get("quien") || "", tipo: params.get("tipo") || "", dur: params.get("dur") || "", orden: params.get("orden") || "destacados", visibles: TURISMO_PAGINA };
+        const abierto = window.matchMedia("(min-width: 62rem)").matches;
+        const radios = (nombre, opciones, actual) => opciones.map(([valor, etiqueta]) => `
+          <label class="tur-radio"><input type="radio" name="${nombre}" value="${valor}"${valor === actual ? " checked" : ""}><span>${etiqueta}</span></label>`).join("");
+        const inicial = filtrarOrdenarTurismo(packages, estado).filtros;
+        document.getElementById("app").innerHTML = `
+          <div class="eaa-home eaa-turismo-page tur-all">
+            <section class="tur-all-head eaa-dark" aria-labelledby="tur-all-title">
+              <div class="eaa-grain" aria-hidden="true"></div>
+              <div class="eaa-wrap">
+                <nav class="tur-crumbs" aria-label="Ruta"><a href="#/turismo">Turismo</a><span aria-hidden="true">/</span><span aria-current="page">Todos los paquetes</span></nav>
+                <h1 id="tur-all-title" class="tur-all-title">Todos los paquetes</h1>
+                <p>Filtrá por cantidad de personas, tipo de viaje, duración y precio. Elegí el que más te guste y consultanos.</p>
+              </div>
+            </section>
+            <section class="tur-shop" aria-label="Paquetes de viaje">
+              <div class="eaa-wrap tur-shop-grid">
+                <details class="tur-filters"${abierto ? " open" : ""}>
+                  <summary>Filtros</summary>
+                  <form class="tur-filters-form" data-tur-filtros autocomplete="off">
+                    <label class="tur-search" for="tur-q"><span>Buscar destino</span>
+                      <input id="tur-q" name="q" type="search" value="${escapeHtml(inicial.q)}" placeholder="Ej: Bariloche, Cataratas, playa">
+                    </label>
+                    <fieldset><legend>¿Cuántos viajan?</legend>${radios("quien", TURISMO_FILTRO_QUIEN, inicial.quien)}</fieldset>
+                    <fieldset><legend>Tipo de viaje</legend>${radios("tipo", TURISMO_FILTRO_TIPO, inicial.tipo)}</fieldset>
+                    <fieldset><legend>Duración</legend>${radios("dur", TURISMO_FILTRO_DURACION, inicial.dur)}</fieldset>
+                    <button type="button" class="eaa-button eaa-button-ink" data-tur-limpiar>Limpiar filtros</button>
+                  </form>
+                </details>
+                <div class="tur-results">
+                  <div class="tur-results-bar">
+                    <p class="tur-count" data-tur-count aria-live="polite"></p>
+                    <label class="tur-sort"><span>Ordenar por</span>
+                      <select name="orden" data-tur-orden>${TURISMO_ORDENES.map(([valor, etiqueta]) => `<option value="${valor}"${valor === inicial.orden ? " selected" : ""}>${etiqueta}</option>`).join("")}</select>
+                    </label>
+                  </div>
+                  <div class="tur-grid tur-grid-all" data-tur-resultados></div>
+                  <div class="tur-more"><button type="button" class="eaa-button eaa-button-ink" data-tur-mas hidden>Mostrar más viajes</button></div>
+                </div>
+              </div>
+            </section>
+          </div>
+        `;
+        const form = document.querySelector("[data-tur-filtros]");
+        const ordenSelect = document.querySelector("[data-tur-orden]");
+        const contenedor = document.querySelector("[data-tur-resultados]");
+        const contador = document.querySelector("[data-tur-count]");
+        const botonMas = document.querySelector("[data-tur-mas]");
+        const leer = () => {
+          const datos = new FormData(form);
+          return { q: datos.get("q") || "", quien: datos.get("quien") || "", tipo: datos.get("tipo") || "", dur: datos.get("dur") || "", orden: ordenSelect.value };
+        };
+        const pintar = () => {
+          const { resultado, filtros } = filtrarOrdenarTurismo(packages, leer());
+          const url = new URLSearchParams();
+          Object.entries(filtros).forEach(([clave, valor]) => { if (valor && !(clave === "orden" && valor === "destacados")) url.set(clave, valor); });
+          history.replaceState(null, "", `#/turismo/paquetes${url.toString() ? `?${url}` : ""}`);
+          const total = resultado.length;
+          contador.textContent = !packages.length ? "Todavía no hay viajes publicados" : total === 1 ? "1 viaje" : `${total} viajes`;
+          const visibles = resultado.slice(0, estado.visibles);
+          contenedor.innerHTML = visibles.length ? visibles.map(renderTurismoPackageCard).join("") : renderTurismoEmptyState(!packages.length);
+          botonMas.hidden = total <= estado.visibles;
+        };
+        form.addEventListener("change", () => { estado.visibles = TURISMO_PAGINA; pintar(); });
+        form.addEventListener("input", (event) => { if (event.target.name === "q") { estado.visibles = TURISMO_PAGINA; pintar(); } });
+        form.addEventListener("submit", (event) => event.preventDefault());
+        ordenSelect.addEventListener("change", () => { estado.visibles = TURISMO_PAGINA; pintar(); });
+        botonMas.addEventListener("click", () => { estado.visibles += TURISMO_PAGINA; pintar(); });
+        document.querySelector("[data-tur-limpiar]").addEventListener("click", () => {
+          form.reset();
+          form.querySelectorAll('input[type="radio"][value=""]').forEach((radio) => { radio.checked = true; });
+          form.querySelector('input[name="q"]').value = "";
+          ordenSelect.value = "destacados";
+          estado.visibles = TURISMO_PAGINA;
+          pintar();
+        });
+        pintar();
+        bindTurismoAnimations();
       }
 
       async function renderTurismo() {
         const packages = await loadTurismoPublicPackages();
         const previewMode = isTurismoPublicPreviewMode();
+        const arrow = TURISMO_ARROW_SVG;
+        const destacados = packages.slice(0, 6);
+        const heroSlides = [
+          ["cataratas-iguazu", "Las Cataratas del Iguazú rodeadas de selva", "Cataratas del Iguazú"],
+          ["playa-rio", "Playa de Río de Janeiro al atardecer", "Playas de Brasil"],
+          ["montana-patagonia", "Montañas y lagos de la Patagonia", "Patagonia"],
+          ["nieve-montana", "Montaña nevada en la Cordillera", "Nieve y montaña"],
+          ["ciudad-rio", "Vista de Río de Janeiro y el Pan de Azúcar", "Río de Janeiro"]
+        ];
+        const beneficios = [
+          ["flight_takeoff", "Destinos nacionales e internacionales", "Escapadas y viajes largos para elegir."],
+          ["support_agent", "Asesoramiento directo", "Una persona de la agencia responde en cada paso."],
+          ["event_available", "Fechas y cupos claros", "Se confirman por WhatsApp antes de reservar."],
+          ["payments", "Pagos a confirmar", "Te contamos las opciones antes de que decidas."]
+        ];
+        const pasos = [
+          ["001", "Contanos la idea", "Fecha tentativa, cantidad de personas y estilo de viaje."],
+          ["002", "Filtramos opciones", "Revisamos destinos, cupos y condiciones actuales."],
+          ["003", "Decidís con claridad", "Comparás precio, duración e incluidos antes de reservar."]
+        ];
         document.getElementById("app").innerHTML = `
-          <div class="layout turismo-layout">
+          <div class="eaa-home eaa-turismo-page">
             ${previewMode ? `
               <section class="turismo-preview-mode-banner">
                 <div>
@@ -873,85 +935,68 @@
                 <button type="button" data-disable-turismo-preview>Volver al JSON público</button>
               </section>
             ` : ""}
-            <section class="turismo-hero">
-              <div class="turismo-hero-carousel" aria-hidden="true">
-                <span></span>
-                <span></span>
-                <span></span>
-                <span></span>
-                <span></span>
+            <section class="eaa-hero eaa-dark" aria-label="Turismo" data-hero>
+              <div class="eaa-hero-slides" data-hero-slides>
+                ${heroSlides.map(([name, alt, caption], i) => `<figure class="eaa-hero-slide${i === 0 ? " is-active" : ""}" data-hero-slide data-caption="${escapeHtml(caption)}"><img src="assets/img/turismo/hero/${name}.webp" alt="${escapeHtml(alt)}" width="2000" height="1333"${i === 0 ? ' fetchpriority="high"' : ' loading="lazy"'}></figure>`).join("")}
               </div>
-              <div class="turismo-hero-content" data-reveal-light>
-                <p class="turismo-kicker">Turismo nacional e internacional</p>
-                <h1>Tu próximo viaje, planificado y acompañado</h1>
-                <p>Escapadas en familia, en pareja o en grupo, con asesoramiento claro antes de reservar y alguien que responde en cada paso.</p>
-                <div class="turismo-proof-list" aria-label="Beneficios principales">
-                  <span>Destinos nacionales e internacionales</span>
-                  <span>Asesoramiento directo</span>
-                  <span>Pagos y fechas a confirmar</span>
+              <div class="eaa-grain" aria-hidden="true"></div>
+              <div class="eaa-hero-shade" aria-hidden="true"></div>
+              <div class="eaa-hero-inner">
+                <h1 class="eaa-wordmark" data-fit aria-label="Turismo El Ángel Azul">Turismo El Ángel Azul</h1>
+                <div class="eaa-hero-foot">
+                  <div class="eaa-hero-tag">
+                    <p class="eaa-hero-claim" data-rise>Tu próximo viaje,<br>planificado y acompañado.</p>
+                    <p class="eaa-hero-sub" data-rise>Escapadas en familia, en pareja o en grupo, con asesoramiento claro antes de reservar y alguien que responde en cada paso.</p>
+                    <div class="eaa-actions" data-rise>
+                      <a class="eaa-button eaa-button-fill" href="#/turismo" data-scroll-target="turismo-catalogo">Ver viajes ${arrow}</a>
+                      <a class="eaa-button eaa-button-line" href="${whatsappLink("Hola, quiero que me asesoren para elegir un viaje turístico con El Ángel Azul.")}" target="_blank" rel="noopener">Pedir asesoramiento ${arrow}</a>
+                    </div>
+                  </div>
+                  <div class="eaa-hero-panel" role="group" aria-label="Fotos de destinos">
+                    <div class="eaa-hero-progress" aria-hidden="true"><span data-hero-bar></span></div>
+                    <div class="eaa-hero-controls">
+                      <button type="button" data-hero-prev aria-label="Foto anterior">${arrow}</button>
+                      <button type="button" data-hero-next aria-label="Foto siguiente">${arrow}</button>
+                      <span class="eaa-hero-count" data-hero-count aria-live="off">01/0${heroSlides.length}</span>
+                    </div>
+                    <p class="eaa-hero-caption" data-hero-caption aria-live="polite">${heroSlides[0][2]}</p>
+                  </div>
                 </div>
-                <div class="turismo-hero-actions">
-                  <a href="#/turismo" data-scroll-target="turismo-catalogo">Ver viajes</a>
-                  <a class="btn-icon-pair" href="${whatsappLink("Hola, quiero que me asesoren para elegir un viaje turístico con El Ángel Azul.")}" target="_blank" rel="noopener">
-                    <span>Pedir asesoramiento</span>
-                    <span class="btn-icon-circle" aria-hidden="true"><span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">chat</span></span>
-                  </a>
+              </div>
+            </section>
+
+            <section class="tur-intro" aria-labelledby="tur-intro-title">
+              <div class="eaa-wrap">
+                <div class="tur-intro-head">
+                  <h2 id="tur-intro-title" data-split>Viajes de turismo, con alguien que te acompaña</h2>
+                  <p data-rise>Paquetes de viaje seleccionados por la agencia para disfrutar en familia, en pareja o en grupo.</p>
                 </div>
+                <ul class="tur-intro-list">
+                  ${beneficios.map(([icono, titulo, texto]) => `<li data-rise><span class="tur-intro-icon" aria-hidden="true"><span class="material-symbols-outlined">${icono}</span></span><strong>${titulo}</strong><p>${texto}</p></li>`).join("")}
+                </ul>
               </div>
             </section>
 
-            <section class="turismo-intention-section">
-              <div class="catalog-heading" data-reveal-light>
-                <h2>Buscá por destino o tipo de experiencia</h2>
-                <p>Filtrá las opciones disponibles. La reserva final siempre se confirma con asesoramiento personalizado.</p>
-              </div>
-              <label class="turismo-search" for="turismo-search">
-                <span>Buscar destino</span>
-                <input id="turismo-search" type="search" placeholder="Ej: Bariloche, Cataratas, playa..." data-turismo-search>
-              </label>
-              <div class="intention-chip-row" aria-label="Selector de intención visual">
-                ${turismoIntentionFilters.map(([value, label], index) => `
-                  <button class="intention-chip${index === 0 ? " active" : ""}" type="button" data-turismo-intention="${value}">${label}</button>
-                `).join("")}
+            <section class="tur-featured" id="turismo-catalogo" aria-labelledby="tur-featured-title">
+              <div class="eaa-wrap">
+                <div class="tur-featured-head">
+                  <h2 id="tur-featured-title" data-split>Paquetes destacados</h2>
+                  ${packages.length ? `<a class="eaa-link tur-featured-all" href="#/turismo/paquetes">Ver todos los paquetes ${arrow}</a>` : ""}
+                </div>
+                <div class="tur-grid" data-turismo-package-grid>
+                  ${destacados.length ? destacados.map(renderTurismoPackageCard).join("") : renderTurismoEmptyState(true)}
+                </div>
+                ${packages.length ? `<div class="tur-more"><a class="eaa-button eaa-button-ink" href="#/turismo/paquetes">Ver todos los paquetes ${arrow}</a></div>` : ""}
               </div>
             </section>
 
-            <section class="catalog-section" id="turismo-catalogo">
-              <div class="catalog-heading" data-reveal-light>
-                <h2>Opciones disponibles</h2>
-                <p>Compará destino, duración, precio de referencia e incluidos. Fechas, cupos y condiciones se confirman por WhatsApp.</p>
-                <strong class="turismo-results-count" data-turismo-results-count>${packages.length} opciones encontradas</strong>
-              </div>
-              <div class="package-grid" data-turismo-package-grid data-result-count="${packages.length}">
-                ${packages.map(renderTurismoPackageCard).join("")}
-              </div>
-            </section>
-
-            <section class="turismo-trust">
-              <div class="catalog-heading" data-reveal-light>
-                <p class="section-kicker">Antes de viajar</p>
-                <h2>Te ayudamos a elegir sin vueltas</h2>
-                <p>Si no encontrás el viaje exacto, te orientamos con fechas, cantidad de personas y presupuesto aproximado.</p>
-              </div>
-              <div class="turismo-trust-grid">
-                <article>
-                  <span>01</span>
-                  <strong>Contanos la idea</strong>
-                  <p>Fecha tentativa, cantidad de personas y estilo de viaje.</p>
-                </article>
-                <article>
-                  <span>02</span>
-                  <strong>Filtramos opciones</strong>
-                  <p>Revisamos destinos, cupos y condiciones actuales.</p>
-                </article>
-                <article>
-                  <span>03</span>
-                  <strong>Decidís con claridad</strong>
-                  <p>Comparás precio, duración e incluidos antes de reservar.</p>
-                </article>
-              </div>
-              <div class="turismo-trust-actions">
-                <a class="package-whatsapp" href="${whatsappLink("Hola, quiero consultar por un viaje turístico con El Ángel Azul. Busco opciones según fecha, presupuesto y cantidad de personas.")}" target="_blank" rel="noopener">Consultar por WhatsApp</a>
+            <section class="eaa-process eaa-dark" aria-labelledby="tur-process-title">
+              <div class="eaa-wrap">
+                <h2 id="tur-process-title" data-split>Te ayudamos a elegir sin vueltas</h2>
+                <ol class="eaa-process-list">
+                  ${pasos.map(([n, titulo, texto]) => `<li data-process-row><span class="eaa-n" aria-hidden="true">${n}</span><div><h3>${titulo}</h3><p>${texto}</p></div><span class="eaa-process-note">Con la agencia</span></li>`).join("")}
+                </ol>
+                <div class="eaa-actions" data-rise><a class="eaa-button eaa-button-fill" href="${whatsappLink("Hola, quiero consultar por un viaje turístico con El Ángel Azul. Busco opciones según fecha, presupuesto y cantidad de personas.")}" target="_blank" rel="noopener">Consultar por un viaje ${arrow}</a></div>
               </div>
             </section>
           </div>
@@ -960,8 +1005,6 @@
           setTurismoPublicPreviewMode(false);
           renderTurismo();
         });
-        bindTurismoIntentions();
-        bindTurismoCardCarousels();
         bindTurismoAnimations();
       }
 
@@ -970,164 +1013,121 @@
         const whatsappHref = turismoWhatsappForPackage(packageItem);
         const itinerario = Array.isArray(packageItem.itinerario) ? packageItem.itinerario : [];
         const formasPago = Array.isArray(packageItem.formasPago) ? packageItem.formasPago : [];
+        const incluye = Array.isArray(packageItem.incluye) ? packageItem.incluye : [];
+        const noIncluye = Array.isArray(packageItem.noIncluye) ? packageItem.noIncluye : [];
         const fechasSalida = [packageItem.fechaSalida, packageItem.fechaRegreso].filter(Boolean).join(" al ");
-        const heroImage = packageItem.image?.startsWith("http") || packageItem.image?.startsWith("/")
-          ? packageItem.image
-          : `/${packageItem.image}`;
+        const titulo = packageItem.titulo || packageItem.destino;
+        const precio = packageItem.precioDesde && packageItem.precioDesde !== "Consultar" ? packageItem.precioDesde : "";
+        const moneda = escapeHtml(packageItem.moneda || "");
+        const relacionados = turismoPackages().filter((item) => item.slug !== packageItem.slug).slice(0, 3);
+        const arrow = TURISMO_ARROW_SVG;
+        const heroImage = escapeHtml(safeMediaUrl(packageItem.image || gallery[0]));
+        const desglose = [
+          packageItem.precioBaseDoble ? ["Base doble", `${moneda} ${escapeHtml(packageItem.precioBaseDoble)}`] : null,
+          packageItem.suplementoSingle ? ["Suplemento single", `+ ${moneda} ${escapeHtml(packageItem.suplementoSingle)}`] : null,
+          packageItem.precioMenor ? ["Precio menor", `${moneda} ${escapeHtml(packageItem.precioMenor)}`] : null
+        ].filter(Boolean);
+        const datos = [
+          fechasSalida ? ["Fechas", fechasSalida] : null,
+          ["Duración", packageItem.duracion || "A confirmar"],
+          ["Destino", packageItem.destino],
+          ["Temporada", packageItem.temporada],
+          ["Tipo", packageItem.tipo],
+          packageItem.salidaGarantizada ? ["Estado", "Salida garantizada"] : null
+        ].filter(Boolean);
 
         document.getElementById("app").innerHTML = `
-          <div class="layout turismo-layout">
-
-            <!-- HERO con imagen de portada -->
-            <section class="package-detail-hero" style="--package-hero-image: url('${heroImage}')">
-              <div class="package-detail-hero-content">
-                <a class="package-back-link" href="#/turismo">← Volver a Turismo</a>
-                <p class="turismo-kicker">${escapeHtml(packageItem.tipo)} · ${escapeHtml(packageItem.temporada)}</p>
-                <h1>${escapeHtml(packageItem.titulo || packageItem.destino)}</h1>
-                ${fechasSalida ? `<p class="package-detail-fechas">${escapeHtml(fechasSalida)}</p>` : ""}
-                ${packageItem.salidaGarantizada ? `<span class="package-detail-badge">Salida garantizada</span>` : ""}
-                <div class="package-detail-hero-highlights" aria-label="Datos principales del viaje">
-                  <span>${escapeHtml(packageItem.duracion || "Duración a confirmar")}</span>
-                  <span>${escapeHtml(packageItem.precioDesde || "Precio a consultar")}</span>
-                  <span>${escapeHtml(packageItem.tipo || "Turismo")}</span>
-                </div>
-                <div class="turismo-hero-actions">
-                  <a href="${whatsappHref}" target="_blank" rel="noopener">Consultar por WhatsApp</a>
-                </div>
-              </div>
-            </section>
-
-            <!-- PRECIO DESTACADO -->
-            <section class="package-detail-precio-section">
-              <div class="package-detail-precio-card">
-                <div class="package-detail-precio-main">
-                  <span>Desde</span>
-                  <strong>${escapeHtml(packageItem.precioDesde || "Consultar")}</strong>
-                  <small>por persona</small>
-                </div>
-                ${packageItem.precioBaseDoble || packageItem.suplementoSingle || packageItem.precioMenor ? `
-                  <div class="package-detail-precio-desglose">
-                    ${packageItem.precioBaseDoble ? `<div><span>Base doble</span><strong>${escapeHtml(packageItem.moneda || "")} ${escapeHtml(packageItem.precioBaseDoble)}</strong></div>` : ""}
-                    ${packageItem.suplementoSingle ? `<div><span>Suplemento single</span><strong>+ ${escapeHtml(packageItem.moneda || "")} ${escapeHtml(packageItem.suplementoSingle)}</strong></div>` : ""}
-                    ${packageItem.precioMenor ? `<div><span>Precio menor</span><strong>${escapeHtml(packageItem.moneda || "")} ${escapeHtml(packageItem.precioMenor)}</strong></div>` : ""}
-                  </div>
-                ` : ""}
-                <a class="package-detail-precio-cta" href="${whatsappHref}" target="_blank" rel="noopener">Consultar disponibilidad</a>
-              </div>
-
-              <div class="package-detail-facts">
-                ${fechasSalida ? `<div><span>Fechas</span><strong>${escapeHtml(fechasSalida)}</strong></div>` : ""}
-                <div><span>Duración</span><strong>${escapeHtml(packageItem.duracion || "A confirmar")}</strong></div>
-                <div><span>Destino</span><strong>${escapeHtml(packageItem.destino)}</strong></div>
-                <div><span>Temporada</span><strong>${escapeHtml(packageItem.temporada)}</strong></div>
-                <div><span>Tipo</span><strong>${escapeHtml(packageItem.tipo)}</strong></div>
-                ${packageItem.salidaGarantizada ? `<div><span>Estado</span><strong class="package-detail-garantizada">Salida garantizada</strong></div>` : ""}
-              </div>
-            </section>
-
-            <!-- GALERÍA -->
-            ${gallery.length > 1 ? `
-              <section class="package-detail-gallery" aria-label="Galería de ${escapeHtml(packageItem.destino)}">
-                <div class="package-detail-section-head">
-                  <p class="section-kicker">Fotos del destino</p>
-                  <h2>Un vistazo al viaje</h2>
-                </div>
-                <img class="package-gallery-main" src="${escapeHtml(safeMediaUrl(gallery[0]))}" alt="${escapeHtml(packageItem.destino)}">
-                <div class="package-gallery-strip">
-                  ${gallery.slice(1).map((image, index) => `
-                    <img src="${escapeHtml(safeMediaUrl(image))}" alt="${escapeHtml(packageItem.destino)} ${index + 2}">
-                  `).join("")}
-                </div>
-              </section>
-            ` : ""}
-
-            <!-- DESCRIPCIÓN -->
-            <section class="package-detail-summary">
-              <p class="section-kicker">Sobre el viaje</p>
-              <h2>${escapeHtml(packageItem.titulo || packageItem.destino)}</h2>
-              <p>${escapeHtml(packageItem.descripcion)}</p>
-            </section>
-
-            <!-- INCLUYE / NO INCLUYE -->
-            <section class="package-detail-content">
-              <div class="package-detail-list-card package-detail-list-card--positive">
-                <h2>Qué incluye</h2>
-                <ul class="package-detail-check-list">
-                  ${packageItem.incluye.map(item => `<li>${escapeHtml(item)}</li>`).join("")}
+          <div class="eaa-home eaa-turismo-page tur-d">
+            <section class="tur-d-hero eaa-dark" aria-labelledby="tur-d-title">
+              <img class="tur-d-hero-img" src="${heroImage}" alt="">
+              <div class="eaa-grain" aria-hidden="true"></div>
+              <div class="tur-d-hero-shade" aria-hidden="true"></div>
+              <div class="eaa-wrap tur-d-hero-inner">
+                <nav class="tur-crumbs" aria-label="Ruta"><a href="#/turismo">Turismo</a><span aria-hidden="true">/</span><a href="#/turismo/paquetes">Paquetes</a><span aria-hidden="true">/</span><span aria-current="page">${escapeHtml(packageItem.destino)}</span></nav>
+                <h1 id="tur-d-title" class="tur-d-title">${escapeHtml(titulo)}</h1>
+                <ul class="tur-d-pills" aria-label="Datos principales">
+                  ${packageItem.duracion ? `<li>${escapeHtml(packageItem.duracion)}</li>` : ""}
+                  ${fechasSalida ? `<li>${escapeHtml(fechasSalida)}</li>` : ""}
+                  ${packageItem.temporada ? `<li>${escapeHtml(packageItem.temporada)}</li>` : ""}
+                  ${packageItem.salidaGarantizada ? `<li class="is-accent">Salida garantizada</li>` : ""}
                 </ul>
               </div>
-              ${packageItem.noIncluye?.length ? `
-                <div class="package-detail-list-card package-detail-list-card--neutral">
-                  <h2>Qué no incluye</h2>
-                  <ul class="package-detail-check-list">
-                    ${packageItem.noIncluye.map(item => `<li>${escapeHtml(item)}</li>`).join("")}
-                  </ul>
-                </div>
-              ` : ""}
             </section>
 
-            <!-- ITINERARIO (acordeón: primer día expandido, resto colapsado) -->
-            ${itinerario.length ? `
-              <section class="package-detail-itinerario">
-                <p class="section-kicker">Programa</p>
-                <h2>Itinerario día por día</h2>
-                <div class="package-itinerario-list" data-itinerario-accordion>
-                  ${itinerario.map((dia, index) => `
-                    <div class="package-itinerario-item${index === 0 ? " is-open" : ""}" data-itinerario-item>
-                      <button type="button" class="package-itinerario-toggle" data-itinerario-toggle aria-expanded="${index === 0 ? "true" : "false"}">
-                        <span class="package-itinerario-num">${escapeHtml(String(dia.dia || index + 1).padStart(2, "0"))}</span>
-                        <span class="package-itinerario-toggle-text">
-                          <strong>${escapeHtml(dia.titulo)}</strong>
-                          <small>Actividad principal</small>
-                        </span>
-                        <span class="material-symbols-outlined package-itinerario-chevron">expand_more</span>
-                      </button>
-                      ${dia.descripcion ? `<div class="package-itinerario-body"><p>${escapeHtml(dia.descripcion)}</p></div>` : ""}
+            <section class="tur-d-body">
+              <div class="eaa-wrap tur-d-grid">
+                <div class="tur-d-main">
+                  <section class="tur-d-block" aria-labelledby="tur-d-about">
+                    <h2 id="tur-d-about">Sobre el viaje</h2>
+                    <p class="tur-d-lead">${escapeHtml(packageItem.descripcion || packageItem.resumen || "")}</p>
+                  </section>
+
+                  ${gallery.length > 1 ? `
+                  <section class="tur-d-block" aria-label="Fotos de ${escapeHtml(packageItem.destino)}">
+                    <div class="tur-d-gallery">
+                      ${gallery.slice(0, 5).map((image, index) => `<img class="${index === 0 ? "is-main" : ""}" src="${escapeHtml(safeMediaUrl(image))}" alt="${escapeHtml(packageItem.destino)} ${index + 1}" loading="lazy">`).join("")}
                     </div>
-                  `).join("")}
+                  </section>` : ""}
+
+                  ${incluye.length || noIncluye.length ? `
+                  <section class="tur-d-block tur-d-lists">
+                    ${incluye.length ? `<div><h2>Qué incluye</h2><ul class="tur-d-checks">${incluye.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></div>` : ""}
+                    ${noIncluye.length ? `<div><h2>Qué no incluye</h2><ul class="tur-d-checks is-off">${noIncluye.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></div>` : ""}
+                  </section>` : ""}
+
+                  ${itinerario.length ? `
+                  <section class="tur-d-block" aria-labelledby="tur-d-prog">
+                    <h2 id="tur-d-prog">Itinerario día por día</h2>
+                    <div class="tur-d-days" data-itinerario-accordion>
+                      ${itinerario.map((dia, index) => `
+                        <div class="package-itinerario-item${index === 0 ? " is-open" : ""}" data-itinerario-item>
+                          <button type="button" class="package-itinerario-toggle" data-itinerario-toggle aria-expanded="${index === 0 ? "true" : "false"}">
+                            <span class="package-itinerario-num">${escapeHtml(String(dia.dia || index + 1).padStart(2, "0"))}</span>
+                            <span class="package-itinerario-toggle-text"><strong>${escapeHtml(dia.titulo)}</strong></span>
+                            <span class="tur-d-chevron" aria-hidden="true">+</span>
+                          </button>
+                          ${dia.descripcion ? `<div class="package-itinerario-body"><p>${escapeHtml(dia.descripcion)}</p></div>` : ""}
+                        </div>`).join("")}
+                    </div>
+                  </section>` : ""}
+
+                  ${formasPago.length || packageItem.condicionVenta ? `
+                  <section class="tur-d-block" aria-labelledby="tur-d-pago">
+                    <h2 id="tur-d-pago">Reserva y pago</h2>
+                    ${formasPago.length ? `<ul class="tur-d-checks">${formasPago.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>` : ""}
+                    ${packageItem.condicionVenta ? `<p class="tur-d-note"><strong>Condición de venta.</strong> ${escapeHtml(packageItem.condicionVenta)}</p>` : ""}
+                  </section>` : ""}
                 </div>
-              </section>
-            ` : ""}
 
-            <!-- FORMAS DE PAGO -->
-            ${formasPago.length ? `
-              <section class="package-detail-payment">
-                <div class="package-detail-section-head">
-                  <p class="section-kicker">Reserva y pago</p>
-                  <h2>Formas de pago</h2>
-                </div>
-                <ul class="package-detail-payment-list">
-                  ${formasPago.map(item => `<li>${escapeHtml(item)}</li>`).join("")}
-                </ul>
-              </section>
-            ` : ""}
-
-            <!-- CONDICIÓN DE VENTA -->
-            ${packageItem.condicionVenta ? `
-              <section class="package-detail-condicion">
-                <strong>Condición de venta</strong>
-                <p>${escapeHtml(packageItem.condicionVenta)}</p>
-              </section>
-            ` : ""}
-
-            <!-- CTA FINAL -->
-            <section class="turismo-cta package-detail-cta">
-              <h2>¿Querés reservar este viaje?</h2>
-              <p>Consultanos por WhatsApp y te pasamos disponibilidad, precio actualizado y próximas salidas.</p>
-              <div class="turismo-hero-actions">
-                <a href="${whatsappHref}" target="_blank" rel="noopener">Consultar por WhatsApp</a>
-                <a href="#/turismo">Ver más viajes</a>
+                <aside class="tur-d-aside" aria-label="Precio y reserva">
+                  <div class="tur-d-card">
+                    <p class="tur-d-from">${precio ? "Desde" : "Precio"}</p>
+                    <p class="tur-d-price">${precio ? escapeHtml(precio) : "A consultar"}</p>
+                    ${precio ? `<p class="tur-d-per">por persona</p>` : ""}
+                    ${desglose.length ? `<dl class="tur-d-breakdown">${desglose.map(([etiqueta, valor]) => `<div><dt>${etiqueta}</dt><dd>${valor}</dd></div>`).join("")}</dl>` : ""}
+                    <dl class="tur-d-facts">${datos.map(([etiqueta, valor]) => `<div><dt>${etiqueta}</dt><dd>${escapeHtml(valor)}</dd></div>`).join("")}</dl>
+                    <a class="eaa-button eaa-button-fill" href="${whatsappHref}" target="_blank" rel="noopener">Consultar disponibilidad ${arrow}</a>
+                    <a class="eaa-button eaa-button-ink" href="#/turismo/paquetes">Ver todos los paquetes</a>
+                  </div>
+                </aside>
               </div>
             </section>
 
+            ${relacionados.length ? `
+            <section class="tur-related" aria-labelledby="tur-related-title">
+              <div class="eaa-wrap">
+                <div class="tur-featured-head">
+                  <h2 id="tur-related-title">Otros viajes que te pueden gustar</h2>
+                  <a class="eaa-link tur-featured-all" href="#/turismo/paquetes">Ver todos los paquetes ${arrow}</a>
+                </div>
+                <div class="tur-grid">${relacionados.map(renderTurismoPackageCard).join("")}</div>
+              </div>
+            </section>` : ""}
           </div>
 
-          <!-- Barra fija inferior: precio + WhatsApp siempre accesible al scrollear -->
+          <!-- Barra fija inferior (solo en pantallas chicas): precio + WhatsApp siempre a mano -->
           <div class="package-sticky-bar">
-            <div>
-              <span>Desde</span>
-              <strong>${escapeHtml(packageItem.precioDesde || "Consultar")}</strong>
-            </div>
+            <div><span>${precio ? "Desde" : "Precio"}</span><strong>${precio ? escapeHtml(precio) : "A consultar"}</strong></div>
             <a href="${whatsappHref}" target="_blank" rel="noopener">Consultar por WhatsApp</a>
           </div>
         `;
@@ -1252,6 +1252,7 @@
           return true;
         } catch (error) {
           adminTurismoSaveFeedback = { ok: false, message: `No se pudo guardar en la base de datos: ${error.message || "error desconocido"}.` };
+          if (error.status === 401) handleAdminSessionLost();
           return false;
         }
       }
@@ -1705,7 +1706,7 @@
                   </div>
                   <span>#/turismo/${escapeHtml(normalizedTrip.slug || adminTurismoSlug(normalizedTrip.titulo || normalizedTrip.destino))}</span>
                 </div>
-                <div class="admin-turismo-real-card-preview">
+                <div class="admin-turismo-real-card-preview eaa-home">
                   ${renderTurismoPackageCard(previewPackage)}
                 </div>
               </div>
@@ -2082,6 +2083,12 @@
           icon: "groups"
         },
         {
+          id: "colegios",
+          label: "Colegios",
+          path: "/admin/colegios",
+          icon: "school"
+        },
+        {
           id: "pasajeros",
           label: "Pasajeros",
           path: "/admin/pasajeros",
@@ -2113,6 +2120,7 @@
           space_dashboard: '<path d="M3 3h8v8H3V3Zm10 0h8v5h-8V3ZM3 13h8v8H3v-8Zm10-3h8v11h-8V10Z"/>',
           assignment: '<path d="M9 5V3h6v2h3a2 2 0 0 1 2 2v14H4V7a2 2 0 0 1 2-2h3Zm2 0h2V4h-2v1Zm-3 5h8V8H8v2Zm0 4h8v-2H8v2Zm0 4h6v-2H8v2Z"/>',
           groups: '<path d="M8 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm8-1a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM2 21v-3c0-3 2.7-5 6-5s6 2 6 5v3H2Zm13.5 0v-3c0-1.4-.5-2.7-1.4-3.8.6-.2 1.2-.2 1.9-.2 3.3 0 6 1.8 6 4.5V21h-6.5Z"/>',
+          school: '<path d="M12 3 1 9l11 6 9-4.9V17h2V9L12 3ZM5 13.2v4L12 21l7-3.8v-4L12 17l-7-3.8Z"/>',
           person: '<path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm-9 9v-2c0-3.3 4-5 9-5s9 1.7 9 5v2H3Z"/>',
           payments: '<path d="M3 6h18v12H3V6Zm2 2v8h14V8H5Zm7 7a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM6 10h2V9H6v1Zm10 5h2v-1h-2v1Z"/>',
           flight: '<path d="m2 16 8-3V4.5a2 2 0 1 1 4 0V13l8 3v2l-8-1v3l2 1.5V23l-4-1-4 1v-1.5l2-1.5v-3l-8 1v-2Z"/>',
@@ -2136,6 +2144,23 @@
 
       let adminSession = null;
       let adminSessionChecked = false;
+      const ADMIN_SESION_PERDIDA_KEY = "eaa-admin-sesion-perdida";
+      let adminLoginNotice = "";
+      try {
+        if (sessionStorage.getItem(ADMIN_SESION_PERDIDA_KEY)) {
+          adminLoginNotice = "Tu sesión terminó (venció o se abrió en otro lugar). El último cambio no se guardó: ingresá de nuevo y repetilo.";
+          sessionStorage.removeItem(ADMIN_SESION_PERDIDA_KEY);
+        }
+      } catch (_) { /* sin sessionStorage el login se muestra igual, solo sin el aviso */ }
+
+      // El servidor respondió 401 a un guardado: la sesión venció o se abrió en otro lugar
+      // con el mismo usuario y el cambio no se guardó. Se recarga en vez de dibujar el login
+      // acá: quien llamó al guardado vuelve a dibujar el panel por su cuenta y lo taparía, y
+      // un arranque limpio vuelve a leer la base en lugar de dejar el cambio sin guardar.
+      function handleAdminSessionLost() {
+        try { sessionStorage.setItem(ADMIN_SESION_PERDIDA_KEY, "1"); } catch (_) { /* ver arriba */ }
+        location.reload();
+      }
 
       async function fetchAdminSession(force = false) {
         if (adminSessionChecked && !force) return adminSession;
@@ -2201,7 +2226,7 @@
                       <button type="button" data-admin-password-toggle aria-label="Mostrar contraseña" aria-pressed="false">Ver</button>
                     </span>
                   </label>
-                  ${errorMessage ? `<p class="admin-login-error">${escapeHtml(errorMessage)}</p>` : ""}
+                  ${errorMessage || adminLoginNotice ? `<p class="admin-login-error" role="alert">${escapeHtml(errorMessage || adminLoginNotice)}</p>` : ""}
                   <button type="submit">Ingresar al panel</button>
                 </form>
                 <div class="admin-login-note">
@@ -2252,6 +2277,7 @@
             }
             adminSession = payload;
             adminSessionChecked = true;
+            adminLoginNotice = "";
             render();
             return;
           } catch (error) {
@@ -2309,6 +2335,7 @@
           }
           adminSession = null;
           adminSessionChecked = true;
+          adminLoginNotice = "";
           renderAdminLogin();
         });
       }
@@ -2563,7 +2590,7 @@
 
       function googleSheetsPassengerRows(now = new Date().toISOString(), rows = adminPasajerosRows()) {
         return rows.map(({ group, passenger }) => ({
-          id: `pasajero-${passenger.dni || sheetMigrationSlug(passenger.nombre || "sin-dni")}`,
+          id: passenger.id || `pasajero-${passenger.dni || sheetMigrationSlug(passenger.nombre || "sin-dni")}-${group.id}`,
           grupo_id: group.id,
           contrato_id: passenger.contratoId || passenger.contrato_id || "",
           codigo_contrato: passenger.codigoContrato || passenger.codigo_contrato || passenger.contratoCodigo || "",
@@ -2721,6 +2748,152 @@
 
       function downloadGoogleSheetAppsScript() {
         downloadTextFile("EAA_Google_Sheets_Apps_Script.js", window.ElAngelAzulPersistence.appsScriptTemplate(), "text/javascript;charset=utf-8");
+      }
+
+      // ABM de colegios (lista que usa la inscripción pública). Baja lógica:
+      // activo = FALSE los saca de la inscripción pero conserva fichas y grupos.
+      let adminColegiosEditId = "";
+      let adminColegiosMessage = "";
+      let adminColegiosVerInactivos = false;
+
+      async function saveAdminColegios(nuevos, mensajeOk) {
+        const anteriores = adminColegios;
+        adminColegios = nuevos;
+        const guardado = await queueGoogleSheetsWrite(["COLEGIOS"]);
+        if (guardado) {
+          adminColegiosMessage = mensajeOk;
+        } else {
+          adminColegios = anteriores;
+          adminColegiosMessage = googleSheetsSyncState.message;
+        }
+        return guardado;
+      }
+
+      function renderAdminColegios() {
+        const sinVincular = loadFichasAdhesionDemo().filter((ficha) => !ficha.colegioVinculado && ficha.colegioTexto).length;
+        const editando = adminColegios.find((colegio) => colegio.id === adminColegiosEditId) || null;
+        const provincias = window.ElAngelAzulFichaValidation.PROVINCIAS;
+        const filas = [...adminColegios]
+          .filter((colegio) => adminColegiosVerInactivos || colegio.activo === "TRUE")
+          .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+        document.getElementById("app").innerHTML = renderAdminShell("colegios", `
+          <section class="admin-turismo-panel admin-colegios">
+            <div class="admin-pasajeros-table-head">
+              <div>
+                <h2>Colegios</h2>
+                <p>Lista que ven las familias al inscribirse. ${sinVincular ? `<strong>${sinVincular} ficha(s)</strong> tienen un colegio escrito a mano sin vincular (se resuelven desde Inscripciones).` : "No hay colegios escritos a mano pendientes de vincular."}</p>
+              </div>
+              <label class="admin-colegios-toggle"><input type="checkbox" data-admin-colegios-inactivos ${adminColegiosVerInactivos ? "checked" : ""}> Mostrar dados de baja</label>
+            </div>
+            ${adminColegiosMessage ? `<div class="admin-fichas-assigned-note" role="status" tabindex="-1" data-admin-colegios-status>${escapeHtml(adminColegiosMessage)}</div>` : ""}
+            <form class="admin-pasajeros-form admin-colegios-form" data-admin-colegios-form novalidate>
+              <fieldset>
+                <legend>${editando ? "Editar colegio" : "Nuevo colegio"}</legend>
+                <label>Nombre <span class="admin-pasajeros-required">*</span>
+                  <input name="nombre" value="${escapeHtml(editando?.nombre || "")}" maxlength="120" required>
+                </label>
+                <label>Provincia
+                  <select name="provincia">
+                    <option value="">Sin indicar</option>
+                    ${provincias.map((provincia) => `<option value="${escapeHtml(provincia)}" ${provincia === (editando ? editando.provincia : "Corrientes") ? "selected" : ""}>${escapeHtml(provincia)}</option>`).join("")}
+                  </select>
+                </label>
+                <label>Localidad
+                  <input name="localidad" value="${escapeHtml(editando?.localidad || "")}" maxlength="80">
+                </label>
+              </fieldset>
+              <div class="admin-colegios-error" id="admin-colegios-error" data-admin-colegios-error role="alert" hidden></div>
+              <div class="admin-pasajeros-form-actions">
+                <button type="submit" class="admin-pasajeros-primary-button">${editando ? "Guardar cambios" : "Agregar colegio"}</button>
+                ${editando ? `<button type="button" class="admin-pasajeros-secondary-button" data-admin-colegios-cancelar>Cancelar</button>` : ""}
+              </div>
+            </form>
+            <div class="admin-pasajeros-table-wrap">
+              <table class="admin-pasajeros-table">
+                <thead><tr><th>Nombre</th><th>Provincia</th><th>Localidad</th><th>Estado</th><th><span class="sr-only">Acciones</span></th></tr></thead>
+                <tbody>
+                  ${filas.length ? filas.map((colegio) => `
+                    <tr>
+                      <td>${escapeHtml(colegio.nombre)}</td>
+                      <td>${escapeHtml(colegio.provincia || "—")}</td>
+                      <td>${escapeHtml(colegio.localidad || "—")}</td>
+                      <td><span class="admin-pasajeros-status ${colegio.activo === "TRUE" ? "is-ok" : "is-alert"}">${colegio.activo === "TRUE" ? "Activo" : "De baja"}</span></td>
+                      <td class="admin-colegios-actions">
+                        <button type="button" class="admin-pasajeros-secondary-button" data-admin-colegios-editar="${escapeHtml(colegio.id)}" aria-label="Editar ${escapeHtml(colegio.nombre)}">Editar</button>
+                        <button type="button" class="admin-pasajeros-secondary-button" data-admin-colegios-estado="${escapeHtml(colegio.id)}" aria-label="${colegio.activo === "TRUE" ? "Dar de baja" : "Reactivar"} ${escapeHtml(colegio.nombre)}">${colegio.activo === "TRUE" ? "Dar de baja" : "Reactivar"}</button>
+                      </td>
+                    </tr>
+                  `).join("") : `<tr><td colspan="5">Todavía no hay colegios cargados.</td></tr>`}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        `);
+        bindAdminShell();
+        document.querySelector("[data-admin-colegios-inactivos]")?.addEventListener("change", (event) => {
+          adminColegiosVerInactivos = event.target.checked;
+          renderAdminColegios();
+        });
+        document.querySelector("[data-admin-colegios-cancelar]")?.addEventListener("click", () => {
+          adminColegiosEditId = "";
+          adminColegiosMessage = "";
+          renderAdminColegios();
+        });
+        document.querySelectorAll("[data-admin-colegios-editar]").forEach((button) => {
+          button.addEventListener("click", () => {
+            adminColegiosEditId = button.dataset.adminColegiosEditar;
+            adminColegiosMessage = "";
+            renderAdminColegios();
+            document.querySelector("[data-admin-colegios-form] [name=nombre]")?.focus();
+          });
+        });
+        document.querySelectorAll("[data-admin-colegios-estado]").forEach((button) => {
+          button.addEventListener("click", async () => {
+            const colegio = adminColegios.find((item) => item.id === button.dataset.adminColegiosEstado);
+            if (!colegio) return;
+            const baja = colegio.activo === "TRUE";
+            if (baja && !confirm(`¿Dar de baja “${colegio.nombre}”? Deja de aparecer en la inscripción; las fichas y grupos existentes se conservan.`)) return;
+            await saveAdminColegios(
+              adminColegios.map((item) => (item.id === colegio.id ? { ...item, activo: baja ? "FALSE" : "TRUE" } : item)),
+              baja ? `“${colegio.nombre}” dado de baja.` : `“${colegio.nombre}” reactivado.`
+            );
+            renderAdminColegios();
+            document.querySelector("[data-admin-colegios-status]")?.focus();
+          });
+        });
+        document.querySelector("[data-admin-colegios-form]")?.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const form = event.currentTarget;
+          const errorBox = form.querySelector("[data-admin-colegios-error]");
+          const datos = new FormData(form);
+          const nombre = String(datos.get("nombre") || "").replace(/\s+/g, " ").trim();
+          const mostrarError = (texto) => {
+            form.closest("section")?.querySelector("[data-admin-colegios-status]")?.remove();
+            errorBox.hidden = false;
+            errorBox.textContent = texto;
+            const campoNombre = form.querySelector("[name=nombre]");
+            campoNombre.setAttribute("aria-invalid", "true");
+            campoNombre.setAttribute("aria-describedby", "admin-colegios-error");
+            campoNombre.focus();
+          };
+          if (nombre.length < 3) return mostrarError("El nombre del colegio es muy corto (mínimo 3 letras).");
+          const repetido = adminColegios.find((colegio) => colegio.id !== adminColegiosEditId && normalizeFichaSearchText(colegio.nombre) === normalizeFichaSearchText(nombre));
+          if (repetido) return mostrarError(`Ya existe un colegio con ese nombre${repetido.activo === "TRUE" ? "" : " (está dado de baja: reactivalo)"}.`);
+          const campos = { nombre, provincia: String(datos.get("provincia") || ""), localidad: String(datos.get("localidad") || "").replace(/\s+/g, " ").trim() };
+          const nuevos = editando
+            ? adminColegios.map((colegio) => (colegio.id === editando.id ? { ...colegio, ...campos } : colegio))
+            : [...adminColegios, { id: crypto.randomUUID(), codigo_oficial: "", activo: "TRUE", ...campos }];
+          const guardado = await saveAdminColegios(nuevos, editando ? `“${nombre}” actualizado.` : `“${nombre}” agregado.`);
+          if (guardado) adminColegiosEditId = "";
+          renderAdminColegios();
+          if (!guardado) {
+            // Conservar el borrador visible aunque se haya rechazado el
+            // guardado. La tabla mantiene el estado anterior, sin fingir éxito.
+            const nuevoForm = document.querySelector("[data-admin-colegios-form]");
+            for (const [campo, valor] of Object.entries(campos)) nuevoForm.elements.namedItem(campo).value = valor;
+          }
+          document.querySelector("[data-admin-colegios-status]")?.focus();
+        });
       }
 
       function renderAdminConfiguracion() {
@@ -3113,6 +3286,7 @@
 
       function sheetPassengerFromRow(row = {}) {
         return {
+          id: row.id || "",
           nombre: row.nombre || "",
           apellido: row.apellido || "",
           responsableApellido: row.responsable_apellido || "",
@@ -3336,6 +3510,17 @@
             fichas: fichasRows,
             includePrivate: adminEntry
           });
+          if (adminEntry) {
+            const capture = window.ElAngelAzulPersistence.captureAdminSheet;
+            capture("GRUPOS", googleSheetsGroupRows(), grupos);
+            capture("CONTRATOS", googleSheetsContratoRows(), contratos);
+            capture("PASAJEROS", googleSheetsPassengerRows(), pasajerosRows);
+            capture("FICHAS_ADHESION", googleSheetsFichaRows(), fichasRows);
+            capture("TURISMO", googleSheetsTurismoRows(), turismo);
+            capture("FICHAS_TUTOR", adminFichasTutor, fichasTutor);
+            capture("COLEGIOS", adminColegios, colegios);
+            capture("PLANES_PAGO", adminPlanesPago, planesPago);
+          }
           googleSheetsHydrated = true;
           googleSheetsSyncState = {
             status: "ok",
@@ -3386,8 +3571,9 @@
         }).catch((error) => {
           googleSheetsSyncState = {
             status: "error",
-            message: `No se pudo guardar en la base de datos: ${error.message || "error desconocido"}.`
+            message: `No se pudo guardar en la base de datos: ${error.message || "error desconocido"}`
           };
+          if (error.status === 401) handleAdminSessionLost();
           return false;
         });
         return googleSheetsWriteQueue;
@@ -3398,7 +3584,7 @@
           ? successText
           : googleSheetsSyncState.status === "local"
             ? googleSheetsSyncState.message
-            : "Error al guardar en la base de datos.";
+            : googleSheetsSyncState.message || "Error al guardar en la base de datos.";
       }
 
       async function updateFichaAdhesionStatus(id, estado, patch = {}, successText = "") {
@@ -3508,7 +3694,7 @@
 
       function fichaSignatureDataUrl(ficha = {}) {
         const value = String(ficha.firma || ficha.firmaDataUrl || "");
-        return /^data:image\/png;base64,[a-z0-9+/=]+$/i.test(value) ? value : "";
+        return /^(data:image\/png;base64,[a-z0-9+/=]+|\/api\/admin\/fichas\/[0-9a-f-]{36}\/firma)$/i.test(value) ? value : "";
       }
 
       function renderFichaAssignmentControls(ficha) {
@@ -3870,6 +4056,7 @@
                   ${renderFichaValue("División", ficha.division)}
                   ${renderFichaValue("Plan", planTexto)}
                   ${renderFichaValue("Contrato", ficha.codigoContrato)}
+                  ${renderFichaValue("Tutor", fichaNombreCompleto(ficha.responsableApellido, ficha.responsableNombre))}
                   ${renderFichaValue("Viaje", ficha.viaje)}
                 </dl>
                 ${renderFichaVincularColegio(ficha)}
@@ -4360,6 +4547,57 @@
           estado: adminPasajerosFilterEstado,
           normalizeText: normalizeFichaSearchText
         });
+      }
+
+      // Exporta las filas filtradas en pantalla. Los datos de domicilio y tutor
+      // salen de la ficha con el mismo DNI (si no hay ficha, quedan vacíos).
+      const ADMIN_PASAJEROS_EXPORT_COLUMNS = [
+        "Colegio", "Curso", "Grado/Año", "División", "Contrato", "Plan", "Cuotas", "Apellido", "Nombre", "DNI",
+        "Nacimiento", "Sexo", "Tutor apellido", "Tutor nombre", "Parentesco", "Tutor DNI", "CUIL/CUIT", "Celular",
+        "Email", "Calle y número", "Barrio", "Localidad", "Provincia", "CP", "Estado", "Documentación",
+        "Ficha médica", "Estado de pago"
+      ];
+
+      function adminPasajerosExportRows(rows) {
+        const fichas = loadFichasAdhesionDemo();
+        const collator = new Intl.Collator("es", { numeric: true, sensitivity: "base" });
+        const sorted = [...rows].sort((a, b) => (
+          collator.compare(a.group.colegio, b.group.colegio)
+          || collator.compare(a.group.curso, b.group.curso)
+          || collator.compare(a.group.division, b.group.division)
+          || collator.compare(a.passenger.apellido || "", b.passenger.apellido || "")
+        ));
+        return sorted.map(({ group, passenger: p, payment }) => {
+          const f = fichas.find((item) => item.tipo !== "tutor" && normalizeFichaDni(item.pasajeroNumeroDocumento) === normalizeFichaDni(p.dni)) || {};
+          return {
+            "Colegio": group.colegio, "Curso": group.nivel, "Grado/Año": group.curso, "División": group.division,
+            "Contrato": p.codigoContrato || "", "Plan": p.planNombre || "", "Cuotas": p.planCuotas || "",
+            "Apellido": p.apellido || "", "Nombre": p.nombre || "", "DNI": p.dni || "",
+            "Nacimiento": p.nacimiento || f.pasajeroNacimiento || "", "Sexo": f.pasajeroSexo || "",
+            "Tutor apellido": p.responsableApellido || f.responsableApellido || "",
+            "Tutor nombre": p.responsable || f.responsableNombre || "",
+            "Parentesco": p.vinculo || f.responsableParentesco || "",
+            "Tutor DNI": p.responsableDni || f.responsableNumeroDocumento || "",
+            "CUIL/CUIT": p.responsableCuilCuit || f.responsableCuilCuit || "",
+            "Celular": f.responsableCelular || p.responsableTelefono || p.telefono || "",
+            "Email": p.responsableEmail || f.responsableEmail || "",
+            "Calle y número": [f.domicilioCalle, f.domicilioNumero].filter(Boolean).join(" "),
+            "Barrio": f.domicilioBarrio || "", "Localidad": f.domicilioLocalidad || "",
+            "Provincia": f.domicilioProvincia || "", "CP": f.domicilioCodigoPostal || "",
+            "Estado": p.estado || "", "Documentación": p.documentacion || "", "Ficha médica": p.fichaMedica || "",
+            "Estado de pago": payment.estadoPago || ""
+          };
+        });
+      }
+
+      function exportAdminPasajerosXlsx() {
+        const rows = adminPasajerosExportRows(adminPasajerosFilteredRows());
+        const sheet = XLSX.utils.json_to_sheet(rows, { header: ADMIN_PASAJEROS_EXPORT_COLUMNS });
+        sheet["!cols"] = autoFitColumnWidths(rows, ADMIN_PASAJEROS_EXPORT_COLUMNS);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, sheet, "Pasajeros");
+        // Fecha local: toISOString() es UTC y de noche en Argentina (UTC-3) ya marca el día siguiente.
+        XLSX.writeFile(workbook, `EAA_pasajeros_${new Date().toLocaleDateString("sv-SE")}.xlsx`);
       }
 
       function adminPasajerosSelectedRecord() {
@@ -4942,6 +5180,15 @@
             <form class="admin-pasajeros-form" data-admin-pasajeros-form novalidate>
 
               <fieldset>
+                <legend>Grupo</legend>
+                <label>Grupo (colegio · curso · viaje) <span class="admin-pasajeros-required">*</span>
+                  <select name="grupoId" data-admin-pasajeros-form-grupo required>
+                    ${adminPasajerosDemo.map((group) => `<option value="${escapeHtml(group.id)}" ${group.id === selectedGroup?.id ? "selected" : ""}>${escapeHtml(`${group.colegio} · ${group.curso} ${group.division} · ${group.viaje} · ${group.nivel}`)}</option>`).join("")}
+                  </select>
+                </label>
+              </fieldset>
+
+              <fieldset>
                 <legend>Datos del pasajero</legend>
                 <label>Nombre/s <span class="admin-pasajeros-required">*</span>
                   <input name="nombre" placeholder="Ej: Juan Ignacio" autocomplete="off" required>
@@ -5090,6 +5337,7 @@
               ${renderAdminPasajerosSelect("curso", adminPasajerosFilterCurso, allCursos, "Curso")}
               ${renderAdminPasajerosSelect("estado", adminPasajerosFilterEstado, allEstados, "Estado")}
               <button type="button" class="admin-pasajeros-secondary-button" data-admin-pasajeros-clear-filters>Limpiar</button>
+              <button type="button" class="admin-pasajeros-secondary-button" data-admin-pasajeros-export>Exportar a Excel</button>
             </div>
           </section>
 
@@ -5859,10 +6107,17 @@
         });
         document.querySelector("[data-admin-pasajeros-form]")?.addEventListener("submit", (event) => {
           event.preventDefault();
-          const selectedGroup = adminPasajerosDemo.find((group) => group.id === adminPasajerosGrupoId);
-          if (!selectedGroup) return;
-
           const formData = new FormData(event.currentTarget);
+          const selectedGroup = adminPasajerosDemo.find((group) => group.id === String(formData.get("grupoId") || ""));
+          if (!selectedGroup) {
+            adminPasajerosFormError = "Elegí un grupo.";
+            renderAdminPasajeros();
+            return;
+          }
+          adminPasajerosNivel = selectedGroup.nivel;
+          adminPasajerosViaje = selectedGroup.viaje;
+          adminPasajerosColegio = selectedGroup.colegio;
+          adminPasajerosGrupoId = selectedGroup.id;
           const selectedContract = contractById(String(formData.get("contratoId") || "").trim(), selectedGroup.id);
           const passenger = {
             nombre: String(formData.get("nombre") || "").trim(),
@@ -5934,6 +6189,20 @@
           adminPasajerosFormError = "";
           renderAdminPasajeros();
         });
+        document.querySelector("[data-admin-pasajeros-form-grupo]")?.addEventListener("change", (event) => {
+          const group = adminPasajerosDemo.find((item) => item.id === event.currentTarget.value);
+          if (!group) return;
+          const typed = [...new FormData(event.currentTarget.form)].filter(([name]) => name !== "grupoId" && name !== "contratoId");
+          adminPasajerosNivel = group.nivel;
+          adminPasajerosViaje = group.viaje;
+          adminPasajerosColegio = group.colegio;
+          adminPasajerosGrupoId = group.id;
+          adminPasajerosFormError = "";
+          renderAdminPasajeros();
+          const form = document.querySelector("[data-admin-pasajeros-form]");
+          typed.forEach(([name, value]) => { if (form?.elements[name]) form.elements[name].value = value; });
+          form?.elements.grupoId?.focus();
+        });
         document.querySelector("[data-admin-pasajeros-new-colegio]")?.addEventListener("click", () => openAdminPasajerosGroupModal("colegio"));
         document.querySelector("[data-admin-pasajeros-new-curso]")?.addEventListener("click", () => openAdminPasajerosGroupModal("curso"));
         document.querySelector("[data-admin-pasajeros-new-division]")?.addEventListener("click", () => openAdminPasajerosGroupModal("division"));
@@ -5997,6 +6266,7 @@
             renderAdminPasajeros();
           });
         });
+        document.querySelector("[data-admin-pasajeros-export]")?.addEventListener("click", exportAdminPasajerosXlsx);
         document.querySelector("[data-admin-pasajeros-clear-filters]")?.addEventListener("click", () => {
           adminPasajerosSearch = "";
           adminPasajerosFilterViaje = "";
@@ -7613,13 +7883,16 @@
 
         gsap.utils.toArray("[data-reveal-light]").forEach((el) => {
           if (el === heroContent) return;
+          // opacity y no autoAlpha: autoAlpha deja visibility:hidden y el bloque (con sus campos)
+          // sale del orden de Tab y del lector de pantalla hasta que alguien hace scroll con el mouse.
           const tween = gsap.from(el, {
-            autoAlpha: 0,
+            opacity: 0,
             y: reduceMotion ? 0 : 18,
             duration: reduceMotion ? 0.3 : 0.5,
             ease: "power2.out",
             scrollTrigger: { trigger: el, start: "top 88%", toggleActions: "play none none reverse", onEnter: () => inscripcionAntiBlankFallback(tween) }
           });
+          el.addEventListener("focusin", () => tween.progress(1));
           if (tween.scrollTrigger) inscripcionScrollTriggers.push(tween.scrollTrigger);
         });
       }
@@ -7648,7 +7921,7 @@
               </div>
               <div class="inscripcion-tipo-grid" data-inscripcion-tipo>
                 <button type="button" data-inscripcion-tipo-pax aria-pressed="false">
-                  <strong>Pasajero (PAX)</strong>
+                  <strong>Pasajero</strong>
                   <span>Ficha de adhesión del alumno que viaja. La completa su padre, madre o tutor.</span>
                 </button>
                 <a href="#/inscripcion/tutor">
@@ -7973,6 +8246,8 @@
           stepBlocks.forEach((block) => {
             block.hidden = Number(block.dataset.macroStep) !== macroStep;
           });
+          // En el tramo 2 la tarjeta de resumen ya muestra las mismas filas.
+          contextSummary.hidden = macroStep === 2;
           macroIndicators.forEach((item) => {
             const step = Number(item.dataset.macroIndicator);
             item.classList.toggle("active", step === macroStep);
@@ -8241,13 +8516,15 @@
 
         gsap.utils.toArray("[data-reveal-light]").forEach((el) => {
           if (el === hero) return;
+          // opacity y no autoAlpha: ver el comentario de bindInscripcionAnimations.
           const tween = gsap.from(el, {
-            autoAlpha: 0,
+            opacity: 0,
             y: reduceMotion ? 0 : 18,
             duration: reduceMotion ? 0.3 : 0.5,
             ease: "power2.out",
             scrollTrigger: { trigger: el, start: "top 88%", toggleActions: "play none none reverse", onEnter: () => fichaAdhesionAntiBlankFallback(tween) }
           });
+          el.addEventListener("focusin", () => tween.progress(1));
           if (tween.scrollTrigger) fichaAdhesionScrollTriggers.push(tween.scrollTrigger);
         });
       }
@@ -8288,9 +8565,15 @@
           nodo.textContent = mensaje || sugerencias[campo] || "";
           nodo.hidden = !nodo.textContent;
           nodo.classList.toggle("is-sugerencia", !mensaje && Boolean(sugerencias[campo]));
-          form.querySelectorAll(`[name="${campo}"]`).forEach((input) => {
-            if (mensaje) input.setAttribute("aria-invalid", "true");
-            else input.removeAttribute("aria-invalid");
+          nodo.id = nodo.id || `error-${campo}`;
+          form.querySelectorAll(`[name="${campo}"], [data-error-target="${campo}"], [data-dob-group="${campo}"] input`).forEach((input) => {
+            if (mensaje) {
+              input.setAttribute("aria-invalid", "true");
+              input.setAttribute("aria-describedby", nodo.id);
+            } else {
+              input.removeAttribute("aria-invalid");
+              input.removeAttribute("aria-describedby");
+            }
           });
         });
         const campos = Object.keys(errores);
@@ -8300,7 +8583,7 @@
           : "";
         if (!campos.length) return;
         const nodo = form.querySelector(`[data-error-for="${campos[0]}"]`);
-        const contenedor = nodo?.closest("label, fieldset, .ficha-adhesion-context") || errorBox;
+        const contenedor = nodo?.closest(".ficha-campo, .ficha-adhesion-signature, label, fieldset, .ficha-adhesion-context") || errorBox;
         contenedor.scrollIntoView({ behavior: "smooth", block: "center" });
         contenedor.querySelector?.("input:not([type=hidden]), select")?.focus({ preventScroll: true });
       }
@@ -8308,13 +8591,26 @@
       // Al corregir un campo se borra su error (no hace falta reenviar para
       // ver que ya está bien). Sirve también para la fecha en 3 partes.
       function limpiarErrorAlEditar(form) {
+        // El mensaje de error no puede vivir dentro del <label>: el lector de
+        // pantalla lo leería como parte del nombre del campo. Se envuelve
+        // label + mensaje en un .ficha-campo y se asocia con aria-describedby.
+        form.querySelectorAll("label [data-error-for]").forEach((nodo) => {
+          const label = nodo.closest("label");
+          const campo = document.createElement("div");
+          campo.className = "ficha-campo" + (label.classList.contains("ficha-adhesion-check") ? " ficha-campo--full" : "");
+          label.replaceWith(campo);
+          campo.append(label, nodo);
+        });
         const limpiar = (event) => {
-          const contenedor = event.target.closest("label, .ficha-adhesion-signature");
+          const contenedor = event.target.closest(".ficha-campo, .ficha-adhesion-signature") || event.target.closest("label");
           const nodo = contenedor?.querySelector("[data-error-for]");
           if (!nodo || nodo.classList.contains("is-sugerencia")) return;
           nodo.hidden = true;
           nodo.textContent = "";
-          form.querySelectorAll(`[name="${nodo.dataset.errorFor}"]`).forEach((input) => input.removeAttribute("aria-invalid"));
+          form.querySelectorAll(`[name="${nodo.dataset.errorFor}"], [data-error-target="${nodo.dataset.errorFor}"]`).forEach((input) => {
+            input.removeAttribute("aria-invalid");
+            input.removeAttribute("aria-describedby");
+          });
         };
         form.addEventListener("input", limpiar);
         form.addEventListener("change", limpiar);
@@ -8334,8 +8630,8 @@
                   </div>
                   <i aria-hidden="true"></i>
                 </div>
-                <div class="ficha-adhesion-success ficha-adhesion-success-large">Recibimos tu ficha correctamente.</div>
-                ${exito.emailDestino ? `<p>Te enviamos una copia a <strong>${escapeHtml(exito.emailDestino)}</strong>. Si no la ves en unos minutos, revisá la carpeta de spam.</p>` : ""}
+                <div class="ficha-adhesion-success ficha-adhesion-success-large" role="status" tabindex="-1" data-ficha-exito>Recibimos tu ficha correctamente.</div>
+                ${exito.emailEstado === "pendiente" && exito.emailDestino ? `<p>La copia por correo está pendiente de envío a <strong>${escapeHtml(exito.emailDestino)}</strong>. Si no llega, consultanos: tu ficha ya quedó guardada.</p>` : ""}
                 <p>Queda pendiente de revisión por administración. Te contactaremos si necesitamos validar algún dato.</p>
                 <a class="ficha-adhesion-home-link" href="#/inscripcion">Volver al inicio</a>
               </section>
@@ -8499,11 +8795,14 @@
 
                 <fieldset data-reveal-light>
                   <legend>Firma del padre, madre o tutor</legend>
-                  <p class="ficha-fieldset-note">Firmá dentro del recuadro usando el dedo o lápiz óptico.</p>
+                  <p class="ficha-fieldset-note">Firmá dentro del recuadro con el dedo, el mouse o un lápiz óptico. Si no podés dibujarla (por ejemplo, si usás teclado o lector de pantalla), escribí tu nombre completo en el campo de abajo.</p>
                   <div class="ficha-adhesion-signature">
                     <span>Firma del padre, madre o tutor</span>
-                    <canvas width="720" height="220" data-ficha-signature></canvas>
+                    <canvas width="720" height="220" role="img" aria-label="Recuadro para dibujar la firma. Alternativa: escribí tu nombre completo en el campo siguiente." data-ficha-signature></canvas>
                     <button type="button" data-ficha-clear-signature>Limpiar firma</button>
+                    <label>O escribí tu nombre y apellido completos como firma
+                      <input name="firmaTexto" autocomplete="off" maxlength="80" data-error-target="firma" data-ficha-signature-text>
+                    </label>
                     ${fichaCampoError("firma")}
                   </div>
                 </fieldset>
@@ -8583,8 +8882,35 @@
             y: (source.clientY - rect.top) * (canvas.height / rect.height)
           };
         };
+        const textoFirma = form.querySelector("[data-ficha-signature-text]");
+        // Alternativa sin mouse ni pantalla táctil: el nombre escrito se dibuja
+        // en un canvas y sale el mismo PNG que la firma a mano (mismo contrato).
+        const firmaDesdeTexto = (texto) => {
+          const lienzo = document.createElement("canvas");
+          lienzo.width = canvas.width;
+          lienzo.height = canvas.height;
+          const g = lienzo.getContext("2d");
+          g.fillStyle = "#10202b";
+          g.textAlign = "center";
+          g.textBaseline = "middle";
+          let tamano = 96;
+          g.font = `italic ${tamano}px "Brush Script MT", "Segoe Script", cursive`;
+          while (g.measureText(texto).width > lienzo.width - 40 && tamano > 20) {
+            tamano -= 4;
+            g.font = `italic ${tamano}px "Brush Script MT", "Segoe Script", cursive`;
+          }
+          g.fillText(texto, lienzo.width / 2, lienzo.height / 2);
+          return lienzo.toDataURL("image/png");
+        };
+        const nombreFirmaValido = () => textoFirma.value.trim().split(/\s+/).filter(Boolean).length >= 2;
+        textoFirma.addEventListener("input", () => {
+          if (!textoFirma.value.trim()) return;
+          context.clearRect(0, 0, canvas.width, canvas.height);
+          hasSignature = false;
+        });
         const begin = (event) => {
           event.preventDefault();
+          textoFirma.value = "";
           drawing = true;
           const point = canvasPoint(event);
           context.beginPath();
@@ -8613,6 +8939,7 @@
         clearButton?.addEventListener("click", () => {
           context.clearRect(0, 0, canvas.width, canvas.height);
           hasSignature = false;
+          textoFirma.value = "";
         });
 
         // Contrato y planes del curso elegido (si el colegio es de la lista).
@@ -8621,7 +8948,14 @@
         const planesFieldset = form.querySelector("[data-ficha-planes]");
         const planesOpciones = form.querySelector("[data-ficha-planes-opciones]");
         let planesDisponibles = [];
-        if (contextoInscripcion.colegioId) {
+        // Sin colegio de la lista no hay planes que cargar. Con colegio, el envío
+        // espera a que los planes estén cargados: si no, el servidor los exigiría
+        // sin que el usuario viera dónde elegirlos.
+        let planesCargados = !contextoInscripcion.colegioId;
+        let planesEnCurso = null;
+        const cargarPlanes = () => {
+          if (planesCargados) return Promise.resolve(true);
+          if (planesEnCurso) return planesEnCurso;
           const params = new URLSearchParams({
             colegioId: contextoInscripcion.colegioId,
             nivel: contextoInscripcion.nivel,
@@ -8629,8 +8963,11 @@
             grado: contextoInscripcion.grado,
             division: contextoInscripcion.division
           });
-          fetch(`/api/public/inscripcion-context?${params}`, { cache: "no-store" })
-            .then((response) => response.json())
+          planesEnCurso = fetch(`/api/public/inscripcion-context?${params}`, { cache: "no-store" })
+            .then((response) => {
+              if (!response.ok) throw new Error("contexto");
+              return response.json();
+            })
             .then((payload) => {
               const planes = Array.isArray(payload.planes) ? payload.planes : [];
               planesDisponibles = planes.map((plan) => plan.id);
@@ -8642,11 +8979,17 @@
                   <span><strong>${escapeHtml(plan.nombre)}</strong> · ${escapeHtml(String(plan.cuotas))} ${Number(plan.cuotas) === 1 ? "cuota" : "cuotas"}${plan.descripcion ? `<small>${escapeHtml(plan.descripcion)}</small>` : ""}</span>
                 </label>
               `).join("");
+              planesCargados = true;
+              return true;
             })
             .catch(() => {
               if (contratoNode) contratoNode.textContent = "se vincula en administración";
-            });
-        }
+              return false;
+            })
+            .finally(() => { planesEnCurso = null; });
+          return planesEnCurso;
+        };
+        cargarPlanes();
 
         // Localidades sugeridas por Georef (API oficial). Si no responde, la
         // localidad se escribe a mano igual.
@@ -8654,15 +8997,19 @@
         const provinciaSelect = form.querySelector('[name="domicilioProvincia"]');
         const localidadesLista = document.getElementById("localidades-lista");
         let georefTimer = null;
+        let georefSeq = 0;
         localidadInput.addEventListener("input", () => {
           clearTimeout(georefTimer);
           const nombre = localidadInput.value.trim();
           if (nombre.length < 2) return;
           georefTimer = setTimeout(async () => {
+            const seq = ++georefSeq;
             try {
               const params = new URLSearchParams({ provincia: provinciaSelect.value, nombre, max: "10", campos: "nombre" });
               const response = await fetch(`https://apis.datos.gob.ar/georef/api/localidades?${params}`);
               const payload = await response.json();
+              // Respuesta vieja (otra provincia o texto ya cambiado): se descarta.
+              if (seq !== georefSeq) return;
               const nombres = [...new Set((payload.localidades || []).map((localidad) => localidad.nombre))];
               localidadesLista.innerHTML = nombres.map((valor) => `<option value="${escapeHtml(valor)}"></option>`).join("");
             } catch (_) {
@@ -8671,6 +9018,7 @@
           }, 250);
         });
         provinciaSelect.addEventListener("change", () => {
+          georefSeq += 1;
           localidadesLista.innerHTML = "";
         });
 
@@ -8703,7 +9051,7 @@
             ...contextoInscripcion,
             ...Object.fromEntries(CAMPOS.map((campo) => [campo, String(formData.get(campo) || "")])),
             aceptaCondiciones: formData.get("aceptaCondiciones") === "si",
-            firma: hasSignature ? canvas.toDataURL("image/png") : ""
+            firma: nombreFirmaValido() ? firmaDesdeTexto(textoFirma.value.trim()) : hasSignature ? canvas.toDataURL("image/png") : ""
           };
         };
 
@@ -8711,9 +9059,21 @@
           event.preventDefault();
           const submitButton = form.querySelector(".ficha-adhesion-submit");
           if (submitButton.disabled) return;
+          if (!planesCargados) {
+            submitButton.disabled = true;
+            const cargados = await cargarPlanes();
+            submitButton.disabled = false;
+            if (!cargados) {
+              errorBox.hidden = false;
+              errorBox.textContent = "No pudimos cargar los planes de pago. Tus datos siguen cargados: revisá tu internet y volvé a intentar.";
+              errorBox.scrollIntoView({ behavior: "smooth", block: "center" });
+              return;
+            }
+          }
           const ficha = leerFormulario();
           const local = validacion.validarFichaPax(ficha, { planesDisponibles });
           if (!local.ok) {
+            if (local.errores.firma && textoFirma.value.trim()) local.errores.firma = "Escribí nombre y apellido completos para usar tu nombre como firma.";
             mostrarErroresFormulario(form, errorBox, local.errores, local.sugerencias);
             return;
           }
@@ -8728,8 +9088,9 @@
             });
             const payload = await response.json().catch(() => ({}));
             if (response.status === 201 && payload.ok) {
-              renderFichaAdhesion({ emailDestino: payload.emailDestino || "" });
+              renderFichaAdhesion({ emailDestino: payload.emailDestino || "", emailEstado: payload.emailEstado || "" });
               window.scrollTo({ top: 0 });
+              document.querySelector("[data-ficha-exito]")?.focus({ preventScroll: true });
               return;
             }
             if (payload.errores && Object.keys(payload.errores).length) {
@@ -8758,7 +9119,7 @@
           document.getElementById("app").innerHTML = `
             <div class="layout ficha-adhesion-layout">
               <section class="ficha-adhesion-panel ficha-adhesion-success-screen">
-                <div class="ficha-adhesion-success ficha-adhesion-success-large">Registramos tus datos como tutor.</div>
+                <div class="ficha-adhesion-success ficha-adhesion-success-large" role="status" tabindex="-1" data-ficha-exito>Registramos tus datos como tutor.</div>
                 <p>Administración los vincula con la ficha del pasajero. Te contactaremos si necesitamos validar algún dato.</p>
                 <a class="ficha-adhesion-home-link" href="#/inscripcion">Volver al inicio</a>
               </section>
@@ -8875,6 +9236,7 @@
             if (response.status === 201 && payload.ok) {
               renderFichaTutor(true);
               window.scrollTo({ top: 0 });
+              document.querySelector("[data-ficha-exito]")?.focus({ preventScroll: true });
               return;
             }
             if (payload.errores && Object.keys(payload.errores).length) {
@@ -8900,6 +9262,8 @@
         const page = routes[path] || routes["/"];
         document.body.classList.toggle("home-page", path === "/");
         document.body.classList.toggle("turismo-page", path.startsWith("/turismo"));
+        document.body.classList.toggle("turismo-hero-page", path.startsWith("/turismo"));
+        if (path !== "/" && path !== "/turismo" && path !== "/turismo/paquetes" && window.EAAHomeMotion) window.EAAHomeMotion.kill();
         closeMobileNav();
         if (path !== "/" && heroCarouselInterval) {
           clearInterval(heroCarouselInterval);
@@ -8911,6 +9275,10 @@
         }
         if (path === "/turismo") {
           await renderTurismo();
+          return;
+        }
+        if (path === "/turismo/paquetes") {
+          await renderTurismoPaquetes();
           return;
         }
         if (path.startsWith("/turismo/")) {
@@ -9014,6 +9382,10 @@
           renderAdminGrupos();
           return;
         }
+        if (path === "/admin/colegios") {
+          renderAdminColegios();
+          return;
+        }
         if (path === "/admin/pasajeros") {
           renderAdminPasajeros();
           return;
@@ -9093,7 +9465,13 @@
         if (typeof Lenis === "undefined") return;
         if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
         if (window.__lenisInstance) return;
-        const lenis = new Lenis({ duration: 1.05, smoothWheel: true });
+        const lenis = new Lenis({
+          duration: 1.25,
+          easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+          smoothWheel: true,
+          wheelMultiplier: 0.9,
+          touchMultiplier: 1.3
+        });
         window.__lenisInstance = lenis;
         if (typeof gsap !== "undefined") {
           lenis.on("scroll", () => { if (typeof ScrollTrigger !== "undefined") ScrollTrigger.update(); });
@@ -9113,6 +9491,10 @@
           if (!target) return;
           event.preventDefault();
           const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+          if (window.__lenisInstance && !reduceMotion) {
+            window.__lenisInstance.scrollTo(target, { offset: -88, duration: 1.4 });
+            return;
+          }
           target.scrollIntoView({
             behavior: reduceMotion ? "auto" : "smooth",
             block: "start"
@@ -9121,6 +9503,12 @@
       }
 
       setupPublicInternalAccess();
+      document.querySelector(".eaa-skip-link")?.addEventListener("click", (event) => {
+        event.preventDefault();
+        const content = document.getElementById("app");
+        content.focus({ preventScroll: true });
+        content.scrollIntoView({ behavior: "instant" });
+      });
       bindInternalSectionLinks();
       initLenisSmoothScroll();
 
@@ -9136,7 +9524,19 @@
         link.addEventListener("click", closeMobileNav);
       });
 
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && document.body.classList.contains("nav-open")) {
+          closeMobileNav();
+          navToggle?.focus();
+        }
+      });
       window.addEventListener("scroll", syncHeaderState, { passive: true });
-      window.addEventListener("hashchange", render);
+      window.addEventListener("hashchange", async () => {
+        await render();
+        if (!isAdminPath(currentPath())) {
+          if (window.__lenisInstance) window.__lenisInstance.scrollTo(0, { immediate: true });
+          else window.scrollTo({ top: 0, behavior: "instant" });
+        }
+      });
       render();
       syncHeaderState();

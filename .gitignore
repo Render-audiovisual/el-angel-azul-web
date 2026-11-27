@@ -19,3 +19,4 @@ tmp/
 # Fotos originales sin procesar (alta resolución, ~278MB). Las versiones
 # optimizadas para web viven en assets/img/. Se dejan fuera del repo.
 imagenes/
+.hallmark/

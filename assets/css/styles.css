@@ -3939,6 +3939,10 @@
 	        padding: 16px;
 	      }
 
+	      .inscripcion-context-summary[hidden] {
+	        display: none;
+	      }
+
 	      .inscripcion-section-heading[hidden],
       .inscripcion-step-actions button[hidden] {
 	        display: none;
@@ -5458,6 +5462,7 @@
         box-shadow: none;
         display: grid;
         gap: 22px;
+        grid-template-columns: minmax(0, 1fr);
         padding: 28px;
       }
 
@@ -6481,6 +6486,8 @@
         gap: 12px;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         margin: 0;
+        /* Un fieldset tiene min-width: min-content por defecto y se salía de la pantalla. */
+        min-width: 0;
         padding: 18px;
       }
 
@@ -6512,8 +6519,14 @@
         resize: vertical;
       }
 
+      /* Un select toma el ancho de su opción más larga y se salía de la pantalla. */
+      .admin-pasajeros-form select {
+        max-width: 100%;
+        min-width: 0;
+      }
+
       .admin-pasajeros-form fieldset:last-of-type {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
       }
 
       .admin-pasajeros-form-error {
@@ -6589,7 +6602,7 @@
       }
 
       .admin-pasajeros-group-form fieldset {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
         padding: 16px;
       }
 
@@ -6633,6 +6646,7 @@
       .admin-pasajeros-table-head {
         align-items: end;
         display: flex;
+        flex-wrap: wrap;
         gap: 16px;
         justify-content: space-between;
       }
@@ -7186,6 +7200,9 @@
       }
 
       .admin-main {
+        /* Sin esto la columna crece hasta el contenido más ancho (p. ej. Colegios, 514 px)
+           y el panel se corta a la derecha en el celular. */
+        grid-template-columns: minmax(0, 1fr);
         min-width: 0;
       }
 
@@ -7652,8 +7669,22 @@
       }
 
       .ficha-adhesion-check input {
-        min-height: auto;
-        width: auto;
+        flex: 0 0 24px;
+        height: 24px;
+        min-height: 24px;
+        width: 24px;
+      }
+
+      .sr-only {
+        border: 0;
+        clip: rect(0 0 0 0);
+        height: 1px;
+        margin: -1px;
+        overflow: hidden;
+        padding: 0;
+        position: absolute;
+        white-space: nowrap;
+        width: 1px;
       }
 
       .ficha-adhesion-signature {
@@ -7677,6 +7708,8 @@
 
       .ficha-adhesion-signature button {
         justify-self: start;
+        /* Área táctil mínima: con 34 px costaba acertarle con el dedo. */
+        min-height: 44px;
       }
 
       .ficha-adhesion-error {
@@ -7762,6 +7795,17 @@
       .ficha-opcional {
         color: #6b7b85;
         font-weight: 500;
+      }
+
+      .ficha-campo {
+        align-content: start;
+        display: grid;
+        gap: 6px;
+        min-width: 0;
+      }
+
+      .ficha-campo--full {
+        grid-column: 1 / -1;
       }
 
       .ficha-campo-error {
@@ -10270,7 +10314,7 @@
 
       input::placeholder,
       textarea::placeholder {
-        color: color-mix(in srgb, var(--color-muted) 74%, transparent);
+        color: var(--color-muted);
       }
 
       input:focus,
@@ -10972,6 +11016,7 @@
       }
 
       body[data-app-entry="admin"] .admin-shell-session strong {
+        color: #ffffff;
         font-size: 0.9rem;
         white-space: nowrap;
       }
@@ -11232,3 +11277,8 @@
           justify-self: start;
         }
       }
+
+/* Colegios (admin): ABM */
+.admin-colegios-toggle { align-items: center; display: flex; font-weight: 700; gap: 8px; }
+.admin-colegios-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.admin-colegios-error { background: #fdecec; border: 1px solid #f1b5b5; border-radius: 10px; color: #8a1f1f; font-weight: 700; padding: 10px 12px; }
