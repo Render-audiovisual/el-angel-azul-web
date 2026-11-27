@@ -448,3 +448,10 @@ test("los paneles del admin se achican al ancho del celular (columnas minmax(0, 
   assert.match(regla("      .admin-pasajeros-group-form fieldset"), /minmax\(0, 1fr\)/);
   assert.match(regla("      .admin-pasajeros-form select"), /max-width: 100%/);
 });
+
+test("el botón Limpiar firma tiene área táctil de 44 px", () => {
+  const css = fs.readFileSync(path.join(__dirname, "../assets/css/styles.css"), "utf8");
+  const inicio = css.indexOf("      .ficha-adhesion-signature button {\n        justify-self: start;");
+  assert.notEqual(inicio, -1, "No se encontró la regla base del botón de firma");
+  assert.match(css.slice(inicio, css.indexOf("}", inicio)), /min-height: 44px/);
+});

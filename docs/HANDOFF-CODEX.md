@@ -103,7 +103,7 @@ Cada paso termina con `npm run check` en verde y un commit chico. Si tocás algo
 - [x] Resumen de la inscripción duplicado en el segundo tramo (se oculta «Tu inscripción»; test en `scripts/frontend-regression.test.js`).
 - [x] Contraste: la etiqueta «Admin» estaba en 2:1 (texto oscuro sobre azul), ahora 8,3:1; los placeholders ya pasaban (4,75:1 en el login del admin, 5,2:1 en la ficha) y se oscurecieron para dejar margen.
 - [x] Admin en celular (390 px): Colegios se cortaba a la derecha (panel de 514 px en 355). Corregido con columnas `minmax(0, 1fr)` y `min-width: 0` en `.admin-main`, `.admin-turismo-panel` y los `fieldset` y `select` del formulario. Las tablas (920 a 2200 px de ancho) ya se desplazaban dentro de su contenedor y no cambiaron; si se prefieren tarjetas en vez de scroll lateral, es decisión de diseño del dueño. Queda un botón de Pasajeros que se pasa 12 px en escritorio (1280 px), ya existía.
-- [ ] Botón «Limpiar firma» de 34 px.
+- [x] Botón «Limpiar firma»: 34 px → 44 px (`min-height`). Era el único control de la ficha por debajo de 44 px en celular.
 - [ ] Revisar con teclado y lector de pantalla las secciones que GSAP deja ocultas hasta el scroll.
 
 **Hecho el 26/11:** el PDF transliteró «Mićić» → «Micic» (`textoSeguro`, `lib/ficha-pdf.js`; lo exacto pide embeber una fuente con fontkit, dependencia nueva). Un 401 al guardar en el admin recarga y el login avisa que el cambio no se guardó.

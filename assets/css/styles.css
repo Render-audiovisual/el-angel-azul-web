@@ -7708,6 +7708,8 @@
 
       .ficha-adhesion-signature button {
         justify-self: start;
+        /* Área táctil mínima: con 34 px costaba acertarle con el dedo. */
+        min-height: 44px;
       }
 
       .ficha-adhesion-error {
