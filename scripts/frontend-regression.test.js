@@ -513,3 +513,12 @@ test("el inicio rediseñado conserva sus decisiones: dos entradas, Camboriú, fo
   assert.match(css.split("\n").find((linea) => linea.trim()), /^\/\* Hallmark ·/, "la primera línea del CSS es el sello de Hallmark");
   assert.doesNotMatch(css, /transition:\s*all|100vw/);
 });
+
+test("el menú público tiene Inicio, Turismo e Inscripción online, y la inscripción dice Pasajero sin «PAX»", () => {
+  const html = fs.readFileSync(path.join(__dirname, "../index.html"), "utf8");
+  const nav = html.slice(html.indexOf('<nav class="site-nav"'), html.indexOf("</nav>", html.indexOf('<nav class="site-nav"')));
+  const enlaces = [...nav.matchAll(/<a [^>]*href="([^"]+)"[^>]*>([^<]+)/g)].map(([, href, texto]) => `${href} ${texto.trim()}`);
+  assert.deepEqual(enlaces, ["#/ Inicio", "#/turismo Turismo", "#/inscripcion Inscripción online", "/admin/ Iniciar sesión"]);
+  assert.match(appSource, /<strong>Pasajero<\/strong>/);
+  assert.doesNotMatch(appSource, /Pasajero \(PAX\)/);
+});
