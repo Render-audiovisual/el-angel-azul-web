@@ -33,7 +33,7 @@ Esto describe el código de `feat/colegios-padron`, no una validación de produc
 ## Pendientes para habilitar la inscripción real
 
 1. Dar acceso a la cuenta de Supabase que contiene «Angel Azul base». Ese proyecto no aparece en las conexiones disponibles en esta sesión; no se pudo verificar el estado actual de sus datos ni migraciones.
-2. Revisar las migraciones aplicadas y los datos existentes antes de preparar cambios en producción. El traspaso del 17/11 señala pendientes las migraciones 0005 y 0006; es información histórica, todavía sin revalidar.
+2. Revisar las migraciones aplicadas y los datos existentes antes de preparar cambios en producción. Las migraciones 0005 y 0006 se aplicaron el 26/11/2026 (el traspaso del 17/11 las daba por pendientes).
 3. Cargar o verificar colegios, grupos, viajes, contratos y planes reales. No inventar precios, destinos ni condiciones de pago. Los registros usados por el admin necesitan su `legacy_id`.
 4. Con la aprobación explícita del dueño, aplicar los cambios necesarios y publicar la rama revisada. `AGENTS.md` requiere esa aprobación para escrituras en Supabase y push a `main`.
 5. Configurar las variables privadas en Hostinger y, para el correo, dominio/remitente verificados. Ninguna credencial debe pasar por el chat o el repositorio.
