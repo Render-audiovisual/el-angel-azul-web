@@ -514,6 +514,19 @@ test("el inicio rediseñado conserva sus decisiones: dos entradas, Camboriú, fo
   assert.doesNotMatch(css, /transition:\s*all|100vw/);
 });
 
+test("Turismo rediseñado: tarjetas de venta, filtros conectados, sin viajes inventados y sin esconder contenido", () => {
+  const pagina = functionSource("renderTurismo", "renderPackageDetail");
+  for (const gancho of ["data-turismo-package-grid", "data-turismo-search", "data-turismo-intention", "data-turismo-results-count", "data-hero-slide", "data-fit"]) assert.match(pagina, new RegExp(gancho));
+  assert.match(pagina, /renderTurismoEmptyState\(true\)/, "sin viajes se ve el estado vacío, no viajes de demostración");
+  assert.doesNotMatch(pagina, /autoAlpha|data-reveal-light/, "nada se esconde hasta el scroll");
+  const tarjeta = functionSource("renderTurismoPackageCard", "bindTurismoCardCarousels");
+  for (const gancho of ["data-card-carousel", "data-carousel-prev", "data-carousel-next", "data-carousel-slide", "tur-price", "Ver detalles"]) assert.match(tarjeta, new RegExp(gancho));
+  assert.doesNotMatch(functionSource("bindTurismoCardReveal", "bindTurismoIntentions"), /autoAlpha/);
+  const css = fs.readFileSync(path.join(__dirname, "../assets/css/turismo.css"), "utf8");
+  assert.match(css.split("\n").find((linea) => linea.trim()), /^\/\* Hallmark ·/, "la primera línea del CSS es el sello de Hallmark");
+  assert.doesNotMatch(css, /transition:\s*all|100vw/);
+});
+
 test("el menú público tiene Inicio, Turismo e Inscripción online, y la inscripción dice Pasajero sin «PAX»", () => {
   const html = fs.readFileSync(path.join(__dirname, "../index.html"), "utf8");
   const nav = html.slice(html.indexOf('<nav class="site-nav"'), html.indexOf("</nav>", html.indexOf('<nav class="site-nav"')));

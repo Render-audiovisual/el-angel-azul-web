@@ -151,3 +151,12 @@ Se reemplazó la primera versión (PR #24) porque al dueño no le gustó. La nue
 - **Fotos de reemplazo:** `homePhotos` en `renderHome` (`assets/js/app.js`) usa dos fotos de Brasil y de Cataratas que ya estaban en `assets/img/turismo/hero/` para Camboriú y Turismo. **No son de tus grupos**: cambialas por las tuyas poniendo la ruta del archivo.
 - **Turismo en el inicio:** muestra viajes **activos de la base**; sin viajes no inventa ninguno.
 - **Hallmark:** `sloplint --render` sobre `home.css` y `public-experience.css`: 0 FAIL, 0 REFLEX (2 excepciones registradas en el sello de `home.css`: fotos grandes a propósito y el nombre decorativo que se sale de la pantalla). Falta Safari/iPhone reales y VoiceOver.
+
+## Turismo rediseñado (27/11/2026)
+Misma línea que el inicio, enfocada en vender y en lo institucional: `renderTurismo` y `renderTurismoPackageCard` (`assets/js/app.js`), estilos en `assets/css/turismo.css` (usa los tokens `--h-*` y el hero, el proceso y el cierre de `home.css`) y el movimiento de `home-motion.js`.
+- **Estructura:** hero con fotos de destinos (Cataratas, Brasil, Patagonia, nieve) y «Turismo El Ángel Azul» de ancho completo · tres beneficios · catálogo con buscador y filtros (cada tarjeta: fotos con flechas, destino, duración, fechas, resumen, incluye, precio en tipografía grande, «Ver detalles» y WhatsApp) · proceso numerado · bloque de la agencia (dirección y WhatsApp) · cierre.
+- **Sin viajes publicados** (hoy): se oculta el buscador y se ve «Estamos preparando nuestros próximos viajes» con el botón de WhatsApp. Los viajes los carga el dueño desde el admin; no hay viajes de demostración.
+- **Botones:** relleno animado que sube al pasar el mouse o con foco (`.eaa-button`, también en el inicio) y filtros que se rellenan.
+- **Detalle de un viaje** (`#/turismo/<slug>`): conserva su estructura; solo se alinearon los titulares (Bebas Neue), el botón de precio y se ocultó el WhatsApp flotante, que tapaba la barra inferior. Un rediseño completo del detalle queda pendiente.
+- **Fotos del hero:** son las de `assets/img/turismo/hero/` (ya estaban en el repo, no son de grupos de la agencia).
+- Encabezado transparente sobre el hero también en Turismo (`body.turismo-hero-page`).
