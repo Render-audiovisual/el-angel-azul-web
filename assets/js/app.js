@@ -9302,6 +9302,10 @@
 
       async function render() {
         const path = currentPath();
+        if (isAdminPath(path) && !location.pathname.replace(/\/+$/, "").startsWith("/admin")) {
+          location.replace(`/admin/${location.hash || "#/admin"}`);
+          return;
+        }
         const page = routes[path] || routes["/"];
         document.body.classList.toggle("home-page", path === "/");
         document.body.classList.toggle("turismo-page", path.startsWith("/turismo"));
@@ -9470,26 +9474,6 @@
         }
       }
 
-      function setupPublicInternalAccess() {
-        document.querySelectorAll('.site-nav a[href="/admin/"]').forEach(link => {
-          if (link.textContent.trim() === "Iniciar sesión") {
-            link.remove();
-          }
-        });
-
-        const footerBottom = document.querySelector(".footer-bottom");
-        if (!footerBottom || footerBottom.querySelector(".footer-internal-access")) return;
-
-        const internalAccess = document.createElement("a");
-        internalAccess.className = "footer-internal-access";
-        // Entrar al panel por la misma ruta hash que usa toda la SPA. Así el
-        // acceso desde la portada no depende de una ruta física ni de una
-        // redirección intermedia del servidor.
-        internalAccess.href = adminRouteHref("/admin");
-        internalAccess.textContent = "Acceso interno";
-        footerBottom.appendChild(internalAccess);
-      }
-
       // Scroll suave global (Lenis) para el sitio público. Solo animaciones/
       // sensación de scroll, no toca layout ni lógica. Se sincroniza con el
       // ticker de GSAP para que ScrollTrigger (parallax del hero, reveals de
@@ -9539,7 +9523,6 @@
         });
       }
 
-      setupPublicInternalAccess();
       document.querySelector(".eaa-skip-link")?.addEventListener("click", (event) => {
         event.preventDefault();
         const content = document.getElementById("app");

@@ -66,6 +66,20 @@ function request({ method = "GET", path = "/", headers = {}, body, rawBody }) {
   });
 }
 
+test("el login del admin tiene una entrada independiente sin sesión", async () => {
+  for (const path of ["/admin", "/admin/", "/admin/index.html"]) {
+    const response = await request({ path });
+    assert.equal(response.status, 200, path);
+    assert.match(response.raw, /data-app-entry="admin"/);
+    assert.match(response.raw, /noindex, nofollow/);
+    assert.doesNotMatch(response.raw, /class="site-footer"/);
+  }
+  const session = await request({ path: "/api/admin/me" });
+  assert.equal(session.json.authenticated, false);
+  const privateData = await request({ path: "/api/google-sheets?sheet=PASAJEROS" });
+  assert.equal(privateData.status, 401);
+});
+
 test("login sin Origin se rechaza antes de autenticar", async () => {
   const response = await request({
     method: "POST",
