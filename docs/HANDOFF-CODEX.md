@@ -10,6 +10,8 @@ Escrito para el programador que sigue el trabajo (con Codex, Claude Code u otro 
 
 ## Página pública (25/11/2026)
 
+- 27/11: el dueño pidió retirar «Acceso interno» de la web pública. Eliminado del footer y la navegación; acceso independiente en `/admin/`, con login y `noindex`. Los enlaces hash antiguos del admin redirigen a esa entrada. Los endpoints privados mantienen la sesión obligatoria. Repositorio transferido a `el-angel-azul/el-angel-azul-web`; `frannook` tiene rol Admin en GitHub.
+
 - Propuesta pedida por el dueño con referencia Maxdream en `feat/publica-experiencia`, basada en `fix/admin-guardado-concurrente`. Dirección y validación en `docs/DISENO-PUBLICO.md`.
 - Portada nueva y navegación/footer públicos; `assets/css/public-experience.css` separa los estilos del admin y los formularios. Fotografías propias existentes, destinos, galería, preguntas frecuentes y accesos a consulta e inscripción.
 - 130 pruebas aprobadas, revisión de escritorio/móvil y rutas públicas. Sin cambios en `main`, Supabase real ni el despliegue compartido.
