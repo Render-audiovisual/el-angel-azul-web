@@ -864,7 +864,10 @@ function staticFile(req, res, url) {
     res.writeHead(405, { "Allow": "GET, HEAD", ...securityHeaders(req) });
     return res.end("Method not allowed");
   }
-  if (url.pathname === "/admin" || url.pathname.startsWith("/admin/") || url.pathname === "/admin-turismo" || url.pathname.startsWith("/admin-turismo/")) {
+  // La entrada independiente muestra el login; los datos siguen protegidos
+  // por la sesión en las rutas /api/admin y /api/google-sheets.
+  const isAdminLoginEntry = ["/admin", "/admin/", "/admin/index.html"].includes(url.pathname);
+  if (!isAdminLoginEntry && (url.pathname.startsWith("/admin/") || url.pathname === "/admin-turismo" || url.pathname.startsWith("/admin-turismo/"))) {
     const session = currentAdminSession(req);
     if (!session) {
       res.writeHead(302, {
@@ -874,7 +877,7 @@ function staticFile(req, res, url) {
       return res.end();
     }
   }
-  const cleanPath = safeDecode(url.pathname === "/" ? "/index.html" : url.pathname);
+  const cleanPath = safeDecode(isAdminLoginEntry ? "/admin/index.html" : url.pathname === "/" ? "/index.html" : url.pathname);
   const publicPath = cleanPath.replace(/^\/+/, "");
   const normalizedPublicPath = path.posix.normalize(publicPath);
   const isPublicAsset = normalizedPublicPath.startsWith("assets/") && !normalizedPublicPath.includes("../");

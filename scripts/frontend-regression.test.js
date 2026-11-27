@@ -51,10 +51,10 @@ test("la navegación interna del admin conserva rutas hash y no genera 404 físi
   assert.doesNotMatch(source, /return `\$\{path\}\//);
 });
 
-test("Acceso interno de la portada entra directamente por la ruta hash", () => {
-  const source = functionSource("setupPublicInternalAccess", "initLenisSmoothScroll");
-  assert.match(source, /internalAccess\.href = adminRouteHref\("\/admin"\)/);
-  assert.doesNotMatch(source, /internalAccess\.href = "\/admin\/"/);
+test("la web pública no ofrece ni agrega el acceso al administrador", () => {
+  const publicEntry = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
+  assert.doesNotMatch(publicEntry, /href="(?:\/admin\/|#\/admin)"/);
+  assert.doesNotMatch(appSource, /footer-internal-access|setupPublicInternalAccess/);
 });
 
 test("Configuración queda bloqueada para cuentas de agente incluso por URL directa", () => {
