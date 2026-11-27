@@ -548,6 +548,17 @@ test("el menú público tiene Inicio, Turismo e Inscripción online, y la inscri
   assert.doesNotMatch(appSource, /Pasajero \(PAX\)/);
 });
 
+test("el encabezado público es siempre el mismo: transparente, logo claro y menú en píldora oscura, sin barra blanca al scrollear", () => {
+  const css = fs.readFileSync(path.join(__dirname, "../assets/css/public-experience.css"), "utf8");
+  const regla = (selector) => (css.match(new RegExp(`${selector.replace(/[.[\]()*+?^$|\\]/g, "\\$&")} \\{[^}]*\\}`)) || [""])[0];
+  assert.match(regla('body:not([data-app-entry="admin"]) .site-header'), /background: transparent/);
+  assert.match(regla('body:not([data-app-entry="admin"]) .site-nav'), /border-radius: 999px/);
+  assert.match(regla('body:not([data-app-entry="admin"]) .brand-logo'), /invert\(1\)/);
+  // Ningún estado del scroll vuelve a pintar una barra clara detrás del encabezado.
+  assert.doesNotMatch(css, /nav-scrolled[^{]*\.site-header\s*\{[^}]*background:\s*var\(--eaa-paper\)/);
+  assert.match(css, /\.site-header :is\(\.brand-link, \.site-nav, \.nav-toggle\) \{ pointer-events: auto/, "el hueco vacío del encabezado deja pasar los clics");
+});
+
 test("la agencia no ve el botón Eliminar de los viajes de Turismo del admin", () => {
   assert.match(appSource, /function adminCanDelete\(\)[\s\S]{0,160}=== "admin"/);
   assert.match(appSource, /adminCanDelete\(\) \? `<button type="button" data-admin-delete=/);
