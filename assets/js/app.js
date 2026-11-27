@@ -538,8 +538,10 @@
       const ADMIN_TURISMO_PREVIEW_MODE_KEY = "angelAzulTurismoPublicPreviewModeV1";
       let turismoPublicPackagesCache = null;
 
+      // Sin viajes cargados la web muestra el estado vacío: nunca viajes de demostración
+      // con precios inventados (los viajes los carga el dueño desde el admin).
       function turismoPackages() {
-        return turismoPublicPackagesCache || turismoFallbackPackages();
+        return turismoPublicPackagesCache || [];
       }
 
       function turismoFallbackPackages() {
@@ -634,44 +636,25 @@
           return turismoPublicPackagesCache;
         }
 
-        // 1. Intentar leer desde Google Sheets (fuente de verdad en vivo)
+        // La base es la fuente de verdad: si responde, lo que devuelve es lo que se publica,
+        // aunque no haya ningún viaje activo (entonces la web muestra el estado vacío).
         try {
           const response = await fetch("/api/google-sheets?sheet=TURISMO", { cache: "no-store" });
           if (response.ok) {
             const payload = await response.json();
-            if (payload.ok && Array.isArray(payload.rows) && payload.rows.length) {
-              const publicPackages = payload.rows
+            if (payload.ok && Array.isArray(payload.rows)) {
+              turismoPublicPackagesCache = payload.rows
                 .map(turismoRowToTrip)
                 .map(adminTripToPublicPackage)
                 .filter(Boolean)
                 .sort((a, b) => Number(b.destacado) - Number(a.destacado) || a.orden - b.orden);
-              if (publicPackages.length) {
-                turismoPublicPackagesCache = publicPackages;
-                return turismoPublicPackagesCache;
-              }
+              return turismoPublicPackagesCache;
             }
           }
         } catch (error) {
-          // Google Sheets no disponible, seguir al fallback JSON
+          // Sin conexión con el servidor: se devuelve vacío sin guardarlo, así el próximo intento vuelve a consultar.
         }
-
-        // 2. Fallback: JSON estático
-        try {
-          const response = await fetch(TURISMO_PUBLIC_JSON_URL, { cache: "no-store" });
-          if (!response.ok) throw new Error("No se pudo cargar turismo-paquetes.json");
-          const adminTrips = await response.json();
-          if (!Array.isArray(adminTrips)) throw new Error("El JSON de Turismo no es un array");
-          const publicPackages = adminTrips
-            .map(adminTripToPublicPackage)
-            .filter(Boolean)
-            .sort((a, b) => Number(b.destacado) - Number(a.destacado) || a.orden - b.orden);
-          if (!publicPackages.length) throw new Error("El JSON no tiene viajes activos");
-          turismoPublicPackagesCache = publicPackages;
-        } catch (error) {
-          // 3. Último fallback: paquetes de demostración
-          turismoPublicPackagesCache = turismoFallbackPackages();
-        }
-        return turismoPublicPackagesCache;
+        return [];
       }
 
       async function turismoPackageBySlug(slug) {
@@ -768,10 +751,12 @@
         });
       }
 
-      function renderTurismoEmptyState() {
+      function renderTurismoEmptyState(sinViajes = false) {
         return `
           <div class="turismo-empty-state">
-            <p>No encontramos viajes para esta categoría por ahora. Consultanos por WhatsApp y te ayudamos a encontrar una opción.</p>
+            <p>${sinViajes
+              ? "Estamos preparando nuestros próximos viajes de turismo. Escribinos por WhatsApp y te asesoramos con las opciones disponibles."
+              : "No encontramos viajes para esta categoría por ahora. Consultanos por WhatsApp y te ayudamos a encontrar una opción."}</p>
             <a class="package-whatsapp" href="${whatsappLink("Hola, quiero consultar por una categoría de viaje que no encontré en la web de El Ángel Azul.")}" target="_blank" rel="noopener">Consultar</a>
           </div>
         `;
@@ -807,7 +792,7 @@
         grid.dataset.resultCount = String(packages.length);
         grid.innerHTML = packages.length
           ? packages.map(renderTurismoPackageCard).join("")
-          : renderTurismoEmptyState();
+          : renderTurismoEmptyState(!turismoPackages().length);
         bindTurismoCardCarousels(grid);
         bindTurismoCardReveal();
       }
@@ -981,7 +966,7 @@
                 <strong class="turismo-results-count" data-turismo-results-count>${packages.length} opciones encontradas</strong>
               </div>
               <div class="package-grid" data-turismo-package-grid data-result-count="${packages.length}">
-                ${packages.map(renderTurismoPackageCard).join("")}
+                ${packages.length ? packages.map(renderTurismoPackageCard).join("") : renderTurismoEmptyState(true)}
               </div>
             </section>
 

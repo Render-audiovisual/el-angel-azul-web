@@ -466,3 +466,27 @@ test("la ficha y la selección de curso no esconden campos con visibility:hidden
     assert.match(reveal, /addEventListener\("focusin", \(\) => tween\.progress\(1\)\)/, `${nombre}: el foco tiene que mostrar el bloque completo`);
   }
 });
+
+test("Turismo público no muestra viajes de demostración cuando no hay viajes activos", async () => {
+  const fuente = appSource.slice(appSource.indexOf("async function loadTurismoPublicPackages()"), appSource.indexOf("async function turismoPackageBySlug"));
+  assert.doesNotMatch(fuente, /turismoFallbackPackages|TURISMO_PUBLIC_JSON_URL/, "la web pública no puede caer a viajes de demostración");
+  assert.match(functionSource("turismoPackages", "turismoFallbackPackages"), /turismoPublicPackagesCache \|\| \[\]/);
+
+  // Control de flujo con la función real: filas inactivas -> vacío; servidor caído -> vacío sin guardarlo.
+  const cargar = new Function("fetch", "turismoRowToTrip", "adminTripToPublicPackage", "isTurismoPublicPreviewMode", "state", `
+    ${fuente.replace("turismoPublicPackagesCache", "state.cache").replaceAll("turismoPublicPackagesCache", "state.cache")}
+    return loadTurismoPublicPackages;`);
+  const respuesta = (rows) => async () => ({ ok: true, json: async () => ({ ok: true, rows }) });
+  const comoPublico = (fila) => (fila.estado === "activo" ? { ...fila, orden: 1, destacado: false } : null);
+  for (const [nombre, fetchFalso, esperado, cacheado] of [
+    ["todas inactivas", respuesta([{ estado: "inactivo" }, { estado: "borrador" }]), 0, true],
+    ["una activa", respuesta([{ estado: "activo", id: "x" }, { estado: "inactivo" }]), 1, true],
+    ["sin filas", respuesta([]), 0, true],
+    ["servidor caído", async () => { throw new Error("sin red"); }, 0, false]
+  ]) {
+    const state = { cache: null };
+    const resultado = await cargar(fetchFalso, (fila) => fila, comoPublico, () => false, state)();
+    assert.equal(resultado.length, esperado, nombre);
+    assert.equal(state.cache !== null, cacheado, `${nombre}: cache`);
+  }
+});
