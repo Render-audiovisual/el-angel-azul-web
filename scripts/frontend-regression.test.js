@@ -414,3 +414,10 @@ test("si un guardado del admin recibe 401, se recarga y el login avisa que el ca
   assert.match(turismo, /error\.status === 401\) handleAdminSessionLost\(\)/);
   assert.match(functionSource("renderAdminLogin", "renderAdminShell"), /adminLoginNotice/);
 });
+
+test("el resumen de la inscripción no se muestra dos veces en el segundo tramo", () => {
+  const source = appSource.slice(appSource.indexOf("const renderStep = () => {"));
+  const renderStep = source.slice(0, source.indexOf("const goNext"));
+  assert.match(renderStep, /contextSummary\.hidden = macroStep === 2/);
+  assert.match(fs.readFileSync(path.join(__dirname, "../assets/css/styles.css"), "utf8"), /\.inscripcion-context-summary\[hidden\]\s*\{\s*display:\s*none/);
+});

@@ -3939,6 +3939,10 @@
 	        padding: 16px;
 	      }
 
+	      .inscripcion-context-summary[hidden] {
+	        display: none;
+	      }
+
 	      .inscripcion-section-heading[hidden],
       .inscripcion-step-actions button[hidden] {
 	        display: none;

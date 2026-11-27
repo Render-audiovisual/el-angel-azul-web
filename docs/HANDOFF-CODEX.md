@@ -99,7 +99,12 @@ Cada paso termina con `npm run check` en verde y un commit chico. Si tocás algo
 
 **Paso 7 – Entrega.** Hosting real: Hostinger (confirmado por el dueño). El 26/11 se cambiaron README, comentarios y mensajes que decían Render o Railway. Queda `render.yaml`: es de un servicio Render que quizás sigue conectado al repo; borrarlo solo con OK del dueño. Con OK del dueño: mergear el PR #3, cargar las variables en Hostinger (`EAA_POSTGRES_MIGRATION_ENABLED=true`), rotar `EAA_ADMIN_PASSWORD` y `EAA_AGENTE*_PASSWORD` (la vieja está en el historial público de git).
 
-**Paso 8 – Al final: frontend.** Rediseño visual y detalles (por ejemplo, el resumen del paso 1 de la inscripción aparece duplicado).
+**Paso 8 – Al final: frontend.** La portada pública la rediseña el PR #8 (Agustín): no tocarla desde acá. Acordado con el dueño (26/11): solo detalles de accesibilidad y uso en admin y ficha, en PRs chicos.
+- [x] Resumen de la inscripción duplicado en el segundo tramo (se oculta «Tu inscripción»; test en `scripts/frontend-regression.test.js`).
+- [ ] Contraste bajo en la etiqueta «Admin» y en los placeholders.
+- [ ] Tablas del admin en celular.
+- [ ] Botón «Limpiar firma» de 34 px.
+- [ ] Revisar con teclado y lector de pantalla las secciones que GSAP deja ocultas hasta el scroll.
 
 **Hecho el 26/11:** el PDF transliteró «Mićić» → «Micic» (`textoSeguro`, `lib/ficha-pdf.js`; lo exacto pide embeber una fuente con fontkit, dependencia nueva). Un 401 al guardar en el admin recarga y el login avisa que el cambio no se guardó.
 
