@@ -455,3 +455,14 @@ test("el botón Limpiar firma tiene área táctil de 44 px", () => {
   assert.notEqual(inicio, -1, "No se encontró la regla base del botón de firma");
   assert.match(css.slice(inicio, css.indexOf("}", inicio)), /min-height: 44px/);
 });
+
+test("la ficha y la selección de curso no esconden campos con visibility:hidden hasta el scroll", () => {
+  // autoAlpha deja visibility:hidden: el bloque sale del orden de Tab y del lector de pantalla.
+  for (const [nombre, siguiente] of [["bindInscripcionAnimations", "renderInscripcion"], ["bindFichaAdhesionAnimations", "fichaOpciones"]]) {
+    const fuente = functionSource(nombre, siguiente);
+    const reveal = fuente.slice(fuente.indexOf('toArray("[data-reveal-light]")')).replace(/^\s*\/\/.*$/gm, "");
+    assert.match(reveal, /gsap\.from\(el, \{\s*opacity: 0/, `${nombre}: el reveal con scroll tiene que animar opacity, no autoAlpha`);
+    assert.doesNotMatch(reveal, /autoAlpha/, `${nombre}: autoAlpha esconde los campos del teclado`);
+    assert.match(reveal, /addEventListener\("focusin", \(\) => tween\.progress\(1\)\)/, `${nombre}: el foco tiene que mostrar el bloque completo`);
+  }
+});
