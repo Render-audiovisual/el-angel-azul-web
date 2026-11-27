@@ -2323,6 +2323,7 @@
                 </nav>
               </aside>
               <main class="admin-main">
+                ${googleSheetsSyncState.status === "error" ? `<section class="admin-turismo-panel admin-form-error" role="alert"><strong>Revisá la conexión antes de seguir</strong><p>${escapeHtml(googleSheetsSyncState.message)}</p><p>Conservá lo que escribiste. Si el error indica que otro usuario modificó el registro, recargá la página antes de volver a editar.</p></section>` : ""}
                 ${contentHtml}
               </main>
             </div>
@@ -2331,6 +2332,10 @@
       }
 
       function bindAdminShell() {
+        document.querySelectorAll("[data-admin-payment-for]").forEach((button) => button.addEventListener("click", () => {
+          adminPagoDraft = { ...newAdminPagoDraft(), pasajeroId: button.dataset.adminPaymentFor };
+          location.hash = "/admin/pagos";
+        }));
         const sidebar = document.querySelector(".admin-sidebar");
         const toggle = sidebar?.querySelector("[data-admin-nav-toggle]");
         toggle?.addEventListener("click", () => {
@@ -2367,7 +2372,7 @@
         const paymentRows = passengerRows.map(({ passenger }) => passengerPaymentData(passenger));
         const fichasNuevas = fichas.filter((ficha) => (ficha.estadoRevision || "pendiente") === "pendiente").length;
         const pasajerosActivos = passengerRows.filter(({ passenger }) => String(passenger.estado || "").toLowerCase().includes("activo")).length;
-        const pagosPendientes = paymentRows.filter((payment) => payment.estadoPago !== "Al día").length;
+        const pasajerosConCobros = paymentRows.filter((payment) => payment.registros > 0).length;
         const gruposActivos = adminPasajerosDemo.filter((group) => {
           const estado = String(group.estado || "Activo").toLowerCase();
           return estado.includes("activo") && !estado.includes("inactivo");
@@ -2394,9 +2399,9 @@
                 <small>Personas cargadas como activas</small>
               </a>
               <a class="admin-dashboard-card is-warning" href="${adminRouteHref("/admin/pagos")}">
-                <span>Pagos pendientes</span>
-                <strong>${pagosPendientes}</strong>
-                <small>Pasajeros no marcados al día</small>
+                <span>Pasajeros con cobros</span>
+                <strong>${adminPagosLoaded ? pasajerosConCobros : "Sin consultar"}</strong>
+                <small>Con pagos registrados</small>
               </a>
               <a class="admin-dashboard-card" href="${adminRouteHref("/admin/grupos")}">
                 <span>Grupos activos</span>
@@ -2755,6 +2760,7 @@
       }
 
       function downloadGoogleSheetDataXlsx() {
+        if (!adminExportReady()) return;
         const rowsByTab = buildGoogleSheetMigrationRows();
         const workbook = XLSX.utils.book_new();
         Object.entries(rowsByTab).forEach(([tab, rows]) => {
@@ -2985,7 +2991,7 @@
             <span class="material-symbols-outlined" aria-hidden="true">info</span>
             <div>
               <h2>Importante</h2>
-              <p>Pagos continúa como módulo de demostración hasta conectar la cobranza real. Los cambios de contraseñas y servidor no se realizan desde este panel.</p>
+              <p>Pagos permite registrar cobros manuales y consultar su historial. El precio y el cronograma de cuotas del contrato siguen pendientes. Los cambios de contraseñas y servidor no se realizan desde este panel.</p>
             </div>
           </section>
         `);
@@ -3163,7 +3169,11 @@
 
       function saveAdminPasajerosDemo() {
         adminPasajerosDemo = adminPasajerosCollection.save(adminPasajerosDemo);
-        if (!googleSheetsHydrating) queueGoogleSheetsWrite(["PASAJEROS"]);
+        if (!googleSheetsHydrating) return queueGoogleSheetsWrite(["PASAJEROS"]).then(async saved => {
+          if (saved) await loadAdminPagos();
+          return saved;
+        });
+        return Promise.resolve(true);
       }
 
       function saveAdminGruposDemo() {
@@ -3197,7 +3207,7 @@
         return adminColegios.find((colegio) => colegio.id === colegioId)?.nombre || "";
       }
 
-      function createAdminPasajerosGroup({ nivel, viaje, colegio, colegioId = "", curso, division, pasajerosEsperados = 0 }) {
+      async function createAdminPasajerosGroup({ nivel, viaje, colegio, colegioId = "", curso, division, pasajerosEsperados = 0 }) {
         const group = normalizeAdminPasajerosGroup({
           nivel,
           viaje,
@@ -3217,7 +3227,10 @@
         ));
         if (!exists) {
           adminPasajerosDemo.push(group);
-          saveAdminGruposDemo();
+          if (!await saveAdminGruposDemo()) {
+            adminPasajerosDemo = adminPasajerosCollection.save(adminPasajerosDemo.filter(item => item.id !== group.id));
+            return false;
+          }
         }
         adminPasajerosNivel = group.nivel;
         adminPasajerosViaje = group.viaje;
@@ -3226,6 +3239,7 @@
         adminPasajerosShowForm = false;
         adminPasajerosFormError = "";
         renderAdminPasajeros();
+        return true;
       }
 
       function openAdminPasajerosGroupModal(type) {
@@ -3285,8 +3299,12 @@
       }
 
       function saveFichasAdhesionDemo(fichas) {
+        const previous = fichaAdhesionCollection.load();
         fichaAdhesionCollection.save(fichas);
-        if (!googleSheetsHydrating) return queueGoogleSheetsWrite(["FICHAS_ADHESION"]);
+        if (!googleSheetsHydrating) return queueGoogleSheetsWrite(["FICHAS_ADHESION"]).then(saved => {
+          if (!saved) fichaAdhesionCollection.save(previous);
+          return saved;
+        });
         return Promise.resolve();
       }
 
@@ -3299,6 +3317,7 @@
           colegioId: row.colegio_id || "",
           curso: row.curso,
           division: row.division,
+          estado: row.estado || "Activo",
           pasajerosEsperados: Number(row.pasajeros_esperados || 0),
           pasajeros: []
         });
@@ -3541,6 +3560,7 @@
             capture("COLEGIOS", adminColegios, colegios);
             capture("PLANES_PAGO", adminPlanesPago, planesPago);
           }
+          if (adminEntry) await loadAdminPagos();
           googleSheetsHydrated = true;
           googleSheetsSyncState = {
             status: "ok",
@@ -3565,6 +3585,10 @@
             status: "local",
             message: "Guardado local. La base de datos no está conectada."
           };
+          return Promise.resolve(false);
+        }
+        if (!googleSheetsHydrated) {
+          googleSheetsSyncState = { status: "error", message: "No se guardó el cambio porque faltó cargar la base completa. Recargá la página y volvé a intentar." };
           return Promise.resolve(false);
         }
         const uniqueSheets = [...new Set(sheets)];
@@ -3778,7 +3802,7 @@
         const dni = normalizeFichaDni(ficha.pasajeroNumeroDocumento || ficha.pasajeroDni);
         if (!dni) return { passenger: [], ficha: [] };
         const passenger = adminPasajerosRows()
-          .filter(({ passenger: item }) => normalizeFichaDni(item.dni) === dni)
+          .filter(({ passenger: item, group }) => normalizeFichaDni(item.dni) === dni && !(item.observaciones === `Creado desde ficha de adhesión ${ficha.id}.` && group.id === fichaAssignmentContext(ficha).grupoId && item.contratoId === fichaAssignmentContext(ficha).contratoId))
           .map(({ passenger: item, group }) => ({
             name: item.nombre || "Pasajero existente",
             detail: `${group?.colegio || "Grupo"} · ${item.codigoContrato || item.codigo_contrato || "Contrato pendiente"}`
@@ -4208,15 +4232,17 @@
           renderAdminFichasRecibidas();
           return;
         }
+        const resumedPassenger = group.pasajeros.find(passenger => normalizeFichaDni(passenger.dni) === dni && passenger.observaciones === `Creado desde ficha de adhesión ${id}.` && passenger.contratoId === context.contratoId);
         const duplicatedDni = adminPasajerosDemo.some((adminGroup) => (
           adminGroup.pasajeros.some((passenger) => normalizeFichaDni(passenger.dni) === dni)
         ));
-        if (duplicatedDni) {
+        if (duplicatedDni && !resumedPassenger) {
           adminFichasMessage = "Ese DNI ya existe en pasajeros. No se creó un pasajero duplicado.";
           renderAdminFichasRecibidas();
           return;
         }
-        group.pasajeros.push({
+        const previous = structuredClone(adminPasajerosDemo);
+        if (!resumedPassenger) group.pasajeros.push({
           nombre: String(ficha.pasajeroNombre || "").trim(),
           apellido: String(ficha.pasajeroApellido || "").trim(),
           dni,
@@ -4245,9 +4271,14 @@
           pagado: "",
           saldo: "",
           proximaCuota: "",
-          observaciones: "Creado desde ficha de adhesión aprobada."
+          observaciones: `Creado desde ficha de adhesión ${id}.`
         });
-        saveAdminPasajerosDemo();
+        if (!resumedPassenger && !await saveAdminPasajerosDemo()) {
+          adminPasajerosDemo = adminPasajerosCollection.save(previous);
+          adminFichasMessage = `No se aprobó la ficha: ${googleSheetsSyncState.message}`;
+          renderAdminFichasRecibidas();
+          return;
+        }
         const saved = await saveFichasAdhesionDemo(fichas.map((item) => (
           item.id === id
             ? {
@@ -4273,6 +4304,12 @@
             }
             : item
         )));
+        if (!saved) {
+          fichaAdhesionCollection.save(fichas);
+          adminFichasMessage = `El pasajero quedó guardado, pero falta confirmar la aprobación de la ficha. Volvé a aprobar para completar el paso sin duplicarlo. ${googleSheetsSyncState.message}`;
+          renderAdminFichasRecibidas();
+          return;
+        }
         adminPasajerosNivel = group.nivel;
         adminPasajerosViaje = group.viaje;
         adminPasajerosColegio = group.colegio;
@@ -4473,23 +4510,23 @@
       }
 
       function parseAdminMoney(value) {
-        const normalized = String(value || "").replace(/[^\d.-]/g, "");
-        const number = Number(normalized);
-        return Number.isFinite(number) ? number : 0;
+        return window.ElAngelAzulPayments.parseMoney(value);
       }
 
       function formatAdminMoney(value) {
-        const amount = parseAdminMoney(value);
-        if (!amount) return "Pendiente";
-        return amount.toLocaleString("es-AR", {
-          style: "currency",
-          currency: "ARS",
-          maximumFractionDigits: 0
-        });
+        if (value === null || value === undefined || value === "") return "Sin definir";
+        return parseAdminMoney(value).toLocaleString("es-AR", { style: "currency", currency: "ARS", minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      }
+
+      function passengerPaymentKey(passenger, group) {
+        return adminPagoPassengerIds.get(`${group?.id}|${passenger.dni}`) || passenger.id || `pasajero-${passenger.dni || sheetMigrationSlug(passenger.nombre || "sin-dni")}-${group?.id || ""}`;
       }
 
       function passengerPaymentData(passenger) {
-        return window.ElAngelAzulPayments.paymentData(passenger);
+        const group = adminPasajerosDemo.find((item) => item.pasajeros.includes(passenger));
+        const key = passengerPaymentKey(passenger, group);
+        const payment = window.ElAngelAzulPayments.paymentData({ ...passenger, cobros: adminPagos.filter((pago) => pago.pasajero_legacy_id === key) });
+        return adminPagosLoaded ? payment : { ...payment, pagado: null, saldo: null, registros: 0 };
       }
 
       function passengerInstallments(passenger) {
@@ -4512,17 +4549,20 @@
           </span>
         `).join("");
         return `
-          ${cells}
+          ${cells || '<span class="admin-installment-pill is-neutral">Cronograma pendiente</span>'}
           ${hiddenCount > 0 ? `<span class="admin-installment-pill is-neutral">+${hiddenCount} cuotas en detalle</span>` : ""}
         `;
       }
 
       function passengerPaymentHistory(passenger) {
-        return window.ElAngelAzulPayments.paymentHistory(passenger);
+        const group = adminPasajerosDemo.find((item) => item.pasajeros.includes(passenger));
+        return window.ElAngelAzulPayments.paymentHistory({ ...passenger, cobros: adminPagos.filter((pago) => pago.pasajero_legacy_id === passengerPaymentKey(passenger, group)) });
       }
 
       function renderPaymentHistoryCells(passenger) {
-        return passengerPaymentHistory(passenger).map((item) => `
+        const history = passengerPaymentHistory(passenger);
+        if (!history.length) return '<span>Sin pagos registrados</span>';
+        return history.map((item) => `
           <div class="admin-payment-history-item">
             <span>${escapeHtml(item.date)}</span>
             <strong>${escapeHtml(item.concept)} · ${escapeHtml(formatAdminMoney(item.amount))}</strong>
@@ -4533,6 +4573,7 @@
 
       function adminStatusClass(value) {
         const normalized = String(value || "").toLowerCase();
+        if (normalized.includes("inactivo") || normalized.includes("inactiva") || normalized.includes("anulado")) return "is-neutral";
         if (normalized.includes("no cargada")) return "is-pending";
         if (normalized.includes("día") || normalized.includes("completa") || normalized.includes("activo") || normalized.includes("cargada") || normalized.includes("aprobada") || normalized.includes("pagada")) return "is-ok";
         if (normalized.includes("vencido") || normalized.includes("vencida") || normalized.includes("rechazada") || normalized.includes("baja") || normalized.includes("observada")) return "is-alert";
@@ -4610,7 +4651,22 @@
         });
       }
 
+      function adminExportReady() {
+        if (typeof XLSX !== "undefined") return true;
+        let notice = document.querySelector("[data-export-error]");
+        if (!notice) {
+          notice = document.createElement("p");
+          notice.dataset.exportError = "";
+          notice.className = "admin-form-error";
+          notice.setAttribute("role", "alert");
+          document.querySelector(".admin-main")?.prepend(notice);
+        }
+        notice.textContent = "No se pudo cargar la herramienta de Excel. Revisá tu conexión y recargá la página para volver a exportar.";
+        return false;
+      }
+
       function exportAdminPasajerosXlsx() {
+        if (!adminExportReady()) return;
         const rows = adminPasajerosExportRows(adminPasajerosFilteredRows());
         const sheet = XLSX.utils.json_to_sheet(rows, { header: ADMIN_PASAJEROS_EXPORT_COLUMNS });
         sheet["!cols"] = autoFitColumnWidths(rows, ADMIN_PASAJEROS_EXPORT_COLUMNS);
@@ -4716,7 +4772,7 @@
               <div class="admin-pasajeros-section-head">
                 <div>
                   <h2>Editando ficha</h2>
-                  <p>${escapeHtml(passenger.nombre)} · DNI ${escapeHtml(passenger.dni || "Pendiente")}</p>
+                  <p>${escapeHtml(adminPasajeroNombreCompleto(passenger))} · DNI ${escapeHtml(passenger.dni || "Pendiente")}</p>
                 </div>
                 <button type="button" class="admin-pasajeros-secondary-button" data-admin-pasajeros-cancel-edit>Cancelar edición</button>
               </div>
@@ -4825,10 +4881,11 @@
             <div class="admin-pasajeros-section-head">
               <div>
                 <h2>Ficha individual</h2>
-                <p>${escapeHtml(passenger.nombre)} · DNI ${escapeHtml(passenger.dni || "Pendiente")}</p>
+                <p>${escapeHtml(adminPasajeroNombreCompleto(passenger))} · DNI ${escapeHtml(passenger.dni || "Pendiente")}</p>
               </div>
               <div class="admin-pasajeros-profile-actions">
                 <button type="button" class="admin-pasajeros-primary-button" data-admin-pasajeros-open-edit>Editar ficha</button>
+                <button type="button" class="admin-pasajeros-secondary-button" data-admin-payment-for="${escapeHtml(passengerPaymentKey(passenger, group))}">Registrar pago</button>
                 <button type="button" class="admin-pasajeros-secondary-button" data-admin-pasajeros-close-profile>Cerrar ficha</button>
               </div>
             </div>
@@ -4836,7 +4893,7 @@
             <div class="admin-pasajeros-profile-hero">
               <div>
                 <span>Pasajero</span>
-                <strong>${escapeHtml(passenger.nombre)}</strong>
+                <strong>${escapeHtml(adminPasajeroNombreCompleto(passenger))}</strong>
                 <p>${escapeHtml(group.viaje)} · ${escapeHtml(group.colegio)} · ${escapeHtml(group.curso)} ${escapeHtml(group.division)}</p>
               </div>
               <div class="admin-pasajeros-profile-statuses">
@@ -4921,8 +4978,12 @@
                   <div><dt>Pagado</dt><dd>${escapeHtml(formatAdminMoney(payment.pagado))}</dd></div>
                   <div><dt>Saldo</dt><dd>${escapeHtml(formatAdminMoney(payment.saldo))}</dd></div>
                   <div><dt>Cuotas</dt><dd>${escapeHtml(installmentSummary(passenger))}</dd></div>
-                  <div><dt>Estado cuotas</dt><dd>${paidInstallments} pagas · ${pendingInstallments} pendientes</dd></div>
+                  <div><dt>Estado cuotas</dt><dd>${passengerInstallments(passenger).length ? `${paidInstallments} pagas · ${pendingInstallments} pendientes` : "Cronograma pendiente"}</dd></div>
                 </dl>
+              </article>
+              <article class="admin-payment-wide">
+                <h3>Historial de cobros</h3>
+                ${adminPagosLoaded ? renderPaymentHistoryCells(passenger) : '<p>No se pudieron consultar los pagos. Entrá en Pagos para volver a intentar.</p>'}
               </article>
               <article>
                 <span>Observaciones</span>
@@ -5589,7 +5650,8 @@
         renderAdminContratos();
       }
 
-      function submitAdminContratoEdit(form) {
+      async function submitAdminContratoEdit(form) {
+        if (form.dataset.saving) return;
         const contractId = adminContratosEditId;
         const index = adminContratosDemo.findIndex((contract) => contract.id === contractId);
         if (index < 0) return;
@@ -5600,16 +5662,17 @@
         const observaciones = String(formData.get("observaciones") || "").trim();
         if (!codigo) {
           adminContratosEditError = "Cargá el código de contrato antes de guardar.";
-          renderAdminContratos();
+          restoreAdminForm(renderAdminContratos, "[data-admin-contrato-edit-form]", formData);
           return;
         }
         const duplicatedCodigo = adminContratosDemo.some((contract, idx) => idx !== index && contract.codigo_contrato === codigo);
         if (duplicatedCodigo) {
           adminContratosEditError = "Ya existe otro contrato con ese código. El código de contrato debe ser único.";
-          renderAdminContratos();
+          restoreAdminForm(renderAdminContratos, "[data-admin-contrato-edit-form]", formData);
           return;
         }
         const now = new Date().toISOString();
+        lockAdminForm(form);
         adminContratosDemo[index] = {
           ...current,
           codigo_contrato: codigo,
@@ -5617,16 +5680,17 @@
           observaciones,
           updated_at: now
         };
+        const saved = await saveAdminContratosDemo();
+        if (!saved) {
+          adminContratosDemo[index] = current;
+          contratosCollection.save(adminContratosDemo);
+          adminContratosEditError = googleSheetsSyncState.message;
+          if (currentPath() === "/admin/contratos") restoreAdminForm(renderAdminContratos, "[data-admin-contrato-edit-form]", formData);
+          return;
+        }
         adminContratosEditId = "";
         adminContratosEditError = "";
-        googleSheetsSyncState = {
-          status: "pending",
-          message: "Guardando contrato en la base de datos..."
-        };
-        saveAdminContratosDemo().then(() => {
-          if (currentPath() === "/admin/contratos") renderAdminContratos();
-        });
-        renderAdminContratos();
+        if (currentPath() === "/admin/contratos") renderAdminContratos();
       }
 
       function renderAdminContratos() {
@@ -5753,9 +5817,11 @@
         document.querySelectorAll("[data-plan-toggle]").forEach((button) => {
           button.addEventListener("click", async () => {
             const id = button.dataset.planToggle;
+            const previous = adminPlanesPago;
+            button.disabled = true;
             adminPlanesPago = adminPlanesPago.map((plan) => (plan.id === id ? { ...plan, activo: plan.activo === "TRUE" ? "FALSE" : "TRUE" } : plan));
             const guardado = await queueGoogleSheetsWrite(["PLANES_PAGO"]);
-            if (!guardado) adminContratosEditError = googleSheetsSyncState.message;
+            if (!guardado) { adminPlanesPago = previous; adminContratosEditError = googleSheetsSyncState.message; }
             renderAdminContratos();
           });
         });
@@ -6018,8 +6084,9 @@
           adminGruposCreateError = "";
           renderAdminGrupos();
         });
-        document.querySelector("[data-admin-grupos-create-form]")?.addEventListener("submit", (event) => {
+        document.querySelector("[data-admin-grupos-create-form]")?.addEventListener("submit", async (event) => {
           event.preventDefault();
+          if (event.currentTarget.dataset.saving) return;
           const formData = new FormData(event.currentTarget);
           const colegioId = String(formData.get("colegio_id") || "").trim();
           const payload = {
@@ -6033,7 +6100,7 @@
           };
           if (!payload.nivel || !payload.viaje || !payload.colegio || !payload.curso || !payload.division) {
             adminGruposCreateError = "Completá nivel, viaje, colegio (de la lista), grado/año y división.";
-            renderAdminGrupos();
+            restoreAdminForm(renderAdminGrupos, "[data-admin-grupos-create-form]", formData);
             return;
           }
           const duplicatedGroup = adminPasajerosDemo.some((group) => (
@@ -6045,7 +6112,7 @@
           ));
           if (duplicatedGroup) {
             adminGruposCreateError = "Ese grupo ya existe para ese nivel, viaje, colegio, curso y división.";
-            renderAdminGrupos();
+            restoreAdminForm(renderAdminGrupos, "[data-admin-grupos-create-form]", formData);
             return;
           }
           const group = normalizeAdminPasajerosGroup({
@@ -6053,6 +6120,8 @@
             estado: "Activo",
             pasajeros: []
           });
+          const previous = structuredClone(adminPasajerosDemo);
+          lockAdminForm(event.currentTarget);
           adminPasajerosDemo.push(group);
           adminPasajerosNivel = group.nivel;
           adminPasajerosViaje = group.viaje;
@@ -6062,16 +6131,16 @@
           adminGruposFilterViaje = "";
           adminGruposFilterColegio = "";
           adminGruposSearch = "";
+          const saved = await saveAdminGruposDemo();
+          if (!saved) {
+            adminPasajerosDemo = adminPasajerosCollection.save(previous);
+            adminGruposCreateError = googleSheetsSyncState.message;
+            restoreAdminForm(renderAdminGrupos, "[data-admin-grupos-create-form]", formData);
+            return;
+          }
           adminGruposShowCreateForm = false;
           adminGruposCreateError = "";
-          googleSheetsSyncState = {
-            status: "pending",
-            message: "Guardando grupo en la base de datos..."
-          };
-          saveAdminGruposDemo().then(() => {
-            if (currentPath() === "/admin/grupos") renderAdminGrupos();
-          });
-          renderAdminGrupos();
+          if (currentPath() === "/admin/grupos") renderAdminGrupos();
         });
         document.querySelectorAll("[data-admin-grupo-view-contracts]").forEach((button) => {
           button.addEventListener("click", () => {
@@ -6116,6 +6185,22 @@
         });
       }
 
+      function restoreAdminForm(renderPage, selector, formData) {
+        renderPage();
+        const form = document.querySelector(selector);
+        for (const [name, value] of formData) {
+          const control = form?.elements.namedItem(name);
+          if (control && control.type !== "file") control.value = value;
+        }
+      }
+
+      function lockAdminForm(form) {
+        if (form.dataset.saving) return false;
+        form.dataset.saving = "true";
+        form.querySelectorAll("button,input,select,textarea").forEach(control => control.disabled = true);
+        return true;
+      }
+
       function bindAdminPasajeros() {
         document.querySelector("[data-admin-pasajeros-open-form]")?.addEventListener("click", () => {
           adminPasajerosShowForm = !adminPasajerosShowForm;
@@ -6127,13 +6212,15 @@
           adminPasajerosFormError = "";
           renderAdminPasajeros();
         });
-        document.querySelector("[data-admin-pasajeros-form]")?.addEventListener("submit", (event) => {
+        document.querySelector("[data-admin-pasajeros-form]")?.addEventListener("submit", async (event) => {
           event.preventDefault();
+          if (event.currentTarget.dataset.saving) return;
+          if (!event.currentTarget.reportValidity()) return;
           const formData = new FormData(event.currentTarget);
           const selectedGroup = adminPasajerosDemo.find((group) => group.id === String(formData.get("grupoId") || ""));
           if (!selectedGroup) {
             adminPasajerosFormError = "Elegí un grupo.";
-            renderAdminPasajeros();
+            restoreAdminForm(renderAdminPasajeros, "[data-admin-pasajeros-form]", formData);
             return;
           }
           adminPasajerosNivel = selectedGroup.nivel;
@@ -6173,27 +6260,27 @@
 
           if (!passenger.nombre) {
             adminPasajerosFormError = "El nombre del pasajero es obligatorio.";
-            renderAdminPasajeros();
+            restoreAdminForm(renderAdminPasajeros, "[data-admin-pasajeros-form]", formData);
             return;
           }
           if (!passenger.dni) {
             adminPasajerosFormError = "El DNI del pasajero es obligatorio.";
-            renderAdminPasajeros();
+            restoreAdminForm(renderAdminPasajeros, "[data-admin-pasajeros-form]", formData);
             return;
           }
           if (!passenger.contratoId) {
             adminPasajerosFormError = "Antes de crear el pasajero, asigná un contrato válido.";
-            renderAdminPasajeros();
+            restoreAdminForm(renderAdminPasajeros, "[data-admin-pasajeros-form]", formData);
             return;
           }
           if (!passenger.responsable) {
             adminPasajerosFormError = "El responsable es obligatorio.";
-            renderAdminPasajeros();
+            restoreAdminForm(renderAdminPasajeros, "[data-admin-pasajeros-form]", formData);
             return;
           }
           if (!passenger.responsableTelefono) {
             adminPasajerosFormError = "El teléfono del responsable es obligatorio.";
-            renderAdminPasajeros();
+            restoreAdminForm(renderAdminPasajeros, "[data-admin-pasajeros-form]", formData);
             return;
           }
           const duplicatedDni = adminPasajerosDemo.some((group) => (
@@ -6201,12 +6288,19 @@
           ));
           if (duplicatedDni) {
             adminPasajerosFormError = "Ya existe un pasajero con ese DNI (revisá otros colegios/viajes, el DNI es único en toda la base).";
-            renderAdminPasajeros();
+            restoreAdminForm(renderAdminPasajeros, "[data-admin-pasajeros-form]", formData);
             return;
           }
 
+          const previous = structuredClone(adminPasajerosDemo);
+          lockAdminForm(event.currentTarget);
           selectedGroup.pasajeros.push(passenger);
-          saveAdminPasajerosDemo();
+          if (!await saveAdminPasajerosDemo()) {
+            adminPasajerosDemo = adminPasajerosCollection.save(previous);
+            adminPasajerosFormError = googleSheetsSyncState.message;
+            restoreAdminForm(renderAdminPasajeros, "[data-admin-pasajeros-form]", formData);
+            return;
+          }
           adminPasajerosShowForm = false;
           adminPasajerosFormError = "";
           renderAdminPasajeros();
@@ -6234,8 +6328,9 @@
             renderAdminPasajeros();
           });
         });
-        document.querySelector("[data-admin-pasajeros-group-form]")?.addEventListener("submit", (event) => {
+        document.querySelector("[data-admin-pasajeros-group-form]")?.addEventListener("submit", async (event) => {
           event.preventDefault();
+          if (event.currentTarget.dataset.saving) return;
           const formData = new FormData(event.currentTarget);
           const colegioId = String(formData.get("colegio_id") || "").trim();
           const payload = {
@@ -6249,7 +6344,7 @@
           };
           if (!payload.nivel || !payload.viaje || !payload.colegio || !payload.curso || !payload.division) {
             adminPasajerosGroupModal = { ...(adminPasajerosGroupModal || { type: "colegio" }), error: "Completá nivel, viaje, colegio (de la lista), grado/año y división." };
-            renderAdminPasajeros();
+            restoreAdminForm(renderAdminPasajeros, "[data-admin-pasajeros-group-form]", formData);
             return;
           }
           const duplicatedGroup = adminPasajerosDemo.some((group) => (
@@ -6261,11 +6356,17 @@
           ));
           if (duplicatedGroup) {
             adminPasajerosGroupModal = { ...(adminPasajerosGroupModal || { type: "colegio" }), error: "Ese colegio, curso y división ya existe para el viaje seleccionado." };
-            renderAdminPasajeros();
+            restoreAdminForm(renderAdminPasajeros, "[data-admin-pasajeros-group-form]", formData);
             return;
           }
-          adminPasajerosGroupModal = null;
-          createAdminPasajerosGroup(payload);
+          lockAdminForm(event.currentTarget);
+          if (await createAdminPasajerosGroup(payload)) {
+            adminPasajerosGroupModal = null;
+            renderAdminPasajeros();
+          } else {
+            adminPasajerosGroupModal = { ...adminPasajerosGroupModal, error: googleSheetsSyncState.message };
+            restoreAdminForm(renderAdminPasajeros, "[data-admin-pasajeros-group-form]", formData);
+          }
         });
         document.querySelector("[data-admin-pasajeros-search]")?.addEventListener("input", (event) => {
           adminPasajerosSearch = event.currentTarget.value;
@@ -6314,22 +6415,24 @@
           adminPasajerosEditError = "";
           renderAdminPasajeros();
         });
-        document.querySelector("[data-admin-pasajeros-edit-form]")?.addEventListener("submit", (event) => {
+        document.querySelector("[data-admin-pasajeros-edit-form]")?.addEventListener("submit", async (event) => {
           event.preventDefault();
+          if (event.currentTarget.dataset.saving) return;
           const record = adminPasajerosSelectedRecord();
           if (!record) return;
           const { group, passenger } = record;
+          if (!event.currentTarget.reportValidity()) return;
           const formData = new FormData(event.currentTarget);
           const nombre = String(formData.get("nombre") || "").trim();
           const dni = String(formData.get("dni") || "").trim();
           const responsable = String(formData.get("responsable") || "").trim();
           const responsableTelefono = String(formData.get("responsableTelefono") || "").trim();
           const contratoId = String(formData.get("contratoId") || "").trim();
-          if (!nombre) { adminPasajerosEditError = "El nombre del pasajero es obligatorio."; renderAdminPasajeros(); return; }
-          if (!dni) { adminPasajerosEditError = "El DNI es obligatorio."; renderAdminPasajeros(); return; }
-          if (!responsable) { adminPasajerosEditError = "El nombre del responsable es obligatorio."; renderAdminPasajeros(); return; }
-          if (!responsableTelefono) { adminPasajerosEditError = "El teléfono del responsable es obligatorio."; renderAdminPasajeros(); return; }
-          if (!contratoId) { adminPasajerosEditError = "Seleccioná un contrato antes de guardar."; renderAdminPasajeros(); return; }
+          if (!nombre) { adminPasajerosEditError = "El nombre del pasajero es obligatorio."; restoreAdminForm(renderAdminPasajeros, "[data-admin-pasajeros-edit-form]", formData); return; }
+          if (!dni) { adminPasajerosEditError = "El DNI es obligatorio."; restoreAdminForm(renderAdminPasajeros, "[data-admin-pasajeros-edit-form]", formData); return; }
+          if (!responsable) { adminPasajerosEditError = "El nombre del responsable es obligatorio."; restoreAdminForm(renderAdminPasajeros, "[data-admin-pasajeros-edit-form]", formData); return; }
+          if (!responsableTelefono) { adminPasajerosEditError = "El teléfono del responsable es obligatorio."; restoreAdminForm(renderAdminPasajeros, "[data-admin-pasajeros-edit-form]", formData); return; }
+          if (!contratoId) { adminPasajerosEditError = "Seleccioná un contrato antes de guardar."; restoreAdminForm(renderAdminPasajeros, "[data-admin-pasajeros-edit-form]", formData); return; }
           const selectedContract = contractById(contratoId, group.id);
           const targetGroup = adminPasajerosDemo.find((g) => g.id === group.id);
           if (!targetGroup) return;
@@ -6343,10 +6446,12 @@
           ));
           if (duplicatedDni) {
             adminPasajerosEditError = "Ya existe otro pasajero con ese DNI (el DNI es único en toda la base).";
-            renderAdminPasajeros();
+            restoreAdminForm(renderAdminPasajeros, "[data-admin-pasajeros-edit-form]", formData);
             return;
           }
           const planElegido = adminPlanesPago.find((plan) => plan.id === String(formData.get("planPagoId") || ""));
+          const previous = structuredClone(adminPasajerosDemo);
+          lockAdminForm(event.currentTarget);
           targetGroup.pasajeros[passengerIndex] = {
             ...targetGroup.pasajeros[passengerIndex],
             nombre,
@@ -6370,7 +6475,12 @@
             pago: String(formData.get("pago") || "Pendiente").trim(),
             observaciones: String(formData.get("observaciones") || "").trim()
           };
-          saveAdminPasajerosDemo();
+          if (!await saveAdminPasajerosDemo()) {
+            adminPasajerosDemo = adminPasajerosCollection.save(previous);
+            adminPasajerosEditError = googleSheetsSyncState.message;
+            restoreAdminForm(renderAdminPasajeros, "[data-admin-pasajeros-edit-form]", formData);
+            return;
+          }
           adminPasajerosSelectedDni = dni;
           adminPasajerosEditMode = false;
           adminPasajerosEditError = "";
@@ -6537,16 +6647,22 @@
         });
         document.querySelectorAll("[data-ficha-tutor-estado]").forEach((select) => {
           select.addEventListener("change", async () => {
+            const previous = adminFichasTutor;
+            select.disabled = true;
             adminFichasTutor = adminFichasTutor.map((tutor) => (
               tutor.id === select.dataset.fichaTutorEstado ? { ...tutor, estado_revision: select.value } : tutor
             ));
             const guardado = await queueGoogleSheetsWrite(["FICHAS_TUTOR"]);
+            if (!guardado) adminFichasTutor = previous;
             adminFichasMessage = guardado ? "Estado de la ficha de tutor guardado." : googleSheetsSyncState.message;
             renderAdminFichasRecibidas();
           });
         });
         document.querySelectorAll("[data-ficha-aprobar]").forEach((button) => {
-          button.addEventListener("click", () => approveFichaAdhesionAndCreatePassenger(button.dataset.fichaAprobar));
+          button.addEventListener("click", async () => {
+            button.disabled = true;
+            await approveFichaAdhesionAndCreatePassenger(button.dataset.fichaAprobar);
+          });
         });
         document.querySelectorAll("[data-ficha-rechazar]").forEach((button) => {
           button.addEventListener("click", () => {
@@ -6617,144 +6733,147 @@
         });
       }
 
-      function renderAdminPagos() {
-        const paymentRows = adminPasajerosDemo.flatMap((group) => (
-          group.pasajeros.map((passenger) => {
-            const payment = passengerPaymentData(passenger);
-            return { group, passenger, payment };
-          })
-        ));
-        const totalSaldo = paymentRows.reduce((sum, row) => sum + parseAdminMoney(row.payment.saldo), 0);
-        const totalPagado = paymentRows.reduce((sum, row) => sum + parseAdminMoney(row.payment.pagado), 0);
-        const totalViajes = paymentRows.reduce((sum, row) => sum + parseAdminMoney(row.payment.valorViaje), 0);
-        const specialPlans = paymentRows.filter((row) => row.payment.planPago !== "Regular").length;
-        const overdue = paymentRows.filter((row) => row.payment.estadoPago === "Vencido").length;
-        const pending = paymentRows.filter((row) => row.payment.estadoPago !== "Al día").length;
-        const collectionRate = totalViajes ? Math.round((totalPagado / totalViajes) * 100) : 0;
-        const rowsHtml = paymentRows.map(({ group, passenger, payment }) => `
-          <tr>
-            <td class="admin-payment-passenger-cell">
-              <strong>${escapeHtml(passenger.nombre)}</strong>
-              <span>DNI ${escapeHtml(passenger.dni || "Pendiente")}</span>
-              <span>${escapeHtml(group.colegio)} · ${escapeHtml(group.curso)} ${escapeHtml(group.division)}</span>
-            </td>
-            <td class="admin-payment-summary-cell">
-              <strong>${escapeHtml(formatAdminMoney(payment.valorViaje))}</strong>
-              <span>Pagado: ${escapeHtml(formatAdminMoney(payment.pagado))}</span>
-              <span>Saldo: ${escapeHtml(formatAdminMoney(payment.saldo))}</span>
-            </td>
-            <td>
-              <span class="admin-pasajeros-status ${adminStatusClass(payment.estadoPago)}">${escapeHtml(payment.estadoPago)}</span>
-              <span>${escapeHtml(payment.planPago)} · ${escapeHtml(payment.cuotas || "Pendiente")} cuotas</span>
-              <span>Próxima: ${escapeHtml(payment.proximaCuota || "Pendiente")}</span>
-            </td>
-            <td>
-              <div class="admin-installments-strip">
-                ${renderInstallmentCells(passenger)}
-              </div>
-            </td>
-            <td>
-              <div class="admin-payment-history">
-                ${renderPaymentHistoryCells(passenger)}
-              </div>
-            </td>
-          </tr>
-        `).join("");
+      let adminPagos = [];
+      let adminPagoPassengerIds = new Map();
+      let adminPagosError = "";
+      let adminPagosLoaded = false;
+      let adminPagoDraft = null;
+      let adminPagoSaving = false;
+      let adminPagoMessage = "";
+      let adminPagoError = "";
+      let adminPagoAnnulError = "";
+      let adminPagoSearch = "";
+      let adminPagoAnularId = "";
+      let adminPagoMotivo = "";
+      const adminPagoMedios = { efectivo: "Efectivo", transferencia: "Transferencia", tarjeta: "Tarjeta", otro: "Otro" };
 
+      function newAdminPagoDraft() {
+        const today = new Date();
+        return { id: crypto.randomUUID(), pasajeroId: "", fecha: new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().slice(0, 10), monto: "", medio: "", concepto: "", referencia: "" };
+      }
+
+      async function loadAdminPagos() {
+        try {
+          const [response, passengers] = await Promise.all([
+            fetch("/api/admin/pagos", { credentials: "same-origin", cache: "no-store" }),
+            window.ElAngelAzulPersistence.fetchGoogleSheetRows("PASAJEROS")
+          ]);
+          const payload = await response.json();
+          if (response.status === 401) handleAdminSessionLost();
+          if (!response.ok || !payload.ok || !Array.isArray(payload.pagos)) throw new Error(payload.error || "No se pudo consultar el registro de pagos.");
+          const selected = adminPagoDraft?.pasajeroId ? adminPasajerosRows().find(({passenger,group}) => passengerPaymentKey(passenger,group) === adminPagoDraft.pasajeroId) : null;
+          adminPagoPassengerIds = new Map(passengers.map(passenger => [`${passenger.grupo_id}|${passenger.dni}`, passenger.id]));
+          if (selected) adminPagoDraft.pasajeroId = passengerPaymentKey(selected.passenger, selected.group);
+          adminPagos = payload.pagos;
+          adminPagosError = "";
+          adminPagosLoaded = true;
+          return true;
+        } catch (error) {
+          adminPagosError = error.message || "No se pudo consultar el registro de pagos. Intentá nuevamente.";
+          adminPagosLoaded = false;
+          return false;
+        }
+      }
+
+      async function sendAdminPago(url, data) {
+        const response = await fetch(url, { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
+        const payload = await response.json();
+        if (response.status === 401) handleAdminSessionLost();
+        if (!response.ok || !payload.ok || !payload.pago) throw new Error(payload.error || "No se pudo guardar el pago. Revisá el historial antes de volver a intentar.");
+        adminPagos = [payload.pago, ...adminPagos.filter((pago) => pago.id !== payload.pago.id)];
+        return payload;
+      }
+
+      function renderAdminPagos() {
+        adminPagoDraft ||= newAdminPagoDraft();
+        const draft = adminPagoDraft;
+        const passengers = adminPasajerosRows();
+        const confirmed = adminPagos.filter((pago) => pago.estado === "confirmado");
+        const total = confirmed.reduce((sum, pago) => sum + Number(pago.monto_centavos), 0) / 100;
+        const filtered = adminPagos.filter((pago) => normalizeFichaSearchText([pago.pasajero_nombre, pago.pasajero_apellido, pago.pasajero_dni, pago.concepto, pago.referencia].join(" ")).includes(normalizeFichaSearchText(adminPagoSearch)));
+        const annul = adminPagos.find((pago) => pago.id === adminPagoAnularId);
+        const field = (name, label, attributes = "") => `<label>${label}<input name="${name}" value="${escapeHtml(draft[name])}" ${attributes}></label>`;
         document.getElementById("app").innerHTML = renderAdminShell("pagos", `
           <section class="admin-turismo-panel">
-            <h1>Pagos y cuotas</h1>
-            <p>Control de cobranza conectado a Pasajeros. Mantiene resumen, cuotas e historial preparado para registrar pagos reales más adelante.</p>
-            <div class="admin-demo-banner" role="note">
-              <div>
-                <strong>Datos de ejemplo</strong>
-                <p>Los montos, cuotas, vencimientos y estados de pago que se ven acá son de muestra: <strong>no reflejan la cobranza real</strong>. Esta sección se conectará a los datos reales más adelante.</p>
-              </div>
-            </div>
-            <div class="admin-payment-dashboard">
-              <article>
-                <strong>${paymentRows.length}</strong>
-                <span>Pasajeros con control</span>
-              </article>
-              <article>
-                <strong>${escapeHtml(formatAdminMoney(totalViajes))}</strong>
-                <span>Total viajes</span>
-              </article>
-              <article>
-                <strong>${escapeHtml(formatAdminMoney(totalPagado))}</strong>
-                <span>Total pagado</span>
-              </article>
-              <article>
-                <strong>${escapeHtml(formatAdminMoney(totalSaldo))}</strong>
-                <span>Saldo pendiente</span>
-              </article>
-              <article>
-                <strong>${collectionRate}%</strong>
-                <span>Avance de cobro</span>
-              </article>
-              <article>
-                <strong>${specialPlans}</strong>
-                <span>Planes especiales</span>
-              </article>
-              <article>
-                <strong>${pending}</strong>
-                <span>Con pago pendiente</span>
-              </article>
-              <article>
-                <strong>${overdue}</strong>
-                <span>Pagos vencidos</span>
-              </article>
-            </div>
+            <h1>Pagos</h1>
+            <p>Registrá los cobros manuales en pesos argentinos. Cada movimiento conserva su fecha, medio y usuario responsable.</p>
+            ${adminPagosLoaded ? `<div class="admin-payment-dashboard">
+              <article><strong>${escapeHtml(formatAdminMoney(total))}</strong><span>Total cobrado confirmado</span></article>
+              <article><strong>${confirmed.length}</strong><span>Pagos confirmados</span></article>
+              <article><strong>${new Set(confirmed.map((pago) => pago.pasajero_legacy_id)).size}</strong><span>Pasajeros con cobros</span></article>
+              <article><strong>${adminPagos.length - confirmed.length}</strong><span>Pagos anulados</span></article>
+            </div>` : ""}
+            <p>El saldo y los vencimientos quedan pendientes hasta contar con el precio y el cronograma del contrato. Registrar un cobro no modifica automáticamente el estado de pago del pasajero.</p>
+            ${adminPagosError ? `<p role="alert" class="admin-form-error">${escapeHtml(adminPagosError)}</p><button class="admin-pasajeros-secondary" data-payment-retry>Volver a consultar pagos</button>` : ""}
+            ${adminPagoMessage ? `<p role="status" class="admin-payment-feedback">${escapeHtml(adminPagoMessage)}</p>` : ""}
           </section>
-
-          <details class="admin-turismo-panel admin-payment-architecture" open>
-            <summary>Estructura preparada para pagos reales</summary>
-            <p>La pantalla ya separa los datos necesarios para pasar de control manual a registro real.</p>
-            <div class="admin-payment-architecture-grid">
-              <article>
-                <span>Resumen</span>
-                <strong>Valor, pagado, saldo y avance</strong>
-              </article>
-              <article>
-                <span>Historial</span>
-                <strong>Fecha, concepto, medio, monto y estado</strong>
-              </article>
-              <article>
-                <span>Cuotas</span>
-                <strong>Pagada, parcial, pendiente o vencida</strong>
-              </article>
-              <article>
-                <span>Integración futura</span>
-                <strong>Comprobante, Mercado Pago, transferencia o caja</strong>
-              </article>
-            </div>
-          </details>
-
+          ${adminPagosLoaded ? `<section class="admin-turismo-panel">
+            <h2>Registrar pago</h2>
+            ${passengers.length ? `<form data-payment-form class="admin-pasajeros-form">
+              <fieldset class="admin-payment-fields" ${adminPagoSaving ? "disabled" : ""}>
+                <label class="admin-payment-wide">Pasajero<select name="pasajeroId" required><option value="">Elegí un pasajero</option>${passengers.map(({passenger,group}) => `<option value="${escapeHtml(passengerPaymentKey(passenger,group))}" ${draft.pasajeroId === passengerPaymentKey(passenger,group) ? "selected" : ""}>${escapeHtml(adminPasajeroNombreCompleto(passenger))} · DNI ${escapeHtml(passenger.dni)} · ${escapeHtml(group.colegio)} · ${escapeHtml(group.curso)} ${escapeHtml(group.division)}</option>`).join("")}</select></label>
+                ${field("fecha", "Fecha del cobro", 'type="date" required')}
+                ${field("monto", "Importe (ARS)", 'type="text" inputmode="decimal" placeholder="Ej.: 12.500,50" required')}
+                <label>Medio de pago<select name="medio" required><option value="">Elegí un medio</option>${Object.entries(adminPagoMedios).map(([key,label])=>`<option value="${key}" ${draft.medio === key ? "selected" : ""}>${label}</option>`).join("")}</select></label>
+                ${field("concepto", "Concepto", 'required maxlength="200" placeholder="Ej.: Cuota de marzo"')}
+                ${field("referencia", "Referencia o comprobante (opcional)", 'maxlength="120"')}
+                <div class="admin-payment-wide"><button class="admin-pasajeros-primary" type="submit">${adminPagoSaving ? "Guardando…" : "Guardar pago"}</button></div>
+              </fieldset>
+              <p data-payment-error class="admin-form-error" role="alert">${escapeHtml(adminPagoError)}</p>
+            </form>` : `<p>Primero cargá o aprobá un pasajero para registrar sus pagos.</p><a href="${adminRouteHref('/admin/pasajeros')}">Ir a Pasajeros</a>`}
+          </section>
           <section class="admin-turismo-panel admin-pasajeros-table-panel">
-            <div class="admin-pasajeros-table-head">
-              <div>
-                <h2>Control por pasajero</h2>
-                <p>Vista compacta con resumen, estado de cuotas e historial preparado por pasajero.</p>
-              </div>
-              <strong>${paymentRows.length} registros</strong>
-            </div>
-            <div class="admin-pasajeros-table-wrap">
-              <table class="admin-pasajeros-table admin-payment-table">
-                <thead>
-                  <tr>
-                    <th>Pasajero</th>
-                    <th>Resumen</th>
-                    <th>Estado</th>
-                    <th>Cuotas</th>
-                    <th>Historial</th>
-                  </tr>
-                </thead>
-                <tbody>${rowsHtml}</tbody>
-              </table>
-            </div>
-          </section>
+            <div class="admin-pasajeros-table-head"><h2>Historial de cobros</h2><button type="button" class="admin-pasajeros-secondary" data-payment-refresh ${adminPagoSaving ? "disabled" : ""}>Actualizar historial</button></div>
+            <form data-payment-search-form class="admin-payment-search"><label>Buscar por pasajero, DNI, concepto o referencia<input type="search" name="buscar" value="${escapeHtml(adminPagoSearch)}"></label><button type="submit" class="admin-pasajeros-secondary">Buscar</button></form>
+            <p>${filtered.length} movimientos${adminPagoSearch ? " encontrados" : " registrados"}. Los anulados se conservan para poder revisar el historial.</p>
+            ${annul ? `<form data-payment-annul-form class="admin-payment-annul"><h3>Anular pago de ${escapeHtml(annul.pasajero_nombre)} ${escapeHtml(annul.pasajero_apellido)}</h3><p>${escapeHtml(formatAdminMoney(Number(annul.monto_centavos) / 100))} · ${escapeHtml(annul.concepto)}. Esta acción excluye el importe del total cobrado.</p><label>Motivo de anulación<textarea name="motivo" required minlength="3" maxlength="500" ${adminPagoSaving ? "disabled" : ""}>${escapeHtml(adminPagoMotivo)}</textarea></label><div class="admin-payment-actions"><button type="submit" class="admin-pasajeros-primary" ${adminPagoSaving ? "disabled" : ""}>${adminPagoSaving ? "Guardando…" : "Confirmar anulación"}</button><button type="button" class="admin-pasajeros-secondary" data-payment-annul-cancel ${adminPagoSaving ? "disabled" : ""}>Cancelar</button></div><p role="alert" data-payment-annul-error class="admin-form-error">${escapeHtml(adminPagoAnnulError)}</p></form>` : ""}
+            <div class="admin-pasajeros-table-wrap"><table class="admin-pasajeros-table admin-payment-ledger"><thead><tr><th>Fecha</th><th>Pasajero</th><th>Concepto y referencia</th><th>Medio</th><th>Importe (ARS)</th><th>Estado y responsable</th><th>Acciones</th></tr></thead><tbody>${filtered.map((pago)=>`<tr><td>${escapeHtml(pago.fecha.split('-').reverse().join('/'))}</td><td><strong>${escapeHtml([pago.pasajero_apellido,pago.pasajero_nombre].filter(Boolean).join(', '))}</strong><span>DNI ${escapeHtml(pago.pasajero_dni)}</span></td><td>${escapeHtml(pago.concepto)}<span>${escapeHtml(pago.referencia || "Sin referencia")}</span></td><td>${escapeHtml(adminPagoMedios[pago.medio] || pago.medio)}</td><td>${escapeHtml(formatAdminMoney(Number(pago.monto_centavos)/100))}</td><td><strong>${pago.estado === "anulado" ? "Anulado" : "Confirmado"}</strong><span>Cargó: ${escapeHtml(pago.actor_username)}</span>${pago.estado === "anulado" ? `<span>Anuló: ${escapeHtml(pago.anulado_por)} · ${escapeHtml(pago.motivo_anulacion)}</span>` : ""}</td><td><div class="admin-payment-actions"><button class="admin-pasajeros-secondary" data-payment-profile="${escapeHtml(pago.pasajero_dni)}">Ver ficha</button>${adminCanDelete() && pago.estado === "confirmado" ? `<button class="admin-pasajeros-secondary" data-payment-annul="${escapeHtml(pago.id)}" ${adminPagoSaving ? "disabled" : ""}>Anular pago</button>` : ""}</div></td></tr>`).join("") || `<tr><td colspan="7">${adminPagoSearch ? "No hay movimientos que coincidan con la búsqueda." : "Todavía no hay pagos registrados."}</td></tr>`}</tbody></table></div>
+          </section>` : ""}
         `);
         bindAdminShell();
+        document.querySelectorAll('[data-payment-retry], [data-payment-refresh]').forEach(button => button.addEventListener('click', async () => { if(adminPagoSaving) return; button.disabled = true; await loadAdminPagos(); if(currentPath() === '/admin/pagos') renderAdminPagos(); }));
+        const form = document.querySelector('[data-payment-form]');
+        const remember = () => { if(form) Object.assign(adminPagoDraft, Object.fromEntries(new FormData(form))); };
+        form?.addEventListener('input', remember);
+        form?.addEventListener('change', remember);
+        form?.addEventListener('submit', async (event) => {
+          event.preventDefault();
+          if(adminPagoSaving) return;
+          remember();
+          const monto = window.ElAngelAzulPayments.amountText(adminPagoDraft.monto);
+          const error = form.querySelector('[data-payment-error]');
+          if(!monto || Number(monto) <= 0) { error.textContent = 'Ingresá un importe mayor a cero, con hasta dos decimales. Ejemplo: 12.500,50.'; return; }
+          adminPagoError = ''; adminPagoMessage = '';
+          adminPagoSaving = true;
+          form.querySelector('fieldset').disabled = true;
+          try {
+            await sendAdminPago('/api/admin/pagos', {...adminPagoDraft, monto});
+            adminPagoDraft = newAdminPagoDraft();
+            adminPagoMessage = 'Pago guardado en la base de datos.';
+          } catch (failure) { adminPagoMessage = ''; adminPagoError = failure.message || 'No se pudo confirmar el guardado. Conservamos los datos: revisá el historial y volvé a intentar.'; }
+          finally { adminPagoSaving = false; if(form.isConnected) form.querySelector('fieldset').disabled = false; }
+          if(currentPath() === '/admin/pagos') renderAdminPagos();
+        });
+        document.querySelector('[data-payment-search-form]')?.addEventListener('submit', event => { event.preventDefault(); adminPagoSearch = new FormData(event.currentTarget).get('buscar') || ''; renderAdminPagos(); });
+        document.querySelectorAll('[data-payment-profile]').forEach(button => button.addEventListener('click',()=> { adminPasajerosSelectedDni = button.dataset.paymentProfile; location.hash = '/admin/pasajeros'; }));
+        document.querySelectorAll('[data-payment-annul]').forEach(button => button.addEventListener('click',()=> { remember(); adminPagoAnularId = button.dataset.paymentAnnul; adminPagoMotivo = ''; adminPagoAnnulError = ''; renderAdminPagos(); document.querySelector('[name="motivo"]')?.focus(); }));
+        document.querySelector('[data-payment-annul-cancel]')?.addEventListener('click',()=> { adminPagoAnularId = ''; renderAdminPagos(); });
+        document.querySelector('[data-payment-annul-form]')?.addEventListener('input', event => { adminPagoMotivo = event.currentTarget.elements.motivo.value; });
+        document.querySelector('[data-payment-annul-form]')?.addEventListener('submit', async event => {
+          event.preventDefault();
+          if(adminPagoSaving) return;
+          const annulForm = event.currentTarget;
+          adminPagoMotivo = annulForm.elements.motivo.value;
+          adminPagoAnnulError = ''; adminPagoMessage = '';
+          adminPagoSaving = true;
+          annulForm.querySelectorAll('button,textarea').forEach(control => control.disabled = true);
+          try {
+            await sendAdminPago(`/api/admin/pagos/${annul.id}/anular`, {motivo: adminPagoMotivo, version: annul._version});
+            adminPagoAnularId = ''; adminPagoMessage = 'Pago anulado. El movimiento original se conserva en el historial.';
+          } catch (failure) { adminPagoAnnulError = failure.message || 'No se pudo anular. Volvé a consultar los pagos antes de intentar nuevamente.'; }
+          finally { adminPagoSaving = false; annulForm.querySelectorAll('button,textarea').forEach(control => control.disabled = false); }
+          if(currentPath() === '/admin/pagos') renderAdminPagos();
+        });
       }
 
       function renderAdminTurismoContent() {

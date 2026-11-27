@@ -342,3 +342,18 @@ body[data-app-entry="admin"] .admin-password-eye { width: 22px; height: 22px; st
 body[data-app-entry="admin"] .admin-password-eye-slash { display: none; }
 body[data-app-entry="admin"] [data-admin-password-toggle][aria-pressed="true"] .admin-password-eye-slash { display: block; }
 body[data-app-entry="admin"] .admin-login-password button:hover { background: var(--admin-selected) !important; }
+
+/* Cobros manuales: campos legibles y movimientos completos. */
+body[data-app-entry="admin"] .admin-payment-fields { grid-column: 1 / -1; width: 100%; border: 0; }
+body[data-app-entry="admin"] .admin-payment-wide { grid-column: 1 / -1; }
+body[data-app-entry="admin"] .admin-payment-search { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin: 20px 0; }
+body[data-app-entry="admin"] .admin-payment-search label { flex: 1 1 260px; }
+body[data-app-entry="admin"] .admin-payment-search input { display: block; width: 100%; margin-top: 8px; }
+body[data-app-entry="admin"] .admin-payment-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+body[data-app-entry="admin"] .admin-payment-ledger { min-width: 1080px; }
+body[data-app-entry="admin"] .admin-payment-ledger td { font-variant-numeric: tabular-nums; }
+body[data-app-entry="admin"] .admin-payment-ledger td > span { display: block; margin-top: 6px; }
+body[data-app-entry="admin"] .admin-payment-annul { border: 1px solid var(--admin-line); border-radius: 12px; padding: 20px; margin: 20px 0; }
+body[data-app-entry="admin"] .admin-payment-annul textarea { display: block; width: 100%; margin: 8px 0 16px; }
+body[data-app-entry="admin"] .admin-form-error { color: #a12323; overflow-wrap: anywhere; }
+body[data-app-entry="admin"] .admin-payment-feedback { color: #145532; }

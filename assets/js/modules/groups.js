@@ -27,6 +27,7 @@
       colegioId: group.colegioId || "",
       curso,
       division,
+      estado: group.estado || "Activo",
       pasajerosEsperados: Number(group.pasajerosEsperados) || 0,
       pasajeros: Array.isArray(group.pasajeros) ? group.pasajeros : []
     };
