@@ -13,7 +13,7 @@ El servidor escucha en `PORT` o, si no está definido, en `8080`.
 
 ## Producción
 
-- Hosting: Render (`el-angel-azul-web`).
+- Hosting: Hostinger, con despliegue automático desde `main` y una vista previa por cada push.
 - Rama desplegada: `main`.
 - Entrada: `server.js` mediante `npm start`.
 - Base activa: PostgreSQL/Supabase.
@@ -53,7 +53,7 @@ El correo necesita el dominio de la agencia verificado en Resend (registros DNS)
 Hoy `elangelazul.tur.ar` no tiene DNS operativos: ver
 `docs/superpowers/specs/2026-09-15-ficha-adhesion-design.md` §9.
 
-Render define `PORT` automáticamente. No configurar variables de Google
+Hostinger define `PORT` automáticamente. No configurar variables de Google
 Sheets: el adaptador legado se conserva temporalmente como rollback, pero no es
 la fuente activa de producción.
 
@@ -61,7 +61,7 @@ Nunca subir a Git ni compartir por chat `DATABASE_URL`, contraseñas, archivos
 `.env` o credenciales de servicios.
 
 Para validación TLS completa, descargar el certificado CA desde Database >
-SSL Configuration en Supabase, cargarlo como `SUPABASE_DB_CA_CERT` en Render y
+SSL Configuration en Supabase, cargarlo como `SUPABASE_DB_CA_CERT` en Hostinger y
 recién entonces activar `EAA_POSTGRES_TLS_VERIFY_FULL=true`.
 El adaptador elimina automáticamente `sslmode`, `sslcert`, `sslkey` y
 `sslrootcert` de `DATABASE_URL` cuando la validación completa está activa para
