@@ -110,15 +110,6 @@
                       <a class="eaa-button eaa-button-line" href="#/turismo" data-scroll-target="eaa-turismo">Turismo ${arrow}</a>
                     </div>
                   </div>
-                  <div class="eaa-hero-panel" role="group" aria-label="Fotos del inicio">
-                    <div class="eaa-hero-progress" aria-hidden="true"><span data-hero-bar></span></div>
-                    <div class="eaa-hero-controls">
-                      <button type="button" data-hero-prev aria-label="Foto anterior">${arrow}</button>
-                      <button type="button" data-hero-next aria-label="Foto siguiente">${arrow}</button>
-                      <span class="eaa-hero-count" data-hero-count aria-live="off">01/0${heroSlides.length}</span>
-                    </div>
-                    <p class="eaa-hero-caption" data-hero-caption aria-live="polite">${heroSlides[0][2]}</p>
-                  </div>
                 </div>
               </div>
             </section>

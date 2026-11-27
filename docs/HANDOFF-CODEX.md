@@ -9,7 +9,7 @@ Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerra
 |---|---|---|---|---|
 | Fran (Claude Code) | `fran/harness` | Harness: guardas, `AGENTS.md`, docs | `AGENTS.md`, `CLAUDE.md`, `package.json`, `scripts/guardas.test.js`, `scripts/helpers/sin-secretos.js`, docs | 25/11 |
 | Fran (Claude Code) | `fran/inicio-aldena` | Paso 8: rediseño del inicio inspirado en la web de referencia (Agustín dio su OK sobre el PR #8) | `index.html`, `assets/css/home.css`, `assets/css/public-experience.css`, `assets/js/modules/home-motion.js`, `renderHome` en `assets/js/app.js` | 27/11 |
-| Agustín (Codex) | `agustin/pdf-aclaracion-centrada` | Aclaración del PDF centrada sobre su línea; verificada con nombres largos y cortos. Check: 167 pasan, 0 fallos, 1 TODO previo de TLS. Pendiente autorización para integrar a main y publicar | `lib/ficha-pdf.js`, este documento | 27/11 |
+| Agustín (Codex) | `agustin/inicio-sin-panel-fotos` | Retirar del inicio el recuadro de fotos con progreso, flechas, contador y descripción, por pedido del dueño. Pendiente publicación; el PR #32 de aclaración centrada ya está integrado a main | `assets/js/app.js`, este documento | 27/11 |
 
 ## Harness (25/11/2026)
 - Las reglas del repo ahora se chequean en `npm run check` con `scripts/guardas.test.js`: secretos en archivos del repo, `.env` trackeados, docs con referencias rotas y `CLAUDE.md` → `AGENTS.md`.
