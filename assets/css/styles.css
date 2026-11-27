@@ -5462,6 +5462,7 @@
         box-shadow: none;
         display: grid;
         gap: 22px;
+        grid-template-columns: minmax(0, 1fr);
         padding: 28px;
       }
 
@@ -6485,6 +6486,8 @@
         gap: 12px;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         margin: 0;
+        /* Un fieldset tiene min-width: min-content por defecto y se salía de la pantalla. */
+        min-width: 0;
         padding: 18px;
       }
 
@@ -6516,8 +6519,14 @@
         resize: vertical;
       }
 
+      /* Un select toma el ancho de su opción más larga y se salía de la pantalla. */
+      .admin-pasajeros-form select {
+        max-width: 100%;
+        min-width: 0;
+      }
+
       .admin-pasajeros-form fieldset:last-of-type {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
       }
 
       .admin-pasajeros-form-error {
@@ -6593,7 +6602,7 @@
       }
 
       .admin-pasajeros-group-form fieldset {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
         padding: 16px;
       }
 
@@ -6637,6 +6646,7 @@
       .admin-pasajeros-table-head {
         align-items: end;
         display: flex;
+        flex-wrap: wrap;
         gap: 16px;
         justify-content: space-between;
       }
@@ -7190,6 +7200,9 @@
       }
 
       .admin-main {
+        /* Sin esto la columna crece hasta el contenido más ancho (p. ej. Colegios, 514 px)
+           y el panel se corta a la derecha en el celular. */
+        grid-template-columns: minmax(0, 1fr);
         min-width: 0;
       }
 
