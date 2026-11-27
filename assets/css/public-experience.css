@@ -12,7 +12,7 @@ body:not([data-app-entry="admin"]) {
   --eaa-ink: var(--color-text);
   --eaa-line: var(--color-border);
   --eaa-on-dark: var(--color-background);
-  --eaa-on-dark-2: #c9dceb;
+  --eaa-on-dark-2: var(--h-on-dark-2);
   font-family: var(--font-body);
 }
 .eaa-skip-link { position: fixed; top: -100px; left: 24px; padding: 16px 24px; background: var(--eaa-paper); color: var(--eaa-navy); z-index: 200; }
@@ -28,14 +28,14 @@ body:not([data-app-entry="admin"]) .site-nav .eaa-nav-enroll:hover { background:
 body:not([data-app-entry="admin"]) .site-header :is(a, button):focus-visible { outline: 3px solid var(--eaa-accent); outline-offset: 3px; }
 body.home-page:not([data-app-entry="admin"]) main { padding: 0; }
 body:not([data-app-entry="admin"]) #app :is(h1,h2,h3) { font-family: var(--font-display); font-weight: 400; font-variation-settings: normal; letter-spacing: .005em; }
-body:not([data-app-entry="admin"]) .site-footer { background: var(--eaa-navy); border: 0; color: var(--eaa-on-dark-2); padding-top: 56px; }
-body:not([data-app-entry="admin"]) .footer-logo { filter: none; background: var(--eaa-paper); padding: 10px 14px; border-radius: 8px; width: 150px; height: 80px; object-fit: cover; }
+body:not([data-app-entry="admin"]) .site-footer { background: var(--eaa-navy); border: 0; color: var(--eaa-on-dark-2); padding-top: 120px; }
+body:not([data-app-entry="admin"]) .footer-logo { filter: none; background: var(--eaa-paper); padding: 8px 16px; border-radius: 8px; width: 150px; height: 80px; object-fit: cover; }
 body:not([data-app-entry="admin"]) .footer-inner { gap: 36px; }
 body:not([data-app-entry="admin"]) .footer-column h2 { color: var(--eaa-on-dark); font: 600 14px var(--font-body); letter-spacing: 0; text-transform: none; }
 body:not([data-app-entry="admin"]) .footer-links a, body:not([data-app-entry="admin"]) .footer-contact-list a, body:not([data-app-entry="admin"]) .footer-socials a { color: var(--eaa-on-dark-2); font-size: 14px; }
 body:not([data-app-entry="admin"]) .footer-links a:hover, body:not([data-app-entry="admin"]) .footer-contact-list a:hover, body:not([data-app-entry="admin"]) .footer-socials a:hover { color: var(--eaa-on-dark); }
 body:not([data-app-entry="admin"]) .site-footer :is(a, button):focus-visible { outline: 3px solid var(--eaa-on-dark); outline-offset: 3px; }
-body:not([data-app-entry="admin"]) .footer-bottom { border-color: rgb(247 251 254 / 0.16); }
+body:not([data-app-entry="admin"]) .footer-bottom { border-color: color-mix(in oklab, var(--h-on-dark) 16%, transparent); }
 @media (min-width: 1050px) {
   body:not([data-app-entry="admin"]) .site-nav { display: flex; position: static; padding: 0; }
   body:not([data-app-entry="admin"]) .mobile-header-actions { display: none; }
@@ -45,13 +45,17 @@ body:not([data-app-entry="admin"]) .footer-bottom { border-color: rgb(247 251 25
   body:not([data-app-entry="admin"]) .site-nav { display: none; position: absolute; top: calc(100% + 10px); left: 0; right: 0; padding: 16px; background: var(--eaa-paper); border: 1px solid var(--eaa-line); border-radius: 14px; }
   body.nav-open:not([data-app-entry="admin"]) .site-nav { display: grid; }
   body:not([data-app-entry="admin"]) .mobile-header-actions { display: flex; }
-  body:not([data-app-entry="admin"]) .nav-toggle { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; }
+  body:not([data-app-entry="admin"]) .nav-toggle { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
   body:not([data-app-entry="admin"]) .nav-toggle span { width: 20px; height: 2px; background: var(--eaa-navy); border-radius: 2px; }
 }
+@media (max-width: 62rem) {
+  body:not([data-app-entry="admin"]) .footer-inner { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  body:not([data-app-entry="admin"]) .footer-brand { grid-column: 1 / -1; }
+}
 @media (max-width: 700px) {
-  body:not([data-app-entry="admin"]) .site-header { top: 12px; left: 16px; right: 16px; min-height: 68px; padding: 7px 16px; border-radius: 12px; }
+  body:not([data-app-entry="admin"]) .site-header { top: 12px; left: 16px; right: 16px; min-height: 68px; padding: 8px 16px; border-radius: 12px; }
   body:not([data-app-entry="admin"]) .brand-logo { height: 48px; width: 110px; }
-  body:not([data-app-entry="admin"]) .footer-inner { gap: 32px; }
+  body:not([data-app-entry="admin"]) .footer-inner { gap: 32px; grid-template-columns: 1fr; }
 }
 /* Poppins en controles públicos; Bebas Neue únicamente para titulares. */
 body:not([data-app-entry="admin"]) :is(button,input,select,textarea,summary) { font-family: var(--font-ui); }

@@ -8,6 +8,7 @@ Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerra
 | Quién | Rama | Paso | Archivos que toca | Actualizado |
 |---|---|---|---|---|
 | Fran (Claude Code) | `fran/harness` | Harness: guardas, `AGENTS.md`, docs | `AGENTS.md`, `CLAUDE.md`, `package.json`, `scripts/guardas.test.js`, `scripts/helpers/sin-secretos.js`, docs | 25/11 |
+| Fran (Claude Code) | `fran/inicio-hallmark` | Paso 8: rediseño del inicio con la skill Hallmark (el PR #8 de Agustín quedó integrado, con su OK) | `index.html`, `assets/css/home.css`, `assets/css/public-experience.css`, `assets/js/modules/home-motion.js`, `renderHome` en `assets/js/app.js` | 27/11 |
 | Agustín (Codex) | — | Sin asignar (propuesto: Paso 3, servidor y base; lo define el dueño) | — | — |
 
 ## Harness (25/11/2026)
@@ -114,7 +115,7 @@ Cada paso termina con `npm run check` en verde y un commit chico. Si tocás algo
 - [x] Admin en celular (390 px): Colegios se cortaba a la derecha (panel de 514 px en 355). Corregido con columnas `minmax(0, 1fr)` y `min-width: 0` en `.admin-main`, `.admin-turismo-panel` y los `fieldset` y `select` del formulario. Las tablas (920 a 2200 px de ancho) ya se desplazaban dentro de su contenedor y no cambiaron; si se prefieren tarjetas en vez de scroll lateral, es decisión de diseño del dueño. Queda un botón de Pasajeros que se pasa 12 px en escritorio (1280 px), ya existía.
 - [x] Botón «Limpiar firma»: 34 px → 44 px (`min-height`). Era el único control de la ficha por debajo de 44 px en celular.
 - [x] Teclado en la ficha (26/11): Domicilio, Condiciones y Firma tenían `visibility:hidden` hasta un scroll real (GSAP `autoAlpha`), así que con Tab se saltaban y no se podía completar ni enviar la ficha. Ahora el reveal anima solo `opacity` y el foco muestra el bloque. Probado con Tab en el navegador: se alcanzan todos los campos, la firma por texto, «Limpiar firma» y «Enviar ficha», con y sin «reducir movimiento».
-- [ ] Mismo patrón (`autoAlpha`) sin corregir: portada (`[data-reveal]`, zona del PR #8 de Agustín) y encabezados y tarjetas de Turismo público (las tarjetas se muestran solas a los 1,3 s). Falta probar con un lector de pantalla real (VoiceOver); solo se probó el orden de Tab.
+- [x] Portada: rediseñada con Hallmark (27/11), sin `autoAlpha`; el movimiento nuevo (`home-motion.js`) no saca nada del orden de Tab. Pendiente el mismo patrón en encabezados y tarjetas de Turismo público (se rediseña a continuación). Falta probar con un lector de pantalla real (VoiceOver).
 
 **Hecho el 26/11:** el PDF transliteró «Mićić» → «Micic» (`textoSeguro`, `lib/ficha-pdf.js`; lo exacto pide embeber una fuente con fontkit, dependencia nueva). Un 401 al guardar en el admin recarga y el login avisa que el cambio no se guardó.
 
@@ -141,3 +142,11 @@ Ramas, reparto, checklist de inicio y cierre y qué puede hacer un agente: ver `
 | `feat/ficha-estabilizacion` | Rama A; tiene docs de contexto (`b65f7ef`) que no están en `integracion/abc`. |
 | `feat/colegios-admin`, `feat/storage-firma`, `feat/db-doble-envio`, `feat/frontend-pasajeros-a11y` | Ya incluidas en `integracion/abc`. |
 | `fix/migracion-supabase-segura`, `feat/ficha-adhesion-v2`, `fix/ficha-v2-release` | Anteriores a noviembre; ignorar. |
+
+## Inicio rediseñado con Hallmark (27/11/2026)
+- **Marca intacta:** paleta (`#083b7a`, `#0d69a1`, rosa de botones `#c42774` para contraste 5,2:1 con texto claro, fondo `#f7fbfe`) y tipografía (Bebas Neue en titulares, Poppins en textos), como pidió el dueño.
+- **Estructura (8 secciones):** hero con dos entradas (viajes estudiantiles y turismo), destinos (Bariloche, Carlos Paz y Camboriú para egresados), «Vos vivís el viaje» (tramo fijo con tres fotos), Turismo, momentos reales, cómo te inscribís, preguntas y cierre. Se quitó la franja de tres afirmaciones y el pedido de contacto duplicado.
+- **Turismo en el inicio:** muestra hasta 3 viajes **activos de la base** (`loadTurismoPublicPackages`); sin viajes activos no inventa ninguno y deja la invitación a consultar.
+- **Fotos del dueño:** `homePhotos` en `renderHome` (`assets/js/app.js`) tiene dos huecos, `camboriu` y `turismo`. Subí la foto (por ejemplo `assets/img/home/camboriu.webp`, ~1600×2100 vertical para Camboriú y ~1600×1280 para Turismo) y poné la ruta; mientras tanto se ven como paneles de la marca. La biblioteca de Hallmark no tenía fotos de Camboriú ni de viajes familiares. Las fotos actuales del inicio son las reales de los grupos.
+- **Movimiento:** Lenis afinado (más inercia, anclas con Lenis), titulares que suben palabra por palabra, parallax suave en las fotos y tramo fijo con cambio de foto. Todo es visible sin JS; con «reducir movimiento» no hay tramo fijo ni scroll suave. Cargado desde `assets/js/modules/home-motion.js`.
+- **Hallmark:** `sloplint --render` sobre `home.css` y `public-experience.css`: 0 FAIL, 0 REFLEX (un hallazgo, las fotos vacías, queda justificado en el sello). Falta la revisión final en contexto limpio y mirarlo en Safari/iPhone reales.

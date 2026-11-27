@@ -130,9 +130,9 @@
                   <h2 id="eaa-story-title" data-split>Vos vivís el viaje. Nosotros, con vos.</h2>
                   <p class="eaa-story-lead" data-rise>Somos una agencia de Corrientes. Nos gusta conocer a cada grupo, escuchar a las familias y acompañar el viaje desde la primera consulta.</p>
                   <ol class="eaa-story-steps">
-                    <li data-story-step="0"><span class="eaa-n" aria-hidden="true">1</span><div><h3>Antes de salir</h3><p>Elegimos la propuesta con vos y repasamos fechas, servicios y formas de pago.</p></div></li>
-                    <li data-story-step="1"><span class="eaa-n" aria-hidden="true">2</span><div><h3>Durante la aventura</h3><p>Acompañamos al grupo para que pueda disfrutar cada momento del viaje.</p></div></li>
-                    <li data-story-step="2"><span class="eaa-n" aria-hidden="true">3</span><div><h3>Cerca de las familias</h3><p>Un contacto directo con la agencia para consultar y organizar la inscripción.</p></div></li>
+                    <li data-story-step="0"><span class="eaa-n" aria-hidden="true">1</span><div><strong class="eaa-step-title">Antes de salir</strong><p>Elegimos la propuesta con vos y repasamos fechas, servicios y formas de pago.</p></div></li>
+                    <li data-story-step="1"><span class="eaa-n" aria-hidden="true">2</span><div><strong class="eaa-step-title">Durante la aventura</strong><p>Acompañamos al grupo para que pueda disfrutar cada momento del viaje.</p></div></li>
+                    <li data-story-step="2"><span class="eaa-n" aria-hidden="true">3</span><div><strong class="eaa-step-title">Cerca de las familias</strong><p>Un contacto directo con la agencia para consultar y organizar la inscripción.</p></div></li>
                   </ol>
                 </div>
                 <div class="eaa-story-media" data-story-media>
@@ -175,9 +175,9 @@
                   <p data-rise>Todo online, con la ficha de tu curso.</p>
                 </div>
                 <ol class="eaa-steps-list">
-                  <li data-rise><span class="eaa-n" aria-hidden="true">1</span><h3>Elegí tu viaje</h3><p>Seleccioná el curso, el destino y el año.</p></li>
-                  <li data-rise><span class="eaa-n" aria-hidden="true">2</span><h3>Completá la ficha</h3><p>Datos del pasajero y del tutor, domicilio y firma.</p></li>
-                  <li data-rise><span class="eaa-n" aria-hidden="true">3</span><h3>Administración la revisa</h3><p>El plan de pago corresponde al contrato de tu grupo.</p></li>
+                  <li data-rise><span class="eaa-n" aria-hidden="true">1</span><strong class="eaa-step-title">Elegí tu viaje</strong><p>Seleccioná el curso, el destino y el año.</p></li>
+                  <li data-rise><span class="eaa-n" aria-hidden="true">2</span><strong class="eaa-step-title">Completá la ficha</strong><p>Datos del pasajero y del tutor, domicilio y firma.</p></li>
+                  <li data-rise><span class="eaa-n" aria-hidden="true">3</span><strong class="eaa-step-title">Administración la revisa</strong><p>El plan de pago corresponde al contrato de tu grupo.</p></li>
                 </ol>
                 <div class="eaa-actions" data-rise><a class="eaa-button eaa-button-fill" href="#/inscripcion">Inscripción online ${arrow}</a></div>
               </div>
@@ -199,7 +199,7 @@
                 <h2 id="eaa-final-title" data-split>¿Y si nos vamos juntos?</h2>
                 <div class="eaa-actions" data-rise>
                   <a class="eaa-button eaa-button-fill" href="${whatsappLink("Hola, queremos viajar con El Ángel Azul. ¿Nos cuentan las propuestas para nuestro grupo?")}" target="_blank" rel="noopener">Armemos el viaje ${arrow}</a>
-                  <a class="eaa-button eaa-button-line" href="#/inscripcion">Ya tengo mi viaje: inscribirme ${arrow}</a>
+                  <a class="eaa-button eaa-button-line" href="#/inscripcion">Quiero inscribirme ${arrow}</a>
                 </div>
               </div>
             </section>
