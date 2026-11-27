@@ -10299,7 +10299,7 @@
 
       input::placeholder,
       textarea::placeholder {
-        color: #5c6c76;
+        color: var(--color-muted);
       }
 
       input:focus,
@@ -11001,6 +11001,7 @@
       }
 
       body[data-app-entry="admin"] .admin-shell-session strong {
+        color: #ffffff;
         font-size: 0.9rem;
         white-space: nowrap;
       }
