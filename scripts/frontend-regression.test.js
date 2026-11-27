@@ -421,3 +421,10 @@ test("el resumen de la inscripción no se muestra dos veces en el segundo tramo"
   assert.match(renderStep, /contextSummary\.hidden = macroStep === 2/);
   assert.match(fs.readFileSync(path.join(__dirname, "../assets/css/styles.css"), "utf8"), /\.inscripcion-context-summary\[hidden\]\s*\{\s*display:\s*none/);
 });
+
+test("el nombre de sesión del admin y los placeholders mantienen contraste", () => {
+  const css = fs.readFileSync(path.join(__dirname, "../assets/css/styles.css"), "utf8");
+  // Una regla genérica `.admin-shell-session strong { color: var(--color-text) }` lo dejaba en 2:1 sobre el azul.
+  assert.match(css, /body\[data-app-entry="admin"\] \.admin-shell-session strong \{\s*color: #ffffff;/);
+  assert.match(css, /input::placeholder,\s*textarea::placeholder \{\s*color: var\(--color-muted\);/);
+});
