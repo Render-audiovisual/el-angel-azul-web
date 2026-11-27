@@ -7885,13 +7885,16 @@
 
         gsap.utils.toArray("[data-reveal-light]").forEach((el) => {
           if (el === heroContent) return;
+          // opacity y no autoAlpha: autoAlpha deja visibility:hidden y el bloque (con sus campos)
+          // sale del orden de Tab y del lector de pantalla hasta que alguien hace scroll con el mouse.
           const tween = gsap.from(el, {
-            autoAlpha: 0,
+            opacity: 0,
             y: reduceMotion ? 0 : 18,
             duration: reduceMotion ? 0.3 : 0.5,
             ease: "power2.out",
             scrollTrigger: { trigger: el, start: "top 88%", toggleActions: "play none none reverse", onEnter: () => inscripcionAntiBlankFallback(tween) }
           });
+          el.addEventListener("focusin", () => tween.progress(1));
           if (tween.scrollTrigger) inscripcionScrollTriggers.push(tween.scrollTrigger);
         });
       }
@@ -8515,13 +8518,15 @@
 
         gsap.utils.toArray("[data-reveal-light]").forEach((el) => {
           if (el === hero) return;
+          // opacity y no autoAlpha: ver el comentario de bindInscripcionAnimations.
           const tween = gsap.from(el, {
-            autoAlpha: 0,
+            opacity: 0,
             y: reduceMotion ? 0 : 18,
             duration: reduceMotion ? 0.3 : 0.5,
             ease: "power2.out",
             scrollTrigger: { trigger: el, start: "top 88%", toggleActions: "play none none reverse", onEnter: () => fichaAdhesionAntiBlankFallback(tween) }
           });
+          el.addEventListener("focusin", () => tween.progress(1));
           if (tween.scrollTrigger) fichaAdhesionScrollTriggers.push(tween.scrollTrigger);
         });
       }
