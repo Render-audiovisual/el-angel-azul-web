@@ -1,0 +1,231 @@
+/* Hallmark · shape: Journey (hero with two doors, destinations, pinned story, tourism, moments, steps, questions, close) · genre: editorial · theme: brand · redesign: full
+ * paper: oklch(98.5% 0.008 240) · accent: oklch(55% 0.21 0) · display: Bebas Neue · body: Poppins · hero: Stage · nav: kept · footer: kept · signature: the real group photo at full scale with two doors
+ * axes: light/display-condensed/chromatic-pink · posture: left-aligned stage, scroll-driven photo · contrast: pass · fold: pass · v2.0.0 */
+/* Hallmark · pre-emit critique: P4 H4 E3 S4 R4 V3 · weakest: E, the tourism and Camboriú photo slots wait for the owner's pictures; they read as designed type panels until then */
+
+/* ---------------------------------------------------------------- tokens ----
+   Acotados a .eaa-home: el resto del sitio (ficha, admin, turismo) comparte
+   styles.css y no tiene que cambiar. Marca y tipografía: las del sitio. */
+.eaa-home {
+  --color-paper: #f7fbfe;
+  --color-paper-2: #eaf3f9;
+  --color-paper-3: #d9e7ef;
+  --color-ink: #10202b;
+  --color-ink-2: #33454f;
+  --color-muted: #4f6472;
+  --color-rule: #cfdfe9;
+  --color-navy: #083b7a;
+  --color-navy-deep: #052a58;
+  --color-blue: #0d69a1;
+  --color-accent: #d82f80;
+  --color-accent-strong: #b7236a;
+  --color-accent-ink: #f7fbfe;
+  --color-focus: #d82f80;
+  --color-on-dark: #f7fbfe;
+  --color-on-dark-2: #c9dceb;
+  --color-focus-on-dark: #f7fbfe;
+  --font-display: "Bebas Neue", Impact, "Arial Narrow", sans-serif;
+  --font-body: "Poppins", system-ui, sans-serif;
+  --space-2xs: 4px; --space-xs: 8px; --space-sm: 12px; --space-md: 16px; --space-lg: 24px; --space-xl: 40px; --space-2xl: 64px; --space-3xl: 96px; --space-4xl: 144px;
+  --text-sm: 0.875rem; --text-md: 1rem; --text-lg: 1.125rem; --text-lead: clamp(1.125rem, 0.4vw + 1rem, 1.375rem);
+  --text-title: clamp(1.5rem, 1vw + 1.1rem, 2rem);
+  --text-section: clamp(3rem, 5.6vw + 0.5rem, 6.25rem);
+  --text-hero: clamp(4rem, 9vw, 8.5rem);
+  --container: 1320px;
+  --gutter: clamp(20px, 5vw, 64px);
+  --section-gap: clamp(72px, 10vw, 144px);
+  --radius-card: 16px;
+  --radius-control: 8px;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-micro: 140ms;
+  --dur-short: 260ms;
+  --dur-long: 700ms;
+  color: var(--color-ink);
+  background: var(--color-paper);
+  font: 400 var(--text-md)/1.6 var(--font-body);
+  overflow-x: clip;
+}
+.eaa-home *, .eaa-home *::before, .eaa-home *::after { box-sizing: border-box; }
+.eaa-home :is(h1, h2, h3, p, figure, ul, ol) { margin: 0; padding: 0; }
+.eaa-home :is(ul, ol) { list-style: none; }
+.eaa-home img { display: block; max-width: 100%; height: auto; }
+.eaa-home svg { display: block; width: 1.25rem; height: 1.25rem; flex-shrink: 0; }
+/* styles.css da a todo <a> y <button> borde azul, radio de píldora y padding: acá se anula y cada componente define el suyo. */
+.eaa-home :where(a, button) { color: inherit; text-decoration: none; border: 0; border-radius: 0; padding: 0; background: none; }
+.eaa-home button, .eaa-home summary { font: inherit; cursor: pointer; }
+.eaa-home :is(h1, h2, h3) {
+  font-family: var(--font-display);
+  font-weight: 400;
+  line-height: 0.9;
+  letter-spacing: 0.005em;
+  overflow-wrap: break-word;
+  min-width: 0;
+  text-wrap: balance;
+}
+.eaa-home :is(a, button, summary):focus-visible { outline: 3px solid var(--color-focus); outline-offset: 4px; }
+.eaa-dark :is(a, button, summary):focus-visible { outline-color: var(--color-focus-on-dark); }
+
+/* ------------------------------------------------------------- estructura -- */
+.eaa-wrap { width: 100%; max-width: calc(var(--container) + 2 * var(--gutter)); margin-inline: auto; padding-inline: var(--gutter); }
+.eaa-section { padding-block: var(--section-gap); scroll-margin-top: 96px; }
+.eaa-dark { background: var(--color-navy); color: var(--color-on-dark); }
+.eaa-soft { background: var(--color-paper-2); }
+.eaa-section-head { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); align-items: end; gap: var(--space-xl); margin-bottom: var(--space-2xl); }
+.eaa-section-head h2 { font-size: var(--text-section); max-width: 8em; color: var(--color-navy); }
+.eaa-section-head p { color: var(--color-muted); font-size: var(--text-lg); max-width: 34ch; padding-bottom: var(--space-xs); }
+.eaa-dark .eaa-section-head h2 { color: var(--color-on-dark); }
+
+/* --------------------------------------------------------------- controles -- */
+.eaa-button {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-md);
+  min-height: 52px; padding: 0 var(--space-lg);
+  border: 2px solid transparent; border-radius: var(--radius-control);
+  font: 600 var(--text-md)/1 var(--font-body);
+  transition: background-color var(--dur-micro) ease, color var(--dur-micro) ease, border-color var(--dur-micro) ease, transform var(--dur-short) var(--ease-out);
+}
+.eaa-button svg { transition: transform var(--dur-short) var(--ease-out); }
+.eaa-button:hover svg { transform: translateX(4px); }
+.eaa-button-fill { background: var(--color-accent); color: var(--color-accent-ink); }
+.eaa-button-fill:hover { background: var(--color-accent-strong); }
+.eaa-button-line { border-color: currentColor; color: var(--color-on-dark); }
+.eaa-button-line:hover { background: var(--color-on-dark); color: var(--color-navy); border-color: var(--color-on-dark); }
+.eaa-button-ink { border-color: var(--color-navy); color: var(--color-navy); }
+.eaa-button-ink:hover { background: var(--color-navy); color: var(--color-on-dark); }
+.eaa-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-md); }
+.eaa-link { display: inline-flex; align-items: center; gap: var(--space-sm); min-height: 44px; font-weight: 600; color: var(--color-blue); border-bottom: 2px solid currentColor; }
+.eaa-link svg { transition: transform var(--dur-short) var(--ease-out); }
+.eaa-link:hover svg { transform: translateX(4px); }
+
+/* -------------------------------------------------------------------- hero -- */
+.eaa-hero { position: relative; isolation: isolate; display: flex; align-items: flex-end; min-height: max(720px, 100svh); color: var(--color-on-dark); background: var(--color-navy-deep); overflow: clip; }
+.eaa-hero-photo { position: absolute; inset: 0; z-index: -2; overflow: clip; }
+.eaa-hero-photo img { width: 100%; height: 100%; object-fit: cover; object-position: 62% 54%; transform-origin: 62% 60%; will-change: transform; }
+.eaa-hero-shade { position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, rgb(5 42 88 / 0.92) 0%, rgb(5 42 88 / 0.62) 42%, rgb(5 42 88 / 0.04) 86%), linear-gradient(0deg, rgb(5 42 88 / 0.7), transparent 46%); }
+.eaa-hero-inner { width: 100%; padding-top: 160px; padding-bottom: var(--space-3xl); }
+.eaa-hero h1 { font-size: var(--text-hero); line-height: 0.88; max-width: 7em; color: var(--color-on-dark); }
+.eaa-hero-lead { margin-top: var(--space-lg); max-width: 36ch; font-size: var(--text-lead); line-height: 1.5; color: var(--color-on-dark); }
+.eaa-hero .eaa-actions { margin-top: var(--space-xl); }
+.eaa-hero-credit { position: absolute; right: var(--gutter); bottom: var(--space-xl); max-width: 22ch; text-align: right; font-size: var(--text-sm); line-height: 1.5; color: var(--color-on-dark-2); }
+
+/* ------------------------------------------------------------ destinos ------ */
+.eaa-destinations-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-lg); }
+.eaa-destination { position: relative; isolation: isolate; display: flex; flex-direction: column; justify-content: flex-end; min-width: 0; aspect-ratio: 3 / 4; padding: var(--space-lg); border-radius: var(--radius-card); overflow: clip; color: var(--color-on-dark); background: var(--color-navy); }
+.eaa-destination::after { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(0deg, rgb(5 28 58 / 0.92), rgb(5 28 58 / 0) 66%); }
+.eaa-destination > img, .eaa-destination > [data-slot] { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; }
+.eaa-destination-tag { position: absolute; top: var(--space-lg); left: var(--space-lg); padding: 6px 14px; border-radius: 999px; background: var(--color-paper); color: var(--color-navy); font-size: var(--text-sm); font-weight: 600; line-height: 1.4; }
+.eaa-destination h3 { font-size: clamp(3.5rem, 6vw, 6rem); color: var(--color-on-dark); }
+.eaa-destination p { margin-top: var(--space-xs); max-width: 26ch; color: var(--color-on-dark-2); }
+.eaa-destination-go { display: flex; align-items: center; justify-content: space-between; margin-top: var(--space-md); padding-top: var(--space-md); border-top: 1px solid rgb(247 251 254 / 0.35); font-weight: 600; }
+.eaa-destination-go i { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--color-paper); color: var(--color-navy); transition: transform var(--dur-short) var(--ease-out), background-color var(--dur-micro) ease; }
+.eaa-destination:hover .eaa-destination-go i { transform: translateX(6px); background: var(--color-accent); color: var(--color-accent-ink); }
+
+/* Hueco para una foto del dueño: se ve como un panel tipográfico de la marca hasta que llegue. */
+.eaa-slot { position: relative; overflow: clip; background: linear-gradient(155deg, var(--color-navy), var(--color-blue)); }
+.eaa-slot > img { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; object-fit: cover; }
+.eaa-slot-name { position: absolute; inset: 0; display: grid; place-items: center; padding: var(--space-lg); font: 400 clamp(4rem, 9vw, 8rem)/0.9 var(--font-display); color: rgb(247 251 254 / 0.16); text-align: center; }
+.eaa-slot:has(> img) .eaa-slot-name { display: none; }
+
+/* ------------------------------------------------------- vivencia (story) ---- */
+.eaa-story { position: relative; padding-block: var(--section-gap); }
+.eaa-story-grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: var(--space-3xl); align-items: center; }
+.eaa-story h2 { font-size: var(--text-section); color: var(--color-on-dark); max-width: 6.5em; }
+.eaa-story-lead { margin-top: var(--space-lg); max-width: 38ch; color: var(--color-on-dark-2); font-size: var(--text-lead); line-height: 1.55; }
+.eaa-story-steps { margin-top: var(--space-xl); display: grid; gap: 0; }
+.eaa-story-steps li { display: grid; grid-template-columns: 2.25rem minmax(0, 1fr); gap: var(--space-md); padding-block: var(--space-md); border-top: 1px solid rgb(247 251 254 / 0.22); opacity: 1; transition: opacity var(--dur-short) ease; }
+.eaa-story-steps .eaa-n { font: 400 2rem/1 var(--font-display); color: var(--color-on-dark-2); font-variant-numeric: tabular-nums; }
+.eaa-story-steps h3 { font: 600 var(--text-lg)/1.4 var(--font-body); letter-spacing: 0; color: var(--color-on-dark); }
+.eaa-story-steps p { margin-top: 4px; color: var(--color-on-dark-2); max-width: 40ch; }
+.eaa-story-media { position: relative; display: grid; gap: var(--space-lg); }
+.eaa-story-media figure { position: relative; margin: 0; border-radius: var(--radius-card); overflow: clip; aspect-ratio: 4 / 5; background: var(--color-navy-deep); }
+.eaa-story-media img { width: 100%; height: 100%; object-fit: cover; }
+.eaa-story-media figcaption { position: absolute; left: var(--space-md); bottom: var(--space-md); padding: 6px 14px; border-radius: 999px; background: var(--color-paper); color: var(--color-navy); font-size: var(--text-sm); font-weight: 600; }
+
+/* ---------------------------------------------------------------- turismo ---- */
+.eaa-tourism-grid { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: var(--space-3xl); align-items: center; }
+.eaa-tourism-media { aspect-ratio: 5 / 4; border-radius: var(--radius-card); min-width: 0; }
+.eaa-tourism h2 { font-size: var(--text-section); color: var(--color-navy); max-width: 7em; }
+.eaa-tourism-lead { margin-top: var(--space-lg); max-width: 38ch; color: var(--color-muted); font-size: var(--text-lead); line-height: 1.55; }
+.eaa-trips { margin-top: var(--space-xl); display: grid; }
+.eaa-trips:empty { display: none; }
+.eaa-trip { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--space-md); padding: var(--space-md) 0; border-top: 1px solid var(--color-rule); min-height: 72px; }
+.eaa-trip:last-child { border-bottom: 1px solid var(--color-rule); }
+.eaa-trip strong { display: block; font: 400 var(--text-title)/1.1 var(--font-display); color: var(--color-navy); letter-spacing: 0.01em; }
+.eaa-trip span { color: var(--color-muted); font-size: var(--text-sm); }
+.eaa-trip em { font-style: normal; font-weight: 600; color: var(--color-ink); font-variant-numeric: tabular-nums; }
+.eaa-tourism .eaa-actions { margin-top: var(--space-xl); }
+
+/* ------------------------------------------------------------- momentos ----- */
+.eaa-moments-head { display: flex; align-items: end; justify-content: space-between; gap: var(--space-xl); margin-bottom: var(--space-2xl); }
+.eaa-moments-head h2 { font-size: var(--text-section); max-width: 9em; color: var(--color-navy); }
+.eaa-gallery-controls { display: flex; gap: var(--space-xs); }
+.eaa-gallery-controls button { display: grid; place-items: center; width: 52px; height: 52px; border: 2px solid var(--color-navy); border-radius: 50%; background: transparent; color: var(--color-navy); transition: background-color var(--dur-micro) ease, color var(--dur-micro) ease; }
+.eaa-gallery-controls button:hover:not(:disabled) { background: var(--color-navy); color: var(--color-on-dark); }
+.eaa-gallery-controls button:disabled { cursor: not-allowed; background: var(--color-paper-3); border-color: var(--color-paper-3); color: var(--color-muted); }
+.eaa-gallery-controls button:first-child svg { transform: rotate(180deg); }
+.eaa-gallery { display: flex; gap: var(--space-lg); overflow-x: auto; scroll-snap-type: x mandatory; padding: 4px max(var(--gutter), calc((100% - var(--container)) / 2)) var(--space-md); scroll-padding-inline: max(var(--gutter), calc((100% - var(--container)) / 2)); scrollbar-width: thin; scrollbar-color: var(--color-muted) transparent; }
+.eaa-gallery figure { flex: 0 0 min(46vw, 640px); scroll-snap-align: start; min-width: 0; }
+.eaa-gallery .eaa-frame { aspect-ratio: 4 / 3; border-radius: var(--radius-card); overflow: clip; background: var(--color-paper-3); }
+.eaa-gallery img { width: 100%; height: 100%; object-fit: cover; }
+.eaa-gallery figcaption { padding-top: var(--space-sm); font-weight: 600; color: var(--color-ink-2); }
+
+/* ------------------------------------------------------- cómo te inscribís --- */
+.eaa-steps-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-xl); counter-reset: paso; }
+.eaa-steps-list li { padding-top: var(--space-lg); border-top: 2px solid var(--color-navy); }
+.eaa-steps-list .eaa-n { display: block; font: 400 clamp(4rem, 7vw, 6.5rem)/0.9 var(--font-display); color: var(--color-blue); font-variant-numeric: tabular-nums; }
+.eaa-steps-list h3 { margin-top: var(--space-md); font: 600 var(--text-title)/1.3 var(--font-body); letter-spacing: 0; color: var(--color-navy); }
+.eaa-steps-list p { margin-top: var(--space-xs); color: var(--color-muted); max-width: 32ch; }
+.eaa-steps .eaa-actions { margin-top: var(--space-2xl); }
+
+/* ------------------------------------------------------------ preguntas ----- */
+.eaa-faq-grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: var(--space-3xl); }
+.eaa-faq-grid h2 { font-size: var(--text-section); max-width: 6em; color: var(--color-navy); }
+.eaa-faq-grid > div > p { margin-top: var(--space-lg); color: var(--color-muted); max-width: 30ch; font-size: var(--text-lg); }
+.eaa-faq details { border-bottom: 1px solid var(--color-rule); }
+.eaa-faq details:first-child { border-top: 1px solid var(--color-rule); }
+.eaa-faq summary { display: flex; align-items: center; justify-content: space-between; gap: var(--space-lg); min-height: 80px; padding-block: var(--space-md); list-style: none; font-weight: 600; font-size: var(--text-lg); color: var(--color-navy); }
+.eaa-faq summary::-webkit-details-marker { display: none; }
+.eaa-faq summary span { display: grid; place-items: center; flex-shrink: 0; width: 36px; height: 36px; font-size: 1.5rem; line-height: 1; border-radius: 50%; border: 2px solid var(--color-navy); transition: transform var(--dur-short) var(--ease-out); }
+.eaa-faq details[open] summary span { transform: rotate(45deg); }
+.eaa-faq details > p { padding: 0 var(--space-3xl) var(--space-lg) 0; color: var(--color-muted); max-width: 60ch; }
+.eaa-faq p a { color: var(--color-blue); text-decoration: underline; text-underline-offset: 0.18em; }
+
+/* ----------------------------------------------------------------- cierre ---- */
+.eaa-final { padding-block: var(--section-gap); text-align: left; }
+.eaa-final h2 { font-size: clamp(4rem, 9vw, 8.5rem); line-height: 0.88; max-width: 7em; color: var(--color-on-dark); }
+.eaa-final .eaa-actions { margin-top: var(--space-xl); }
+
+/* Tramo fijo de «Vos vivís el viaje»: las fotos se apilan y cambian al avanzar el scroll (home-motion.js agrega .is-pinned solo en pantallas grandes y sin reducir movimiento). */
+.eaa-dark .eaa-link { color: var(--color-on-dark); }
+.eaa-story.is-pinned { padding-block: 0; min-height: 100svh; display: flex; align-items: center; }
+.eaa-story.is-pinned .eaa-story-grid { width: 100%; }
+.eaa-story.is-pinned .eaa-story-media { display: block; position: relative; width: 100%; max-width: 560px; aspect-ratio: 4 / 5; max-height: 78svh; margin-inline: auto; }
+.eaa-story.is-pinned .eaa-story-media figure { position: absolute; inset: 0; aspect-ratio: auto; }
+.eaa-story.is-pinned .eaa-story-media figure + figure { opacity: 0; }
+
+/* ------------------------------------------------------------ movimiento ----- */
+/* Visible por defecto. El estado "oculto" lo agrega home-motion.js (clase .is-motion en .eaa-home) solo cuando GSAP está listo. */
+.eaa-home.is-motion [data-split] .eaa-w { display: inline-block; overflow: clip; vertical-align: top; padding: 0.14em 0 0.08em; margin: -0.14em 0 -0.08em; }
+.eaa-home.is-motion [data-split] .eaa-wi { display: inline-block; will-change: transform; }
+.eaa-home [data-parallax] { will-change: transform; }
+.eaa-story-steps li.is-dim { opacity: 0.42; }
+
+/* ------------------------------------------------------------ responsive ---- */
+@media (max-width: 62rem) {
+  .eaa-section-head { grid-template-columns: 1fr; gap: var(--space-md); margin-bottom: var(--space-xl); }
+  .eaa-destinations-grid { grid-template-columns: 1fr; }
+  .eaa-destination { aspect-ratio: 4 / 5; }
+  .eaa-story-grid, .eaa-tourism-grid, .eaa-faq-grid { grid-template-columns: 1fr; gap: var(--space-2xl); }
+  .eaa-steps-list { grid-template-columns: 1fr; gap: var(--space-xl); }
+  .eaa-gallery figure { flex-basis: 78vw; }
+  .eaa-faq details > p { padding-right: 0; }
+}
+@media (max-width: 40rem) {
+  .eaa-hero { min-height: max(680px, 100svh); }
+  .eaa-hero-inner { padding-top: 130px; padding-bottom: var(--space-3xl); }
+  .eaa-hero-credit { display: none; }
+  .eaa-hero .eaa-actions .eaa-button { flex: 1 1 100%; }
+  .eaa-moments-head { align-items: flex-start; flex-direction: column; gap: var(--space-lg); margin-bottom: var(--space-xl); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .eaa-home *, .eaa-home *::before, .eaa-home *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}

@@ -66,6 +66,10 @@
       async function renderHome() {
         killHomeAnimations();
         const arrow = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
+        // Fotos del dueño para los huecos de la portada. Poné acá la ruta cuando la subas
+        // (por ejemplo "assets/img/home/camboriu.webp"); mientras tanto el hueco se ve como un panel de la marca.
+        const homePhotos = { camboriu: "", turismo: "" };
+        const slotPhoto = (key, alt) => (homePhotos[key] ? `<img src="${escapeHtml(homePhotos[key])}" alt="${escapeHtml(alt)}" loading="lazy">` : "");
         const gallery = [
           ["bariloche-atardecer-grupo", "El grupo, el lago y un atardecer en Bariloche", "Atardeceres que quedan"],
           ["bariloche-nieve-cerro-grupo", "Estudiantes de El Ángel Azul disfrutando un día de nieve", "La primera vez en la nieve"],
@@ -75,90 +79,129 @@
         ];
         document.getElementById("app").innerHTML = `
           <div class="eaa-home">
-            <section class="eaa-hero" aria-labelledby="eaa-hero-title">
-              <img class="eaa-hero-photo" src="assets/img/home/hero-carousel/bariloche-atardecer-grupo-hero.webp" alt="Nuestro grupo de estudiantes junto al Nahuel Huapi, en Bariloche" width="2000" height="1333" fetchpriority="high">
+            <section class="eaa-hero eaa-dark" aria-labelledby="eaa-hero-title">
+              <div class="eaa-hero-photo"><img src="assets/img/home/hero-carousel/bariloche-atardecer-grupo-hero.webp" alt="Nuestro grupo de estudiantes junto al Nahuel Huapi, en Bariloche" width="2000" height="1333" fetchpriority="high" data-hero-photo></div>
               <div class="eaa-hero-shade" aria-hidden="true"></div>
-              <div class="eaa-hero-inner">
-                <p class="eaa-eyebrow eaa-hero-eyebrow"><span></span> De Corrientes a los mejores recuerdos</p>
-                <h1 id="eaa-hero-title">EL VIAJE PASA.<br>LA HISTORIA<br><em>QUEDA.</em></h1>
-                <p class="eaa-hero-description">La nieve, las sierras, tus amigos. Ese viaje que esperás todo el año empieza con El Ángel Azul.</p>
-                <div class="eaa-actions">
-                  <a class="eaa-button eaa-button-accent" href="#/estudiantil" data-scroll-target="eaa-destinos">Encontrá tu viaje ${arrow}</a>
-                  <a class="eaa-hero-secondary" href="${whatsappLink("Hola, quiero organizar una reunión para conocer los viajes estudiantiles de El Ángel Azul.")}" target="_blank" rel="noopener">Quiero una reunión ${arrow}</a>
+              <div class="eaa-wrap eaa-hero-inner">
+                <h1 id="eaa-hero-title" data-split>El viaje pasa.<br>La historia queda.</h1>
+                <p class="eaa-hero-lead" data-rise>Viajes estudiantiles y turismo, organizados desde Corrientes con acompañamiento real.</p>
+                <div class="eaa-actions" data-rise>
+                  <a class="eaa-button eaa-button-fill" href="#/estudiantil" data-scroll-target="eaa-destinos">Viajes estudiantiles ${arrow}</a>
+                  <a class="eaa-button eaa-button-line" href="#/turismo" data-scroll-target="eaa-turismo">Turismo ${arrow}</a>
                 </div>
               </div>
-              <div class="eaa-hero-note"><span class="eaa-note-line"></span> Bariloche, con nuestra gente.<br><small>Fotos reales. Historias reales.</small></div>
-              <a class="eaa-hero-scroll" href="#/estudiantil" data-scroll-target="eaa-destinos" aria-label="Explorar los destinos">Explorá <span aria-hidden="true">↓</span></a>
             </section>
 
-            <div class="eaa-intro-strip" aria-label="Nuestra propuesta">
-              <p>Viajás con tu curso.<br><strong>Volvés con mil historias.</strong></p>
-              <span>Primaria y secundaria</span><span>Acompañamiento cercano</span><a href="#/inscripcion">Ficha de inscripción online ${arrow}</a>
-            </div>
-
-            <section class="eaa-section eaa-destinations" id="eaa-destinos" aria-labelledby="eaa-destinos-title">
-              <div class="eaa-section-heading">
-                <div><p class="eaa-eyebrow">Elegí dónde empieza tu historia</p><h2 id="eaa-destinos-title">DOS DESTINOS.<br><span>MILES DE RECUERDOS.</span></h2></div>
-                <p>Un viaje para cada etapa.<br>Encontrá la propuesta para tu curso.</p>
-              </div>
-              <div class="eaa-destination-grid">
-                <a class="eaa-destination" href="#/estudiantil/secundaria-bariloche">
-                  <img src="assets/img/home/carrusel-viajes/bariloche-nieve-panoramica-grupo.webp" alt="Estudiantes en las montañas nevadas de Bariloche" width="1600" height="1067" loading="lazy">
-                  <span class="eaa-destination-tag">Secundaria · Patagonia</span>
-                  <div class="eaa-destination-copy"><p>Nieve, lagos y tu grupo.</p><h3>BARILOCHE</h3><span>Conocé la experiencia <i>${arrow}</i></span></div>
-                </a>
-                <a class="eaa-destination" href="#/estudiantil/primaria-carlos-paz">
-                  <img src="assets/img/home/carrusel-viajes/carlos-paz-reloj-cucu-grupo.webp" alt="Nuestro grupo de primaria en Villa Carlos Paz" width="1600" height="1067" loading="lazy">
-                  <span class="eaa-destination-tag">Primaria · Córdoba</span>
-                  <div class="eaa-destination-copy"><p>La aventura de viajar juntos.</p><h3>CARLOS PAZ</h3><span>Conocé la experiencia <i>${arrow}</i></span></div>
-                </a>
-              </div>
-              <a class="eaa-tourism-link" href="#/turismo"><span>¿Vacaciones en familia o una escapada?</span><strong>También tenemos un viaje para vos ${arrow}</strong></a>
-            </section>
-
-            <section class="eaa-experience" aria-labelledby="eaa-experience-title">
-              <div class="eaa-experience-photo">
-                <img src="assets/img/home/experiencia/bariloche-lago-companeros.webp" alt="Compañeros de viaje de El Ángel Azul frente al lago" width="900" height="1100" loading="lazy">
-                <span class="eaa-photo-caption">El Ángel Azul / Momentos en destino</span>
-              </div>
-              <div class="eaa-experience-copy">
-                <p class="eaa-eyebrow">La experiencia Ángel Azul</p>
-                <h2>VOS VIVÍS<br>EL VIAJE.<br><span>NOSOTROS,<br>CON VOS.</span></h2>
-                <p>Somos una agencia de Corrientes. Nos gusta conocer a cada grupo, escuchar a las familias y acompañar el viaje desde la primera consulta.</p>
-                <div class="eaa-care-list">
-                  <article><span aria-hidden="true">↗</span><div><h3>Antes de salir</h3><p>Elegimos la propuesta con vos y repasamos fechas, servicios y formas de pago.</p></div></article>
-                  <article><span aria-hidden="true">↗</span><div><h3>Durante la aventura</h3><p>Acompañamos al grupo para que pueda disfrutar cada momento del viaje.</p></div></article>
-                  <article><span aria-hidden="true">↗</span><div><h3>Cerca de las familias</h3><p>Un contacto directo con la agencia para consultar y organizar la inscripción.</p></div></article>
+            <section class="eaa-section" id="eaa-destinos" aria-labelledby="eaa-destinos-title">
+              <div class="eaa-wrap">
+                <div class="eaa-section-head">
+                  <h2 id="eaa-destinos-title" data-split>Elegí dónde empieza tu historia</h2>
+                  <p data-rise>Un viaje para cada etapa: primaria, secundaria y egresados.</p>
                 </div>
-                <a class="eaa-text-link" href="#/nosotros">Conocé a El Ángel Azul ${arrow}</a>
+                <div class="eaa-destinations-grid">
+                  <a class="eaa-destination" href="#/estudiantil/secundaria-bariloche" data-rise>
+                    <img src="assets/img/home/carrusel-viajes/bariloche-nieve-panoramica-grupo.webp" alt="Estudiantes en las montañas nevadas de Bariloche" width="1600" height="1067" loading="lazy">
+                    <span class="eaa-destination-tag">Secundaria</span>
+                    <h3>Bariloche</h3>
+                    <p>Nieve, lagos y tu grupo.</p>
+                    <span class="eaa-destination-go">Conocé la experiencia <i>${arrow}</i></span>
+                  </a>
+                  <a class="eaa-destination" href="#/estudiantil/primaria-carlos-paz" data-rise>
+                    <img src="assets/img/home/carrusel-viajes/carlos-paz-reloj-cucu-grupo.webp" alt="Nuestro grupo de primaria en Villa Carlos Paz" width="1600" height="1067" loading="lazy">
+                    <span class="eaa-destination-tag">Primaria</span>
+                    <h3>Carlos Paz</h3>
+                    <p>La aventura de viajar juntos.</p>
+                    <span class="eaa-destination-go">Conocé la experiencia <i>${arrow}</i></span>
+                  </a>
+                  <a class="eaa-destination" href="${whatsappLink("Hola, quiero consultar por el viaje de egresados a Camboriú, Brasil, con El Ángel Azul.")}" target="_blank" rel="noopener" data-rise>
+                    <div class="eaa-slot" data-slot="camboriu">${slotPhoto("camboriu", "Egresados de El Ángel Azul en Camboriú, Brasil")}<span class="eaa-slot-name" aria-hidden="true">Camboriú</span></div>
+                    <span class="eaa-destination-tag">Egresados</span>
+                    <h3>Camboriú</h3>
+                    <p>El viaje de egresados, en Brasil.</p>
+                    <span class="eaa-destination-go">Consultá por WhatsApp <i>${arrow}</i></span>
+                  </a>
+                </div>
               </div>
             </section>
 
-            <section class="eaa-section eaa-moments" aria-labelledby="eaa-moments-title">
-              <div class="eaa-section-heading"><div><p class="eaa-eyebrow">El viaje se cuenta así</p><h2 id="eaa-moments-title">MOMENTOS REALES.<br><span>RECUERDOS PARA SIEMPRE.</span></h2></div>
+            <section class="eaa-section eaa-dark eaa-story" id="eaa-experiencia" aria-labelledby="eaa-story-title" data-story>
+              <div class="eaa-wrap eaa-story-grid">
+                <div class="eaa-story-copy">
+                  <h2 id="eaa-story-title" data-split>Vos vivís el viaje. Nosotros, con vos.</h2>
+                  <p class="eaa-story-lead" data-rise>Somos una agencia de Corrientes. Nos gusta conocer a cada grupo, escuchar a las familias y acompañar el viaje desde la primera consulta.</p>
+                  <ol class="eaa-story-steps">
+                    <li data-story-step="0"><span class="eaa-n" aria-hidden="true">1</span><div><h3>Antes de salir</h3><p>Elegimos la propuesta con vos y repasamos fechas, servicios y formas de pago.</p></div></li>
+                    <li data-story-step="1"><span class="eaa-n" aria-hidden="true">2</span><div><h3>Durante la aventura</h3><p>Acompañamos al grupo para que pueda disfrutar cada momento del viaje.</p></div></li>
+                    <li data-story-step="2"><span class="eaa-n" aria-hidden="true">3</span><div><h3>Cerca de las familias</h3><p>Un contacto directo con la agencia para consultar y organizar la inscripción.</p></div></li>
+                  </ol>
+                </div>
+                <div class="eaa-story-media" data-story-media>
+                  <figure data-story-panel="0"><img src="assets/img/home/experiencia/bariloche-lago-companeros.webp" alt="Compañeros de viaje de El Ángel Azul frente al lago" width="900" height="1100" loading="lazy" data-parallax></figure>
+                  <figure data-story-panel="1"><img src="assets/img/home/experiencia/bariloche-nieve-companeros.webp" alt="Estudiantes de El Ángel Azul en la nieve de Bariloche" width="900" height="1100" loading="lazy" data-parallax></figure>
+                  <figure data-story-panel="2"><img src="assets/img/home/experiencia/bariloche-retrato-mirador.webp" alt="Estudiante de El Ángel Azul en un mirador de Bariloche" width="900" height="1100" loading="lazy" data-parallax></figure>
+                </div>
+              </div>
+            </section>
+
+            <section class="eaa-section eaa-tourism" id="eaa-turismo" aria-labelledby="eaa-turismo-title">
+              <div class="eaa-wrap eaa-tourism-grid">
+                <div class="eaa-slot eaa-tourism-media" data-slot="turismo" data-rise>${slotPhoto("turismo", "Familia de viaje con El Ángel Azul")}<span class="eaa-slot-name" aria-hidden="true">Turismo</span></div>
+                <div>
+                  <h2 id="eaa-turismo-title" data-split>También viajamos en familia</h2>
+                  <p class="eaa-tourism-lead" data-rise>Escapadas en familia, en pareja o en grupo, con asesoramiento claro antes de reservar.</p>
+                  <ul class="eaa-trips" data-eaa-trips aria-label="Viajes de turismo disponibles"></ul>
+                  <div class="eaa-actions" data-rise>
+                    <a class="eaa-button eaa-button-fill" href="#/turismo">Ver turismo ${arrow}</a>
+                    <a class="eaa-button eaa-button-ink" href="${whatsappLink("Hola, quiero que me asesoren para elegir un viaje turístico con El Ángel Azul.")}" target="_blank" rel="noopener">Pedir asesoramiento</a>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="eaa-section eaa-soft eaa-moments" aria-labelledby="eaa-moments-title">
+              <div class="eaa-wrap eaa-moments-head">
+                <h2 id="eaa-moments-title" data-split>Momentos reales, recuerdos para siempre</h2>
                 <div class="eaa-gallery-controls"><button type="button" data-eaa-gallery-prev aria-label="Ver fotos anteriores">${arrow}</button><button type="button" data-eaa-gallery-next aria-label="Ver fotos siguientes">${arrow}</button></div>
               </div>
               <div class="eaa-gallery" data-eaa-gallery tabindex="0" role="region" aria-label="Fotos reales de nuestros viajes. Deslizá para ver más.">
-                ${gallery.map(([name, alt, caption]) => `<figure><img src="assets/img/home/carrusel-viajes/${name}-800.webp" alt="${alt}" width="800" height="600" loading="lazy"><figcaption>${caption}</figcaption></figure>`).join("")}
-              </div>
-              <p class="eaa-gallery-note">Nuestros grupos, en sus propios recuerdos.</p>
-            </section>
-
-            <section class="eaa-family" aria-labelledby="eaa-family-title">
-              <div><p class="eaa-eyebrow">Para viajar tranquilos</p><h2 id="eaa-family-title">LAS PREGUNTAS<br><span>TAMBIÉN VIAJAN.</span></h2><p>Lo que las familias quieren saber antes de preparar la valija.</p><a class="eaa-text-link" href="${whatsappLink("Hola, tengo una consulta sobre los viajes estudiantiles de El Ángel Azul.")}" target="_blank" rel="noopener">Hacé tu consulta ${arrow}</a></div>
-              <div class="eaa-faq">
-                <details><summary>¿Cómo conocemos la propuesta del viaje?<span aria-hidden="true">+</span></summary><p>Escribinos por WhatsApp para coordinar una reunión. Contanos el colegio, el curso y el destino que les interesa, y revisamos la propuesta para el grupo.</p></details>
-                <details><summary>¿Dónde veo los servicios y las formas de pago?<span aria-hidden="true">+</span></summary><p>Los servicios, fechas, condiciones y planes se detallan en la propuesta y el contrato de cada grupo. Consultalos con la agencia antes de confirmar la inscripción.</p></details>
-                <details><summary>Ya tenemos el viaje. ¿Cómo me inscribo?<span aria-hidden="true">+</span></summary><p>Entrá a <a href="#/inscripcion">Inscripción online</a>, elegí el colegio y el viaje y completá los datos del pasajero y su tutor. El plan corresponde al contrato de tu grupo.</p></details>
-                <details><summary>¿Puedo registrar a otro tutor?<span aria-hidden="true">+</span></summary><p>Sí. En Inscripción, elegí Tutor para completar el formulario corto con sus datos y el DNI del pasajero al que acompaña.</p></details>
+                ${gallery.map(([name, alt, caption]) => `<figure><div class="eaa-frame"><img src="assets/img/home/carrusel-viajes/${name}-800.webp" alt="${alt}" width="800" height="600" loading="lazy"></div><figcaption>${caption}</figcaption></figure>`).join("")}
               </div>
             </section>
 
-            <section class="eaa-final" aria-labelledby="eaa-final-title">
-              <p class="eaa-eyebrow">La próxima historia puede ser la tuya</p>
-              <h2 id="eaa-final-title">¿Y SI NOS<br><em>VAMOS JUNTOS?</em></h2>
-              <div class="eaa-actions"><a class="eaa-button eaa-button-accent" href="${whatsappLink("Hola, queremos viajar con El Ángel Azul. ¿Nos cuentan las propuestas para nuestro grupo?")}" target="_blank" rel="noopener">Armemos el viaje ${arrow}</a><a class="eaa-final-secondary" href="#/inscripcion">Ya tengo mi viaje: inscribirme ${arrow}</a></div>
-              <span class="eaa-final-mark" aria-hidden="true">AZUL.</span>
+            <section class="eaa-section eaa-steps" aria-labelledby="eaa-steps-title">
+              <div class="eaa-wrap">
+                <div class="eaa-section-head">
+                  <h2 id="eaa-steps-title" data-split>Cómo te inscribís</h2>
+                  <p data-rise>Todo online, con la ficha de tu curso.</p>
+                </div>
+                <ol class="eaa-steps-list">
+                  <li data-rise><span class="eaa-n" aria-hidden="true">1</span><h3>Elegí tu viaje</h3><p>Seleccioná el curso, el destino y el año.</p></li>
+                  <li data-rise><span class="eaa-n" aria-hidden="true">2</span><h3>Completá la ficha</h3><p>Datos del pasajero y del tutor, domicilio y firma.</p></li>
+                  <li data-rise><span class="eaa-n" aria-hidden="true">3</span><h3>Administración la revisa</h3><p>El plan de pago corresponde al contrato de tu grupo.</p></li>
+                </ol>
+                <div class="eaa-actions" data-rise><a class="eaa-button eaa-button-fill" href="#/inscripcion">Inscripción online ${arrow}</a></div>
+              </div>
+            </section>
+
+            <section class="eaa-section eaa-soft" aria-labelledby="eaa-family-title">
+              <div class="eaa-wrap eaa-faq-grid">
+                <div><h2 id="eaa-family-title" data-split>Las preguntas también viajan</h2><p data-rise>Lo que las familias quieren saber antes de preparar la valija.</p></div>
+                <div class="eaa-faq" data-rise>
+                  <details><summary>¿Cómo conocemos la propuesta del viaje?<span aria-hidden="true">+</span></summary><p>Escribinos por WhatsApp para coordinar una reunión. Contanos el colegio, el curso y el destino que les interesa, y revisamos la propuesta para el grupo.</p></details>
+                  <details><summary>¿Dónde veo los servicios y las formas de pago?<span aria-hidden="true">+</span></summary><p>Los servicios, fechas, condiciones y planes se detallan en la propuesta y el contrato de cada grupo. Consultalos con la agencia antes de confirmar la inscripción.</p></details>
+                  <details><summary>¿Puedo registrar a otro tutor?<span aria-hidden="true">+</span></summary><p>Sí. En <a href="#/inscripcion">Inscripción online</a>, elegí Tutor para completar el formulario corto con sus datos y el DNI del pasajero al que acompaña.</p></details>
+                </div>
+              </div>
+            </section>
+
+            <section class="eaa-section eaa-dark eaa-final" aria-labelledby="eaa-final-title">
+              <div class="eaa-wrap">
+                <h2 id="eaa-final-title" data-split>¿Y si nos vamos juntos?</h2>
+                <div class="eaa-actions" data-rise>
+                  <a class="eaa-button eaa-button-fill" href="${whatsappLink("Hola, queremos viajar con El Ángel Azul. ¿Nos cuentan las propuestas para nuestro grupo?")}" target="_blank" rel="noopener">Armemos el viaje ${arrow}</a>
+                  <a class="eaa-button eaa-button-line" href="#/inscripcion">Ya tengo mi viaje: inscribirme ${arrow}</a>
+                </div>
+              </div>
             </section>
           </div>
         `;
@@ -174,6 +217,37 @@
         };
         rail.addEventListener("scroll", updateControls, { passive: true });
         updateControls();
+        // Viajes de turismo publicados desde el admin (ninguno inventado: sin viajes activos la lista no aparece).
+        const tripList = document.querySelector("[data-eaa-trips]");
+        loadTurismoPublicPackages().then((packages) => {
+          if (!tripList.isConnected) return;
+          packages.slice(0, 3).forEach((trip) => {
+            const item = document.createElement("li");
+            const link = document.createElement("a");
+            link.className = "eaa-trip";
+            link.href = `#/turismo/${encodeURIComponent(trip.slug)}`;
+            const text = document.createElement("div");
+            const name = document.createElement("strong");
+            name.textContent = trip.titulo || trip.destino;
+            text.appendChild(name);
+            const duration = String(trip.duracion || "");
+            if (duration && duration !== "A confirmar") {
+              const meta = document.createElement("span");
+              meta.textContent = duration;
+              text.appendChild(meta);
+            }
+            link.appendChild(text);
+            const price = String(trip.precioDesde || "");
+            if (price && price !== "Consultar") {
+              const priceEl = document.createElement("em");
+              priceEl.textContent = `Desde ${price}`;
+              link.appendChild(priceEl);
+            }
+            item.appendChild(link);
+            tripList.appendChild(item);
+          });
+        }).catch(() => {});
+        if (window.EAAHomeMotion) window.EAAHomeMotion.init(document.querySelector(".eaa-home"));
       }
 
       // Carrusel automático del hero: rota las fotos cada 3 segundos con
@@ -208,6 +282,7 @@
       let homeHeroZoomTween = null;
 
       function killHomeAnimations() {
+        if (window.EAAHomeMotion) window.EAAHomeMotion.kill();
         homeScrollTriggers.forEach((trigger) => trigger.kill());
         homeScrollTriggers = [];
         if (homeHeroZoomTween) {
@@ -9442,7 +9517,13 @@
         if (typeof Lenis === "undefined") return;
         if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
         if (window.__lenisInstance) return;
-        const lenis = new Lenis({ duration: 1.05, smoothWheel: true });
+        const lenis = new Lenis({
+          duration: 1.25,
+          easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+          smoothWheel: true,
+          wheelMultiplier: 0.9,
+          touchMultiplier: 1.3
+        });
         window.__lenisInstance = lenis;
         if (typeof gsap !== "undefined") {
           lenis.on("scroll", () => { if (typeof ScrollTrigger !== "undefined") ScrollTrigger.update(); });
@@ -9462,6 +9543,10 @@
           if (!target) return;
           event.preventDefault();
           const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+          if (window.__lenisInstance && !reduceMotion) {
+            window.__lenisInstance.scrollTo(target, { offset: -88, duration: 1.4 });
+            return;
+          }
           target.scrollIntoView({
             behavior: reduceMotion ? "auto" : "smooth",
             block: "start"
