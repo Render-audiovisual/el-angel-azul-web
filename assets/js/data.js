@@ -352,10 +352,6 @@
         },
         whatsapp: "5493794331380",
         address: "Córdoba 6660, Corrientes Capital",
-        email: "contacto@elangelazul.com.ar",
-        temporaryData: {
-          email: true
-        },
         pending: [
           "email oficial confirmado",
           "años de experiencia si corresponde",

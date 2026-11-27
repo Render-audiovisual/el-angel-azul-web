@@ -95,7 +95,7 @@ Cada paso termina con `npm run check` en verde y un commit chico. Si tocás algo
 2. Importar el Padrón de colegios (ver sección 6): simular primero, `--aplicar` después.
 3. Cargar viajes, grupos, contratos y planes de pago. Todo registro lleva `legacy_id` (sin él el admin muestra `id: null`).
 
-**Paso 6 – Correo.** Verificar el dominio en Resend, cargar las tres variables en Hostinger, probar un envío y revisar que la ficha llegue con todos los datos. Corregir el email de contacto del sitio (`contacto@elangelazul.com.ar` no existe). Al arrancar, el servidor reenvía solo 25 correos atrasados por vez (`listFichaEmailsPendientes`).
+**Paso 6 – Correo.** Verificar el dominio en Resend, cargar las tres variables en Hostinger, probar un envío y revisar que la ficha llegue con todos los datos. El footer ya no muestra el mail de contacto (`contacto@elangelazul.com.ar` no existe): cuando haya un mail oficial, volver a ponerlo en `index.html`. Al arrancar, el servidor reenvía solo 25 correos atrasados por vez (`listFichaEmailsPendientes`).
 
 **Paso 7 – Entrega.** Hosting real: Hostinger (confirmado por el dueño). El 26/11 se cambiaron README, comentarios y mensajes que decían Render o Railway. Queda `render.yaml`: es de un servicio Render que quizás sigue conectado al repo; borrarlo solo con OK del dueño. Con OK del dueño: mergear el PR #3, cargar las variables en Hostinger (`EAA_POSTGRES_MIGRATION_ENABLED=true`), rotar `EAA_ADMIN_PASSWORD` y `EAA_AGENTE*_PASSWORD` (la vieja está en el historial público de git).
 
