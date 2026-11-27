@@ -2231,7 +2231,6 @@
             <section class="eaa-login-card" aria-labelledby="login-title">
               <p class="eaa-login-eyebrow">Administración</p>
               <h1 id="login-title">Ingresá al panel</h1>
-              <p class="eaa-login-intro">Tu lugar para organizar cada viaje.</p>
               <form class="eaa-login-form" data-admin-login-form>
                 <label for="admin-usuario">Usuario</label>
                 <input id="admin-usuario" name="usuario" autocomplete="username" autocapitalize="none" spellcheck="false" required>
@@ -2245,7 +2244,6 @@
               </form>
               <p class="eaa-login-note">Solo personal autorizado.</p>
             </section>
-            <a class="eaa-login-back" href="/#/">← Volver a la web</a>
           </div>
         `;
 
