@@ -137,7 +137,7 @@ Rama `b830cbb` (`feat/colegios-padron` con el PR #4). Servidor local con `npm ru
 | 5 | Baja | En celular, las tablas de Fichas y Pasajeros obligan a scrollear de costado dentro de la tabla. Sirve, pero es incómodo. Mejor decidirlo con el rediseño (Paso 8). | Frontend del admin. |
 | 6 | Baja | Los placeholders (`20-12345678-6`, `3794 123456`, `1234`, `3400`) son gris oscuro (`rgb(92,108,118)`, contraste suficiente) y pueden parecer datos cargados. | CSS de la ficha. |
 | 7 | Baja | «Limpiar firma» mide 34 px de alto (menos de 40 px). | CSS de la ficha. |
-| 8 | Ya conocida | El footer muestra `contacto@elangelazul.com.ar`, que no existe. | Paso 6. |
+| 8 | Ya conocida | El footer mostraba `contacto@elangelazul.com.ar`, que no existe. | Corregida el 26/11: se sacó la línea del footer. Falta el mail oficial para volver a ponerla (Paso 6). |
 | 9 | A verificar | Las secciones de la ficha PAX están en `visibility: hidden` hasta que el scroll las revela (GSAP). No se probó la navegación solo con teclado ni con lector de pantalla: si el foco salta campos ocultos, es un problema de accesibilidad. | `bindFichaAdhesionAnimations` en `assets/js/app.js`. |
 
 ## Estado de los puntos tras la revisión
