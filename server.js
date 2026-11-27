@@ -189,7 +189,7 @@ function clearLoginAttempts(ip) {
 }
 
 // Cantidad de proxies de confianza delante del servidor (los que agregan una
-// IP al final de X-Forwarded-For). Render y la mayoría de los hostings: 1.
+// IP al final de X-Forwarded-For). Hostinger no lo documenta: medirlo (ver HANDOFF, Paso 2). Por defecto 1.
 // Si el hosting suma un proxy más (CDN, balanceador), subir EAA_PROXY_HOPS; si
 // no, todos los visitantes comparten IP y los límites (fichas por hora, intentos
 // de login) se pegan entre sí. Medirlo con GET /api/admin/diagnostico-ip.
@@ -337,14 +337,14 @@ function safeErrorForLog(error) {
   };
 }
 
-// Railway (y la mayoría de los hosts con proxy) terminan HTTPS en el borde y
+// Los hosts con proxy (Hostinger incluido) terminan HTTPS en el borde y
 // reenvían por HTTP puro al contenedor, seteando x-forwarded-proto=https.
 // En localhost (npm start) no hay proxy, así que esto da false correctamente
 // y la cookie funciona igual en desarrollo sin el flag Secure (que el
 // navegador ignoraría/bloquearía sobre HTTP de todos modos).
 function isHttpsRequest(req) {
   if (!req || !req.headers) return false;
-  // En producción Render siempre termina TLS antes de llegar al proceso.
+  // En producción el hosting siempre termina TLS antes de llegar al proceso.
   // No depender de una cabecera que un cliente puede intentar falsificar.
   if (process.env.NODE_ENV === "production") return true;
   return Boolean(req.socket?.encrypted);
@@ -494,7 +494,7 @@ function credentials() {
   }
   if (!fs.existsSync(CREDENTIALS_PATH)) {
     throw new Error(
-      "Credenciales de Google Sheets no configuradas. En Railway cargar GOOGLE_SHEETS_CREDENTIALS o GOOGLE_SHEETS_SERVICE_ACCOUNT_JSON con el JSON completo de la service account."
+      "Credenciales de Google Sheets no configuradas. En el hosting cargar GOOGLE_SHEETS_CREDENTIALS o GOOGLE_SHEETS_SERVICE_ACCOUNT_JSON con el JSON completo de la service account."
     );
   }
   return JSON.parse(fs.readFileSync(CREDENTIALS_PATH, "utf8"));
