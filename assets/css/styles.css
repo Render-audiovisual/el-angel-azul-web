@@ -11330,3 +11330,37 @@ body.portal-private-page:not([data-app-entry="admin"]) #app .angel-passenger-por
 .enrollment-entry :focus-visible { outline:3px solid #d22976; outline-offset:4px; }
 .enrollment-entry [role="alert"] { color:#a02b35; }
 @media(max-width:600px) { .enrollment-entry dl { grid-template-columns:1fr; gap:18px; } .enrollment-entry a,.enrollment-entry button { width:100%; justify-content:center; box-sizing:border-box; } }
+
+/* Archivos de contrato y pasajero: lista de trabajo compartida por panel/portal. */
+.angel-documents { min-width:0; }
+.angel-documents p { max-width:75ch; }
+.angel-documents label { display:grid; gap:8px; font-weight:600; min-width:0; }
+.angel-documents input:not([type="checkbox"]),.angel-documents select,.angel-documents textarea { box-sizing:border-box; width:100%; max-width:100%; min-width:0; min-height:44px; font:inherit; padding:10px 12px; border:1px solid #abc4d9; border-radius:10px; background:#fff; color:#173b59; }
+.angel-documents input[type="file"] { white-space:normal; font-size:.9rem; }
+.angel-documents input::file-selector-button { min-height:36px; border:0; border-radius:6px; background:#e9f2fb; color:#123f6b; margin-right:8px; font:inherit; }
+.angel-documents button { min-height:44px; box-sizing:border-box; padding:10px 16px; font:inherit; font-weight:600; background:#fff; color:#07528d; border:1px solid #9bb7cf; border-radius:10px; }
+.angel-documents button[type="submit"] { background:#07528d; color:#fff; }
+.angel-documents button:disabled { opacity:.55; cursor:not-allowed; }
+.angel-documents button:not(:disabled):hover { background:#e7f0f8; color:#123f6b; }
+.angel-documents button[type="submit"]:not(:disabled):hover { background:#063c67; color:#fff; }
+.angel-documents :focus-visible { outline:3px solid #d22976; outline-offset:3px; }
+.angel-documents .document-list { list-style:none; margin:24px 0; padding:0; }
+.angel-documents .document-list>li { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:start; gap:16px; padding:20px 0; border-top:1px solid #c9dbea; }
+.angel-documents .document-description strong,.angel-documents [data-document-selection] { overflow-wrap:anywhere; }
+.angel-documents .document-description p { margin:8px 0 0; }
+.angel-documents .document-review { grid-column:1/-1; min-width:0; }
+.angel-documents summary { cursor:pointer; min-height:44px; align-content:center; font-weight:600; color:#07528d; }
+.angel-documents .document-review form { display:grid; gap:16px; margin:16px 0; }
+.angel-documents .document-check { display:flex; align-items:center; gap:12px; min-height:44px; }
+.angel-documents input[type="checkbox"] { width:22px; height:22px; min-height:22px; flex-shrink:0; accent-color:#07528d; }
+.angel-documents .document-upload { margin-top:32px; padding-top:24px; border-top:1px solid #c9dbea; }
+.angel-documents .document-upload fieldset { display:grid; gap:16px; border:0; padding:0; min-width:0; }
+.angel-documents legend { margin-bottom:16px; font-size:1.125rem; font-weight:600; }
+.angel-documents .document-actions { display:flex; flex-wrap:wrap; gap:12px; }
+.angel-documents [role="alert"] { color:#a02b35; font-weight:600; }
+.angel-documents [role="status"]:empty { display:none; }
+.admin-document-section { border-top:1px solid #c9dbea; padding-top:24px; margin-top:24px; }
+@media(max-width:600px) { .angel-documents .document-list>li { grid-template-columns:minmax(0,1fr); } .angel-documents .document-actions button { width:100%; } .angel-documents input[type="file"] { font-size:.8rem; padding:8px; } }
+body.portal-private-page .whatsapp-fab { display:none; }
+body.portal-private-page:not([data-app-entry="admin"]) .site-header { top:0; left:0; right:0; padding:12px max(16px,4%); background:#f7fbff; box-sizing:border-box; }
+.angel-documents input::file-selector-button { min-height:44px; }
