@@ -46,6 +46,8 @@ test('el seguimiento distingue documento pendiente, corrección y aprobación si
 });
 test('rechaza tipos desconocidos, duplicados y avisos inválidos; retirar publicación oculta el aviso',async()=>{
  for(const patch of [{requisitos:['inventado']},{requisitos:['otro','otro']},{avisos:[{...notice,publicado:'true'}]},{avisos:[notice,notice]},{avisos:[{...notice,texto:''}]}])assert.equal((await request(route(),{revision:2,requisitos:[],avisos:[],...patch})).status,400);
- assert.equal((await request(route(),{revision:2,requisitos:[],avisos:[{...notice,publicado:false}]})).status,200);
+ assert.equal((await request(route(),{revision:2,requisitos:[],avisos:[{...notice,publicado:false}]})).status,409);
+ const all=(await information.read(contract)).avisos.map(row=>({...row,publicado:false}));
+ assert.equal((await request(route(),{revision:2,requisitos:[],avisos:all})).status,200);
  assert.deepEqual((await information.passenger(pax,await portalService.session(portal.split('=')[1]))).avisos,[]);
 });
