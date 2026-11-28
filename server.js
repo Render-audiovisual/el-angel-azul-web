@@ -113,7 +113,8 @@ const fichaSubmitAttempts = new Map();
 // personas cargando Inscripción a la vez desde una IP compartida hacen
 // varias lecturas (GRUPOS/CONTRATOS/TURISMO) cada una antes de llegar a
 // mandar la ficha.
-const GENERAL_API_LIMIT = 480;
+// Tope por IP en toda la API (no por ruta: variar la ruta creaba un contador nuevo y evadía el límite).
+const GENERAL_API_LIMIT = 1500;
 const GENERAL_API_WINDOW_MS = 15 * 60 * 1000;
 const apiAttempts = new Map();
 
@@ -140,8 +141,8 @@ function registerGenericAttempt(store, key, windowMs) {
   record.count += 1;
 }
 
-function apiRateLimited(req, url) {
-  const key = `${clientIp(req)}:${url.pathname}`;
+function apiRateLimited(req) {
+  const key = clientIp(req);
   if (genericRateLimited(apiAttempts, key, GENERAL_API_LIMIT, GENERAL_API_WINDOW_MS)) return true;
   registerGenericAttempt(apiAttempts, key, GENERAL_API_WINDOW_MS);
   return false;
@@ -435,21 +436,25 @@ function jsonWithHeaders(req, res, status, payload, headers) {
 
 function readBody(req, limitBytes = MAX_BODY_BYTES) {
   return new Promise((resolve, reject) => {
-    let body = "";
+    // Se juntan Buffers y se decodifica al final: un carácter multibyte (ñ, á) partido entre dos chunks no se rompe.
+    const chunks = [];
+    let received = 0;
     let exceeded = false;
     req.on("data", (chunk) => {
       if (exceeded) return;
-      body += chunk;
-      if (Buffer.byteLength(body, "utf8") > limitBytes) {
+      received += chunk.length;
+      if (received > limitBytes) {
         exceeded = true;
-        body = "";
+        chunks.length = 0;
         const error = new Error("Payload demasiado grande");
         error.statusCode = 413;
         reject(error);
+        return;
       }
+      chunks.push(chunk);
     });
     req.on("end", () => {
-      if (!exceeded) resolve(body);
+      if (!exceeded) resolve(Buffer.concat(chunks).toString("utf8"));
     });
     req.on("error", reject);
   });
@@ -458,13 +463,21 @@ function readBody(req, limitBytes = MAX_BODY_BYTES) {
 async function readJsonBody(req, limitBytes = MAX_BODY_BYTES) {
   const raw = await readBody(req, limitBytes);
   if (!raw.trim()) return {};
+  let parsed;
   try {
-    return JSON.parse(raw);
+    parsed = JSON.parse(raw);
   } catch (error) {
     const invalidJson = new Error("JSON inválido");
     invalidJson.statusCode = 400;
     throw invalidJson;
   }
+  // Un body `null`, número o lista tiraba TypeError (500) en los handlers que leen campos.
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    const notObject = new Error("El cuerpo debe ser un objeto JSON");
+    notObject.statusCode = 400;
+    throw notObject;
+  }
+  return parsed;
 }
 
 function isStateChangingMethod(method) {
@@ -679,7 +692,7 @@ function sanitizeDeleteIds(deleteIds) {
 async function handleSheets(req, res, url) {
   if (req.method === "GET") {
     const sheet = String(url.searchParams.get("sheet") || "");
-    if (!SCHEMA[sheet]) return json(res, 400, { ok: false, error: "Hoja no permitida" });
+    if (!Object.hasOwn(SCHEMA, sheet)) return json(res, 400, { ok: false, error: "Hoja no permitida" });
     const adminSession = currentAdminSession(req);
     if (!PUBLIC_READ_SHEETS.has(sheet) && !adminSession) {
       return json(res, 401, { ok: false, error: "Necesitás iniciar sesión para ver esta información" });
@@ -724,7 +737,7 @@ async function handleSheets(req, res, url) {
     if (requireSameOrigin(req, res)) return;
     const payload = await readJsonBody(req);
     const sheet = String(payload.sheet || "");
-    if (!SCHEMA[sheet]) return json(res, 400, { ok: false, error: "Hoja no permitida" });
+    if (!Object.hasOwn(SCHEMA, sheet)) return json(res, 400, { ok: false, error: "Hoja no permitida" });
     if (!WRITE_ALLOWED.has(sheet)) return json(res, 403, { ok: false, error: "Escritura no habilitada para esta hoja" });
 
     const adminSession = currentAdminSession(req);
@@ -1360,10 +1373,10 @@ async function handleStudentAccounts(req, res, url) {
     const plan = /^\/api\/admin\/finanzas\/planes\/([^/]+)$/.exec(url.pathname);
     const passenger = /^\/api\/admin\/finanzas\/pasajeros\/([^/]+)(\/confirmar)?$/.exec(url.pathname);
     if (url.pathname === "/api/admin/finanzas/planes" && req.method === "GET") return json(res,200,{ok:true,planes:await studentAccounts.plans()});
-    if (plan && req.method === "POST") return json(res,200,{ok:true,plan:await studentAccounts.configure(decodeURIComponent(plan[1]),body,session.user)});
-    if (passenger && !passenger[2] && req.method === "GET") return json(res,200,{ok:true,...await studentAccounts.summary(decodeURIComponent(passenger[1]))});
+    if (plan && req.method === "POST") return json(res,200,{ok:true,plan:await studentAccounts.configure(safeDecode(plan[1]),body,session.user)});
+    if (passenger && !passenger[2] && req.method === "GET") return json(res,200,{ok:true,...await studentAccounts.summary(safeDecode(passenger[1]))});
     if (passenger && passenger[2] && req.method === "POST") {
-      const result = await studentAccounts.confirm(decodeURIComponent(passenger[1]),body,session.user);
+      const result = await studentAccounts.confirm(safeDecode(passenger[1]),body,session.user);
       return json(res,result.creada?201:200,{ok:true,...result});
     }
     if (url.pathname === "/api/admin/finanzas/imputaciones" && req.method === "POST") {
@@ -1382,7 +1395,7 @@ function createAppServer() {
     res.req = req;
     const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
     try {
-      if (url.pathname.startsWith("/api/") && apiRateLimited(req, url)) {
+      if (url.pathname.startsWith("/api/") && apiRateLimited(req)) {
         return json(res, 429, { ok: false, error: "Demasiadas solicitudes. Probá de nuevo más tarde." });
       }
       if (url.pathname === "/api/public/paquetes" && req.method === "GET") {
@@ -1399,7 +1412,7 @@ function createAppServer() {
         if (!session) return json(res,401,{ok:false,error:"Necesitás iniciar sesión."});
         if (requireSameOrigin(req,res)) return;
         const body = await readJsonBody(req,10000);
-        const row = await catalog.duplicate(decodeURIComponent(duplicatePackage[1]),body.version,session.user);
+        const row = await catalog.duplicate(safeDecode(duplicatePackage[1]),body.version,session.user);
         return json(res,201,{ok:true,paquete:row});
       }
       if(url.pathname==="/api/admin/catalogo/multimedia"||url.pathname.startsWith("/api/public/catalogo/media/")) {
@@ -1521,6 +1534,7 @@ module.exports = {
     safeErrorForLog,
     recuperarCorreosPendientes,
     clientIp,
+    readBody,
     proxyHops
   }
 };

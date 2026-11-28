@@ -505,3 +505,50 @@ test("las entradas físicas del panel abren con sesión y redirigen al acceso cu
     assert.equal((await request({ path, headers: { cookie } })).status, 404, path);
   }
 });
+
+test("readBody no rompe un carácter multibyte partido entre dos chunks", async () => {
+  const { PassThrough } = require("node:stream");
+  const stream = new PassThrough();
+  const lectura = __test.readBody(stream);
+  const bytes = Buffer.from('{"nombre":"Muñoz Ñandú"}', "utf8");
+  const corte = bytes.indexOf(0xc3) + 1; // entre los dos bytes de la "ñ"
+  stream.write(bytes.subarray(0, corte));
+  stream.write(bytes.subarray(corte));
+  stream.end();
+  assert.equal(await lectura, '{"nombre":"Muñoz Ñandú"}');
+});
+
+test("un body JSON que no es objeto devuelve 400, no 500", async () => {
+  const origin = `http://127.0.0.1:${port}`;
+  for (const rawBody of ["null", "[]", "5", '"texto"']) {
+    for (const path of ["/api/admin/login", "/api/google-sheets"]) {
+      const res = await request({ method: "POST", path, headers: { origin, "content-type": "application/json", "content-length": String(Buffer.byteLength(rawBody)) }, rawBody });
+      assert.equal(res.status, 400, `${path} ${rawBody}`);
+    }
+  }
+});
+
+test("nombres de hoja heredados de Object (__proto__, constructor) se rechazan con 400", async () => {
+  const origin = `http://127.0.0.1:${port}`;
+  const login = await request({ method: "POST", path: "/api/admin/login", headers: { origin, "x-forwarded-for": "8.8.1.1" }, body: { username: "admin", password: "test-admin-password" } });
+  const cookie = String(login.headers["set-cookie"]?.[0] || "").split(";")[0];
+  for (const sheet of ["__proto__", "constructor", "toString", "hasOwnProperty"]) {
+    const get = await request({ path: `/api/google-sheets?sheet=${sheet}`, headers: { cookie, "x-forwarded-for": "8.8.1.1" } });
+    assert.equal(get.status, 400, `GET ${sheet}`);
+    const post = await request({ method: "POST", path: "/api/google-sheets", headers: { origin, cookie, "x-forwarded-for": "8.8.1.1" }, body: { sheet, rows: [] } });
+    assert.equal(post.status, 400, `POST ${sheet}`);
+  }
+});
+
+test("los ids de las rutas admin se decodifican siempre con safeDecode (un % mal formado no da 500)", () => {
+  const fuente = require("node:fs").readFileSync(require("node:path").join(__dirname, "..", "server.js"), "utf8");
+  const usos = fuente.match(/decodeURIComponent\(/g) || [];
+  assert.equal(usos.length, 1, "solo debe quedar el uso dentro de safeDecode");
+});
+
+test("el límite general de la API cuenta por IP aunque se varíe la ruta", async () => {
+  const headers = { "x-forwarded-for": "7.7.7.7" };
+  let ultimo;
+  for (let i = 0; i < 1501; i++) ultimo = await request({ path: `/api/public/ruta-${i}`, headers });
+  assert.equal(ultimo.status, 429);
+});
