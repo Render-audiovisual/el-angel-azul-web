@@ -60,12 +60,13 @@ la fuente activa de producción.
 Nunca subir a Git ni compartir por chat `DATABASE_URL`, contraseñas, archivos
 `.env` o credenciales de servicios.
 
-Para validación TLS completa, descargar el certificado CA desde Database >
-SSL Configuration en Supabase, cargarlo como `SUPABASE_DB_CA_CERT` en Hostinger y
-recién entonces activar `EAA_POSTGRES_TLS_VERIFY_FULL=true`.
-El adaptador elimina automáticamente `sslmode`, `sslcert`, `sslkey` y
-`sslrootcert` de `DATABASE_URL` cuando la validación completa está activa para
-evitar que `node-postgres` reemplace el certificado configurado.
+La conexión exige verificar el certificado TLS por defecto. Si la cadena del
+proveedor necesita una CA propia, descargala de Database > SSL Configuration
+en Supabase y cargala únicamente como `SUPABASE_DB_CA_CERT` en Hostinger.
+`EAA_POSTGRES_TLS_VERIFY_FULL=true` es compatible; `false` se rechaza.
+Las opciones SSL de la URL no pueden desactivar la verificación. Antes de
+publicar, el administrador debe validar la conexión desde el hosting; no se
+probó contra la base oficial en esta revisión.
 
 ## Base de datos
 

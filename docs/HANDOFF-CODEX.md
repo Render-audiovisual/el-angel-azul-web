@@ -174,7 +174,7 @@ Cada paso termina con `npm run check` en verde y un commit chico. Si tocás algo
   - Aviso en el log al arrancar en producción si el certificado de la base no se verifica.
 - **Falta (necesita tu decisión o configuración):**
   - **Roles: resuelto el 27/11/2026** (decisión del dueño). La agencia (`agente1` a `agente5`) crea y edita todo (colegios, grupos, contratos, planes, pasajeros, fichas, Turismo) y puede dar de baja un colegio (es una edición reversible). **Solo el administrador elimina registros** y entra a Configuración y al diagnóstico de IP. El servidor responde 403 a cualquier eliminación de la agencia (`handleSheets`, `deleteIds`); el botón «Eliminar» de Turismo no se muestra a la agencia. Test: `scripts/server-routes.test.js`.
-  - **Certificado de Supabase:** cargar `SUPABASE_DB_CA_CERT` (CA descargado del panel de Supabase) y `EAA_POSTGRES_TLS_VERIFY_FULL=true` en Hostinger. Es configuración, no código; hasta entonces `lib/db.js` conserva `rejectUnauthorized: false` por defecto.
+  - **Certificado de Supabase:** cargar `SUPABASE_DB_CA_CERT` (CA descargado del panel de Supabase) y `EAA_POSTGRES_TLS_VERIFY_FULL=true` en Hostinger. La nueva rama exige verificación por defecto y rechaza desactivarla; validar la CA y la conexión real desde Hostinger antes de publicar.
 
 **Paso 4 – Revisar los 12 puntos en el navegador: hecho el 25/11.** Fallas anotadas en `docs/correcciones-del-angel.md` (sección «Revisión a mano»); falta corregirlas.
 
@@ -242,3 +242,7 @@ Pensado para gente que quiere ver los viajes enseguida y elegir rápido; el inic
 - **Detalle de cada viaje** (`#/turismo/<slug>`): ficha de producto. Hero a pantalla completa; a la izquierda descripción, fotos, qué incluye y no incluye, itinerario día por día, reserva y pago; a la derecha una tarjeta fija con el precio, los datos y «Consultar disponibilidad»; abajo, otros viajes. En celular, barra fija con el precio y WhatsApp.
 - **Sin viajes publicados:** estado vacío con botón de WhatsApp; los viajes los carga el dueño desde el admin; no hay datos de demostración.
 - Las fotos del hero son las de `assets/img/turismo/hero/` (no son de grupos de la agencia).
+
+### Cierre de seguridad TLS — 28/11/2026
+
+La conexión a Postgres verifica el certificado por defecto, utiliza las raíces del sistema o la CA opcional y elimina opciones SSL de la URL que sustituirían esa política. Configurar explícitamente la bandera en false produce un error de configuración. No se abrió una conexión real ni se inspeccionaron valores del hosting. El marcador TODO histórico de las guardas se conserva porque modificar ese archivo exige autorización; su aserción ahora pasa, y cuatro pruebas nuevas obligatorias verifican la política.
