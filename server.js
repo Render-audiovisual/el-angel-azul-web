@@ -6,6 +6,7 @@ const { URL } = require("url");
 const academic = require('./lib/academic');
 const enrollment = require('./lib/enrollment');
 const documents = require('./lib/documents');
+const contractInformation = require('./lib/contract-information');
 const passengerPortal = require('./lib/passenger-portal');
 const studentAccounts = require('./lib/student-accounts');
 const db = require("./lib/db");
@@ -1423,6 +1424,29 @@ function createAppServer() {
         }catch(error){
           if(error.code==="42P01"||error.code==="42703")return json(res,503,{ok:false,error:"Las fotos del catálogo todavía no están habilitadas en esta base."});
           if([502,503].includes(error.statusCode))return json(res,error.statusCode,{ok:false,error:"La foto no está disponible. Volvé a intentar o consultá con el administrador."});
+          throw error;
+        }
+      }
+      const contractInfo=/^\/api\/admin\/contratos\/([^/]+)\/informacion$/.exec(url.pathname);
+      const passengerInfo=/^\/api\/(admin|portal)\/pasajeros\/([^/]+)\/informacion$/.exec(url.pathname);
+      if(contractInfo||passengerInfo) {
+        if(!POSTGRES_MIGRATION_ENABLED)return json(res,503,{ok:false,error:"La información del contrato requiere la base habilitada."});
+        const isPortal=passengerInfo?.[1]==="portal";
+        const admin=isPortal?null:currentAdminSession(req);
+        const identity=isPortal?await passengerPortal.session(parseCookies(req)[passengerPortal.COOKIE]):null;
+        if(!admin&&!identity)return json(res,401,{ok:false,error:"Iniciá sesión para consultar la información del viaje."});
+        try {
+          const id=safeDecode(contractInfo?contractInfo[1]:passengerInfo[2]);
+          if(req.method==="GET")return json(res,200,{ok:true,...await (contractInfo?contractInformation.read(id):contractInformation.passenger(id,identity))});
+          if(contractInfo&&req.method==="POST") {
+            if(requireSameOrigin(req,res))return;
+            const body=await readJsonBody(req,150000);
+            if(!body||typeof body!=="object"||Array.isArray(body))return json(res,400,{ok:false,error:"Revisá la información del contrato."});
+            return json(res,200,{ok:true,...await contractInformation.save(id,body,admin.user)});
+          }
+          return json(res,405,{ok:false,error:"Método no permitido"});
+        }catch(error) {
+          if(error.code==="42P01"||error.code==="42703")return json(res,503,{ok:false,error:"Los requisitos y avisos todavía no están habilitados en esta base."});
           throw error;
         }
       }

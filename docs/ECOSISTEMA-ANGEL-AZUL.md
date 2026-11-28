@@ -186,3 +186,7 @@ El editor incorpora servicios, cupos, promoción, video, carga de fotos desde di
 ### Certificado de la base
 
 Se elimina la conexión con certificado sin verificar. La política segura se aplica también sin bandera y no admite que parámetros SSL de la URL la reemplacen. Se conserva una CA opcional cargada por el dueño en Hostinger. La prueba usa exclusivamente configuración ficticia en memoria: comprobar el certificado del proveedor y la conectividad real sigue siendo una condición previa al despliegue autorizado.
+
+### Requisitos y comunicaciones por contrato
+
+Cada contrato puede elegir los tipos de documentos que requiere y redactar avisos privados, sin predeterminar requisitos de menores. El portal muestra únicamente avisos publicados del contrato actual y distingue documentación faltante, pendiente, observada o aprobada a partir de archivos visibles. La aprobación de un documento la decide el operador; no registra pagos ni constituye evaluación médica o legal. Los avisos se despublican y conservan, con auditoría de cambios y conflictos por versión. La empresa debe validar sus propios requisitos, consentimiento, conservación y condiciones antes de configurarlos.

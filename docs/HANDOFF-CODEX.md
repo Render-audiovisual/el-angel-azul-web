@@ -9,7 +9,7 @@ Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerra
 |---|---|---|---|---|
 | Fran (Claude Code) | `fran/harness` | Harness: guardas, `AGENTS.md`, docs | `AGENTS.md`, `CLAUDE.md`, `package.json`, `scripts/guardas.test.js`, `scripts/helpers/sin-secretos.js`, docs | 25/11 |
 | Fran (Claude Code) | `fran/inicio-aldena` | Paso 8: rediseño del inicio inspirado en la web de referencia (Agustín dio su OK sobre el PR #8) | `index.html`, `assets/css/home.css`, `assets/css/public-experience.css`, `assets/js/modules/home-motion.js`, `renderHome` en `assets/js/app.js` | 27/11 |
-| Agustín (Codex) | `agustin/ecosistema-revision-integrada` | Revisión integrada y entorno local de recorrido | Servidor local aislado, pruebas y documentación. Sin main, hosting ni base oficial | 28/11 |
+| Agustín (Codex) | `agustin/ecosistema-informacion-servidor` | Requisitos documentales y avisos privados por contrato | Servidor, migración aditiva y pruebas. Sin main, hosting ni base oficial | 28/11 |
 
 ## Ecosistema integral — nuevo encargo del 27/11/2026
 
@@ -246,3 +246,7 @@ Pensado para gente que quiere ver los viajes enseguida y elegir rápido; el inic
 ### Cierre de seguridad TLS — 28/11/2026
 
 La conexión a Postgres verifica el certificado por defecto, utiliza las raíces del sistema o la CA opcional y elimina opciones SSL de la URL que sustituirían esa política. Configurar explícitamente la bandera en false produce un error de configuración. No se abrió una conexión real ni se inspeccionaron valores del hosting. El marcador TODO histórico de las guardas se conserva porque modificar ese archivo exige autorización; su aserción ahora pasa, y cuatro pruebas nuevas obligatorias verifican la política.
+
+### Información operativa del contrato — servidor
+
+Migración aditiva 0017: requisitos documentales seleccionados por el operador y avisos de texto con publicación explícita. Sin requisitos predeterminados, términos inventados ni efectos sobre cobros/cuentas. Las familias solo leen avisos publicados de sus propios pasajeros y el estado de los documentos requeridos. Guardado con revisión, bloqueo y auditoría anterior/posterior; avisos guardados no se eliminan, se despublican. Cinco pruebas HTTP/PGlite verifican permisos, concurrencia, privacidad, validación y seguimiento de archivos. Interfaz en el siguiente PR. Sin aplicar migraciones reales.
