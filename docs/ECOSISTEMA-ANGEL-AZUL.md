@@ -144,3 +144,7 @@ La migración 0012 distingue la promoción (colegio, nivel y año de egreso) del
 Los vínculos se validan con claves foráneas compuestas, comprobación de nivel, versiones y auditoría. Quitar una relación con pasajeros asignados se bloquea; primero se revisa su asignación. Archivar conserva las relaciones históricas. No se permite cambiar silenciosamente el colegio/nivel de una promoción vinculada ni el viaje de una salida con grupos. El portal toma las fechas de la salida concreta y muestra la promoción si fueron asignadas.
 
 Las restricciones añadidas sobre relaciones heredadas pasajero/grupo/viaje/contrato/plan se crean `NOT VALID`: protegen nuevas escrituras y no clasifican, reparan ni borran registros viejos. Antes de la publicación corresponde revisar esos datos en lectura y validar las restricciones con autorización; las pruebas locales no acreditan que la base oficial esté libre de inconsistencias.
+
+### Interfaz académica conectada
+
+Grupos incorpora promociones y salidas, selección de promoción compatible con colegio/nivel, habilitación de varias salidas de un mismo viaje y asignación individual de PAX. No cambia contratos ni cuentas. Los borradores viven en memoria y sobreviven a la navegación; conflictos requieren volver a consultar y descartar explícitamente la edición. La desactivación conserva los vínculos históricos. El portal privado usa la promoción y la salida de su pasajero, incluidas sus fechas. Se verifican recorridos completos con PGlite y Chrome en escritorio y celular; no se aplicó la migración en Supabase.

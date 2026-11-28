@@ -2364,6 +2364,7 @@
           }
           window.ElAngelAzulPersistence.clearPrivateCollections();
           window.ElAngelAzulAccounts?.clear();
+          window.ElAngelAzulAcademic?.clear();
           adminPasajerosDemo = [];
           adminContratosDemo = [];
           adminFichasTutor = [];
@@ -6092,6 +6093,11 @@
         `);
         bindAdminShell();
         bindAdminGrupos();
+        const organization = document.createElement("section");
+        organization.className = "admin-turismo-panel academic-admin";
+        organization.dataset.academicAdmin = "";
+        document.querySelector("[data-admin-grupos-filters]")?.closest("section").before(organization);
+        window.ElAngelAzulAcademic?.mount(organization);
       }
 
       function bindAdminGrupos() {

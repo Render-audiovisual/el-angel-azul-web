@@ -390,3 +390,22 @@ body[data-app-entry="admin"] .portal-admin-check input { flex: 0 0 20px; width: 
 body[data-app-entry="admin"] .portal-admin-access :is(summary, [data-portal-generated-link]) { margin-top: 20px; }
 body[data-app-entry="admin"] .portal-admin-access summary { min-height: 44px; cursor: pointer; }
 body[data-app-entry="admin"] .portal-admin-access [role="alert"] { color: var(--admin-danger); }
+
+/* Organización académica: flujo de edición en el ancho útil del panel. */
+.academic-admin .academic-tabs { display:flex; flex-wrap:wrap; gap:8px; margin:20px 0; }
+body[data-app-entry="admin"] .academic-admin .academic-tabs button[aria-pressed="true"],
+body[data-app-entry="admin"] .academic-admin .academic-tabs button[aria-pressed="true"]:hover { background:var(--admin-blue,#0765a4); color:#fff; border-color:var(--admin-blue,#0765a4); }
+.academic-admin .academic-toolbar { display:flex; align-items:end; gap:16px; flex-wrap:wrap; }
+.academic-admin .academic-toolbar label { flex:1 1 420px; }
+.academic-admin label { display:grid; gap:8px; font-weight:600; min-width:0; }
+.academic-admin input:not([type="checkbox"]),.academic-admin select,.academic-admin textarea { width:100%; max-width:100%; min-width:0; }
+.academic-admin .academic-fields { border:0; padding:0; margin:24px 0 0; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; }
+.academic-admin .academic-fields p,.academic-admin .academic-departures,.academic-admin .academic-actions,.academic-admin .academic-context { grid-column:1/-1; }
+.academic-admin .academic-departures { padding:16px; border:1px solid #c9dbea; border-radius:12px; }
+.academic-admin .academic-departures label,.academic-admin .academic-check { display:flex; align-items:center; gap:12px; min-height:44px; }
+.academic-admin input[type="checkbox"] { flex:0 0 22px; width:22px; height:22px; min-height:22px; accent-color:#0765a4; }
+.academic-admin .academic-actions { display:flex; flex-wrap:wrap; gap:12px; margin-top:8px; }
+.academic-admin [role="alert"] { color:#a02b35; font-weight:600; }
+.academic-admin [role="status"]:empty { display:none; }
+.academic-admin p { max-width:75ch; }
+@media(max-width:640px) { .academic-admin .academic-fields { grid-template-columns:minmax(0,1fr); } .academic-admin .academic-toolbar label { flex-basis:100%; } .academic-admin .academic-actions button { width:100%; } .academic-admin .academic-tabs button { flex:1 1 120px; } }

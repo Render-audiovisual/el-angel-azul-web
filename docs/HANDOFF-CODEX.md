@@ -9,7 +9,7 @@ Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerra
 |---|---|---|---|---|
 | Fran (Claude Code) | `fran/harness` | Harness: guardas, `AGENTS.md`, docs | `AGENTS.md`, `CLAUDE.md`, `package.json`, `scripts/guardas.test.js`, `scripts/helpers/sin-secretos.js`, docs | 25/11 |
 | Fran (Claude Code) | `fran/inicio-aldena` | Paso 8: rediseño del inicio inspirado en la web de referencia (Agustín dio su OK sobre el PR #8) | `index.html`, `assets/css/home.css`, `assets/css/public-experience.css`, `assets/js/modules/home-motion.js`, `renderHome` en `assets/js/app.js` | 27/11 |
-| Agustín (Codex) | `agustin/ecosistema-academico-servidor` | Promociones académicas y contingentes compartidos, con asignación explícita de pasajeros | Migración 0012, servicio académico, servidor, lecturas privadas, pruebas y docs. Solo PGlite | 27/11 |
+| Agustín (Codex) | `agustin/ecosistema-academico-panel` | Gestión de promociones, salidas y asignaciones en Grupos, con información propia en Mi viaje | Módulo académico, integración de app, HTML, CSS, E2E y docs. Solo PGlite | 27/11 |
 
 ## Ecosistema integral — nuevo encargo del 27/11/2026
 
@@ -34,6 +34,8 @@ Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerra
 - Edición de Pasajeros alineada con la integridad de cuentas: contrato/plan confirmados se leen sin ofrecer cambios rechazados por el servidor, el estado de pago se muestra calculado y las correcciones personales siguen disponibles. Tabla y ficha muestran el nombre del plan guardado en la cuenta, aunque cambie el nombre para futuras cuentas. Verificación: 211 pruebas aprobadas, 1 TODO previo y portal 13/13 (incluye editar datos personales y conservar los vínculos).
 
 - Servidor académico: migración 0012, promociones por colegio/nivel/año y salidas compartidas entre grupos. PAX se asigna explícitamente a una salida del mismo viaje vinculada a su grupo; no se toca su cuenta. Historial sin borrados, CAS/auditoría, restricciones por colegio/nivel/viaje y RLS. Las restricciones sobre datos heredados se añaden NOT VALID y requieren revisión/validación autorizada antes de publicar. Prueba HTTP/PGlite: 10/10 y comprobación de índices. Interfaz en el siguiente PR. Como integración de grupos numerosos, el portal cuenta intentos fallidos de acceso y no bloquea 35 enlaces válidos desde una conexión compartida; prueba agregada.
+
+- Interfaz académica en Grupos: Promociones, Salidas, vínculos por grupo y asignación individual. Borradores en memoria, conflictos sin pisar cambios, consulta y descarte explícitos, desactivación con historia. El buscador de colegios limita las opciones del padrón sin perder la selección. Mi viaje muestra promoción y fechas de la salida asignada, sin mezclar pasajeros. Pruebas locales: 11 recorridos con Chrome/PGlite y revisión en 320/390/1440 px; ninguna escritura real.
 
 ## Revisión funcional y pagos manuales — 27/11/2026
 
