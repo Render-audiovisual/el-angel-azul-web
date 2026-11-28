@@ -9,7 +9,7 @@ Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerra
 |---|---|---|---|---|
 | Fran (Claude Code) | `fran/harness` | Harness: guardas, `AGENTS.md`, docs | `AGENTS.md`, `CLAUDE.md`, `package.json`, `scripts/guardas.test.js`, `scripts/helpers/sin-secretos.js`, docs | 25/11 |
 | Fran (Claude Code) | `fran/inicio-aldena` | Paso 8: rediseño del inicio inspirado en la web de referencia (Agustín dio su OK sobre el PR #8) | `index.html`, `assets/css/home.css`, `assets/css/public-experience.css`, `assets/js/modules/home-motion.js`, `renderHome` en `assets/js/app.js` | 27/11 |
-| Agustín (Codex) | `agustin/ecosistema-cuentas-servidor` | Condiciones de planes, cuentas inmutables, cuotas e imputación manual; solo migración local | `server.js`, `lib/student-accounts.js`, migración 0009, pruebas y docs. Sin Supabase real | 27/11 |
+| Agustín (Codex) | `agustin/ecosistema-cuentas-panel` | Conectar condiciones, cuotas y saldos a Pagos; conservar borradores y validar en escritorio/celular | `assets/js/modules/accounts.js`, `assets/js/app.js`, CSS, HTML, pruebas y docs. Solo PGlite | 27/11 |
 
 ## Ecosistema integral — nuevo encargo del 27/11/2026
 
@@ -24,6 +24,8 @@ Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerra
 - Acceso directo corregido en rama separada: `/admin/` y las entradas conocidas de sus módulos resuelven a su HTML, requieren sesión y conservan no-cache. Rutas desconocidas, código, docs y migraciones continúan bloqueados; las rutas codificadas tampoco eluden sesión. Prueba HTTP: 30/30. Después continuar con condiciones/cuotas y acceso privado individual, además de multimedia/disponibilidad del catálogo. El alcance integral del encargo sigue abierto.
 
 - Servidor de cuentas y cuotas: migración aditiva 0009, condiciones versionadas de planes, cuenta confirmada inmutable, cuotas exactas e imputación manual con idempotencia y control de concurrencia. Saldo/saldo a favor se recalculan con cobros confirmados; anular no borra historia. Solo ARS, igual que el registro manual vigente. Confirmar no equivale a consentimiento de la familia. Interfaz en el siguiente PR. Prueba HTTP/PGlite: 8/8 (incluye concurrencia, integridad SQL y RLS).
+
+- Interfaz de cuentas en Pagos: configura cada importe/fecha, conserva el borrador ante error o cambio de pantalla, permite revisar condiciones antes de confirmar y muestra cronograma, saldo, saldo a favor y cobros sin imputar. La imputación es explícita y reutiliza el mismo identificador ante un reintento. No guarda datos personales en el navegador. Pruebas locales: `npm run check`, 199 aprobadas y 1 TODO previo; 10/10 recorridos de cuentas (respuesta perdida/reintento sin duplicación, edición del plan sin alterar cuentas, errores y 320/390/1440 px) y 37/37 del panel. Capturas revisadas. Guion en `scripts/e2e/cuentas.e2e.js`.
 
 ## Revisión funcional y pagos manuales — 27/11/2026
 
@@ -106,6 +108,10 @@ npm run dev       # web local en http://localhost:3057
 - Las secciones del formulario aparecen al hacer scroll (animación); si automatizás con Playwright, hacé scroll real con `mouse.wheel`.
 
 ## 4. Estado
+
+**Corte verificado del 27/11:** main hasta `893217d` (PR #35/#36/#37) se publicó en el dominio principal y la migración 0008 se aplicó a la base oficial con autorización previa. Pagos se verificó en producción únicamente en lectura, por decisión del dueño. El trabajo nuevo del ecosistema integral está en ramas de revisión, sin integrar en main ni desplegar; 0009 solo se ejecutó en PGlite. El estado real actual no debe inferirse de los apuntes históricos siguientes.
+
+### Apuntes históricos del 24–25/11
 **Hecho en código (nada desplegado):** los 12 puntos del cliente tienen su parte hecha. El detalle punto por punto, con lo que falta de cada uno, está en `docs/correcciones-del-angel.md`.
 **Verificado a mano en el navegador local (ficha PAX):** selector PAX/Tutor, curso/grado/división, nombre y apellido separados con aviso de tildes, validación (bloquea y lista los 20 datos faltantes), CUIL/correo/celular del tutor, plan de pago, dirección, envío 201 y ficha guardada con colegio, contrato y plan; el PDF sale con «APELLIDO, NOMBRE» y el plan.
 **Revisado a mano el 25/11 (Paso 4):** formulario de Tutor, ficha PAX en celular (390 px), pantalla Fichas del admin, aprobación, exportación a Excel y PDF. Resultado y 9 fallas anotadas en `docs/correcciones-del-angel.md`. La principal: el PDF pierde las letras fuera de Latin-1 («Mićić» sale «MII»).

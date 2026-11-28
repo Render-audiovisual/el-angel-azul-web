@@ -2363,6 +2363,7 @@
             // Si falla el logout remoto, se limpia igual la sesión visual.
           }
           window.ElAngelAzulPersistence.clearPrivateCollections();
+          window.ElAngelAzulAccounts?.clear();
           adminPasajerosDemo = [];
           adminContratosDemo = [];
           adminFichasTutor = [];
@@ -6817,7 +6818,7 @@
               <article><strong>${new Set(confirmed.map((pago) => pago.pasajero_legacy_id)).size}</strong><span>Pasajeros con cobros</span></article>
               <article><strong>${adminPagos.length - confirmed.length}</strong><span>Pagos anulados</span></article>
             </div>` : ""}
-            <p>El saldo y los vencimientos quedan pendientes hasta contar con el precio y el cronograma del contrato. Registrar un cobro no modifica automáticamente el estado de pago del pasajero.</p>
+            <p>Consultá saldos y vencimientos en «Planes, cuotas y saldos». Los cobros se asignan a cuotas de forma manual.</p>
             ${adminPagosError ? `<p role="alert" class="admin-form-error">${escapeHtml(adminPagosError)}</p><button class="admin-pasajeros-secondary" data-payment-retry>Volver a consultar pagos</button>` : ""}
             ${adminPagoMessage ? `<p role="status" class="admin-payment-feedback">${escapeHtml(adminPagoMessage)}</p>` : ""}
           </section>
@@ -6836,6 +6837,7 @@
               <p data-payment-error class="admin-form-error" role="alert">${escapeHtml(adminPagoError)}</p>
             </form>` : `<p>Primero cargá o aprobá un pasajero para registrar sus pagos.</p><a href="${adminRouteHref('/admin/pasajeros')}">Ir a Pasajeros</a>`}
           </section>
+          <section class="admin-turismo-panel admin-accounts" data-student-accounts></section>
           <section class="admin-turismo-panel admin-pasajeros-table-panel">
             <div class="admin-pasajeros-table-head"><h2>Historial de cobros</h2><button type="button" class="admin-pasajeros-secondary" data-payment-refresh ${adminPagoSaving ? "disabled" : ""}>Actualizar historial</button></div>
             <form data-payment-search-form class="admin-payment-search"><label>Buscar por pasajero, DNI, concepto o referencia<input type="search" name="buscar" value="${escapeHtml(adminPagoSearch)}"></label><button type="submit" class="admin-pasajeros-secondary">Buscar</button></form>
@@ -6845,6 +6847,7 @@
           </section>` : ""}
         `);
         bindAdminShell();
+        window.ElAngelAzulAccounts?.mount(document.querySelector("[data-student-accounts]"), { initialPassenger: adminPagoDraft?.pasajeroId || "", onSessionLost: handleAdminSessionLost });
         document.querySelectorAll('[data-payment-retry], [data-payment-refresh]').forEach(button => button.addEventListener('click', async () => { if(adminPagoSaving) return; button.disabled = true; await loadAdminPagos(); if(currentPath() === '/admin/pagos') renderAdminPagos(); }));
         const form = document.querySelector('[data-payment-form]');
         const remember = () => { if(form) Object.assign(adminPagoDraft, Object.fromEntries(new FormData(form))); };
