@@ -9,7 +9,7 @@ Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerra
 |---|---|---|---|---|
 | Fran (Claude Code) | `fran/harness` | Harness: guardas, `AGENTS.md`, docs | `AGENTS.md`, `CLAUDE.md`, `package.json`, `scripts/guardas.test.js`, `scripts/helpers/sin-secretos.js`, docs | 25/11 |
 | Fran (Claude Code) | `fran/inicio-aldena` | Paso 8: rediseño del inicio inspirado en la web de referencia (Agustín dio su OK sobre el PR #8) | `index.html`, `assets/css/home.css`, `assets/css/public-experience.css`, `assets/js/modules/home-motion.js`, `renderHome` en `assets/js/app.js` | 27/11 |
-| Agustín (Codex) | `agustin/ecosistema-cuentas-panel` | Conectar condiciones, cuotas y saldos a Pagos; conservar borradores y validar en escritorio/celular | `assets/js/modules/accounts.js`, `assets/js/app.js`, CSS, HTML, pruebas y docs. Solo PGlite | 27/11 |
+| Agustín (Codex) | `agustin/ecosistema-portal-servidor` | Accesos individuales, sesiones revocables y permisos por pasajero | `lib/passenger-portal.js`, `server.js`, migración 0010, pruebas y docs. Solo PGlite | 27/11 |
 
 ## Ecosistema integral — nuevo encargo del 27/11/2026
 
@@ -26,6 +26,8 @@ Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerra
 - Servidor de cuentas y cuotas: migración aditiva 0009, condiciones versionadas de planes, cuenta confirmada inmutable, cuotas exactas e imputación manual con idempotencia y control de concurrencia. Saldo/saldo a favor se recalculan con cobros confirmados; anular no borra historia. Solo ARS, igual que el registro manual vigente. Confirmar no equivale a consentimiento de la familia. Interfaz en el siguiente PR. Prueba HTTP/PGlite: 8/8 (incluye concurrencia, integridad SQL y RLS).
 
 - Interfaz de cuentas en Pagos: configura cada importe/fecha, conserva el borrador ante error o cambio de pantalla, permite revisar condiciones antes de confirmar y muestra cronograma, saldo, saldo a favor y cobros sin imputar. La imputación es explícita y reutiliza el mismo identificador ante un reintento. No guarda datos personales en el navegador. Pruebas locales: `npm run check`, 199 aprobadas y 1 TODO previo; 10/10 recorridos de cuentas (respuesta perdida/reintento sin duplicación, edición del plan sin alterar cuentas, errores y 320/390/1440 px) y 37/37 del panel. Capturas revisadas. Guion en `scripts/e2e/cuentas.e2e.js`.
+
+- Servidor del portal individual: migración aditiva 0010, invitación de un uso por destinatario verificado por admin, tokens/sesiones solo como hashes, cookie HttpOnly/SameSite, revocación y control de pertenencia por recurso. Responsable con varios pasajeros, cuenta/cobros y PDF propio. No se envían correos ni se expone la API de pasajeros. Interfaz en el siguiente PR. Pruebas HTTP/PGlite: 8/8 (identidades separadas, permisos, PDF, expiración, concurrencia y RLS). Incluye lectura conjunta privada de cuentas para conectar los saldos del resto del panel; prueba financiera ampliada a 9/9.
 
 ## Revisión funcional y pagos manuales — 27/11/2026
 

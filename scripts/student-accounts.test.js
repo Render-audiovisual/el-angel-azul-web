@@ -72,3 +72,8 @@ test('dos administradores no pisan las condiciones del plan y un cuerpo nulo dev
  const bad=await fetch(base+'/api/admin/finanzas/planes/'+planId,{method:'POST',headers:{Cookie:cookie,Origin:base,'Content-Type':'application/json'},body:'null'});assert.equal(bad.status,400);
  assert.equal((await request('/api/admin/finanzas/pasajeros/no-existe')).status,404);
 });
+
+test('la lectura conjunta conecta saldos y cronogramas sin incluir datos personales',async()=>{
+ assert.equal((await request('/api/admin/finanzas/cuentas',null,null)).status,401);
+ const response=await request('/api/admin/finanzas/cuentas');assert.equal(response.status,200);const rows=(await response.json()).cuentas;assert.equal(rows.length,1);assert.equal(rows[0].total_centavos,'10001');assert.equal(rows[0].saldo_favor_centavos,'1999');assert.equal(rows[0].cuotas[0].estado,'pagada');assert.equal(Object.hasOwn(rows[0],'dni'),false);
+});

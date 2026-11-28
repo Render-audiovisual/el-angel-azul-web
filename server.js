@@ -3,6 +3,7 @@ const fs = require("fs");
 const http = require("http");
 const path = require("path");
 const { URL } = require("url");
+const passengerPortal = require('./lib/passenger-portal');
 const studentAccounts = require('./lib/student-accounts');
 const db = require("./lib/db");
 const fichaValidation = require("./assets/js/modules/ficha-validation.js");
@@ -604,7 +605,7 @@ async function writeSheet(sheet, rows, deleteIds = []) {
   await sheetsRequest("PUT", `/values/${range}?valueInputOption=RAW`, { values });
 }
 
-// TURISMO/CONFIG son públicas por diseño (catálogo web). GRUPOS y CONTRATOS
+// Solo TURISMO tiene lectura pública (catálogo web). CONFIG requiere sesión. GRUPOS y CONTRATOS
 // ya no se entregan completos: la inscripción usa un endpoint de búsqueda
 // acotado que devuelve como máximo cinco coincidencias activas.
 // PASAJEROS, FICHAS_ADHESION, PAGOS y CUOTAS SÍ tienen datos
@@ -1209,6 +1210,56 @@ async function handleAdminPayments(req, res, url) {
   }
 }
 
+const portalAttempts = new Map();
+function portalCookie(token,req) {
+  const age=token?passengerPortal.SESSION_SECONDS:0;
+  return `${passengerPortal.COOKIE}=${token}; HttpOnly; ${isHttpsRequest(req)?"Secure; ":""}SameSite=Strict; Path=/api/portal; Max-Age=${age}`;
+}
+async function handlePassengerPortal(req,res,url) {
+  if(!POSTGRES_MIGRATION_ENABLED)return json(res,503,{ok:false,error:"El portal privado todavía no está habilitado."});
+  const adminRoute = url.pathname.startsWith("/api/admin/portal/");
+  const admin = adminRoute ? currentAdminSession(req) : null;
+  if(adminRoute && !admin)return json(res,401,{ok:false,error:"Iniciá sesión para administrar accesos."});
+  if(adminRoute && admin.role!=="admin")return json(res,403,{ok:false,error:"Solo el administrador puede gestionar accesos privados."});
+  if(req.method==="POST" && requireSameOrigin(req,res))return;
+  try {
+    const raw = parseCookies(req)[passengerPortal.COOKIE];
+    const body = req.method==="POST" ? await readJsonBody(req,10000) : null;
+    if(req.method==="POST" && (!body||typeof body!=="object"||Array.isArray(body)))return json(res,400,{ok:false,error:"Enviá un objeto con los datos del acceso."});
+    const target=/^\/api\/admin\/portal\/pasajeros\/([^/]+)(\/(invitar|revocar))?$/.exec(url.pathname);
+    if(target && req.method==="GET" && !target[2])return json(res,200,{ok:true,...await passengerPortal.targets(safeDecode(target[1]))});
+    if(target && req.method==="POST" && target[3]==="invitar")return json(res,201,{ok:true,...await passengerPortal.invite(safeDecode(target[1]),body,admin.user)});
+    if(target && req.method==="POST" && target[3]==="revocar")return json(res,200,{ok:true,...await passengerPortal.revoke(safeDecode(target[1]),body,admin.user)});
+    if(adminRoute)return json(res,405,{ok:false,error:"Método no permitido"});
+    if(url.pathname==="/api/portal/acceso" && req.method==="POST") {
+      const key=clientIp(req);
+      if(genericRateLimited(portalAttempts,key,30,15*60*1000))return json(res,429,{ok:false,error:"Demasiados intentos. Esperá unos minutos antes de volver a intentar."});
+      registerGenericAttempt(portalAttempts,key,15*60*1000);
+      const token=await passengerPortal.consume(body.token,raw);
+      res.setHeader("Set-Cookie",portalCookie(token,req));return json(res,200,{ok:true});
+    }
+    if(url.pathname==="/api/portal/logout" && req.method==="POST") {
+      await passengerPortal.logout(raw);res.setHeader("Set-Cookie",portalCookie("",req));return json(res,200,{ok:true});
+    }
+    const identity=await passengerPortal.session(raw);
+    if(!identity)return json(res,401,{ok:false,error:"Necesitás un acceso individual vigente. Pedilo a El Ángel Azul."});
+    if(url.pathname==="/api/portal/me" && req.method==="GET")return json(res,200,{ok:true,...await passengerPortal.me(identity)});
+    const resource=/^\/api\/portal\/pasajeros\/([^/]+)\/(cuenta|pagos|ficha.pdf)$/.exec(url.pathname);
+    if(resource && req.method==="GET") {
+      if(resource[2]==="cuenta")return json(res,200,{ok:true,...await passengerPortal.account(identity,resource[1])});
+      if(resource[2]==="pagos")return json(res,200,{ok:true,pagos:await passengerPortal.payments(identity,resource[1])});
+      const id=await passengerPortal.fichaId(identity,resource[1]);const [row]=await db.listFichasAdmin(id);
+      if(!row)return json(res,404,{ok:false,error:"Ficha no encontrada."});
+      const pdf=await fichaPdf.generarPdfFicha(await conFirmaEmbebida(row));
+      res.writeHead(200,{"Content-Type":"application/pdf","Content-Disposition":`attachment; filename="${fichaPdf.nombreArchivoPdf(row)}"`,"Cache-Control":"no-store",...securityHeaders(req)});return res.end(Buffer.from(pdf));
+    }
+    return json(res,405,{ok:false,error:"Método no permitido"});
+  } catch(error) {
+    if(error.code==="42P01")return json(res,503,{ok:false,error:"El portal privado todavía no está habilitado en esta base."});
+    throw error;
+  }
+}
+
 async function handleStudentAccounts(req, res, url) {
   const session = currentAdminSession(req);
   if (!session) return json(res,401,{ok:false,error:"Iniciá sesión para ver las cuentas."});
@@ -1217,6 +1268,7 @@ async function handleStudentAccounts(req, res, url) {
   try {
     const body = req.method === "POST" ? await readJsonBody(req,100000) : null;
     if (req.method === "POST" && (!body || typeof body !== "object" || Array.isArray(body))) return json(res,400,{ok:false,error:"Enviá un objeto con los datos de la cuenta."});
+    if (url.pathname === "/api/admin/finanzas/cuentas" && req.method === "GET") return json(res,200,{ok:true,cuentas:await studentAccounts.list()});
     const plan = /^\/api\/admin\/finanzas\/planes\/([^/]+)$/.exec(url.pathname);
     const passenger = /^\/api\/admin\/finanzas\/pasajeros\/([^/]+)(\/confirmar)?$/.exec(url.pathname);
     if (url.pathname === "/api/admin/finanzas/planes" && req.method === "GET") return json(res,200,{ok:true,planes:await studentAccounts.plans()});
@@ -1262,6 +1314,7 @@ function createAppServer() {
         const row = await catalog.duplicate(decodeURIComponent(duplicatePackage[1]),body.version,session.user);
         return json(res,201,{ok:true,paquete:row});
       }
+      if (url.pathname.startsWith("/api/portal/") || url.pathname.startsWith("/api/admin/portal/")) return await handlePassengerPortal(req,res,url);
       if (url.pathname.startsWith("/api/admin/finanzas/")) return await handleStudentAccounts(req,res,url);
       if (url.pathname === "/api/admin/pagos" || url.pathname.startsWith("/api/admin/pagos/")) return await handleAdminPayments(req, res, url);
       if (url.pathname.startsWith("/api/admin/fichas/")) {
