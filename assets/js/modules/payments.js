@@ -13,16 +13,17 @@
     const cobros=Array.isArray(passenger.cobros)?passenger.cobros:[];
     const confirmados=cobros.filter(p=>p.estado==='confirmado');
     const centavos=confirmados.reduce((sum,p)=>sum+Number(p.monto_centavos||0),0);
-    const valorViaje=passenger.valorViaje!==''&&passenger.valorViaje!=null?parseMoney(passenger.valorViaje):null;
+    const account=passenger.cuenta;
+    const valorViaje=account?Number(account.total_centavos)/100:passenger.valorViaje!==''&&passenger.valorViaje!=null?parseMoney(passenger.valorViaje):null;
     return {
       planPago:passenger.planNombre||passenger.planPago||'Sin plan asignado',
-      cuotas:passenger.planCuotas||passenger.cuotas||'',
-      valorViaje,pagado:centavos/100,saldo:valorViaje===null?null:Math.max(0,valorViaje-centavos/100),
-      sena:null,proximaCuota:passenger.proximaCuota||'',estadoPago:passenger.pago||'Pendiente',
+      cuotas:account?account.cuotas.length:passenger.planCuotas||passenger.cuotas||'',
+      valorViaje,pagado:account?Number(account.pagado_centavos)/100:centavos/100,saldo:account?Number(account.saldo_centavos)/100:valorViaje===null?null:Math.max(0,valorViaje-centavos/100),
+      sena:null,proximaCuota:passenger.proximaCuota||'',estadoPago:account?(Number(account.saldo_centavos)===0?'Al día':'Saldo pendiente'):passenger.pago||'Pendiente',
       registros:confirmados.length
     };
   }
-  function installments(passenger = {}) {return Array.isArray(passenger.cuotasDetalle)?passenger.cuotasDetalle:[];}
+  function installments(passenger = {}) {if(passenger.cuenta)return passenger.cuenta.cuotas.map(row=>({number:row.numero,date:row.vencimiento,amount:Number(row.monto_centavos)/100,status:{pagada:'Pagada',pendiente:'Pendiente',vencida:'Vencida'}[row.estado]}));return Array.isArray(passenger.cuotasDetalle)?passenger.cuotasDetalle:[];}
   function installmentSummary(passenger = {}) {
     const rows=installments(passenger);
     if(!rows.length)return 'Cronograma pendiente';

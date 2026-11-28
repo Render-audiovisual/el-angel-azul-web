@@ -29,3 +29,8 @@ test('Un grupo cerrado conserva su estado después de normalizar y volver a guar
   const group=window.ElAngelAzulGroups.normalizeGroup({id:'grupo-prueba',estado:'Cerrado',pasajeros:[]});
   assert.equal(window.ElAngelAzulGroups.normalizeGroup(JSON.parse(JSON.stringify(group))).estado,'Cerrado');
 });
+
+test('las cuentas confirmadas alimentan el saldo y las cuotas sin inventar un cronograma',()=>{
+ const passenger={cuenta:{total_centavos:'10001',pagado_centavos:'4000',saldo_centavos:'6001',cuotas:[{numero:1,vencimiento:'2027-01-10',monto_centavos:'4000',estado:'pagada'},{numero:2,vencimiento:'2027-02-10',monto_centavos:'6001',estado:'pendiente'}]},cobros:[{estado:'confirmado',monto_centavos:'4000'}]};
+ const payment=window.ElAngelAzulPayments.paymentData(passenger);assert.equal(payment.valorViaje,100.01);assert.equal(payment.pagado,40);assert.equal(payment.saldo,60.01);assert.equal(payment.cuotas,2);assert.equal(payment.estadoPago,'Saldo pendiente');assert.equal(window.ElAngelAzulPayments.installmentSummary(passenger),'1/2 pagadas');
+});

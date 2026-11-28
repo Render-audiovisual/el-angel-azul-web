@@ -2368,6 +2368,8 @@
           adminContratosDemo = [];
           adminFichasTutor = [];
           adminPagos = [];
+          adminCuentas.clear();
+          adminCuentasLoaded = false;
           adminPagosLoaded = false;
           googleSheetsHydrated = false;
           adminSession = null;
@@ -4528,8 +4530,8 @@
         return window.ElAngelAzulPayments.parseMoney(value);
       }
 
-      function formatAdminMoney(value) {
-        if (value === null || value === undefined || value === "") return "Sin definir";
+      function formatAdminMoney(value, missing = "Sin definir") {
+        if (value === null || value === undefined || value === "") return missing;
         return parseAdminMoney(value).toLocaleString("es-AR", { style: "currency", currency: "ARS", minimumFractionDigits: 2, maximumFractionDigits: 2 });
       }
 
@@ -4540,16 +4542,18 @@
       function passengerPaymentData(passenger) {
         const group = adminPasajerosDemo.find((item) => item.pasajeros.includes(passenger));
         const key = passengerPaymentKey(passenger, group);
-        const payment = window.ElAngelAzulPayments.paymentData({ ...passenger, cobros: adminPagos.filter((pago) => pago.pasajero_legacy_id === key) });
-        return adminPagosLoaded ? payment : { ...payment, pagado: null, saldo: null, registros: 0 };
+        const payment = window.ElAngelAzulPayments.paymentData({ ...passenger, cuenta: adminCuentas.get(key), cobros: adminPagos.filter((pago) => pago.pasajero_legacy_id === key) });
+        return adminPagosLoaded ? { ...payment, cuentaConsultada: adminCuentasLoaded } : { ...payment, cuentaConsultada: false, pagado: null, saldo: null, registros: 0 };
       }
 
       function passengerInstallments(passenger) {
-        return window.ElAngelAzulPayments.installments(passenger);
+        const group = adminPasajerosDemo.find(item => item.pasajeros.includes(passenger));
+        return window.ElAngelAzulPayments.installments({ ...passenger, cuenta: adminCuentas.get(passengerPaymentKey(passenger, group)) });
       }
 
       function installmentSummary(passenger) {
-        return window.ElAngelAzulPayments.installmentSummary(passenger);
+        const rows = passengerInstallments(passenger);
+        return rows.length ? `${rows.filter(row => row.status === "Pagada").length}/${rows.length} pagadas` : "Cronograma pendiente";
       }
 
       function renderInstallmentCells(passenger) {
@@ -4989,9 +4993,9 @@
                 <span>Pagos</span>
                 <strong>${escapeHtml(payment.estadoPago)}</strong>
                 <dl>
-                  <div><dt>Total</dt><dd>${escapeHtml(formatAdminMoney(payment.valorViaje))}</dd></div>
+                  <div><dt>Total</dt><dd>${escapeHtml(formatAdminMoney(payment.valorViaje, payment.cuentaConsultada ? "Sin definir" : "Sin consultar"))}</dd></div>
                   <div><dt>Pagado</dt><dd>${escapeHtml(formatAdminMoney(payment.pagado))}</dd></div>
-                  <div><dt>Saldo</dt><dd>${escapeHtml(formatAdminMoney(payment.saldo))}</dd></div>
+                  <div><dt>Saldo</dt><dd>${escapeHtml(formatAdminMoney(payment.saldo, payment.cuentaConsultada ? "Sin definir" : "Sin consultar"))}</dd></div>
                   <div><dt>Cuotas</dt><dd>${escapeHtml(installmentSummary(passenger))}</dd></div>
                   <div><dt>Estado cuotas</dt><dd>${passengerInstallments(passenger).length ? `${paidInstallments} pagas · ${pendingInstallments} pendientes` : "Cronograma pendiente"}</dd></div>
                 </dl>
@@ -5000,6 +5004,7 @@
                 <h3>Historial de cobros</h3>
                 ${adminPagosLoaded ? renderPaymentHistoryCells(passenger) : '<p>No se pudieron consultar los pagos. Entrá en Pagos para volver a intentar.</p>'}
               </article>
+              ${adminCanDelete() ? `<article class="admin-payment-wide portal-admin-access" data-portal-access-admin data-passenger-id="${escapeHtml(passengerPaymentKey(passenger, group))}"></article>` : ""}
               <article>
                 <span>Observaciones</span>
                 <p>${escapeHtml(passenger.observaciones || "Sin observaciones internas.")}</p>
@@ -6217,6 +6222,7 @@
       }
 
       function bindAdminPasajeros() {
+        document.querySelectorAll("[data-portal-access-admin]").forEach(root => window.ElAngelAzulPortalAdmin?.mount(root, root.dataset.passengerId));
         document.querySelector("[data-admin-pasajeros-open-form]")?.addEventListener("click", () => {
           adminPasajerosShowForm = !adminPasajerosShowForm;
           adminPasajerosFormError = "";
@@ -6749,6 +6755,8 @@
       }
 
       let adminPagos = [];
+      let adminCuentas = new Map();
+      let adminCuentasLoaded = false;
       let adminPagoPassengerIds = new Map();
       let adminPagosError = "";
       let adminPagosLoaded = false;
@@ -6767,11 +6775,26 @@
         return { id: crypto.randomUUID(), pasajeroId: "", fecha: new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().slice(0, 10), monto: "", medio: "", concepto: "", referencia: "" };
       }
 
+      async function loadAdminCuentas() {
+        try {
+          const response = await fetch("/api/admin/finanzas/cuentas", { credentials: "same-origin", cache: "no-store" });
+          const payload = await response.json();
+          if (!response.ok || !payload.ok || !Array.isArray(payload.cuentas)) throw new Error("No se pudieron consultar las cuentas.");
+          adminCuentas = new Map(payload.cuentas.flatMap(account => [[account.legacy_id, account], [account.pasajero_id, account]]));
+          adminCuentasLoaded = true;
+        } catch (_) { adminCuentas.clear(); adminCuentasLoaded = false; }
+      }
+      window.addEventListener("eaa-cuentas-cambiadas", async () => {
+        await loadAdminCuentas();
+        if (currentPath() === "/admin/pasajeros" && !adminPasajerosEditMode && !adminPasajerosShowForm && !adminPasajerosGroupModal) renderAdminPasajeros();
+      });
+
       async function loadAdminPagos() {
         try {
           const [response, passengers] = await Promise.all([
             fetch("/api/admin/pagos", { credentials: "same-origin", cache: "no-store" }),
-            window.ElAngelAzulPersistence.fetchGoogleSheetRows("PASAJEROS")
+            window.ElAngelAzulPersistence.fetchGoogleSheetRows("PASAJEROS"),
+            loadAdminCuentas()
           ]);
           const payload = await response.json();
           if (response.status === 401) handleAdminSessionLost();
@@ -6796,6 +6819,7 @@
         if (response.status === 401) handleAdminSessionLost();
         if (!response.ok || !payload.ok || !payload.pago) throw new Error(payload.error || "No se pudo guardar el pago. Revisá el historial antes de volver a intentar.");
         adminPagos = [payload.pago, ...adminPagos.filter((pago) => pago.id !== payload.pago.id)];
+        await loadAdminCuentas();
         return payload;
       }
 
@@ -7680,293 +7704,8 @@
         `;
       }
 
-      function portalStatusTone(value) {
-        return window.ElAngelAzulPortal.statusTone(value);
-      }
-
-      function portalPaymentStatus(record) {
-        return window.ElAngelAzulPortal.paymentStatus(record);
-      }
-
-      function portalDocumentationItems(record) {
-        return window.ElAngelAzulPortal.documentationItems(record);
-      }
-
-      function renderPortalDocumentation(record) {
-        const items = portalDocumentationItems(record);
-        const pendingItems = items.filter(item => !item.isComplete);
-        if (!pendingItems.length) {
-          return `
-            <div class="portal-doc-ok">
-              <strong>Documentación al día</strong>
-              <span>No figuran documentos pendientes para este pasajero.</span>
-            </div>
-          `;
-        }
-        return `
-          <div class="portal-doc-list">
-            ${pendingItems.map(item => `
-              <div class="portal-doc-item">
-                <span>${escapeHtml(item.label)}</span>
-                <strong>${escapeHtml(item.status)}</strong>
-              </div>
-            `).join("")}
-          </div>
-        `;
-      }
-
-      function portalWhatsappHref(record) {
-        return whatsappLink(window.ElAngelAzulPortal.whatsappMessage(record));
-      }
-
-      function renderPortalResult(record) {
-        const result = document.getElementById("portal-result");
-        const paymentStatus = portalPaymentStatus(record);
-        const paidPercentage = record.total > 0 ? Math.min(100, Math.max(0, Math.round((record.paid / record.total) * 100))) : 0;
-        const pendingDocs = portalDocumentationItems(record).filter(item => !item.isComplete).length;
-        const whatsappHref = portalWhatsappHref(record);
-        const nextActions = [
-          paymentStatus === "Al día" ? "Mantené tu comprobante guardado por cualquier revisión." : "Consultá el detalle de pago y próxima cuota.",
-          pendingDocs ? "Revisá la documentación pendiente con administración." : "La documentación figura sin pendientes cargados.",
-          "Guardá este acceso para volver a consultar tu viaje."
-        ];
-        result.innerHTML = `
-          <section class="portal-result portal-result-dashboard">
-            <div class="portal-result-head">
-              <div>
-                <span>Mi viaje</span>
-                <h2>${escapeHtml(record.name)}</h2>
-                <p>${escapeHtml(record.group.school || record.group.name || "Grupo pendiente")} · ${escapeHtml(record.group.course || "Curso pendiente")}</p>
-              </div>
-              <a href="${whatsappHref}" target="_blank" rel="noopener">Consultar por WhatsApp</a>
-            </div>
-
-            <div class="portal-trip-card">
-              <div>
-                <span>Viaje asignado</span>
-                <strong>${escapeHtml(record.trip.name || "Viaje pendiente")}</strong>
-                <p>${escapeHtml(record.group.name || "Grupo pendiente")} · Contrato ${escapeHtml(record.contractCode || "Pendiente")}</p>
-              </div>
-              <strong class="portal-status-pill ${portalStatusTone(record.generalStatus)}">${escapeHtml(record.generalStatus || "Consultar")}</strong>
-            </div>
-
-            <div class="portal-status-grid">
-              <article class="portal-status-card">
-                <span>Estado del viaje</span>
-                <strong>${escapeHtml(record.trip.status || record.passengerStatus || "En seguimiento")}</strong>
-                <small>${escapeHtml(record.trip.name || "Viaje pendiente")} · ${escapeHtml(record.trip.destination || "Destino pendiente")}</small>
-                <small>${escapeHtml(record.generalStatus || "Consultar estado")}</small>
-              </article>
-              <article class="portal-status-card">
-                <span>Estado de pagos</span>
-                <strong>${escapeHtml(paymentStatus)}</strong>
-                <small>${record.nextInstallment ? `Próxima cuota: ${escapeHtml(record.nextInstallment.cuota_nombre || `Cuota ${record.nextInstallment.cuota_numero}`)} · ${formatDate(record.nextInstallment.cuota_vencimiento)}` : "Sin cuotas pendientes cargadas"}</small>
-                ${record.hasReview ? `<small>Hay un pago en revisión administrativa.</small>` : ""}
-              </article>
-              <article class="portal-status-card">
-                <span>Documentación pendiente</span>
-                <strong>${pendingDocs ? `${pendingDocs} pendiente${pendingDocs > 1 ? "s" : ""}` : "Al día"}</strong>
-                <small>${pendingDocs ? "Revisá el detalle de documentación más abajo." : "No figuran pendientes cargados."}</small>
-              </article>
-            </div>
-
-            <div class="portal-next-actions">
-              <span>Próximos pasos</span>
-              ${nextActions.map((action, index) => `
-                <div>
-                  <strong>${index + 1}</strong>
-                  <p>${escapeHtml(action)}</p>
-                </div>
-              `).join("")}
-            </div>
-
-            <div class="portal-result-section">
-              <h3>Resumen del viaje</h3>
-              <div class="portal-summary">
-                <div><span>Viaje</span><strong>${escapeHtml(record.trip.name || "Pendiente")}</strong></div>
-                <div><span>Colegio / grupo</span><strong>${escapeHtml(record.group.name || "Pendiente")}</strong></div>
-                <div><span>Contrato</span><strong>${escapeHtml(record.contractCode || "Pendiente")}</strong></div>
-                <div><span>DNI</span><strong>${escapeHtml(record.dni || "Pendiente")}</strong></div>
-                <div><span>Estado del pasajero</span><strong class="portal-status-pill ${portalStatusTone(record.passengerStatus)}">${escapeHtml(record.passengerStatus || "En seguimiento")}</strong></div>
-                <div><span>Estado general</span><strong class="portal-status-pill ${portalStatusTone(record.generalStatus)}">${escapeHtml(record.generalStatus || "Consultar")}</strong></div>
-              </div>
-            </div>
-
-            <div class="portal-result-section">
-              <h3>Estado de pagos</h3>
-              ${record.total === null || record.total === undefined ? `
-                <p class="portal-notice">Todavía no cargamos el detalle de montos para este viaje. Tu estado de pago actual es <strong>${escapeHtml(paymentStatus)}</strong>. Para el monto exacto, consultanos por WhatsApp.</p>
-              ` : `
-                <div class="portal-payment-panel">
-                  <div class="portal-payment-meter" aria-label="Avance de pago">
-                    <span style="width: ${paidPercentage}%"></span>
-                  </div>
-                  <div class="portal-payment-summary">
-                    <div><span>Total del viaje</span><strong>${formatCurrency(record.total)}</strong></div>
-                    <div><span>Monto pagado</span><strong>${formatCurrency(record.paid)}</strong></div>
-                    <div><span>Saldo pendiente</span><strong>${formatCurrency(record.balance)}</strong></div>
-                    <div><span>Avance</span><strong>${paidPercentage}%</strong></div>
-                  </div>
-                </div>
-              `}
-              ${record.hasReview ? `<p class="portal-notice">Hay pagos en revisión.</p>` : ""}
-            </div>
-
-            <div class="portal-result-section">
-              <h3>Cuotas</h3>
-              <div class="portal-installments">
-                ${record.installments.length ? record.installments.map(installment => `
-                  <div class="portal-installment">
-                    <strong>${installment.cuota_nombre || `Cuota ${installment.cuota_numero}`}</strong>
-                    <span>${formatCurrency(parseNumber(installment.cuota_monto))}</span>
-                    <span>Vence: ${formatDate(installment.cuota_vencimiento)}</span>
-                    <span class="portal-status-pill ${portalStatusTone(installment.cuota_estado)}">${escapeHtml(installment.cuota_estado)}</span>
-                  </div>
-                `).join("") : `<p>Este contrato todavía no tiene cuotas cargadas.</p>`}
-              </div>
-            </div>
-
-            <div class="portal-result-section">
-              <h3>Documentación</h3>
-              ${renderPortalDocumentation(record)}
-            </div>
-
-            <div class="portal-whatsapp-panel">
-              <div>
-                <span>Atención directa</span>
-                <h3>Consultá por WhatsApp</h3>
-                <p>El mensaje ya incluye pasajero, DNI y contrato para que administración ubique rápido el caso.</p>
-              </div>
-              <a href="${whatsappHref}" target="_blank" rel="noopener">Abrir WhatsApp</a>
-            </div>
-          </section>
-        `;
-      }
-
-      function renderPortalNotFound() {
-        const result = document.getElementById("portal-result");
-        result.innerHTML = `
-          <section class="portal-empty">
-            <h2>No encontramos un pasajero con ese DNI.</h2>
-            <p>Revisá el número o consultanos por WhatsApp.</p>
-            <a href="${whatsappLink("Hola, quiero consultar por el portal de pasajeros de El Ángel Azul.")}" target="_blank" rel="noopener">Consultar por WhatsApp</a>
-          </section>
-        `;
-      }
-
-      // FIX: el portal leía de un archivo Excel hardcodeado ("...simulado_v1.xlsx") con
-      // datos de prueba, completamente desconectado de la base real (Google Sheets) que
-      // usa el resto del sistema. Por eso la ruta pública estaba deshabilitada (redirigía
-      // a Inscripción) - mostrar datos falsos a una familia real hubiera sido peor que no
-      // mostrar nada. Ahora busca sobre los GRUPOS/PASAJEROS reales (los mismos que ya
-      // sincroniza el admin con Sheets).
-      //
-      // Importante: el sistema hoy NO trackea montos reales de pago por pasajero (solo un
-      // estado: "Pendiente" / "Al día" / "Vencido"), así que NO se inventan cifras de saldo.
-      // Se muestra el estado real, y para el detalle de monto se deriva a WhatsApp - es
-      // preferible decir "consultá el monto por WhatsApp" antes que mostrar un número
-      // inventado que la familia podría tomar como real.
-      function buildRealPortalRecord(passenger, group) {
-        const contrato = contractById(passengerContratoId(passenger), group.id);
-        return {
-          contractCode: passengerCodigoContrato(passenger) || "Pendiente",
-          name: passenger.nombre || "Pasajero",
-          dni: passenger.dni || "",
-          passengerStatus: passenger.estado || "Pendiente",
-          trip: {
-            code: group.id || "",
-            name: group.viaje || "",
-            destination: group.viaje || "",
-            type: group.nivel || "",
-            status: group.estado || ""
-          },
-          group: {
-            code: group.id || "",
-            name: `${group.colegio || ""} · ${group.curso || ""} ${group.division || ""}`.trim(),
-            school: group.colegio || "",
-            course: `${group.curso || ""} ${group.division || ""}`.trim()
-          },
-          documentation: {
-            general: passenger.documentacion || "Pendiente de validar",
-            medical: passenger.fichaMedica || "Pendiente de validar",
-            authorization: String(contrato?.estado || "").toLowerCase() === "activo" ? "Aprobada" : "Pendiente de validar"
-          },
-          installments: [],
-          payments: [],
-          total: null,
-          paid: 0,
-          balance: null,
-          nextInstallment: null,
-          hasReview: false,
-          generalStatus: passenger.pago || "Consultar estado"
-        };
-      }
-
-      async function consultarPortalPasajeros(event) {
-        event.preventDefault();
-        const dni = document.getElementById("portal-dni").value.replace(/\D/g, "");
-        const accessCode = document.getElementById("portal-code").value.trim().toUpperCase();
-        const result = document.getElementById("portal-result");
-        result.innerHTML = `<section class="portal-empty"><p>Cargando datos del pasajero...</p></section>`;
-        try {
-          await hydrateGoogleSheetsData();
-          let foundPassenger = null;
-          let foundGroup = null;
-          for (const group of adminPasajerosDemo) {
-            const match = (group.pasajeros || []).find((item) => (
-              normalizeDni(item.dni) === dni &&
-              normalizeCode(passengerCodigoContrato(item)) === accessCode
-            ));
-            if (match) {
-              foundPassenger = match;
-              foundGroup = group;
-              break;
-            }
-          }
-          if (!foundPassenger) {
-            renderPortalNotFound();
-            return;
-          }
-          renderPortalResult(buildRealPortalRecord(foundPassenger, foundGroup));
-        } catch (error) {
-          result.innerHTML = `
-            <section class="portal-empty">
-              <h2>No pudimos cargar la base de pasajeros.</h2>
-              <p>Revisá que la base esté disponible o consultanos por WhatsApp.</p>
-            </section>
-          `;
-        }
-      }
-
       function renderPortalPasajeros() {
-        document.getElementById("app").innerHTML = `
-          <div class="layout portal-layout">
-            <section class="portal-hero">
-              <span>Mi viaje</span>
-              <h1>Estado de inscripción</h1>
-              <p>Consultá desde el celular tu viaje, documentación y estado de pagos con DNI y código de contrato.</p>
-            </section>
-
-            <section class="portal-panel">
-              <div class="portal-panel-head">
-                <span>Acceso rápido</span>
-                <h2>Ingresá tus datos</h2>
-                <p>El código figura en la ficha o contrato de viaje.</p>
-              </div>
-              <form class="portal-form" id="portal-form">
-                <label for="portal-dni">DNI del pasajero</label>
-                <input id="portal-dni" name="dni" inputmode="numeric" autocomplete="off" placeholder="Ingresá tu DNI" required>
-                <label for="portal-code">Código de contrato</label>
-                <input id="portal-code" name="code" autocomplete="off" placeholder="Ej: CON-PRI-RIO-PARANA-6TO-A-CARLOS-PAZ-2026" required>
-                <small class="portal-form-hint">Lo encontrás en tu ficha de adhesión o contrato de viaje.</small>
-                <button type="submit">Ver mi viaje</button>
-              </form>
-            </section>
-
-            <div id="portal-result" aria-live="polite"></div>
-          </div>
-        `;
-        document.getElementById("portal-form").addEventListener("submit", consultarPortalPasajeros);
+        return window.ElAngelAzulPortalPrivate.render(document.getElementById("app"));
       }
 
       const inscripcionDestinosPorNivel = {
@@ -8316,140 +8055,6 @@
           /^[A-Z0-9]{1,3}$/.test(context.division) &&
           (context.colegioId || context.colegioTexto.trim().length >= 3)
         );
-      }
-
-      async function renderAdminPortal() {
-        document.getElementById("app").innerHTML = `
-          <div class="layout portal-layout">
-            <section class="portal-hero">
-              <h1>Admin portal</h1>
-              <p>Cargando estructura desde Excel simulado...</p>
-            </section>
-          </div>
-        `;
-
-        let data;
-        try {
-          data = await loadPortalExcelData();
-        } catch (error) {
-          document.getElementById("app").innerHTML = `
-            <div class="layout portal-layout">
-              <section class="portal-empty">
-                <h1>No se pudo cargar el Excel simulado</h1>
-                <p>La vista admin necesita el archivo ${portalExcelFile}.</p>
-              </section>
-            </div>
-          `;
-          return;
-        }
-
-        const tripCards = data.tripsGroups.map(group => {
-          const passengers = data.passengers.filter(passenger => (
-            normalizeCode(passenger.viaje_codigo) === normalizeCode(group.viaje_codigo) &&
-            normalizeCode(passenger.grupo_codigo) === normalizeCode(group.grupo_codigo)
-          ));
-          const records = passengers.map(passenger => getPassengerPortalRecord(passenger, data));
-          const total = records.reduce((sum, record) => sum + record.total, 0);
-          const paid = records.reduce((sum, record) => sum + record.paid, 0);
-          const balance = total - paid;
-          return `
-            <div class="admin-demo-card">
-              <h3>${group.viaje_nombre}</h3>
-              <p><strong>Código:</strong> ${group.viaje_codigo}</p>
-              <p><strong>Destino:</strong> ${group.destino}</p>
-              <p><strong>Tipo:</strong> ${group.tipo_viaje}</p>
-              <p><strong>Estado:</strong> ${group.estado_grupo}</p>
-              <p><strong>Grupo:</strong> ${group.grupo_nombre}</p>
-              <p><strong>Pasajeros:</strong> ${passengers.length}</p>
-              <p><strong>Total:</strong> ${formatCurrency(total)}</p>
-              <p><strong>Pagado:</strong> ${formatCurrency(paid)}</p>
-              <p><strong>Saldo:</strong> ${formatCurrency(balance)}</p>
-            </div>
-          `;
-        }).join("");
-
-        const groupCards = data.tripsGroups.map(group => {
-          const passengers = data.passengers.filter(passenger => normalizeCode(passenger.grupo_codigo) === normalizeCode(group.grupo_codigo));
-          return `
-            <div class="admin-demo-card">
-              <h3>${group.grupo_nombre}</h3>
-              <p><strong>Código:</strong> ${group.grupo_codigo}</p>
-              <p><strong>Viaje:</strong> ${group.viaje_nombre}</p>
-              <p><strong>Colegio:</strong> ${group.colegio}</p>
-              <p><strong>Curso:</strong> ${group.curso}</p>
-              <p><strong>Estado:</strong> ${group.estado_grupo}</p>
-              <p><strong>Pasajeros:</strong> ${passengers.length}</p>
-            </div>
-          `;
-        }).join("");
-
-        const passengerCards = data.passengers.map(passenger => {
-          const record = getPassengerPortalRecord(passenger, data);
-          return `
-            <div class="admin-demo-card">
-              <h3>${record.name}</h3>
-              <p><strong>DNI:</strong> ${record.dni}</p>
-              <p><strong>Contrato:</strong> ${record.contractCode}</p>
-              <p><strong>Viaje:</strong> ${record.trip.name}</p>
-              <p><strong>Grupo:</strong> ${record.group.name}</p>
-              <p><strong>Estado:</strong> ${record.generalStatus}</p>
-              <p><strong>Total:</strong> ${formatCurrency(record.total)}</p>
-              <p><strong>Pagado:</strong> ${formatCurrency(record.paid)}</p>
-              <p><strong>Saldo:</strong> ${formatCurrency(record.balance)}</p>
-            </div>
-          `;
-        }).join("");
-
-        const paymentCards = data.payments.map(payment => {
-          const passenger = data.passengers.find(item => (
-            normalizeDni(item.pasajero_dni) === normalizeDni(payment.pasajero_dni) &&
-            normalizeCode(item.contrato_codigo) === normalizeCode(payment.contrato_codigo)
-          ));
-          return `
-            <div class="admin-demo-card">
-              <h3>${passenger?.pasajero_nombre || "Pasajero no encontrado"}</h3>
-              <p><strong>Contrato:</strong> ${payment.contrato_codigo}</p>
-              <p><strong>Pago:</strong> ${formatCurrency(parseNumber(payment.pago_monto))}</p>
-              <p><strong>Fecha:</strong> ${formatDate(payment.pago_fecha)}</p>
-              <p><strong>Medio:</strong> ${payment.pago_medio || "Sin medio"}</p>
-              <p><strong>Cuota:</strong> ${payment.cuota_asociada || "Sin asociar"}</p>
-              <p><strong>Estado:</strong> ${payment.pago_estado}</p>
-            </div>
-          `;
-        }).join("");
-
-        document.getElementById("app").innerHTML = `
-          <div class="layout portal-layout">
-            <section class="portal-hero">
-              <h1>Admin portal</h1>
-              <p>Vista interna para validar estructura de viajes, grupos, pasajeros, cuotas y pagos.</p>
-            </section>
-
-            <section class="admin-demo-section">
-              <p class="portal-notice">Esta es una vista de solo lectura para revisar viajes, grupos, pasajeros, cuotas y pagos.</p>
-            </section>
-
-            <section class="admin-demo-section">
-              <h2>Viajes</h2>
-              <div class="admin-demo-grid">${tripCards}</div>
-            </section>
-
-            <section class="admin-demo-section">
-              <h2>Grupos</h2>
-              <div class="admin-demo-grid">${groupCards}</div>
-            </section>
-
-            <section class="admin-demo-section">
-              <h2>Pasajeros</h2>
-              <div class="admin-demo-grid">${passengerCards}</div>
-            </section>
-
-            <section class="admin-demo-section">
-              <h2>Resumen de pagos</h2>
-              <div class="admin-demo-grid">${paymentCards}</div>
-            </section>
-          </div>
-        `;
       }
 
       function fichaOpciones(lista, seleccionado = "", placeholder = "") {
@@ -9182,6 +8787,7 @@
         if (path === "/" || path.startsWith("/turismo")) turismoPublicPackagesCache = null;
         const page = routes[path] || routes["/"];
         document.body.classList.toggle("home-page", path === "/");
+        document.body.classList.toggle("portal-private-page", ["/portal-pasajeros", "/pasajeros", "/mi-viaje"].includes(path));
         document.body.classList.toggle("turismo-page", path.startsWith("/turismo"));
         document.body.classList.toggle("turismo-hero-page", path.startsWith("/turismo"));
         if (path !== "/" && path !== "/turismo" && path !== "/turismo/paquetes" && window.EAAHomeMotion) window.EAAHomeMotion.kill();
@@ -9237,13 +8843,9 @@
           renderContacto();
           return;
         }
-        // FIX: el portal de pasajeros estaba desconectado del router (redirigía a
-        // Inscripción) porque su fuente de datos era un Excel simulado. Ahora que lee
-        // de la base real (ver buildRealPortalRecord / consultarPortalPasajeros), se
-        // reconecta la ruta pública.
+        // El portal utiliza una sesión propia; nunca hidrata colecciones del administrador.
         if (path === "/portal-pasajeros" || path === "/pasajeros" || path === "/mi-viaje") {
-          await hydrateGoogleSheetsData();
-          renderPortalPasajeros();
+          await renderPortalPasajeros();
           return;
         }
         // Ficha v2: la inscripción ya no hidrata Grupos/Contratos en el

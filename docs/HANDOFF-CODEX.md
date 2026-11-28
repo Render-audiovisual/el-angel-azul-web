@@ -9,7 +9,7 @@ Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerra
 |---|---|---|---|---|
 | Fran (Claude Code) | `fran/harness` | Harness: guardas, `AGENTS.md`, docs | `AGENTS.md`, `CLAUDE.md`, `package.json`, `scripts/guardas.test.js`, `scripts/helpers/sin-secretos.js`, docs | 25/11 |
 | Fran (Claude Code) | `fran/inicio-aldena` | Paso 8: rediseño del inicio inspirado en la web de referencia (Agustín dio su OK sobre el PR #8) | `index.html`, `assets/css/home.css`, `assets/css/public-experience.css`, `assets/js/modules/home-motion.js`, `renderHome` en `assets/js/app.js` | 27/11 |
-| Agustín (Codex) | `agustin/ecosistema-portal-servidor` | Accesos individuales, sesiones revocables y permisos por pasajero | `lib/passenger-portal.js`, `server.js`, migración 0010, pruebas y docs. Solo PGlite | 27/11 |
+| Agustín (Codex) | `agustin/ecosistema-portal-panel` | Portal privado real, gestión de invitaciones desde Pasajeros y saldos conectados al resto del panel | Módulos de interfaz, `assets/js/app.js`, CSS, HTML, pruebas y docs. Solo PGlite | 27/11 |
 
 ## Ecosistema integral — nuevo encargo del 27/11/2026
 
@@ -28,6 +28,8 @@ Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerra
 - Interfaz de cuentas en Pagos: configura cada importe/fecha, conserva el borrador ante error o cambio de pantalla, permite revisar condiciones antes de confirmar y muestra cronograma, saldo, saldo a favor y cobros sin imputar. La imputación es explícita y reutiliza el mismo identificador ante un reintento. No guarda datos personales en el navegador. Pruebas locales: `npm run check`, 199 aprobadas y 1 TODO previo; 10/10 recorridos de cuentas (respuesta perdida/reintento sin duplicación, edición del plan sin alterar cuentas, errores y 320/390/1440 px) y 37/37 del panel. Capturas revisadas. Guion en `scripts/e2e/cuentas.e2e.js`.
 
 - Servidor del portal individual: migración aditiva 0010, invitación de un uso por destinatario verificado por admin, tokens/sesiones solo como hashes, cookie HttpOnly/SameSite, revocación y control de pertenencia por recurso. Responsable con varios pasajeros, cuenta/cobros y PDF propio. No se envían correos ni se expone la API de pasajeros. Interfaz en el siguiente PR. Pruebas HTTP/PGlite: 8/8 (identidades separadas, permisos, PDF, expiración, concurrencia y RLS). Incluye lectura conjunta privada de cuentas para conectar los saldos del resto del panel; prueba financiera ampliada a 9/9.
+
+- Interfaz privada conectada: acceso individual sin formulario DNI/código, retiro del valor de acceso de la dirección, varios pasajeros por responsable, cuentas/cuotas/cobros y PDF propio. Admin genera/revoca desde la ficha de Pasajeros, verificando destinatario/canal. Las cuentas alimentan además saldos y cuotas del panel general. Se retiraron los prototipos locales antiguos. Revisión de paleta, Poppins/Bebas y vistas 320/390/1440 px con fuentes reales. Verificación: `npm run check`, 209 aprobadas, 0 fallas y 1 TODO previo; portal 12/12 (incluye descarga de PDF y cierre de sesión), cuentas 10/10, catálogo 12/12 y panel 37/37. Pendiente de integración antes de publicar: impedir en servidor el cambio de contrato/plan/viaje de un pasajero con cuenta confirmada y conservar el nombre del plan en la copia de la cuenta.
 
 ## Revisión funcional y pagos manuales — 27/11/2026
 
