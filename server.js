@@ -16,6 +16,7 @@ const storage = require("./lib/storage");
 const adminWrite = require("./lib/admin-write");
 const paymentsLedger = require("./lib/payments-ledger");
 const catalog = require("./lib/catalog");
+const catalogMedia = require("./lib/catalog-media");
 
 const PORT = Number(process.env.PORT || 8080);
 const ROOT = __dirname;
@@ -255,7 +256,7 @@ const SCHEMA = {
   PAGOS: ["id", "pasajero_id", "pasajero_dni", "contrato_codigo", "fecha", "monto", "medio", "estado", "cuota_id", "comprobante_url", "observaciones", "created_at"],
   CUOTAS: ["id", "pasajero_id", "pasajero_dni", "contrato_codigo", "numero", "nombre", "monto", "vencimiento", "estado", "created_at", "updated_at"],
   CONFIG: ["clave", "valor", "descripcion", "updated_at"],
-  TURISMO: ["id", "slug", "destino", "titulo", "duracion", "temporada", "fecha_salida", "fecha_regreso", "salida_garantizada", "precio_desde", "precio_valor", "moneda", "precio_base_doble", "suplemento_single", "precio_menor", "condicion_venta", "categorias", "descripcion_corta", "descripcion_larga", "incluye", "no_incluye", "formas_pago", "itinerario", "fotos", "estado", "destacado", "orden", "created_at", "updated_at"]
+  TURISMO: ["id", "slug", "destino", "titulo", "duracion", "temporada", "fecha_salida", "fecha_regreso", "salida_garantizada", "precio_desde", "precio_valor", "moneda", "precio_base_doble", "suplemento_single", "precio_menor", "condicion_venta", "categorias", "descripcion_corta", "descripcion_larga", "incluye", "no_incluye", "formas_pago", "itinerario", "fotos", "estado", "destacado", "orden", "alojamiento", "transporte", "regimen_comidas", "disponibilidad", "cupos", "promocion", "video_url", "archivado", "created_at", "updated_at"]
 };
 
 const WRITE_ALLOWED = new Set(["GRUPOS", "CONTRATOS", "PASAJEROS", "FICHAS_ADHESION", "TURISMO", "FICHAS_TUTOR", "PLANES_PAGO", "COLEGIOS"]);
@@ -396,6 +397,7 @@ function securityHeaders(req) {
       "base-uri 'self'",
       "object-src 'none'",
       "frame-ancestors 'none'",
+      "frame-src 'self' https://www.youtube-nocookie.com https://player.vimeo.com",
       "form-action 'self'",
       "script-src 'self' https://cdn.jsdelivr.net",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net",
@@ -644,6 +646,7 @@ const LONG_FIELD_LIMITS = {
   itinerario: 20000,
   fotos: 10000,
   descripcion_larga: 5000,
+  alojamiento:2000,transporte:2000,regimen_comidas:2000,promocion:2000,
   observaciones: 3000,
   firma_data_url: 250000
 };
@@ -655,7 +658,7 @@ function fieldLimitFor(column) {
 function sanitizeRow(row, columns) {
   const clean = {};
   columns.forEach((column) => {
-    clean[column] = String(row && typeof row === "object" ? row[column] || "" : "").slice(0, fieldLimitFor(column));
+    clean[column] = String(row && typeof row === "object" ? row[column] ?? "" : "").slice(0, fieldLimitFor(column));
   });
   return clean;
 }
@@ -1397,6 +1400,31 @@ function createAppServer() {
         const body = await readJsonBody(req,10000);
         const row = await catalog.duplicate(decodeURIComponent(duplicatePackage[1]),body.version,session.user);
         return json(res,201,{ok:true,paquete:row});
+      }
+      if(url.pathname==="/api/admin/catalogo/multimedia"||url.pathname.startsWith("/api/public/catalogo/media/")) {
+        try {
+          if(!POSTGRES_MIGRATION_ENABLED)return json(res,503,{ok:false,error:"La carga de fotos requiere la base habilitada."});
+          const photo=/^\/api\/public\/catalogo\/media\/([^/]+)$/.exec(url.pathname);
+          if(photo&&req.method==="GET") {
+            const result=await catalogMedia.read(safeDecode(photo[1]),!!currentAdminSession(req),req.headers["if-none-match"]);
+            const headers={"Cache-Control":"private, no-cache",ETag:result.etag,"X-Content-Type-Options":"nosniff","Cross-Origin-Resource-Policy":"same-origin"};
+            if(result.notModified){res.writeHead(304,headers);return res.end();}
+            res.writeHead(200,{...headers,"Content-Type":result.mime,"Content-Length":result.bytes.length});return res.end(result.bytes);
+          }
+          const session=currentAdminSession(req);
+          if(!session)return json(res,401,{ok:false,error:"Iniciá sesión para cargar fotos del catálogo."});
+          if(url.pathname!=="/api/admin/catalogo/multimedia")return json(res,405,{ok:false,error:"Método no permitido"});
+          if(req.method==="GET")return json(res,200,{ok:true,disponible:await catalogMedia.available()});
+          if(req.method!=="POST")return json(res,405,{ok:false,error:"Método no permitido"});
+          if(requireSameOrigin(req,res))return;
+          const body=await readJsonBody(req,7*1024*1024+10000);
+          if(!body||typeof body!=="object"||Array.isArray(body))return json(res,400,{ok:false,error:"Elegí una foto para cargar."});
+          const result=await catalogMedia.upload(body,session.user);return json(res,result.creada?201:200,{ok:true,...result});
+        }catch(error){
+          if(error.code==="42P01"||error.code==="42703")return json(res,503,{ok:false,error:"Las fotos del catálogo todavía no están habilitadas en esta base."});
+          if([502,503].includes(error.statusCode))return json(res,error.statusCode,{ok:false,error:"La foto no está disponible. Volvé a intentar o consultá con el administrador."});
+          throw error;
+        }
       }
       if(url.pathname.startsWith("/api/admin/documentos/") || /^\/api\/portal\/pasajeros\/[^/]+\/documentos(?:\/|$)/.test(url.pathname))return await handleDocuments(req,res,url);
       const enrollmentRoute=/^\/api\/admin\/inscripciones\/contratos\/([^/]+)$/.exec(url.pathname);
