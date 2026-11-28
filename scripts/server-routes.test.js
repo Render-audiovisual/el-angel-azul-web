@@ -296,11 +296,11 @@ test("Grupos y Contratos completos exigen sesión", async () => {
   }
 });
 
-test("HTML, CSS y JavaScript se revalidan para evitar versiones viejas", async () => {
+test("HTML no se guarda; CSS y JavaScript se revalidan para evitar versiones viejas", async () => {
   for (const path of ["/", "/assets/css/styles.css", "/assets/js/app.js"]) {
     const response = await request({ path });
     assert.equal(response.status, 200);
-    assert.equal(response.headers["cache-control"], "no-cache, no-store, must-revalidate");
+    assert.equal(response.headers["cache-control"], path === "/" ? "no-cache, no-store, must-revalidate" : "no-cache");
     assert.match(response.headers["content-security-policy"] || "", /default-src 'self'/);
     assert.match(response.headers["content-security-policy"] || "", /frame-ancestors 'none'/);
     assert.equal(response.headers["x-frame-options"], "DENY");
@@ -551,4 +551,20 @@ test("el límite general de la API cuenta por IP aunque se varíe la ruta", asyn
   let ultimo;
   for (let i = 0; i < 1501; i++) ultimo = await request({ path: `/api/public/ruta-${i}`, headers });
   assert.equal(ultimo.status, 429);
+});
+
+test("assets/source (logos fuente) no se publica", async () => {
+  const fuente = require("node:fs").readdirSync(require("node:path").join(__dirname, "..", "assets", "source"), { recursive: true }).find((f) => /\.(png|svg|jpg|webp)$/i.test(f));
+  if (!fuente) return;
+  assert.equal((await request({ path: `/assets/source/${fuente.split(require("node:path").sep).map(encodeURIComponent).join("/")}` })).status, 404);
+});
+
+test("CSS y JS se revalidan con ETag y devuelven 304 si no cambiaron", async () => {
+  const primera = await request({ path: "/assets/css/styles.css" });
+  assert.equal(primera.status, 200);
+  assert.equal(primera.headers["cache-control"], "no-cache");
+  assert.match(primera.headers.etag, /^W\/"/);
+  const segunda = await request({ path: "/assets/css/styles.css", headers: { "if-none-match": primera.headers.etag } });
+  assert.equal(segunda.status, 304);
+  assert.equal(segunda.raw, "");
 });

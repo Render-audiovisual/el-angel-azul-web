@@ -2274,7 +2274,7 @@
                 <form class="admin-login-form" data-admin-login-form>
                   <label>
                     Usuario
-                    <input name="usuario" autocomplete="username" placeholder="admin" required>
+                    <input name="usuario" autocomplete="username" required>
                   </label>
                   <label>
                     Contraseña

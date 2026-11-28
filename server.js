@@ -915,7 +915,8 @@ function staticFile(req, res, url) {
   const cleanPath = url.pathname === "/" ? "/index.html" : adminEntries.includes(requestedEntry) ? `/${requestedEntry}/index.html` : decodedPath;
   const publicPath = cleanPath.replace(/^\/+/, "");
   const normalizedPublicPath = path.posix.normalize(publicPath);
-  const isPublicAsset = normalizedPublicPath.startsWith("assets/") && !normalizedPublicPath.includes("../");
+  // assets/source/ guarda logos fuente pesados (14 MB) que ninguna página usa: no se publican.
+  const isPublicAsset = normalizedPublicPath.startsWith("assets/") && !normalizedPublicPath.startsWith("assets/source/") && !normalizedPublicPath.includes("../");
   const isPublicEntry = publicPath === "index.html" || adminEntries.some(entry => publicPath === `${entry}/index.html`);
   if (!isPublicAsset && !isPublicEntry) {
     res.writeHead(404, securityHeaders(req));
@@ -953,14 +954,28 @@ function staticFile(req, res, url) {
     ".jpeg": "image/jpeg",
     ".webp": "image/webp"
   };
-  const cacheControl = [".html", ".css", ".js", ".json"].includes(ext)
-    ? "no-cache, no-store, must-revalidate"
-    : "public, max-age=86400";
-  res.writeHead(200, {
+  // CSS y JS se revalidan con ETag: el navegador pregunta en cada visita pero recibe 304 sin cuerpo si no cambiaron,
+  // así un deploy nuevo se ve enseguida sin volver a bajar ~400 KB. HTML y JSON siguen sin guardarse.
+  const revalidated = [".css", ".js"].includes(ext);
+  const cacheControl = revalidated
+    ? "no-cache"
+    : [".html", ".json"].includes(ext)
+      ? "no-cache, no-store, must-revalidate"
+      : "public, max-age=86400";
+  const headers = {
     "Content-Type": types[ext] || "application/octet-stream",
     "Cache-Control": cacheControl,
     ...securityHeaders(req)
-  });
+  };
+  if (revalidated) {
+    const info = fs.statSync(target);
+    headers.ETag = `W/"${info.size.toString(16)}-${Math.floor(info.mtimeMs).toString(16)}"`;
+    if (req.headers["if-none-match"] === headers.ETag) {
+      res.writeHead(304, { "Cache-Control": cacheControl, ETag: headers.ETag, ...securityHeaders(req) });
+      return res.end();
+    }
+  }
+  res.writeHead(200, headers);
   if (req.method === "HEAD") return res.end();
   const stream = fs.createReadStream(target);
   // Sin este manejador, un error de lectura (archivo borrado o ilegible entre el
