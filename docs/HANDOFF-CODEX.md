@@ -9,7 +9,7 @@ Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerra
 |---|---|---|---|---|
 | Fran (Claude Code) | `fran/harness` | Harness: guardas, `AGENTS.md`, docs | `AGENTS.md`, `CLAUDE.md`, `package.json`, `scripts/guardas.test.js`, `scripts/helpers/sin-secretos.js`, docs | 25/11 |
 | Fran (Claude Code) | `fran/inicio-aldena` | Paso 8: rediseño del inicio inspirado en la web de referencia (Agustín dio su OK sobre el PR #8) | `index.html`, `assets/css/home.css`, `assets/css/public-experience.css`, `assets/js/modules/home-motion.js`, `renderHome` en `assets/js/app.js` | 27/11 |
-| Agustín (Codex) | `agustin/admin-funciones-conectadas` | Pagos manuales y guardados conectados; revisión local terminada, pendiente aprobación para integrar/publicar | Servidor PR #36; interfaz, módulos, HTML, pruebas y docs | 27/11 |
+| Agustín (Codex) | `agustin/ecosistema-auditoria` | Nuevo encargo integral: auditoría antes de ampliar catálogo, gestión estudiantil y portal. Referencia de flujo recibida del dueño | Auditoría y arquitectura; luego servidor/base y pruebas, después interfaz. Solo datos locales | 27/11 |
 
 ## Revisión funcional y pagos manuales — 27/11/2026
 
