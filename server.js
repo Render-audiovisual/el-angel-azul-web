@@ -249,7 +249,7 @@ const SCHEMA = {
     "estado_revision", "documentacion_estado", "ficha_medica_estado", "autorizacion_estado", "motivo_rechazo", "observaciones",
     "email_estado", "email_error", "email_enviado_at", "created_at", "updated_at"
   ],
-  FICHAS_TUTOR: ["id", "tipo", "pasajero_nombre", "pasajero_apellido", "pasajero_dni", "nombre", "apellido", "tipo_documento", "numero_documento", "cuil_cuit", "celular", "email", "parentesco", "estado_revision", "observaciones", "created_at", "updated_at"],
+  FICHAS_TUTOR: ["id", "tipo", "pasajero_nombre", "pasajero_apellido", "pasajero_dni", "nombre", "apellido", "tipo_documento", "numero_documento", "cuil_cuit", "celular", "email", "parentesco", "estado_revision", "observaciones", "pasajero_id", "identidad_verificada", "created_at", "updated_at"],
   PLANES_PAGO: ["id", "contrato_id", "nombre", "cuotas", "descripcion", "activo", "orden"],
   COLEGIOS: ["id", "nombre", "provincia", "localidad", "codigo_oficial", "activo"],
   PAGOS: ["id", "pasajero_id", "pasajero_dni", "contrato_codigo", "fecha", "monto", "medio", "estado", "cuota_id", "comprobante_url", "observaciones", "created_at"],
