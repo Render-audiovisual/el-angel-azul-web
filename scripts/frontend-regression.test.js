@@ -489,11 +489,13 @@ test("Turismo público no muestra viajes de demostración cuando no hay viajes a
   }
 });
 
-test("el inicio rediseñado conserva sus decisiones: dos entradas, Camboriú, fotos propias y movimiento accesible", () => {
+test("el inicio conserva los destinos y usa un carrusel independiente con controles accesibles", () => {
   const inicio = functionSource("renderHome", "bindHeroCarousel");
-  // Hero con las dos entradas (estudiantil y turismo) que llevan a su sección.
-  assert.match(inicio, /data-scroll-target="eaa-destinos"/);
-  assert.match(inicio, /data-scroll-target="eaa-turismo"/);
+  assert.match(inicio, /EL MEJOR VIAJE DE TU VIDA/);
+  assert.match(inicio, /data-home-carousel/);
+  assert.match(inicio, /data-home-dot/);
+  assert.match(inicio, /data-home-autoplay/);
+  assert.doesNotMatch(inicio, /class="eaa-hero eaa-dark"/);
   // Tres destinos, con Camboriú (egresados, Brasil) por WhatsApp, y fotos de reemplazo configurables.
   for (const destino of ["Bariloche", "Carlos Paz", "Camboriú"]) assert.match(inicio, new RegExp(`name: "${destino}"`));
   assert.match(inicio, /const homePhotos = \{/);

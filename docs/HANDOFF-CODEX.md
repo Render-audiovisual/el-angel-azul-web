@@ -9,7 +9,13 @@ Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerra
 |---|---|---|---|---|
 | Fran (Claude Code) | `fran/harness` | Harness: guardas, `AGENTS.md`, docs | `AGENTS.md`, `CLAUDE.md`, `package.json`, `scripts/guardas.test.js`, `scripts/helpers/sin-secretos.js`, docs | 25/11 |
 | Fran (Claude Code) | `fran/inicio-aldena` | Paso 8: rediseño del inicio inspirado en la web de referencia (Agustín dio su OK sobre el PR #8) | `index.html`, `assets/css/home.css`, `assets/css/public-experience.css`, `assets/js/modules/home-motion.js`, `renderHome` en `assets/js/app.js` | 27/11 |
-| Agustín (Codex) | `agustin/correo-automatico` | Activación segura del correo de fichas | lib/email.js, PDF estable para reintentos, consulta de recuperación, pruebas y docs. Sin activar claves ni enviar correos todavía | 28/11 |
+| Agustín (Codex) | `agustin/home-carrusel-azul` | Primera sección del Home, lista para revisión | Hero azul de marca, titular centrado, carrusel independiente y navbar solo en Home. Sin cambios en base, main ni hosting | 28/11 |
+
+## Primera sección del Home — 28/11/2026
+
+Propuesta en `agustin/home-carrusel-azul`, basada en main `1e93b64`. Fondo sólido `--color-primary` (#0d69a1), titular «EL MEJOR VIAJE DE TU VIDA» en Bebas Neue y carrusel 16:9 con fotos existentes. Navbar compacto con logo, Viajes estudiantiles, Turismo e Inscripción online; las otras rutas conservan sus etiquetas y estilos. El resto de las secciones del Home y el hero de Turismo se mantienen.
+
+Rotación cada 4 segundos, indicadores manuales y pausa/reproducción. Se pausa al interactuar y con la pestaña oculta; con reducir movimiento comienza detenido. Los temporizadores se limpian al cambiar de ruta. Verificado en navegador local con datos ficticios: escritorio, tablet y celular; contrato de navegación a Turismo e inscripción, selección de fotos y reproducción manual. `npm run check`: 287 aprobadas, sin fallas ni TODO. No está integrado a main ni publicado en Hostinger.
 
 ## Estado actual de la propuesta — 28/11/2026
 
