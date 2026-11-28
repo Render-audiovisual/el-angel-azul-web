@@ -1,5 +1,7 @@
 # El Ángel Azul: auditoría y desarrollo integral
 
+Publicación posterior a esta auditoría: PR #63, commit bb8bff89, ya desplegado en el dominio principal con migraciones 0009–0017 aplicadas. Registro de autorización, comprobaciones y límites en `docs/PUBLICACION-PR63.md`. Las referencias a trabajo local y propuesta pendiente que siguen son el historial de desarrollo.
+
 Fecha de corte: 27/11/2026. Base auditada: main `893217d` (PR #35, #36 y #37 publicados). Encargo: desarrollar sobre lo existente, auditar antes de ampliar y separar catálogo comercial de operación estudiantil. Las capturas describen relaciones y flujo; no solicitan adoptar una interfaz oscura ni convertir el panel en un diagrama.
 
 ## Reglas de trabajo
