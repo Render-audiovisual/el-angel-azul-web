@@ -15,9 +15,14 @@
     return rowsToFilter.filter(({ group, passenger, payment }) => {
       const searchable = normalizeText([
         passenger.nombre,
+        passenger.apellido,
+        [passenger.apellido, passenger.nombre].filter(Boolean).join(" "),
+        [passenger.nombre, passenger.apellido].filter(Boolean).join(" "),
         passenger.dni,
         passenger.telefono,
         passenger.responsable,
+        passenger.responsableApellido,
+        passenger.responsableEmail,
         passenger.responsableTelefono,
         group.viaje,
         group.colegio,

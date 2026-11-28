@@ -366,7 +366,7 @@ test("el alta de pasajero guarda en el grupo elegido y sin grupo no guarda", () 
   const submit = bind.slice(bind.indexOf("[data-admin-pasajeros-form]\")?.addEventListener(\"submit\""));
   assert.match(submit, /group\.id === String\(formData\.get\("grupoId"\) \|\| ""\)\)/);
   assert.doesNotMatch(submit.slice(0, submit.indexOf("selectedGroup.pasajeros.push")), /adminPasajerosDemo\[0\]|formData\.get\("grupoId"\) \|\| adminPasajerosGrupoId/);
-  assert.match(submit, /if \(!selectedGroup\) \{\s*adminPasajerosFormError = "Elegí un grupo\.";\s*renderAdminPasajeros\(\);\s*return;/);
+  assert.match(submit, /if \(!selectedGroup\) \{\s*adminPasajerosFormError = "Elegí un grupo\.";\s*restoreAdminForm\(renderAdminPasajeros, "\[data-admin-pasajeros-form\]", formData\);\s*return;/);
   assert.match(submit, /selectedGroup\.pasajeros\.push\(passenger\)/);
 });
 
