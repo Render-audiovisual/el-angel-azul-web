@@ -9,7 +9,13 @@ Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerra
 |---|---|---|---|---|
 | Fran (Claude Code) | `fran/harness` | Harness: guardas, `AGENTS.md`, docs | `AGENTS.md`, `CLAUDE.md`, `package.json`, `scripts/guardas.test.js`, `scripts/helpers/sin-secretos.js`, docs | 25/11 |
 | Fran (Claude Code) | `fran/inicio-aldena` | Paso 8: rediseño del inicio inspirado en la web de referencia (Agustín dio su OK sobre el PR #8) | `index.html`, `assets/css/home.css`, `assets/css/public-experience.css`, `assets/js/modules/home-motion.js`, `renderHome` en `assets/js/app.js` | 27/11 |
-| Agustín (Codex) | `agustin/ecosistema-integracion` | Propuesta integral y recorrido local listos para revisión | PR integral preparado para revisión; migraciones 0009–0017 solo locales. Sin main, hosting ni base oficial | 28/11 |
+| Agustín (Codex) | `agustin/publicacion-pr63` | PR63 publicado y comprobado en el dominio principal | Registro operativo y actualización de documentación; sin nuevas modificaciones funcionales | 28/11 |
+
+## Estado publicado — 28/11/2026
+
+PR #63 integrado en main y publicado automáticamente en Hostinger, commit bb8bff89. Migraciones 0009–0017 aplicadas en la base oficial del Ángel Azul y cinco restricciones heredadas validadas con autorización específica. Ficha ficticia enviada/revisada/aprobada, pasajero creado, PDF descargado desde admin/portal y sesión privada comprobada/cerrada. Cero cobros y correos de prueba. El registro detallado, evidencia y límites están en `docs/PUBLICACION-PR63.md`.
+
+Los apartados siguientes registran el desarrollo anterior a esa publicación; sus menciones de migraciones pendientes o ausencia de acceso a Supabase describen esos hitos, no el estado publicado de hoy.
 
 ## Estado actual de la propuesta — 28/11/2026
 
