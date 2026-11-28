@@ -5,6 +5,7 @@ const path = require("path");
 const { URL } = require("url");
 const academic = require('./lib/academic');
 const enrollment = require('./lib/enrollment');
+const documents = require('./lib/documents');
 const passengerPortal = require('./lib/passenger-portal');
 const studentAccounts = require('./lib/student-accounts');
 const db = require("./lib/db");
@@ -1246,6 +1247,47 @@ async function handleAcademic(req,res,url) {
   }
 }
 
+async function handleDocuments(req,res,url) {
+  if(!POSTGRES_MIGRATION_ENABLED)return json(res,503,{ok:false,error:"Los documentos privados requieren la base habilitada."});
+  const adminRoute=url.pathname.startsWith("/api/admin/");
+  const admin=adminRoute?currentAdminSession(req):null;
+  const identity=adminRoute?null:await passengerPortal.session(parseCookies(req)[passengerPortal.COOKIE]);
+  if(!admin&&!identity)return json(res,401,{ok:false,error:"Necesitás una sesión vigente para acceder a documentos privados."});
+  if(req.method==="POST"&&requireSameOrigin(req,res))return;
+  try {
+    const adminList=/^\/api\/admin\/documentos\/(contratos|pasajeros)\/([^/]+)$/.exec(url.pathname);
+    const portalList=/^\/api\/portal\/pasajeros\/([^/]+)\/documentos$/.exec(url.pathname);
+    const download=adminRoute?/^\/api\/admin\/documentos\/([^/]+)\/archivo$/.exec(url.pathname):/^\/api\/portal\/pasajeros\/([^/]+)\/documentos\/([^/]+)\/archivo$/.exec(url.pathname);
+    if(download&&req.method==="GET") {
+      const file=await documents.download(safeDecode(download[adminRoute?1:2]),{identity,pasajeroId:adminRoute?null:safeDecode(download[1]),actor:admin?.user});
+      const filename=encodeURIComponent(file.nombre).replace(/[!'()*]/g,char=>"%"+char.charCodeAt(0).toString(16));
+      res.writeHead(200,{"Content-Type":file.mime,"Content-Length":file.bytes.length,"Content-Disposition":`attachment; filename="documento.${file.mime==="application/pdf"?"pdf":file.mime==="image/png"?"png":"jpg"}"; filename*=UTF-8''${filename}`,"Cache-Control":"no-store, private","X-Content-Type-Options":"nosniff","Content-Security-Policy":"sandbox; default-src 'none'","Cross-Origin-Resource-Policy":"same-origin"});return res.end(file.bytes);
+    }
+    if(adminList||portalList) {
+      const type=adminList?adminList[1]:"pasajeros",id=safeDecode(adminList?adminList[2]:portalList[1]);
+      if(req.method==="GET")return json(res,200,{ok:true,...await documents.list(type,id,{identity,antes:url.searchParams.get("antes")})});
+      if(req.method==="POST") {
+        const body=await readJsonBody(req,7*1024*1024+10000);
+        if(!body||typeof body!=="object"||Array.isArray(body))return json(res,400,{ok:false,error:"Elegí un documento para adjuntar."});
+        const result=await documents.upload(type,id,body,admin?.user||`portal:${identity.id}`,identity);
+        return json(res,result.creado?201:200,{ok:true,...result});
+      }
+    }
+    const review=/^\/api\/admin\/documentos\/([^/]+)\/revisar$/.exec(url.pathname);
+    if(review&&req.method==="POST") {
+      const body=await readJsonBody(req,10000);
+      if(!body||typeof body!=="object"||Array.isArray(body))return json(res,400,{ok:false,error:"Revisá el estado del documento."});
+      return json(res,200,{ok:true,documento:await documents.review(safeDecode(review[1]),body,admin.user)});
+    }
+    return json(res,405,{ok:false,error:"Método no permitido"});
+  } catch(error) {
+    if(error.code==="42P01"||error.code==="42703")return json(res,503,{ok:false,error:"La gestión de documentos privados todavía no está habilitada en esta base."});
+    if(error.code==="23503")return json(res,409,{ok:false,error:"El contrato o pasajero cambió. Volvé a consultar antes de adjuntar."});
+    if([502,503].includes(error.statusCode))return json(res,error.statusCode,{ok:false,error:error.message});
+    throw error;
+  }
+}
+
 const portalAttempts = new Map();
 function portalCookie(token,req) {
   const age=token?passengerPortal.SESSION_SECONDS:0;
@@ -1356,6 +1398,7 @@ function createAppServer() {
         const row = await catalog.duplicate(decodeURIComponent(duplicatePackage[1]),body.version,session.user);
         return json(res,201,{ok:true,paquete:row});
       }
+      if(url.pathname.startsWith("/api/admin/documentos/") || /^\/api\/portal\/pasajeros\/[^/]+\/documentos(?:\/|$)/.test(url.pathname))return await handleDocuments(req,res,url);
       const enrollmentRoute=/^\/api\/admin\/inscripciones\/contratos\/([^/]+)$/.exec(url.pathname);
       if (enrollmentRoute) {
         const session=currentAdminSession(req);

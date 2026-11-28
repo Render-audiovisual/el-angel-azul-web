@@ -9,7 +9,7 @@ Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerra
 |---|---|---|---|---|
 | Fran (Claude Code) | `fran/harness` | Harness: guardas, `AGENTS.md`, docs | `AGENTS.md`, `CLAUDE.md`, `package.json`, `scripts/guardas.test.js`, `scripts/helpers/sin-secretos.js`, docs | 25/11 |
 | Fran (Claude Code) | `fran/inicio-aldena` | Paso 8: rediseño del inicio inspirado en la web de referencia (Agustín dio su OK sobre el PR #8) | `index.html`, `assets/css/home.css`, `assets/css/public-experience.css`, `assets/js/modules/home-motion.js`, `renderHome` en `assets/js/app.js` | 27/11 |
-| Agustín (Codex) | `agustin/ecosistema-inscripcion-panel` | Enlaces, pausa y renovación en contratos; adhesión con grupo preseleccionado | Módulo de inscripción, app, HTML, CSS, E2E y docs. Solo PGlite | 27/11 |
+| Agustín (Codex) | `agustin/ecosistema-documentos-servidor` | Contratos firmados y documentos privados con pertenencia, revisión y descarga autorizada | Migración 0014, almacenamiento y validación de archivos, servicio/API, pruebas y docs. Solo PGlite y objetos ficticios | 27/11 |
 
 ## Ecosistema integral — nuevo encargo del 27/11/2026
 
@@ -40,6 +40,8 @@ Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerra
 - Servidor de inscripción por contrato: migración 0013 con enlace compartido renovable y pausa explícita. Un contrato activo con grupo/colegio activos habilita su contexto; varios contratos para un curso exigen enlace y nunca eligen el último automáticamente. El enlace no autentica personas ni da acceso a contratos/PDF/cuentas. El guardado verifica colegio/curso/viaje/plan y vuelve a bloquear/revalidar el contrato antes de insertar. Las solicitudes heredadas sin contrato se conservan como pendientes de revisión, sin afirmar inscripción confirmada. Pruebas nuevas con HTTP/PGlite; interfaz en el siguiente PR.
 
 - Interfaz de inscripción por contrato: al editar un contrato se puede copiar su enlace, pausar o renovar. La familia revisa el grupo preseleccionado y completa la ficha; los campos del enlace vuelven a validarse en servidor. La selección manual con varios contratos informa el problema y no avanza arbitrariamente. Pausas, renovación y conflictos conservan solicitudes y campos. Prueba de navegador con servidor/PGlite y ficha completa firmada, más revisión en 320/390/1440 px.
+
+- Servidor de documentos privados: migración 0014 amplía documentos con FK reales, metadatos completos y archivo/pertenencia inmutables, sin reemplazar datos heredados. PDF de contrato separado de condiciones operativas; archivos del PAX con revisión y visibilidad explícita. Bucket privado y descarga por servidor con sesión/pertenencia, adjunto, no-cache y hash verificado. Portal propio permite adjuntar documentos pendientes; un comprobante no crea cobros. Validación limitada a PDF/JPG/PNG de hasta 5 MB, trabajador con memoria/tiempo limitados y dos procesamientos simultáneos. Reintentos idempotentes, paginación y auditoría; pruebas solo con PGlite y objetos ficticios. Antes de producción: revisar políticas reales de storage, conservación/consentimientos, antivirus y conciliación de objetos sin referencia tras una interrupción.
 
 ## Revisión funcional y pagos manuales — 27/11/2026
 
