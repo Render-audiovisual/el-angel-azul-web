@@ -23,7 +23,7 @@ async function capture(page,name){if(process.env.E2E_SCREENSHOTS){fs.mkdirSync(p
  const page=await admin.newPage();const client=await publicContext.newPage();page.setDefaultTimeout(8000);client.setDefaultTimeout(8000);
  const errors=[];for(const p of [page,client])p.on('pageerror',e=>errors.push(e.message));
  await caso('Crear: agregar fotos e itinerario conserva todos los campos sin guardar un paquete vacío',async()=>{
-  await page.goto(base+'/#/admin/turismo');await page.locator('[data-admin-new]').click();await openBlocks(page);
+  await page.goto(base+'/admin/#/admin/turismo');await page.locator('[data-admin-new]').click();await openBlocks(page);
   await page.locator('[name="destino"]').fill('Cataratas');await page.locator('[name="titulo"]').fill('Cataratas de prueba integral');await page.locator('[name="duracion"]').fill('4 días');await page.locator('[name="descripcionCorta"]').fill('Paquete ficticio para verificar publicación y edición.');await page.locator('[name="precioDesde"]').fill('12500.50');await page.locator('[name="moneda"]').selectOption('ARS');await page.locator('[name="fechaSalida"]').fill('2027-04-10');await page.locator('[name="fechaRegreso"]').fill('2027-04-13');
   await page.locator('#new-foto-url').fill('assets/img/turismo/hero/cataratas-iguazu.webp');await page.locator('[data-add-foto]').click();
   assert.equal(await page.locator('[name="titulo"]').inputValue(),'Cataratas de prueba integral');await openBlocks(page);await page.locator('[data-add-dia]').click();await openBlocks(page);await page.locator('[name="itinerario_titulo_0"]').fill('Llegada');await page.locator('[name="itinerario_desc_0"]').fill('Recepción del grupo de prueba.');

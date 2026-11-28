@@ -876,7 +876,11 @@ function staticFile(req, res, url) {
     res.writeHead(405, { "Allow": "GET, HEAD", ...securityHeaders(req) });
     return res.end("Method not allowed");
   }
-  if (url.pathname === "/admin" || url.pathname.startsWith("/admin/") || url.pathname === "/admin-turismo" || url.pathname.startsWith("/admin-turismo/")) {
+  // Resolver únicamente entradas conocidas; nunca abrir carpetas del servidor.
+  const adminEntries = ["admin", "admin-turismo", ...["colegios", "configuracion", "contratos", "fichas", "grupos", "pagos", "pasajeros", "turismo"].map(name => `admin/${name}`)];
+  const decodedPath = safeDecode(url.pathname);
+  const requestedEntry = decodedPath.replace(/^\/+|\/+$/g, "");
+  if (requestedEntry === "admin" || requestedEntry.startsWith("admin/") || requestedEntry === "admin-turismo" || requestedEntry.startsWith("admin-turismo/")) {
     const session = currentAdminSession(req);
     if (!session) {
       res.writeHead(302, {
@@ -886,11 +890,11 @@ function staticFile(req, res, url) {
       return res.end();
     }
   }
-  const cleanPath = safeDecode(url.pathname === "/" ? "/index.html" : url.pathname);
+  const cleanPath = url.pathname === "/" ? "/index.html" : adminEntries.includes(requestedEntry) ? `/${requestedEntry}/index.html` : decodedPath;
   const publicPath = cleanPath.replace(/^\/+/, "");
   const normalizedPublicPath = path.posix.normalize(publicPath);
   const isPublicAsset = normalizedPublicPath.startsWith("assets/") && !normalizedPublicPath.includes("../");
-  const isPublicEntry = publicPath === "index.html" || publicPath === "admin/index.html" || publicPath === "admin-turismo/index.html";
+  const isPublicEntry = publicPath === "index.html" || adminEntries.some(entry => publicPath === `${entry}/index.html`);
   if (!isPublicAsset && !isPublicEntry) {
     res.writeHead(404, securityHeaders(req));
     return res.end("Not found");
