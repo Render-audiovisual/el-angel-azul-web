@@ -116,3 +116,9 @@ flowchart TB
 6. Verificación integrada en escritorio/celular, errores, concurrencia, documentos, persistencia y privacidad. Separar escenarios locales con dobles de servicios de verificaciones reales pendientes de configuración.
 
 La lista anterior es el orden de ejecución, no una declaración de que esas fases ya están completas. Una prueba local no habilita automáticamente migraciones o despliegues reales.
+
+## Implementación de cuentas — revisión local
+
+La migración 0009 es aditiva y no aplica cargos ni transforma datos existentes. Permite configurar importes y vencimientos exactos en planes existentes, confirmar una cuenta del pasajero con una copia inmutable y registrar imputaciones manuales de pagos a cuotas. Cada operación queda auditada. Editar un plan no cambia cuentas ya confirmadas. Los pagos anulados conservan su historial y dejan de sumar tanto al saldo como a cuotas imputadas. Los excesos aparecen como saldo a favor, sin devoluciones automáticas.
+
+El registro manual actual utiliza ARS: esta entrega mantiene ese límite explícito. No incorpora intereses, descuentos, recargos, reasignaciones, pasarelas ni aceptación legal en nombre del responsable. Confirmar una cuenta es una operación administrativa; no acredita que la familia haya aceptado condiciones. El estado de una cuota depende de la imputación explícita, por lo que un cobro sin imputar reduce el saldo general pero no marca arbitrariamente una cuota como pagada.

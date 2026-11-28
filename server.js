@@ -3,6 +3,7 @@ const fs = require("fs");
 const http = require("http");
 const path = require("path");
 const { URL } = require("url");
+const studentAccounts = require('./lib/student-accounts');
 const db = require("./lib/db");
 const fichaValidation = require("./assets/js/modules/ficha-validation.js");
 const fichaPdf = require("./lib/ficha-pdf");
@@ -1208,6 +1209,34 @@ async function handleAdminPayments(req, res, url) {
   }
 }
 
+async function handleStudentAccounts(req, res, url) {
+  const session = currentAdminSession(req);
+  if (!session) return json(res,401,{ok:false,error:"Iniciá sesión para ver las cuentas."});
+  if (!POSTGRES_MIGRATION_ENABLED) return json(res,503,{ok:false,error:"Las cuentas requieren la base de datos habilitada."});
+  if (req.method === "POST" && requireSameOrigin(req,res)) return;
+  try {
+    const body = req.method === "POST" ? await readJsonBody(req,100000) : null;
+    if (req.method === "POST" && (!body || typeof body !== "object" || Array.isArray(body))) return json(res,400,{ok:false,error:"Enviá un objeto con los datos de la cuenta."});
+    const plan = /^\/api\/admin\/finanzas\/planes\/([^/]+)$/.exec(url.pathname);
+    const passenger = /^\/api\/admin\/finanzas\/pasajeros\/([^/]+)(\/confirmar)?$/.exec(url.pathname);
+    if (url.pathname === "/api/admin/finanzas/planes" && req.method === "GET") return json(res,200,{ok:true,planes:await studentAccounts.plans()});
+    if (plan && req.method === "POST") return json(res,200,{ok:true,plan:await studentAccounts.configure(decodeURIComponent(plan[1]),body,session.user)});
+    if (passenger && !passenger[2] && req.method === "GET") return json(res,200,{ok:true,...await studentAccounts.summary(decodeURIComponent(passenger[1]))});
+    if (passenger && passenger[2] && req.method === "POST") {
+      const result = await studentAccounts.confirm(decodeURIComponent(passenger[1]),body,session.user);
+      return json(res,result.creada?201:200,{ok:true,...result});
+    }
+    if (url.pathname === "/api/admin/finanzas/imputaciones" && req.method === "POST") {
+      const result = await studentAccounts.allocate(body,session.user);
+      return json(res,result.creada?201:200,{ok:true,...result});
+    }
+    return json(res,405,{ok:false,error:"Método no permitido"});
+  } catch(error) {
+    if(error.code === "42P01" || error.code === "42883") return json(res,503,{ok:false,error:"Las cuentas y cuotas todavía no están habilitadas en esta base."});
+    throw error;
+  }
+}
+
 function createAppServer() {
   return http.createServer(async (req, res) => {
     res.req = req;
@@ -1233,6 +1262,7 @@ function createAppServer() {
         const row = await catalog.duplicate(decodeURIComponent(duplicatePackage[1]),body.version,session.user);
         return json(res,201,{ok:true,paquete:row});
       }
+      if (url.pathname.startsWith("/api/admin/finanzas/")) return await handleStudentAccounts(req,res,url);
       if (url.pathname === "/api/admin/pagos" || url.pathname.startsWith("/api/admin/pagos/")) return await handleAdminPayments(req, res, url);
       if (url.pathname.startsWith("/api/admin/fichas/")) {
         if (await handleAdminFicha(req, res, url)) return;
