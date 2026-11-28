@@ -39,6 +39,15 @@ async function sembrar(pool) {
   await pool.query(
     "insert into planes_pago (contrato_id, nombre, cuotas, descripcion, orden) values ($1,'Contado',1,'Pago único',1), ($1,'12 cuotas',12,'Cuotas mensuales',2)", [contrato]
   );
+  const plan = (await pool.query("select id from planes_pago where contrato_id=$1 and cuotas=12", [contrato])).rows[0].id;
+  const seeded = await db.savePasajerosAdmin([{
+    id: "pasajero-local", grupo_id: "grupo-local", contrato_id: "contrato-local",
+    nombre: "María de prueba", apellido: "Ángel Azul", dni: "45999001", nacimiento: "2009-05-14",
+    responsable_nombre: "Ana de prueba", responsable_apellido: "Ángel Azul", responsable_dni: "30999001",
+    responsable_telefono: "3794000000", responsable_email: "familia-prueba@example.com", vinculo: "Madre", plan_pago_id: plan,
+    estado: "Activo", observaciones: "Datos ficticios del entorno local."
+  }]);
+  if (seeded.failed.length) throw new Error("No se pudo preparar el pasajero ficticio local.");
 }
 
 (async () => {
@@ -92,6 +101,6 @@ async function sembrar(pool) {
   server.listen(PORT, "127.0.0.1", () => {
     console.log(`Local listo: http://localhost:${server.address().port}`);
     console.log(accesoLibre ? "Acceso libre al administrador (solo local, con datos ficticios)." : "Acceso con la cuenta local de prueba.");
-    console.log("Datos de prueba: 3 colegios, Bariloche 2027, 5° B de Escuela Normal N° 1 con contrato LOCAL-001 y 2 planes.");
+    console.log("Datos de prueba: 3 colegios, Bariloche 2027, 5° B de Escuela Normal N° 1 con contrato LOCAL-001 y 2 planes. Un pasajero ficticio disponible para probar pagos.");
   });
 })();

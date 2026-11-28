@@ -9,7 +9,15 @@ Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerra
 |---|---|---|---|---|
 | Fran (Claude Code) | `fran/harness` | Harness: guardas, `AGENTS.md`, docs | `AGENTS.md`, `CLAUDE.md`, `package.json`, `scripts/guardas.test.js`, `scripts/helpers/sin-secretos.js`, docs | 25/11 |
 | Fran (Claude Code) | `fran/inicio-aldena` | Paso 8: rediseño del inicio inspirado en la web de referencia (Agustín dio su OK sobre el PR #8) | `index.html`, `assets/css/home.css`, `assets/css/public-experience.css`, `assets/js/modules/home-motion.js`, `renderHome` en `assets/js/app.js` | 27/11 |
-| Agustín (Codex) | `agustin/admin-espacios-botones` | Panel interno mejorado y verificado: Acceso local libre solicitado por el dueño; solo PGlite y loopback. Panel: 67/67 casos de navegador, 167 pruebas + 1 TODO conocido. Pendiente integración y publicación | `assets/css/admin-workspace.css`, HTML del panel, controles en `assets/js/app.js`, `scripts/dev-local.js`, pruebas E2E y este documento | 27/11 |
+| Agustín (Codex) | `agustin/admin-revision-funcional` | Revisión funcional completa. Dueño autorizó preparar pagos manuales; backend y migración primero, pruebas solo PGlite | `lib/payments-ledger.js`, `server.js`, migración 0008, pruebas y docs; después frontend | 27/11 |
+
+## Revisión funcional y pagos manuales — 27/11/2026
+
+- El dueño pidió revisar y corregir cada sector del panel y autorizó preparar el registro manual de pagos (fecha, monto y medio). Trabajo sobre la propuesta local del PR #35, sin publicar en main ni escribir en Supabase.
+- Primera entrega de servidor: `lib/payments-ledger.js`, rutas autenticadas de pagos en `server.js` y migración `supabase/migrations/0008_pagos_manuales.sql`. Registros en ARS y centavos enteros, identificador idempotente, pasajero vinculado, actor y auditoría transaccional. Agencia registra/consulta; solo admin anula con motivo y versión, conservando el movimiento original.
+- Pruebas del servidor: 8 casos HTTP con PGlite (validación, exactitud, reintentos concurrentes, auditoría, permisos, anulación y migración faltante). Check tras la revisión funcional: 181 aprobadas, 0 fallas, 1 TODO conocido. La migración 0008 **solo se ejecutó en memoria**; requiere autorización para la base oficial.
+- Corrección de servidor: editar nombre/apellido/DNI de un pasajero existente conserva su persona, identificador y cobros. Rechaza documentos que ya pertenecen a otra persona y cambios de viaje. Prueba HTTP con PGlite verifica identidad, cantidades de filas y pagos vinculados. El entorno local incluye un pasajero ficticio con tutor y plan para probar cobros.
+- Próxima entrega: conectar la pantalla de Pagos y el perfil del pasajero, retirar importes inventados y corregir búsquedas/guardados; luego revisión funcional y visual completa.
 
 ## Espacio de trabajo del administrador — 27/11/2026
 

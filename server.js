@@ -9,6 +9,7 @@ const fichaPdf = require("./lib/ficha-pdf");
 const email = require("./lib/email");
 const storage = require("./lib/storage");
 const adminWrite = require("./lib/admin-write");
+const paymentsLedger = require("./lib/payments-ledger");
 
 const PORT = Number(process.env.PORT || 8080);
 const ROOT = __dirname;
@@ -1174,6 +1175,30 @@ async function handleAdminFicha(req, res, url) {
   return true;
 }
 
+async function handleAdminPayments(req, res, url) {
+  const session = currentAdminSession(req);
+  if (!session) return json(res, 401, { ok: false, error: "Iniciá sesión para ver los pagos." });
+  if (!POSTGRES_MIGRATION_ENABLED) return json(res, 503, { ok: false, error: "Los pagos manuales requieren la base de datos habilitada." });
+  if (req.method === "POST" && requireSameOrigin(req, res)) return;
+  try {
+    if (url.pathname === "/api/admin/pagos" && req.method === "GET") return json(res, 200, { ok: true, pagos: await paymentsLedger.list() });
+    if (url.pathname === "/api/admin/pagos" && req.method === "POST") {
+      const result = await paymentsLedger.create(await readJsonBody(req, 10000), session.user);
+      return json(res, result.creado ? 201 : 200, { ok: true, ...result });
+    }
+    const match = url.pathname.match(/^\/api\/admin\/pagos\/([^/]+)\/anular$/);
+    if (match && req.method === "POST") {
+      if (session.role !== "admin") return json(res, 403, { ok: false, error: "Solo el administrador puede anular pagos." });
+      const pago = await paymentsLedger.annul(match[1], await readJsonBody(req, 10000), session.user);
+      return json(res, 200, { ok: true, pago });
+    }
+    return json(res, 405, { ok: false, error: "Método no permitido" });
+  } catch(error) {
+    if (error.code === "42P01") return json(res, 503, { ok: false, error: "El registro manual de pagos todavía no está habilitado en esta base." });
+    throw error;
+  }
+}
+
 function createAppServer() {
   return http.createServer(async (req, res) => {
     res.req = req;
@@ -1182,6 +1207,7 @@ function createAppServer() {
       if (url.pathname.startsWith("/api/") && apiRateLimited(req, url)) {
         return json(res, 429, { ok: false, error: "Demasiadas solicitudes. Probá de nuevo más tarde." });
       }
+      if (url.pathname === "/api/admin/pagos" || url.pathname.startsWith("/api/admin/pagos/")) return await handleAdminPayments(req, res, url);
       if (url.pathname.startsWith("/api/admin/fichas/")) {
         if (await handleAdminFicha(req, res, url)) return;
       }
