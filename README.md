@@ -53,6 +53,14 @@ El correo necesita el dominio de la agencia verificado en Resend (registros DNS)
 Hoy `elangelazul.tur.ar` no tiene DNS operativos: ver
 `docs/superpowers/specs/2026-09-15-ficha-adhesion-design.md` §9.
 
+Al activar el correo, las fichas antiguas marcadas `sin_configurar` no se
+mandan automáticamente. El arranque solo recupera fichas pendientes de las
+últimas 23 horas y sin envío confirmado, dentro de la ventana idempotente del
+proveedor. Las anteriores o con error se revisan y reenvían explícitamente
+desde el administrador. Nunca activar el servicio para reenviar datos de
+prueba a destinatarios ficticios. Cada pedido de correo tiene un límite de 15
+segundos; si falla, la ficha permanece guardada y el error se muestra en admin.
+
 Hostinger define `PORT` automáticamente. No configurar variables de Google
 Sheets: el adaptador legado se conserva temporalmente como rollback, pero no es
 la fuente activa de producción.

@@ -41,6 +41,7 @@ test("envía con clave de idempotencia y devuelve el id", async () => {
   assert.equal(llamada.url, "https://api.resend.com/emails");
   assert.equal(llamada.opciones.headers["Idempotency-Key"], `ficha-${fila.id}`);
   assert.equal(llamada.opciones.headers.Authorization, "Bearer re_test");
+  assert.equal(llamada.opciones.signal instanceof AbortSignal, true);
 });
 
 test("traduce errores de Resend a mensajes legibles", async () => {
@@ -56,7 +57,8 @@ test("el arranque recupera correos pendientes con una clave idempotente", () => 
   const dbSource = fs.readFileSync(path.join(__dirname, "..", "lib", "db.js"), "utf8");
   assert.match(serverSource, /setImmediate\(recuperarCorreosPendientes\)/);
   assert.match(serverSource, /`ficha-\$\{ficha\.id\}`/);
-  assert.match(dbSource, /email_estado in \('pendiente', 'sin_configurar'\)/);
+  assert.match(dbSource, /email_estado = 'pendiente' and email_enviado_at is null/);
+  assert.match(dbSource, /interval '23 hours'/);
   assert.doesNotMatch(dbSource, /email_estado in \([^)]*'error'/);
 });
 

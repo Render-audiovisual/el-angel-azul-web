@@ -9,7 +9,7 @@ Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerra
 |---|---|---|---|---|
 | Fran (Claude Code) | `fran/harness` | Harness: guardas, `AGENTS.md`, docs | `AGENTS.md`, `CLAUDE.md`, `package.json`, `scripts/guardas.test.js`, `scripts/helpers/sin-secretos.js`, docs | 25/11 |
 | Fran (Claude Code) | `fran/inicio-aldena` | Paso 8: rediseño del inicio inspirado en la web de referencia (Agustín dio su OK sobre el PR #8) | `index.html`, `assets/css/home.css`, `assets/css/public-experience.css`, `assets/js/modules/home-motion.js`, `renderHome` en `assets/js/app.js` | 27/11 |
-| Agustín (Codex) | `agustin/ecosistema-integracion` | Propuesta integral y recorrido local listos para revisión | PR integral preparado para revisión; migraciones 0009–0017 solo locales. Sin main, hosting ni base oficial | 28/11 |
+| Agustín (Codex) | `agustin/correo-automatico` | Activación segura del correo de fichas | lib/email.js, PDF estable para reintentos, consulta de recuperación, pruebas y docs. Sin activar claves ni enviar correos todavía | 28/11 |
 
 ## Estado actual de la propuesta — 28/11/2026
 
@@ -268,3 +268,13 @@ El editor de contrato configura documentos requeridos y avisos, con publicación
 ### Verificación integrada de cierre
 
 Check completo: 269 aprobadas, cero fallas y un TODO histórico TLS cuya aserción pasa (270 casos en total). Chrome/PGlite: 117/117 recorridos integrados, más los ocho accesos directos del panel comprobados en navegador. Los accesos tenían recursos divergentes; quedaron sincronizados con la entrada principal y una prueba evita repetirlo. Detalle y límites en la matriz final del informe. Main consultado otra vez: 893217d, sin cambios. No se tocó la base real ni el hosting. Servidor local 3059 abierto con acceso libre y datos ficticios para revisión.
+
+## Activación del correo de adhesión — 28/11/2026
+
+En rama `agustin/correo-automatico`, salida de main 0a05df2 (incluye la corrección reciente del PR #65): se prepara activación para nuevas fichas, sin recuperar fichas antiguas sin configuración ni pendientes de más de 23 horas. El correo conserva PDF adjunto y clave idempotente por ficha, con timeout de 15 s. Un test SQL/PGlite comprueba los estados/antigüedad reales de la selección de recuperación. Sin migraciones nuevas. No se activó el envío ni se copiaron claves.
+
+DNS de elangelazul.tur.ar devuelve SERVFAIL en la revisión actual. Resend conectado solo muestra auth.rendercorrientes.com verificado. Se pidió al dueño elegir reparar el dominio propio o usar el remitente temporal. La clave Resend debe crearla/copiarla el dueño directamente al campo de Hostinger, sin pasar por chat ni archivos. Antes de habilitar: integrar esta protección con autorización y probar únicamente con destinatario controlado confirmado por el dueño; no reenviar las fichas ficticias existentes. El estado «enviado» significa aceptado por Resend, no acredita recepción en bandeja; comprobar entrega/recepción del correo de prueba.
+
+El dueño eligió usar el dominio propio. Se creó el dominio elangelazul.tur.ar en Resend (pendiente de verificación, envío habilitado solo a nivel de dominio; web sin claves de correo). DNS público independiente confirma delegación defectuosa: los servidores autoritativos de AWS rechazan las consultas. Hostinger solo ofrece zonas bacoia.com, litoralmaq.com y rendercorrientes.com; no dispone de la del Ángel. El dueño no sabe quién conserva el acceso a NIC.ar/AWS. Se requiere al titular o su representante para recuperar esa administración; no cambiar delegación ni contratar otro dominio a ciegas.
+
+También se estabilizan los metadatos del PDF con la fecha de creación de la ficha para que regenerarlo produzca los mismos bytes y el proveedor pueda reconocer el reintento. No cambia el diseño visual ni su cobertura tipográfica. Prueba que compara el adjunto completo y sus metadatos.
