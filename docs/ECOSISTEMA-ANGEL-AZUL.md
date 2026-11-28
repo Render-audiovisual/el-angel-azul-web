@@ -8,7 +8,7 @@ La base oficial está en la cuenta del Ángel, proyecto `kfjtvazbcaypzuethxav`; 
 
 ## Auditoría antes del desarrollo
 
-### Integridad de la implementación: no pasa todavía
+### Línea de base antes de estos cambios: integridad incompleta
 
 La adhesión y el registro manual de cobros tienen persistencia y pruebas. El ecosistema completo no: el portal depende de colecciones del navegador, faltan condiciones comerciales y cuotas operativas, y hay un DTO administrativo de turismo usado como API pública. Una interfaz existente no acredita que la capacidad esté terminada.
 
@@ -190,3 +190,52 @@ Se elimina la conexión con certificado sin verificar. La política segura se ap
 ### Requisitos y comunicaciones por contrato
 
 Cada contrato puede elegir los tipos de documentos que requiere y redactar avisos privados, sin predeterminar requisitos de menores. El portal muestra únicamente avisos publicados del contrato actual y distingue documentación faltante, pendiente, observada o aprobada a partir de archivos visibles. La aprobación de un documento la decide el operador; no registra pagos ni constituye evaluación médica o legal. Los avisos se despublican y conservan, con auditoría de cambios y conflictos por versión. La empresa debe validar sus propios requisitos, consentimiento, conservación y condiciones antes de configurarlos.
+
+## Revisión integrada — 28/11/2026
+
+Los apartados iniciales describen main `893217d` antes de desarrollar. Las implementaciones de abajo están reunidas en una propuesta de revisión, no en producción. No se accedió a Supabase ni se modificó Hostinger. Se volvió a consultar GitHub y main seguía en el mismo commit; no se incorporaron cambios ajenos pendientes como si estuvieran aprobados.
+
+| Criterio | Resultado comprobado localmente | Límite antes de operar |
+|---|---|---|
+| Catálogo conectado | Crear, editar, publicar/despublicar, duplicar, archivar, filtros, servicios, cupos informativos, galería y video | No reserva automáticamente ni interpreta promociones como descuentos |
+| Contenido vigente | Nueva consulta al navegar, cambio de precios, fechas argentinas, portada correcta y foto privada al despublicar | Revisión real de bucket/CA pendiente |
+| Colegio y promociones | Promociones, divisiones, grupos, salidas compartidas y asignación explícita | Datos heredados requieren revisión autorizada |
+| Contrato y adhesión | Enlace renovable/pausable, contexto propio, ficha firmada y relaciones persistidas | Empresa decide si conserva recepción de solicitudes sin contrato |
+| Planes y cuotas | Importes/vencimientos configurados, centavos exactos, cuenta histórica inmutable | Registro manual solo ARS; no reasigna condiciones a cuentas confirmadas |
+| Cobros y saldos | Registro/anulación con historial, imputación explícita, saldo/favor reales | Sin cobro online ni intereses, reintegros o recargos inventados |
+| Responsables | Revisión explícita, viaje correcto, conservación de tutores adicionales | Revisar relaciones antiguas antes de emitir accesos reales |
+| Portal privado | Identidad individual, multipasajero, cuentas, cobros, PDF, archivos, requisitos y avisos | La agencia verifica identidad/canal; no es autenticación por documento |
+| Contrato firmado y documentos | Archivo privado separado de datos operativos, revisión, descarga propia y reintentos | Políticas reales, antivirus, conservación y conciliación pendientes |
+| Concurrencia y errores | Versiones, bloqueo, respuesta perdida, borradores conservados, idempotencia en cobros/archivos | No prueba una caída física de Supabase ni certifica disponibilidad |
+| Permisos | Agencia crea/edita sin eliminar; CONFIG privada; IDOR/CSRF y sesiones controlados en servidor | No sustituye revisión de roles/políticas del proveedor |
+| Visual y acceso | Chrome local en 320/390/1440, controles legibles, foco, fuentes/paleta conservadas | Sin certificación WCAG completa ni prueba física de Safari/iPhone |
+
+Verificación de cierre: 269 pruebas obligatorias aprobadas, cero fallas y un marcador TODO histórico de las guardas cuya aserción TLS ya pasa. Se incorporaron cuatro pruebas TLS obligatorias separadas sin alterar guardas, que requieren autorización. Los recorridos integrados de Chrome se consignan en el cierre del PR con sus cantidades; todos usan HTTP real sobre PGlite y objetos ficticios, sin servicios reales. Las pruebas verifican persistencia y relaciones SQL durante el proceso; no equivalen a una migración aplicada o una prueba del hosting.
+
+### Decisiones y limitaciones explícitas
+
+- La ficha registra la aceptación general existente. La cuenta confirma condiciones por el operador y conserva su versión; esto **no acredita aceptación de esos importes por la familia**. Antes de operar se debe definir con la empresa el texto, evidencia y momento de aceptación financiera y de tratamiento de datos. No se genera deuda como si hubiera consentimiento jurídico automático.
+- Cambiar un acuerdo ya confirmado exige un proceso específico de rectificación con historia; esta propuesta bloquea sustituciones silenciosas. Falta validar reglas de cambios de viaje, bajas, transferencias, devoluciones, mora y monedas adicionales.
+- Extraer datos del PDF puede preparar un borrador revisable, pero OCR/IA no es necesario para operar y no se activó ningún servicio ni dependencia. Se carga el archivo firmado y se registran condiciones estructuradas explícitas.
+- El PDF heredado conserva las tildes españolas pero translitera caracteres que Helvetica no admite (por ejemplo algunos apellidos extranjeros), aunque la base conserva el original. Corregirlo requiere autorizar una dependencia de incrustación tipográfica y elegir fuentes con cobertura documentada; no se instaló ni se prometió soporte Unicode universal. Mantener este límite visible en la revisión antes de emitir documentos reales.
+- El acceso a Mi viaje se comparte manualmente mediante un enlace individual de un uso. Correo automático depende de Resend/DNS; no se envían mensajes reales. La pasarela de pagos es una integración futura que debe registrar eventos verificados/idempotentes antes de incorporarlos al libro de cobros; no se simula como cobro confirmado.
+- La revisión local aporta código ejecutable, controles y pruebas. La habilitación diaria en producción depende de aprobar y comprobar las migraciones, credenciales/certificados y políticas del proveedor con autorización; no se presenta como un sistema ya desplegado.
+
+### Evidencia de navegador de la integración
+
+| Recorrido | Casos aprobados |
+|---|---:|
+| Panel general y permisos de agencia | 37/37 |
+| Portal, privacidad y PDF propio | 13/13 |
+| Cuentas, cuotas e imputaciones | 10/10 |
+| Promociones, salidas y grupos | 11/11 |
+| Adhesión vinculada al contrato | 11/11 |
+| Documentos privados | 11/11 |
+| Tutores y dos viajes del mismo alumno | 8/8 |
+| Catálogo operativo, fotos y publicación | 9/9 |
+| Requisitos y avisos privados | 7/7 |
+| Total de estos guiones de integración | 117/117 |
+
+Además se verificaron en Chrome los ocho accesos directos de las áreas del panel; todos respondieron 200 y cargaron el mismo módulo operativo. Contratos abrió el editor de requisitos/avisos y Pagos cargó cuentas. Se añadió una prueba obligatoria que evita divergencias de recursos/protecciones entre las ocho entradas y el panel principal. El recorrido de localhost:3059 confirmó entrada libre, paquete ficticio visible y cero errores de página.
+
+Los guiones están en `scripts/e2e/`, emplean el Playwright ya instalado externamente mediante PLAYWRIGHT_PATH y Chrome mediante PLAYWRIGHT_CHANNEL=chrome. No se agregó una dependencia al repositorio. E2E_FONTS=online habilita únicamente la lectura de fuentes de Google en los recorridos aislados; los demás proveedores se bloquean o se sustituyen por respuestas ficticias. El panel general usa una copia local de la biblioteca XLSX existente verificada con su hash. Ningún resultado implica pruebas sobre la base oficial.

@@ -43,6 +43,9 @@ test('modo local libre: entra sin clave, tolera cookies viejas y conserva la pro
     const usuario = await me.json();
     assert.equal(usuario.authenticated, true);
     assert.equal(usuario.role, 'admin');
+    const direct = await fetch(local.base + '/admin/contratos/', {redirect:'manual'});
+    assert.equal(direct.status,200);
+    assert.equal(direct.headers.get('location'),null);
     assert.equal(colegios.status, 200);
     assert.equal((await colegios.json()).rows.length, 3);
     assert.equal((await (await fetch(local.base + '/api/admin/catalogo/multimedia')).json()).disponible, true);
@@ -53,6 +56,12 @@ test('modo local libre: entra sin clave, tolera cookies viejas y conserva la pro
     const contracts = await (await fetch(local.base + '/api/google-sheets?sheet=CONTRATOS')).json();
     const documents = await (await fetch(local.base + '/api/admin/documentos/contratos/' + contracts.rows[0].id)).json();
     assert.equal(documents.almacenamientoDisponible, true);
+    const info = await (await fetch(local.base + '/api/admin/contratos/' + contracts.rows[0].id + '/informacion')).json();
+    assert.deepEqual(info.requisitos, ['dni_frente']);
+    assert.match(info.avisos[0].titulo, /ficticio/);
+    const catalog = await (await fetch(local.base + '/api/public/paquetes')).json();
+    assert.equal(catalog.paquetes.length, 1);
+    assert.match(catalog.paquetes[0].titulo, /ficticio/);
     const bloqueado = await fetch(local.base + '/api/google-sheets', {
       method: 'POST', headers: { 'Content-Type': 'application/json', Origin: 'https://otro-sitio.invalid' },
       body: JSON.stringify({ sheet: 'COLEGIOS', rows: [] })

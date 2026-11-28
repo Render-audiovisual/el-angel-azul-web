@@ -9,7 +9,17 @@ Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerra
 |---|---|---|---|---|
 | Fran (Claude Code) | `fran/harness` | Harness: guardas, `AGENTS.md`, docs | `AGENTS.md`, `CLAUDE.md`, `package.json`, `scripts/guardas.test.js`, `scripts/helpers/sin-secretos.js`, docs | 25/11 |
 | Fran (Claude Code) | `fran/inicio-aldena` | Paso 8: rediseño del inicio inspirado en la web de referencia (Agustín dio su OK sobre el PR #8) | `index.html`, `assets/css/home.css`, `assets/css/public-experience.css`, `assets/js/modules/home-motion.js`, `renderHome` en `assets/js/app.js` | 27/11 |
-| Agustín (Codex) | `agustin/ecosistema-informacion-panel` | Requisitos documentales y avisos privados conectados al panel/portal | Interfaz, pruebas de navegador y documentación. Sin main, hosting ni base oficial | 28/11 |
+| Agustín (Codex) | `agustin/ecosistema-integracion` | Propuesta integral y recorrido local listos para revisión | PR integral preparado para revisión; migraciones 0009–0017 solo locales. Sin main, hosting ni base oficial | 28/11 |
+
+## Estado actual de la propuesta — 28/11/2026
+
+Implementación integrada en `agustin/ecosistema-integracion`, basada en main `893217d` y en las ramas de revisión #39–#62. No está mergeada ni publicada. El inicio de auditoría de abajo es histórico: el estado actual y los límites se resumen en la matriz final de `docs/ECOSISTEMA-ANGEL-AZUL.md`.
+
+Para recorrer todo: `PORT=3059 npm run dev -- --libre`, abrir `http://localhost:3059/admin/#/admin`. Este acceso libre solo existe en el servidor local enlazado a 127.0.0.1; la autenticación normal de producción se conserva. Hay 3 colegios, promoción/salida Bariloche 2027, un PAX con cuenta ficticia de 12 cuotas de $100, un requisito y un aviso de prueba, y un paquete turístico ficticio. Archivos en dos almacenes efímeros separados; todo desaparece al reiniciar. No usa servicios reales ni variables de claves exportadas.
+
+Para probar Mi viaje, abrir el perfil del PAX y generar su enlace individual con destinatario ficticio verificado. Usar ese enlace en otra pestaña; no autentica por DNI. Para probar una adhesión nueva, copiar el enlace del contrato LOCAL-001; usar otro documento ficticio para no duplicar el PAX existente. Pagos se puede registrar/anular libremente en esta base local.
+
+Antes de publicar: autorización para merge y migraciones 0009–0017; revisión de vínculos heredados/índices únicos/restricciones NOT VALID; CA TLS y conectividad, buckets privados y políticas de acceso, consentimiento/retención y requisitos de la empresa. No aplicar todas las migraciones automáticamente sin esa revisión. Correo/Resend, extracción de PDF y pasarela online no se implementaron como servicios activos. La confirmación de cuenta es administrativa y no reemplaza aceptación financiera de la familia.
 
 ## Ecosistema integral — nuevo encargo del 27/11/2026
 
@@ -19,7 +29,7 @@ Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerra
 
 - Interfaz del catálogo sobre el servidor anterior: acciones explícitas Guardar/Publicar/Despublicar/Duplicar, API pública sin caché heredada de previsualización, filtros de destino/fecha y orden de importes agrupado por moneda (sin conversión inventada). Los campos de fechas e importes ahora coinciden con la validación del servidor.
 - Fotografías e itinerarios conservan el resto del formulario. El borrador en edición no se publica ni se inserta al abrir «Nuevo viaje». Si falla el guardado/conflicta, conserva los campos, revierte el modelo confirmado y permite corregir/reintentar. El precio y las condiciones comerciales opcionales no se inventan.
-- Fichas, pasajeros y contratos dejan de persistir en localStorage: colecciones en memoria, limpieza de cachés antiguas al arrancar y al cerrar sesión. Se retira el acceso interno del pie público. Esto no sustituye la autenticación privada del portal, todavía pendiente.
+- Fichas, pasajeros y contratos dejan de persistir en localStorage: colecciones en memoria, limpieza de cachés antiguas al arrancar y al cerrar sesión. Se retira el acceso interno del pie público. En ese hito el portal seguía pendiente; quedó implementado en las etapas posteriores de esta misma propuesta.
 - Verificación de esta interfaz: `npm run check`, 190 aprobadas, 0 fallas y 1 TODO previo de TLS; navegador local, 12/12 recorridos de catálogo (incluye filtros, conflictos y privacidad) y 37/37 de panel en escritorio/celular. Capturas revisadas en 320/390/1440 px; corregidos cabecera superpuesta y controles recortados en móvil.
 - Acceso directo corregido en rama separada: `/admin/` y las entradas conocidas de sus módulos resuelven a su HTML, requieren sesión y conservan no-cache. Rutas desconocidas, código, docs y migraciones continúan bloqueados; las rutas codificadas tampoco eluden sesión. Prueba HTTP: 30/30. Después continuar con condiciones/cuotas y acceso privado individual, además de multimedia/disponibilidad del catálogo. El alcance integral del encargo sigue abierto.
 
@@ -254,3 +264,7 @@ Migración aditiva 0017: requisitos documentales seleccionados por el operador y
 ### Información operativa del contrato — interfaz
 
 El editor de contrato configura documentos requeridos y avisos, con publicación explícita y conservación del historial. El borrador conserva su revisión al consultar una versión posterior; descartarlo es una acción separada. El perfil PAX y Mi viaje muestran requisitos/estados y avisos publicados del contrato correcto. Cargar o revisar un archivo actualiza el seguimiento. Siete recorridos de Chrome/PGlite verifican guardado, privacidad, texto seguro, red/conflictos, despublicación y 320/390/1440 px. La revisión visual corrigió la precedencia CSS de WhatsApp que todavía tapaba un campo del portal. Todo local, sin servicios reales.
+
+### Verificación integrada de cierre
+
+Check completo: 269 aprobadas, cero fallas y un TODO histórico TLS cuya aserción pasa (270 casos en total). Chrome/PGlite: 117/117 recorridos integrados, más los ocho accesos directos del panel comprobados en navegador. Los accesos tenían recursos divergentes; quedaron sincronizados con la entrada principal y una prueba evita repetirlo. Detalle y límites en la matriz final del informe. Main consultado otra vez: 893217d, sin cambios. No se tocó la base real ni el hosting. Servidor local 3059 abierto con acceso libre y datos ficticios para revisión.

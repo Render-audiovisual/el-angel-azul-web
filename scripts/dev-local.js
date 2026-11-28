@@ -65,6 +65,20 @@ async function sembrar(pool) {
   const departure = (await pool.query("insert into contingentes(viaje_id,nombre,fecha_salida,fecha_regreso) values($1,'Salida ficticia de noviembre','2027-11-10','2027-11-17') returning id", [viaje])).rows[0].id;
   await pool.query("insert into contingente_grupos(contingente_id,grupo_id,viaje_id) values($1,$2,$3)", [departure, grupo, viaje]);
   await pool.query("update pasajeros set contingente_id=$1 where id=$2", [departure, pax]);
+  await require("../lib/contract-information").save(contrato, {
+    revision: 0, requisitos: ["dni_frente"], avisos: [{
+      id: require("node:crypto").randomUUID(), titulo: "Aviso ficticio para recorrer el portal",
+      texto: "Entorno local de prueba. Los requisitos y las condiciones que ves acá son ficticios; no se envían documentos ni datos a servicios reales.", publicado: true
+    }]
+  }, "admin");
+  const catalog = await db.saveTurismoAdmin([{
+    id: "catalogo-local", slug: "iguazu-prueba-local", destino: "Iguazú", titulo: "Iguazú — paquete ficticio",
+    estado: "activo", moneda: "Consultar", duracion: "3 noches / 4 días", categorias: "Nacionales",
+    descripcion_corta: "Paquete ficticio para revisar el catálogo local. No es una oferta comercial.",
+    alojamiento: "Alojamiento ficticio para pruebas", transporte: "Transporte ficticio", regimen_comidas: "A confirmar",
+    disponibilidad: "a_confirmar", fotos: JSON.stringify([{url:"assets/img/turismo/hero/cataratas-iguazu.webp",alt:"Cataratas del Iguazú",principal:true}])
+  }], [], "admin");
+  if(catalog.failed.length)throw new Error("No se pudo preparar el catálogo ficticio local.");
 }
 
 (async () => {
@@ -111,7 +125,8 @@ async function sembrar(pool) {
     server.on("request", async (req, res) => {
       const pathname = new URL(req.url, "http://127.0.0.1").pathname;
       try {
-        if (pathname.startsWith("/api/") && pathname !== "/api/admin/login") {
+        const entradaAdmin = /^\/admin(?:\/|$)/.test(pathname) || /^\/admin-turismo(?:\/|$)/.test(pathname);
+        if ((entradaAdmin || pathname.startsWith("/api/")) && pathname !== "/api/admin/login") {
           if (!cookieLocal || Date.now() >= cookieValidaHasta) await ingresarLocal();
           if (pathname === "/api/admin/logout") res.once("finish", () => { cookieLocal = ""; });
           const nombreCookie = cookieLocal.split("=")[0];
