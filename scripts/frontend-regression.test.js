@@ -491,7 +491,7 @@ test("Turismo público no muestra viajes de demostración cuando no hay viajes a
 
 test("el inicio conserva los destinos y usa un carrusel independiente con controles accesibles", () => {
   const inicio = functionSource("renderHome", "bindHeroCarousel");
-  assert.match(inicio, /EL MEJOR VIAJE DE TU VIDA/);
+  assert.match(inicio, /EL MEJOR VIAJE <span>DE TU VIDA<\/span>/);
   assert.match(inicio, /data-home-carousel/);
   assert.match(inicio, /data-home-dot/);
   assert.match(inicio, /data-home-autoplay/);

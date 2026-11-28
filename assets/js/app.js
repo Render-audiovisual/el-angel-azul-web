@@ -94,7 +94,7 @@
         document.getElementById("app").innerHTML = `
           <div class="eaa-home">
             <section class="eaa-home-hero" aria-labelledby="home-hero-title">
-              <h1 id="home-hero-title">EL MEJOR VIAJE DE TU VIDA</h1>
+              <h1 id="home-hero-title">EL MEJOR VIAJE <span>DE TU VIDA</span></h1>
               <div class="eaa-home-carousel" data-home-carousel role="region" aria-roledescription="carrusel" aria-label="Experiencias de El Ángel Azul">
                 <div class="eaa-home-carousel-stage" id="home-carousel-photos" aria-live="off">
                   ${heroSlides.map(([name, alt, caption], i) => `<figure class="eaa-home-carousel-slide${i === 0 ? " is-active" : ""}" data-home-slide role="group" aria-roledescription="diapositiva" aria-label="${i + 1} de ${heroSlides.length}: ${escapeHtml(caption)}" aria-hidden="${i !== 0}">${img(`assets/img/home/hero-carousel/${name}.webp`, alt, `width="2000" height="1333"${i === 0 ? ' fetchpriority="high"' : ' loading="lazy"'}`)}</figure>`).join("")}

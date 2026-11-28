@@ -13,7 +13,7 @@ Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerra
 
 ## Primera sección del Home — 28/11/2026
 
-Propuesta en `agustin/home-carrusel-azul`, basada en main `1e93b64`. Fondo sólido `--color-primary` (#0d69a1), titular «EL MEJOR VIAJE DE TU VIDA» en Bebas Neue y carrusel 16:9 con fotos existentes. Navbar compacto con logo, Viajes estudiantiles, Turismo e Inscripción online; las otras rutas conservan sus etiquetas y estilos. El resto de las secciones del Home y el hero de Turismo se mantienen.
+Propuesta en `agustin/home-carrusel-azul`, basada en main `1e93b64`, PR #70 en borrador. Fondo sólido `--color-primary` (#0d69a1), titular «EL MEJOR VIAJE DE TU VIDA» en dos líneas con énfasis en «DE TU VIDA» y carrusel 16:9 con fotos existentes. Navbar compacto alineado al ancho del carrusel, logo a la izquierda y Viajes estudiantiles, Turismo e Inscripción online a la derecha; las otras rutas conservan sus etiquetas y estilos. La referencia de Travel Rock guía la jerarquía, manteniendo una composición propia de El Ángel Azul. El resto de las secciones del Home y el hero de Turismo se mantienen.
 
 Rotación cada 4 segundos, indicadores manuales y pausa/reproducción. Se pausa al interactuar y con la pestaña oculta; con reducir movimiento comienza detenido. Los temporizadores se limpian al cambiar de ruta. Verificado en navegador local con datos ficticios: escritorio, tablet y celular; contrato de navegación a Turismo e inscripción, selección de fotos y reproducción manual. `npm run check`: 287 aprobadas, sin fallas ni TODO. No está integrado a main ni publicado en Hostinger.
 
