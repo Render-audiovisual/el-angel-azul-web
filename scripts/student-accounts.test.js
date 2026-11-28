@@ -77,3 +77,14 @@ test('la lectura conjunta conecta saldos y cronogramas sin incluir datos persona
  assert.equal((await request('/api/admin/finanzas/cuentas',null,null)).status,401);
  const response=await request('/api/admin/finanzas/cuentas');assert.equal(response.status,200);const rows=(await response.json()).cuentas;assert.equal(rows.length,1);assert.equal(rows[0].total_centavos,'10001');assert.equal(rows[0].saldo_favor_centavos,'1999');assert.equal(rows[0].cuotas[0].estado,'pagada');assert.equal(Object.hasOwn(rows[0],'dni'),false);
 });
+test('el nombre del plan queda en la cuenta aunque cambie la configuración futura',async()=>{
+ const before=await summary();assert.equal(before.cuenta.plan_nombre,'Dos cuotas configuradas');await pool.query("update planes_pago set nombre='Nombre nuevo para futuras cuentas' where id=$1",[planId]);assert.equal((await summary()).cuenta.plan_nombre,'Dos cuotas configuradas');const rows=(await(await request('/api/admin/finanzas/cuentas')).json()).cuentas;assert.equal(rows[0].plan_nombre,'Dos cuotas configuradas');
+});
+test('ni SQL ni el guardado normal pueden cambiar el plan o borrar un pasajero con cuenta confirmada',async()=>{
+ const otherPlan='22222222-2222-4333-8444-555555555555';await write('PLANES_PAGO',{id:otherPlan,contrato_id:'contrato-cuenta',nombre:'Otro plan',cuotas:'2',activo:'TRUE'});
+ const row=(await(await request('/api/google-sheets?sheet=PASAJEROS')).json()).rows.find(row=>row.id===passengerIds['pax-cuenta']);
+ const response=await request('/api/google-sheets',{sheet:'PASAJEROS',rows:[{...row,plan_pago_id:otherPlan}],expectedVersions:{[row.id]:row._version}});const result=await response.json();assert.equal(result.ok,false);assert.match(JSON.stringify(result),/cuenta confirmada/);
+ const current=(await pool.query('select plan_pago_id from pasajeros where id=$1',[account.pasajero_id])).rows[0];assert.equal(current.plan_pago_id,planId);
+ await assert.rejects(pool.query('delete from pasajeros where id=$1',[account.pasajero_id]),/conservar su historial/);
+ assert.equal((await pool.query('select count(*)::int as n from cuentas_pasajeros')).rows[0].n,1);
+});

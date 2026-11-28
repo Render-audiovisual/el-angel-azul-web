@@ -132,3 +132,6 @@ Un responsable consulta los pasajeros actualmente vinculados a su identidad, inc
 
 
 La interfaz del portal reemplaza el acceso por DNI/código y se integra con la ficha de Pasajeros, donde el administrador genera o revoca el enlace. La familia consulta sus pasajeros, viaje, condiciones de la cuenta confirmada, vencimientos, cobros y PDF propio. No simula cobros online ni presenta botones de carga documental todavía inexistentes. Los prototipos anteriores de consulta local y «Admin portal» se retiraron del frontend. La lectura conjunta de cuentas actualiza también importes y cuotas del panel general.
+
+
+La migración 0011 protege el vínculo de una cuenta confirmada con pasajero/contrato/plan/viaje y captura el nombre del plan al crearla. No se cambian ni adivinan nombres históricos. Borrar físicamente un pasajero con cuenta se reemplaza por una indicación de usar Baja; los cambios personales y de estado siguen disponibles. La corrección de acuerdos ya confirmados necesita una revisión explícita posterior, no una sobrescritura silenciosa del historial.
