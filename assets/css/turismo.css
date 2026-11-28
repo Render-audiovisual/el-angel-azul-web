@@ -176,3 +176,15 @@ body:has(.tur-d) .whatsapp-fab { display: none; }
   .tur-sort { width: 100%; }
   .tur-sort select { width: 100%; }
 }
+
+.tur-card-availability { color:var(--h-navy,#083b7a); font-size:.875rem; font-weight:600; margin-block:4px 8px; }
+.tur-card-promotion { color:var(--h-accent,#c42774); font-size:.875rem; font-weight:600; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; margin-bottom:12px; }
+.tur-d-promotion p,.tur-services dd { white-space:pre-line; overflow-wrap:anywhere; }
+.tur-services { margin:0; display:grid; gap:20px; }
+.tur-services dt { font-weight:600; color:var(--h-navy,#083b7a); margin-bottom:6px; }
+.tur-services dd { margin:0; max-width:70ch; }
+.tur-video iframe { display:block; width:100%; height:auto; aspect-ratio:16/9; border:0; }
+.tur-video p { max-width:65ch; margin-bottom:16px; }
+.tur-video button { min-height:44px; cursor:pointer; }
+.tur-date-error { grid-column:1/-1; padding:20px; border:1px solid #b5394b; border-radius:12px; color:#982332; background:#fff8fa; }
+body:has(#app .tur-d) .whatsapp-fab { display:none; }

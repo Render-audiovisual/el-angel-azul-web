@@ -436,3 +436,12 @@ body[data-app-entry="admin"] .admin-tutor-table th:last-child { width:42%; }
 @media(max-width:500px) { body[data-app-entry="admin"] .admin-tutor-table tr { grid-template-columns:minmax(0,1fr); } .admin-tutor-review .admin-actions-row button { width:100%; } }
 .admin-tutor-review-details summary { min-height:44px; align-content:center; cursor:pointer; white-space:normal; color:#07528d; }
 .admin-tutor-review fieldset { display:grid; gap:12px; border:0; padding:16px 0 0; margin:0; min-width:0; }
+.catalog-file-upload { display:grid; gap:12px; margin-bottom:24px; padding-bottom:24px; border-bottom:1px solid #c9dbea; min-width:0; }
+.catalog-file-upload label { display:grid; gap:8px; min-width:0; }
+.catalog-file-upload input[type="file"] { width:100%; min-width:0; min-height:60px; padding:8px; box-sizing:border-box; }
+.catalog-file-upload input::file-selector-button { min-height:44px; padding:8px 12px; border:0; border-radius:6px; background:#e9f2fb; color:#123f6b; font:inherit; margin-right:8px; }
+.catalog-file-upload p { overflow-wrap:anywhere; margin:0; }
+.catalog-file-upload [role="alert"] { color:#a02b35; }
+.catalog-photo-url summary { cursor:pointer; min-height:44px; align-content:center; font-weight:600; }
+.admin-turismo-foto-error[hidden],[data-admin-catalog-photo][hidden] { display:none!important; }
+@media(max-width:640px) { .catalog-file-upload input[type="file"] { font-size:.8rem; } }

@@ -13,29 +13,6 @@
     if(!response.ok||!data.ok)throw Object.assign(Error(data.error||'No pudimos consultar los documentos.'),{status:response.status});
     return data;
   }
-  const readFile = file => new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.onerror=()=>reject(Error('No pudimos leer el archivo. Elegilo de nuevo.'));reader.readAsDataURL(file);});
-  async function prepare(file) {
-    let source=file, mime=file.type || (/\.pdf$/i.test(file.name)?'application/pdf':/\.png$/i.test(file.name)?'image/png':/\.jpe?g$/i.test(file.name)?'image/jpeg':'');
-    let nombre=file.name;
-    if(!['application/pdf','image/png','image/jpeg'].includes(mime)||!file.size||file.size>5*1024*1024)throw Error('Elegí un PDF, JPG o PNG de hasta 5 MB.');
-    if(mime!=='application/pdf') {
-      const url=URL.createObjectURL(file);
-      try {
-        const image=new Image();image.src=url;await image.decode();
-        if(mime==='image/jpeg'||image.naturalWidth*image.naturalHeight>3800000){
-          const scale=Math.min(1,Math.sqrt(3800000/(image.naturalWidth*image.naturalHeight)));
-          const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.floor(image.naturalWidth*scale));canvas.height=Math.max(1,Math.floor(image.naturalHeight*scale));
-          const context=canvas.getContext('2d');context.fillStyle='#fff';context.fillRect(0,0,canvas.width,canvas.height);context.drawImage(image,0,0,canvas.width,canvas.height);
-          source=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.9));
-          if(!source)throw Error('No pudimos preparar la foto. Probá con otra copia o un PDF.');
-          nombre=nombre.replace(/\.[^.]+$/,'')+'.jpg';mime='image/jpeg';
-        }
-      } catch(error) { throw Error(error.message||'No pudimos preparar la foto. Probá con otra copia o un PDF.'); }
-      finally { URL.revokeObjectURL(url); }
-    }
-    if(source.size>5*1024*1024)throw Error('El archivo preparado supera 5 MB. Elegí una copia más liviana.');
-    return {nombre,mime,contenidoBase64:await readFile(source)};
-  }
   async function mount(root,{mode='admin',type='pasajeros',id,onSessionLost=()=>{}}) {
     if(!root||!id)return;
     const key=mode+':'+type+':'+id;
@@ -77,7 +54,7 @@
         busy=true;lock();
         try {
           notice(output,'Preparando y adjuntando el archivo…');
-          draft.prepared ||= await prepare(draft.file);draft.id ||= crypto.randomUUID();
+          draft.prepared ||= await window.ElAngelAzulFileInput.prepare(draft.file);draft.id ||= crypto.randomUUID();
           const result=await request(path,{id:draft.id,tipo:draft.tipo,...draft.prepared});
           draft.file=null;draft.id=null;draft.prepared=null;
           data.documentos=[result.documento,...data.documentos.filter(doc=>doc.id!==result.documento.id)];

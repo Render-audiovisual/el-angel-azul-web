@@ -625,7 +625,7 @@
           categoria: turismoCategoryLabel(firstCategory),
           intenciones: categories,
           duracion: adminTrip.duracion || "A confirmar",
-          temporada: adminTrip.temporada || "Consultar disponibilidad",
+          temporada: adminTrip.temporada || "",
           fechaSalida: adminTrip.fechaSalida || "",
           fechaRegreso: adminTrip.fechaRegreso || "",
           salidaGarantizada: Boolean(adminTrip.salidaGarantizada),
@@ -642,6 +642,7 @@
           suplementoSingle: adminTrip.suplementoSingle || "",
           precioMenor: adminTrip.precioMenor || "",
           condicionVenta: adminTrip.condicionVenta || "",
+          alojamiento:adminTrip.alojamiento,transporte:adminTrip.transporte,regimenComidas:adminTrip.regimenComidas,disponibilidad:adminTrip.disponibilidad||"a_confirmar",cupos:adminTrip.cupos===""?null:Number(adminTrip.cupos),promocion:adminTrip.promocion,videoUrl:adminTrip.videoUrl,
           moneda: adminTrip.moneda,
           image,
           gallery: gallery.length ? gallery : [image],
@@ -652,7 +653,6 @@
       }
 
       async function loadTurismoPublicPackages() {
-        if (turismoPublicPackagesCache) return turismoPublicPackagesCache;
         // La base es la fuente de verdad: si responde, lo que devuelve es lo que se publica,
         // aunque no haya ningún viaje activo (entonces la web muestra el estado vacío).
         try {
@@ -697,17 +697,41 @@
       }
 
       function turismoDias(packageItem) {
-        const match = String(packageItem.duracion || "").match(/\d+/);
-        return match ? Number(match[0]) : null;
+        const match = String(packageItem.duracion || "").match(/(\d+)\s*(?:d[ií]as?\b|d\b)/i);
+        return match ? Number(match[1]) : null;
       }
 
       const TURISMO_ARROW_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
+
+      function turismoDisponibilidad(packageItem) {
+        if(packageItem.disponibilidad==="sin_cupo"||packageItem.cupos===0)return "Sin cupos disponibles";
+        if(packageItem.disponibilidad==="disponible")return packageItem.cupos!==null&&packageItem.cupos!==undefined?`${packageItem.cupos} cupos informados`:"Disponible · consultá con la agencia";
+        return "Disponibilidad a confirmar";
+      }
+
+      function turismoVideoUrl(raw) {
+        try {
+          const url=new URL(raw);if(url.protocol!=="https:"||url.username||url.password)return "";
+          const host=url.hostname.replace(/^www\./,"");
+          let id=host==="youtu.be"?url.pathname.slice(1):["youtube.com","youtube-nocookie.com"].includes(host)?url.pathname==="/watch"?url.searchParams.get("v"):/^\/(?:embed|shorts)\/([^/]+)$/.exec(url.pathname)?.[1]:null;
+          if(id&&/^[a-z0-9_-]{11}$/i.test(id))return "https://www.youtube-nocookie.com/embed/"+id;
+          if(["vimeo.com","player.vimeo.com"].includes(host)){id=/^\/(?:video\/)?(\d{6,12})\/?$/.exec(url.pathname)?.[1];if(id)return "https://player.vimeo.com/video/"+id;}
+        } catch(_) {} return "";
+      }
+
+      function bindTurismoVideos(root=document) {
+        root.querySelectorAll("[data-tur-video-open]").forEach(button=>button.onclick=()=>{
+          const src=turismoVideoUrl(button.dataset.videoSrc);if(!src)return;
+          const frame=document.createElement("iframe");frame.src=src;frame.title=button.dataset.videoTitle||"Video del viaje";frame.allow="fullscreen; encrypted-media; picture-in-picture";frame.allowFullscreen=true;frame.referrerPolicy="no-referrer";frame.setAttribute("sandbox","allow-scripts allow-same-origin allow-presentation");
+          button.closest("[data-tur-video]").replaceChildren(frame);
+        });
+      }
 
       function renderTurismoPackageCard(packageItem) {
         const priceText = packageItem.precioDesde && packageItem.precioDesde !== "Consultar" ? packageItem.precioDesde : "";
         const destination = escapeHtml(packageItem.destino);
         const dias = turismoDias(packageItem);
-        const image = escapeHtml(safeMediaUrl((packageItem.gallery && packageItem.gallery[0]) || packageItem.image));
+        const image = escapeHtml(safeMediaUrl(packageItem.image || (packageItem.gallery && packageItem.gallery[0])));
         return `
           <article class="tur-card turismo-package-card">
             <a class="tur-card-link" href="#/turismo/${encodeURIComponent(String(packageItem.slug || ""))}">
@@ -719,6 +743,8 @@
               <span class="tur-card-body">
                 <span class="tur-card-meta">${escapeHtml(packageItem.temporada || packageItem.tipo || "")}</span>
                 <h3>${escapeHtml(packageItem.titulo || packageItem.destino)}</h3>
+                <span class="tur-card-availability">${escapeHtml(turismoDisponibilidad(packageItem))}</span>
+                ${packageItem.promocion?`<span class="tur-card-promotion">${escapeHtml(packageItem.promocion)}</span>`:""}
                 <span class="tur-card-foot">
                   <span class="tur-price"><span>${priceText ? "Desde" : "Precio"}</span><strong>${priceText ? escapeHtml(priceText) : "A consultar"}</strong></span>
                   <span class="tur-card-go" aria-hidden="true">${TURISMO_ARROW_SVG}</span>
@@ -876,7 +902,9 @@
           return { destino: datos.get("destino") || "", desde: datos.get("desde") || "", hasta: datos.get("hasta") || "", q: datos.get("q") || "", quien: datos.get("quien") || "", tipo: datos.get("tipo") || "", dur: datos.get("dur") || "", orden: ordenSelect.value };
         };
         const pintar = () => {
-          const { resultado, filtros } = filtrarOrdenarTurismo(packages, leer());
+          const selection=leer();
+          if(selection.desde&&selection.hasta&&selection.hasta<selection.desde){contador.textContent="Revisá las fechas";contenedor.innerHTML='<p role="alert" class="tur-date-error">La fecha hasta debe ser igual o posterior a la fecha desde.</p>';botonMas.hidden=true;return;}
+          const { resultado, filtros } = filtrarOrdenarTurismo(packages, selection);
           const url = new URLSearchParams();
           Object.entries(filtros).forEach(([clave, valor]) => { if (valor && !(clave === "orden" && valor === "destacados")) url.set(clave, valor); });
           history.replaceState(null, "", `#/turismo/paquetes${url.toString() ? `?${url}` : ""}`);
@@ -1033,8 +1061,9 @@
           fechasSalida ? ["Fechas", fechasSalida] : null,
           ["Duración", packageItem.duracion || "A confirmar"],
           ["Destino", packageItem.destino],
-          ["Temporada", packageItem.temporada],
+          packageItem.temporada?["Temporada", packageItem.temporada]:null,
           ["Tipo", packageItem.tipo],
+          ["Disponibilidad",turismoDisponibilidad(packageItem)],
           packageItem.salidaGarantizada ? ["Estado", "Salida garantizada"] : null
         ].filter(Boolean);
 
@@ -1051,6 +1080,7 @@
                   ${packageItem.duracion ? `<li>${escapeHtml(packageItem.duracion)}</li>` : ""}
                   ${fechasSalida ? `<li>${escapeHtml(fechasSalida)}</li>` : ""}
                   ${packageItem.temporada ? `<li>${escapeHtml(packageItem.temporada)}</li>` : ""}
+                  <li>${escapeHtml(turismoDisponibilidad(packageItem))}</li>
                   ${packageItem.salidaGarantizada ? `<li class="is-accent">Salida garantizada</li>` : ""}
                 </ul>
               </div>
@@ -1070,6 +1100,10 @@
                       ${gallery.slice(0, 5).map((image, index) => `<img class="${index === 0 ? "is-main" : ""}" src="${escapeHtml(safeMediaUrl(image))}" alt="${escapeHtml(packageItem.destino)} ${index + 1}" loading="lazy">`).join("")}
                     </div>
                   </section>` : ""}
+
+                  ${packageItem.alojamiento||packageItem.transporte||packageItem.regimenComidas?`<section class="tur-d-block"><h2>Servicios del paquete</h2><dl class="tur-services">${[["Alojamiento",packageItem.alojamiento],["Transporte",packageItem.transporte],["Comidas",packageItem.regimenComidas]].filter(([,value])=>value).map(([label,value])=>`<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>`).join("")}</dl></section>`:""}
+                  ${packageItem.promocion?`<section class="tur-d-block tur-d-promotion"><h2>Promoción del viaje</h2><p>${escapeHtml(packageItem.promocion)}</p></section>`:""}
+                  ${turismoVideoUrl(packageItem.videoUrl)?`<section class="tur-d-block"><h2>Conocé el viaje</h2><div class="tur-video" data-tur-video><p>El video se reproduce desde ${turismoVideoUrl(packageItem.videoUrl).includes("vimeo.com")?"Vimeo":"YouTube"} al abrirlo.</p><button type="button" class="eaa-button eaa-button-fill" data-tur-video-open data-video-src="${escapeHtml(turismoVideoUrl(packageItem.videoUrl))}" data-video-title="${escapeHtml(packageItem.titulo||packageItem.destino)}">Ver video del viaje</button></div></section>`:""}
 
                   ${incluye.length || noIncluye.length ? `
                   <section class="tur-d-block tur-d-lists">
@@ -1134,6 +1168,7 @@
           </div>
         `;
         bindPackageDetailItinerario();
+        bindTurismoVideos();
       }
 
       function bindPackageDetailItinerario() {
@@ -1190,7 +1225,8 @@
         fotos: [],
         estado: "borrador",
         destacado: false,
-        orden: 1
+        orden: 1,
+        alojamiento:"",transporte:"",regimenComidas:"",disponibilidad:"a_confirmar",cupos:"",promocion:"",videoUrl:"",archivado:false
       };
 
       let adminTurismoTrips = loadAdminTurismoTrips();
@@ -1314,6 +1350,7 @@
           suplemento_single: trip.suplementoSingle || "",
           precio_menor: trip.precioMenor || "",
           condicion_venta: trip.condicionVenta || "",
+          alojamiento:trip.alojamiento,transporte:trip.transporte,regimen_comidas:trip.regimenComidas,disponibilidad:trip.disponibilidad,cupos:trip.cupos,promocion:trip.promocion,video_url:trip.videoUrl,archivado:trip.archivado?"TRUE":"FALSE",
           categorias: (trip.categorias || []).join("|"),
           descripcion_corta: trip.descripcionCorta || "",
           descripcion_larga: trip.descripcionLarga || "",
@@ -1352,6 +1389,7 @@
           suplementoSingle: row.suplemento_single,
           precioMenor: row.precio_menor,
           condicionVenta: row.condicion_venta,
+          alojamiento:row.alojamiento,transporte:row.transporte,regimenComidas:row.regimen_comidas,disponibilidad:row.disponibilidad,cupos:row.cupos??"",promocion:row.promocion,videoUrl:row.video_url,archivado:String(row.archivado).toUpperCase()==="TRUE",
           categorias: splitPipe(row.categorias),
           descripcionCorta: row.descripcion_corta,
           descripcionLarga: row.descripcion_larga,
@@ -1495,6 +1533,7 @@
           suplementoSingle: String(trip.suplementoSingle || "").trim(),
           precioMenor: String(trip.precioMenor || "").trim(),
           condicionVenta: String(trip.condicionVenta || "").trim(),
+          alojamiento:String(trip.alojamiento||"").trim(),transporte:String(trip.transporte||"").trim(),regimenComidas:String(trip.regimenComidas||"").trim(),disponibilidad:trip.disponibilidad||"a_confirmar",cupos:String(trip.cupos??"").trim(),promocion:String(trip.promocion||"").trim(),videoUrl:String(trip.videoUrl||"").trim(),archivado:trip.archivado===true||String(trip.archivado).toUpperCase()==="TRUE",
           categorias: normalizeAdminTurismoCategories(trip.categorias || trip.categoria),
           descripcionCorta: String(trip.descripcionCorta || "").trim(),
           descripcionLarga: String(trip.descripcionLarga || "").trim(),
@@ -1541,7 +1580,8 @@
         const checklist = adminTurismoPublicationChecklist(normalizedTrip);
         const missing = checklist.filter((item) => !item.ok);
         const isPublished = normalizedTrip.estado === "activo" && missing.length === 0;
-        const today = new Date().toISOString().slice(0, 10);
+        const today = new Date().toLocaleDateString("sv-SE",{timeZone:"America/Argentina/Buenos_Aires"});
+        if(normalizedTrip.archivado)return {key:"archivado",label:"Archivado",tone:"neutral",canPublish:false,isPublished:false,missing,checklist,message:"El paquete está archivado. Restauralo como borrador para volver a publicarlo."};
         if (normalizedTrip.estado === "activo" && ((normalizedTrip.fechaSalida && normalizedTrip.fechaSalida < today) || (normalizedTrip.fechaRegreso && normalizedTrip.fechaRegreso < today))) {
           return { key: "vencido", label: "Salida vencida", tone: "neutral", canPublish: false, isPublished: false, missing, checklist, message: "La fecha de este paquete ya pasó. No aparece en el catálogo; actualizá las fechas o despublicalo." };
         }
@@ -1652,7 +1692,8 @@
               </button>
             </div>
             <div class="admin-turismo-action-buttons">
-              <button type="button" data-admin-publish>${esActivo ? "Guardar y mantener publicado" : "Guardar y publicar en la web"}</button>
+              ${trip.archivado?"":`<button type="button" data-admin-publish>${esActivo ? "Guardar y mantener publicado" : "Guardar y publicar en la web"}</button>`}
+              ${window.ElAngelAzulPersistence.adminSheetVersion("TURISMO",trip.id)?`<button type="button" data-admin-archive="${trip.archivado?"restaurar":"archivar"}">${trip.archivado?"Restaurar como borrador":"Archivar paquete"}</button>`:""}
               ${esActivo ? '<button type="button" data-admin-deactivate>Despublicar</button>' : ""}
               ${window.ElAngelAzulPersistence.adminSheetVersion("TURISMO", trip.id) ? '<button type="button" data-admin-duplicate>Duplicar como borrador</button>' : ""}
             </div>
@@ -1895,6 +1936,7 @@
 
         return `
           <form class="admin-turismo-form" id="admin-turismo-form" data-admin-turismo-form>
+            <input type="hidden" name="archivado" value="${trip.archivado?"TRUE":"FALSE"}">
             <section class="admin-turismo-quick-status" aria-labelledby="admin-turismo-status-title">
               <div class="admin-turismo-quick-status-head">
                 <span>
@@ -1912,7 +1954,7 @@
                   ["inactivo", "Inactivo", "Oculto temporalmente"]
                 ].map(([value, label, description]) => `
                   <label class="admin-turismo-status-option admin-turismo-status-option--${value}">
-                    <input name="estado" type="radio" value="${value}" ${(trip.estado || "borrador") === value ? "checked" : ""}>
+                    <input name="estado" type="radio" value="${value}" ${(trip.estado || "borrador") === value ? "checked" : ""} ${trip.archivado&&value==="activo"?"disabled":""}>
                     <span class="admin-turismo-status-indicator" aria-hidden="true"></span>
                     <span class="admin-turismo-status-copy">
                       <strong>${label}</strong>
@@ -1966,17 +2008,30 @@
               ${field("Condición de venta", `<textarea name="condicionVenta" rows="2">${escapeHtml(trip.condicionVenta || "")}</textarea>`, "Aparece al pie del detalle del paquete.")}
             `, statusBadge(priceComplete, true))}
 
-            ${block("Fotos", "URLs de las imágenes del paquete.", `
+            ${block("Servicios y disponibilidad", "Información comercial confirmada por la agencia.", `
+              <div class="admin-turismo-form-grid admin-turismo-form-grid--compact">
+                ${field("Alojamiento",`<textarea name="alojamiento" rows="2" maxlength="2000">${escapeHtml(trip.alojamiento||"")}</textarea>`,"Opcional.")}
+                ${field("Transporte",`<textarea name="transporte" rows="2" maxlength="2000">${escapeHtml(trip.transporte||"")}</textarea>`,"Opcional.")}
+                ${field("Régimen de comidas",`<textarea name="regimenComidas" rows="2" maxlength="2000">${escapeHtml(trip.regimenComidas||"")}</textarea>`,"Opcional.")}
+                ${field("Disponibilidad",`<select name="disponibilidad">${Object.entries({a_confirmar:"A confirmar",disponible:"Disponible",sin_cupo:"Sin cupos"}).map(([value,text])=>`<option value="${value}" ${trip.disponibilidad===value?'selected':''}>${text}</option>`).join("")}</select>`,"Se informa al cliente; la consulta no reserva lugares.")}
+                ${field("Cupos disponibles · opcional",`<input type="number" name="cupos" min="0" step="1" value="${escapeHtml(trip.cupos??"")}">`,"Dejá vacío si se confirma con la agencia.")}
+                ${field("Promoción · opcional",`<textarea name="promocion" rows="2" maxlength="2000">${escapeHtml(trip.promocion||"")}</textarea>`,"Ingresá el beneficio y sus condiciones confirmadas.")}
+                ${field("Video · opcional",`<input type="url" name="videoUrl" value="${escapeHtml(trip.videoUrl||"")}">`,"Pegá el enlace de YouTube o Vimeo.")}
+              </div>
+            `,statusBadge(Boolean(trip.alojamiento||trip.transporte||trip.regimenComidas||trip.promocion||trip.videoUrl||trip.cupos!==""),true))}
+
+            ${block("Fotos", "Cargá fotos desde tu dispositivo y elegí la portada.", `
+              <div class="catalog-file-upload" data-catalog-photo-upload></div>
               <div class="admin-turismo-fotos-list" data-admin-turismo-fotos-list>
                 ${photos.length ? photos.map((photo, index) => `
                   <div class="admin-turismo-foto-row">
                     <div class="admin-turismo-foto-preview">
-                      <img src="${escapeHtml(photo.url)}" alt="Foto ${index + 1}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                      <div class="admin-turismo-foto-error" style="display:none">URL inválida</div>
+                      <img src="${escapeHtml(safeMediaUrl(photo.url))}" alt="Foto ${index + 1}" data-admin-catalog-photo>
+                      <div class="admin-turismo-foto-error" hidden>No pudimos cargar esta foto.</div>
                     </div>
                     <div class="admin-turismo-foto-fields">
-                      <input class="admin-turismo-foto-url" name="foto_url_${index}" value="${escapeHtml(photo.url)}" placeholder="https://... URL de la imagen" data-foto-index="${index}">
-                      <input name="foto_alt_${index}" value="${escapeHtml(photo.alt || "")}" placeholder="Descripción de la foto (opcional)">
+                      ${photo.url.startsWith("/api/public/catalogo/media/")?`<input type="hidden" name="foto_url_${index}" value="${escapeHtml(photo.url)}">`:`<label>Dirección de la imagen<input class="admin-turismo-foto-url" name="foto_url_${index}" value="${escapeHtml(photo.url)}" data-foto-index="${index}"></label>`}
+                      <label>Descripción de la foto · opcional<input name="foto_alt_${index}" value="${escapeHtml(photo.alt || "")}" maxlength="200"></label>
                       <label class="admin-turismo-foto-principal">
                         <input type="radio" name="fotoPrincipal" value="${index}" ${photo.principal ? "checked" : ""}>
                         <span class="admin-turismo-selection-icon" aria-hidden="true">
@@ -1991,7 +2046,7 @@
                     <button type="button" class="admin-turismo-foto-remove" data-remove-foto="${index}" aria-label="Quitar foto">×</button>
                   </div>
                 `).join("") : ""}
-                <div class="admin-turismo-foto-row admin-turismo-foto-row--new">
+                <details class="catalog-photo-url"><summary>Agregar una foto por enlace</summary><div class="admin-turismo-foto-row admin-turismo-foto-row--new">
                   <div class="admin-turismo-foto-preview admin-turismo-foto-preview--empty" id="new-foto-preview">
                     <span>Preview</span>
                   </div>
@@ -2000,7 +2055,7 @@
                     <input id="new-foto-alt" placeholder="Descripción (opcional)">
                   </div>
                   <button type="button" class="admin-turismo-primary-button" data-add-foto>+ Agregar foto</button>
-                </div>
+                </div></details>
               </div>
               <p class="admin-field-hint">La foto marcada como "Principal" aparece de portada en la card y el detalle.</p>
               <input type="hidden" name="fotos_count" value="${photos.length}">
@@ -2368,6 +2423,7 @@
           window.ElAngelAzulAccounts?.clear();
           window.ElAngelAzulAcademic?.clear();
           window.ElAngelAzulDocuments?.clear("admin");
+          window.ElAngelAzulCatalogMedia?.clear();
           adminPasajerosDemo = [];
           adminContratosDemo = [];
           adminFichasTutor = [];
@@ -7076,6 +7132,15 @@ ${renderTutorReviewForm(tutor)}
         bindAdminShell();
         bindAdminTurismo();
         bindTurismoCardCarousels(document.querySelector(".admin-turismo-layout"));
+        const photoRoot=document.querySelector("[data-catalog-photo-upload]");
+        const photoKey=adminTurismoEditingId;
+        window.ElAngelAzulCatalogMedia?.mount(photoRoot,{key:photoKey,onPhoto:photo=>{
+          if(currentPath()!=="/admin/turismo"||adminTurismoEditingId!==photoKey)return false;
+          const form=document.querySelector("[data-admin-turismo-form]");if(!form||form.dataset.saving)return false;
+          const trip=readAdminTurismoForm(form);if(!trip.fotos.some(item=>item.url===photo.url))trip.fotos.push({url:photo.url,alt:(trip.titulo||"Foto del paquete").slice(0,200),principal:!trip.fotos.length});
+          adminTurismoEditorDraft=trip;renderAdminTurismo();return true;
+        }});
+        document.querySelectorAll("[data-admin-catalog-photo]").forEach(image=>{image.addEventListener("error",()=>{image.hidden=true;image.nextElementSibling.hidden=false;});});
       }
 
       function exportAdminTurismoJson() {
@@ -7132,6 +7197,7 @@ ${renderTutorReviewForm(tutor)}
             suplementoSingle: formData.get("suplementoSingle") || "",
             precioMenor: formData.get("precioMenor") || "",
             condicionVenta: formData.get("condicionVenta") || "",
+            alojamiento:formData.get("alojamiento")||"",transporte:formData.get("transporte")||"",regimenComidas:formData.get("regimenComidas")||"",disponibilidad:formData.get("disponibilidad")||"a_confirmar",cupos:formData.get("cupos")??"",promocion:formData.get("promocion")||"",videoUrl:formData.get("videoUrl")||"",archivado:formData.get("archivado")==="TRUE",
             categorias: formData.getAll("categorias"),
             descripcionCorta: formData.get("descripcionCorta") || "",
             descripcionLarga: formData.get("descripcionLarga") || "",
@@ -7239,6 +7305,11 @@ ${renderTutorReviewForm(tutor)}
           form.requestSubmit();
         });
 
+        document.querySelector("[data-admin-archive]")?.addEventListener("click",event=>{
+          const form=document.querySelector("[data-admin-turismo-form]");if(!form)return;
+          const archived=event.currentTarget.dataset.adminArchive==="archivar";
+          form.elements.archivado.value=archived?"TRUE":"FALSE";form.elements.estado.value=archived?"inactivo":"borrador";form.requestSubmit();
+        });
         document.querySelector("[data-admin-duplicate]")?.addEventListener("click", async (event) => {
           const trip = adminTurismoCurrentTrip();
           const button = event.currentTarget;

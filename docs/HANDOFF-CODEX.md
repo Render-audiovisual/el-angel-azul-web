@@ -9,7 +9,7 @@ Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerra
 |---|---|---|---|---|
 | Fran (Claude Code) | `fran/harness` | Harness: guardas, `AGENTS.md`, docs | `AGENTS.md`, `CLAUDE.md`, `package.json`, `scripts/guardas.test.js`, `scripts/helpers/sin-secretos.js`, docs | 25/11 |
 | Fran (Claude Code) | `fran/inicio-aldena` | Paso 8: rediseño del inicio inspirado en la web de referencia (Agustín dio su OK sobre el PR #8) | `index.html`, `assets/css/home.css`, `assets/css/public-experience.css`, `assets/js/modules/home-motion.js`, `renderHome` en `assets/js/app.js` | 27/11 |
-| Agustín (Codex) | `agustin/ecosistema-catalogo-operativo-servidor` | Servicios, cupos, archivo y fotos vinculadas a paquetes; imágenes de borrador privadas | Migración 0016, catálogo, archivos multimedia, adaptador de storage, servidor y pruebas. Solo PGlite/objetos ficticios | 28/11 |
+| Agustín (Codex) | `agustin/ecosistema-catalogo-operativo-panel` | Editor/publicación con servicios, disponibilidad, archivo, videos y carga de fotos sin URL | App, preparación compartida de archivos, módulo de fotos, HTML/CSS y E2E. Solo PGlite/objetos ficticios | 28/11 |
 
 ## Ecosistema integral — nuevo encargo del 27/11/2026
 
@@ -50,6 +50,8 @@ Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerra
 - Interfaz de tutores: revisión explícita con selección del viaje y confirmación de identidad/autorización. Conserva el borrador y su versión inicial aunque se consulte una versión posterior; un conflicto no pisa cambios ajenos y requiere descartar para adoptar lo actual. La lista se adapta al celular. Corrección integrada: el perfil y los accesos desde Pagos seleccionan al pasajero por su identificador de viaje, no solo por DNI; dos viajes del mismo alumno muestran tutores separados. Excel limita los datos de adhesión al viaje correcto y conserva el nombre del plan confirmado. Prueba de navegador: 8/8, incluidos conflictos después de volver a consultar y 320/390/1440 px.
 
 - Catálogo operativo, servidor: migración 0016 con alojamiento, transporte, comidas, disponibilidad/cupos informativos, promoción, video y archivo. Las fotos se cargan como objetos privados y se vinculan mediante FK a paquetes: solo se sirven a visitantes si al menos un paquete vinculado está publicado/vigente; se revalida incluso la caché. Duplicar comparte el recurso sin duplicar objetos y restaura el borrador fuera del archivo. Cupos contradictorios, videos inseguros y fechas de filtros inválidas se rechazan. Las salidas vencen según el día de Argentina. El saneamiento conserva ceros y falsos. Pruebas HTTP/PGlite con objetos ficticios; interfaz en el siguiente PR.
+
+- Interfaz del catálogo operativo: servicios, disponibilidad/cupos, promoción y video se editan y se leen en la página pública. Fotos desde archivo (incluye WebP convertido), portada elegida y archivo/restauración como borrador. Los textos escritos durante la carga no se pierden; se reutiliza el envío tras perder una respuesta. La nueva foto sigue privada hasta publicar el paquete. Se corrigen duración que confundía noches con días, portada que ignoraba la principal, filtros de fechas invertidas y caché de sesión que retenía precios/disponibilidad anteriores. El reproductor no carga terceros hasta abrirlo. Prueba local: 9/9 recorridos nuevos, 12/12 de catálogo previo y 11/11 de documentos tras compartir la preparación de archivos; revisión en 320/390/1440 px.
 
 ## Revisión funcional y pagos manuales — 27/11/2026
 
