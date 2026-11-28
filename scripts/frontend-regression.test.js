@@ -538,17 +538,18 @@ test("Turismo: seis destacados, página con todos los paquetes y filtros, detall
   for (const admin of ["admin/index.html", "admin-turismo/index.html"]) assert.match(fs.readFileSync(path.join(__dirname, "..", admin), "utf8"), /turismo\.css/, `${admin} carga los estilos de la tarjeta (vista previa del editor)`);
 });
 
-test("el menú público identifica la Ficha de adhesión y distingue al pasajero sin «PAX»", () => {
+test("el menú público conecta las tres áreas principales y distingue al pasajero sin «PAX»", () => {
   const html = fs.readFileSync(path.join(__dirname, "../index.html"), "utf8");
   const nav = html.slice(html.indexOf('<nav class="site-nav"'), html.indexOf("</nav>", html.indexOf('<nav class="site-nav"')));
   const enlaces = [...nav.matchAll(/<a [^>]*href="([^"]+)"[^>]*>([^<]+)/g)].map(([, href, texto]) => `${href} ${texto.trim()}`);
-  assert.deepEqual(enlaces, ["#/ Inicio", "#/turismo Turismo", "#/inscripcion Ficha de adhesión", "/admin/ Iniciar sesión"]);
+  assert.deepEqual(enlaces, ["#/estudiantil Viajes estudiantiles", "#/turismo Turismo", "#/inscripcion Inscripción online", "/admin/ Iniciar sesión"]);
   assert.match(appSource, /<strong>Ficha del pasajero<\/strong>/);
   assert.doesNotMatch(appSource, /Pasajero \(PAX\)/);
 });
 
-test("el encabezado público es siempre el mismo: transparente, logo claro y menú en píldora oscura, sin barra blanca al scrollear", () => {
+test("el encabezado público usa una barra compacta oscura con logo claro y conserva el acceso por teclado", () => {
   const css = fs.readFileSync(path.join(__dirname, "../assets/css/public-experience.css"), "utf8");
+  const publico = fs.readFileSync(path.join(__dirname, "../assets/css/public-design.css"), "utf8");
   const regla = (selector) => (css.match(new RegExp(`${selector.replace(/[.[\]()*+?^$|\\]/g, "\\$&")} \\{[^}]*\\}`)) || [""])[0];
   assert.match(regla('body:not([data-app-entry="admin"]) .site-header'), /background: transparent/);
   assert.match(regla('body:not([data-app-entry="admin"]) .site-nav'), /border-radius: 999px/);
@@ -556,6 +557,9 @@ test("el encabezado público es siempre el mismo: transparente, logo claro y men
   // Ningún estado del scroll vuelve a pintar una barra clara detrás del encabezado.
   assert.doesNotMatch(css, /nav-scrolled[^{]*\.site-header\s*\{[^}]*background:\s*var\(--eaa-paper\)/);
   assert.match(css, /\.site-header :is\(\.brand-link, \.site-nav, \.nav-toggle\) \{ pointer-events: auto/, "el hueco vacío del encabezado deja pasar los clics");
+  assert.match(publico, /background: var\(--h-night\); border-radius: 999px/);
+  assert.match(publico, /body\.nav-open:not\(\[data-app-entry="admin"\]\)/);
+  for (const admin of ["admin/index.html", "admin-turismo/index.html"]) assert.doesNotMatch(fs.readFileSync(path.join(__dirname, "..", admin), "utf8"), /public-design\.css/);
 });
 
 test("la agencia no ve el botón Eliminar de los viajes de Turismo del admin", () => {

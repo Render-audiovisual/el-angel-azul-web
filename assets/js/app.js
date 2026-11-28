@@ -129,20 +129,16 @@
 
             <section class="eaa-works" id="eaa-destinos" aria-labelledby="eaa-works-title">
               <h2 id="eaa-works-title" class="visually-hidden">Destinos de viajes estudiantiles</h2>
-              ${works.map((w, i) => `
-              <article class="eaa-work eaa-dark" data-work>
-                <div class="eaa-work-bg" aria-hidden="true"><img src="${escapeHtml(w.bg)}" alt="" loading="lazy" data-work-bg></div>
-                <div class="eaa-grain" aria-hidden="true"></div>
-                <p class="eaa-work-type" aria-hidden="true" data-work-type>${w.name} ${w.name} ${w.name}</p>
-                <div class="eaa-work-head eaa-wrap">
+              ${works.map((w) => `
+              <article class="eaa-work eaa-dark">
+                <div class="eaa-work-head">
                   <div><h3 data-split>${w.name}</h3><p>${w.text}</p></div>
                   <span class="eaa-work-tag">${w.tag}</span>
                 </div>
                 <a class="eaa-work-thumb" href="${escapeHtml(w.href)}"${w.external ? ' target="_blank" rel="noopener"' : ""} aria-label="${w.name}: ${w.cta}">
-                  ${img(w.thumb, w.alt, `width="1600" height="1067" loading="lazy" data-work-thumb`)}
+                  ${img(w.thumb, w.alt, 'width="1600" height="1067" loading="lazy"')}
                 </a>
                 <a class="eaa-work-link eaa-link" href="${escapeHtml(w.href)}"${w.external ? ' target="_blank" rel="noopener"' : ""}>${w.cta} ${arrow}</a>
-                <p class="eaa-work-index" aria-hidden="true">0${i + 1}/0${works.length}</p>
               </article>`).join("")}
             </section>
 
@@ -183,10 +179,10 @@
               <div class="eaa-wrap">
                 <h2 id="eaa-moments-title" data-split>Momentos reales, recuerdos para siempre</h2>
                 <div class="eaa-stack">
-                  ${moments.map(([name, alt, caption], i) => `
-                  <figure class="eaa-stack-card" data-stack-card style="--i:${i}">
+                  ${moments.map(([name, alt, caption]) => `
+                  <figure class="eaa-stack-card">
                     <div class="eaa-frame">${img(`assets/img/home/carrusel-viajes/${name}.webp`, alt, 'loading="lazy"')}</div>
-                    <figcaption><span class="eaa-n" aria-hidden="true">0${i + 1}</span>${caption}</figcaption>
+                    <figcaption>${caption}</figcaption>
                   </figure>`).join("")}
                 </div>
               </div>
@@ -7588,7 +7584,7 @@ ${renderTutorReviewForm(tutor)}
 
       function renderPrimariaCarlosPaz() {
         document.getElementById("app").innerHTML = `
-          <div class="layout student-detail-layout">
+          <div class="layout student-detail-layout" data-public-destination="carlos-paz">
             <section class="student-detail-hero primary">
               <div class="student-detail-hero-content">
                 <p class="hero-kicker">Primaria</p>
@@ -7637,10 +7633,7 @@ ${renderTutorReviewForm(tutor)}
             `).join("");
           }
 
-          return Array.from(
-            { length: item.gallerySlots || 3 },
-            () => `<div class="bariloche-gallery-slot"></div>`
-          ).join("");
+          return "";
         };
 
         const renderExperienceVideo = item => {
@@ -7652,7 +7645,7 @@ ${renderTutorReviewForm(tutor)}
             `).join("");
           }
 
-          return `<div class="bariloche-experience-video" aria-label="Video de ${item.name}"></div>`;
+          return "";
         };
 
         const renderExperienceCategory = category => `
@@ -7677,7 +7670,7 @@ ${renderTutorReviewForm(tutor)}
         `;
 
         document.getElementById("app").innerHTML = `
-          <div class="layout student-detail-layout">
+          <div class="layout student-detail-layout" data-public-destination="bariloche">
             <section class="student-detail-hero">
               <div class="student-detail-hero-content">
                 <p class="hero-kicker">Secundaria</p>
@@ -7710,7 +7703,7 @@ ${renderTutorReviewForm(tutor)}
 
       function renderSecundariaCarlosPaz() {
         document.getElementById("app").innerHTML = `
-          <div class="layout student-detail-layout">
+          <div class="layout student-detail-layout" data-public-destination="carlos-paz">
             <section class="student-detail-hero">
               <div class="student-detail-hero-content">
                 <p class="hero-kicker">Secundaria</p>
@@ -8940,14 +8933,11 @@ ${renderTutorReviewForm(tutor)}
         if (path === "/" || path.startsWith("/turismo")) turismoPublicPackagesCache = null;
         const page = routes[path] || routes["/"];
         document.body.classList.toggle("home-page", path === "/");
-        // Solo el Home cambia las etiquetas del navbar compartido.
-        const homeNavEntry = document.querySelector("[data-home-nav-entry]");
-        const enrollNavEntry = document.querySelector(".site-nav .eaa-nav-enroll");
-        if (homeNavEntry) {
-          homeNavEntry.href = path === "/" ? "#/estudiantil" : "#/";
-          homeNavEntry.textContent = path === "/" ? "Viajes estudiantiles" : "Inicio";
-        }
-        if (enrollNavEntry) enrollNavEntry.textContent = path === "/" ? "Inscripción online" : "Ficha de adhesión";
+        document.querySelectorAll('.site-nav a').forEach(link => {
+          const target = link.getAttribute('href')?.slice(1);
+          if (target && (path === target || path.startsWith(`${target}/`))) link.setAttribute('aria-current', 'page');
+          else link.removeAttribute('aria-current');
+        });
         document.body.classList.toggle("portal-private-page", ["/portal-pasajeros", "/pasajeros", "/mi-viaje"].includes(path));
         document.body.classList.toggle("turismo-page", path.startsWith("/turismo"));
         document.body.classList.toggle("turismo-hero-page", path.startsWith("/turismo"));
@@ -9177,7 +9167,7 @@ ${renderTutorReviewForm(tutor)}
           event.preventDefault();
           const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
           if (window.__lenisInstance && !reduceMotion) {
-            window.__lenisInstance.scrollTo(target, { offset: -88, duration: 1.4 });
+            window.__lenisInstance.scrollTo(target, { offset: -112, duration: 1.4 });
             return;
           }
           target.scrollIntoView({

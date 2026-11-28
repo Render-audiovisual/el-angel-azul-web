@@ -9,7 +9,15 @@ Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerra
 |---|---|---|---|---|
 | Fran (Claude Code) | `fran/harness` | Harness: guardas, `AGENTS.md`, docs | `AGENTS.md`, `CLAUDE.md`, `package.json`, `scripts/guardas.test.js`, `scripts/helpers/sin-secretos.js`, docs | 25/11 |
 | Fran (Claude Code) | `fran/inicio-aldena` | Paso 8: rediseño del inicio inspirado en la web de referencia (Agustín dio su OK sobre el PR #8) | `index.html`, `assets/css/home.css`, `assets/css/public-experience.css`, `assets/js/modules/home-motion.js`, `renderHome` en `assets/js/app.js` | 27/11 |
-| Agustín (Codex) | `agustin/home-carrusel-azul` | Primera sección del Home, lista para revisión | Hero azul de marca, titular centrado, carrusel independiente y navbar solo en Home. Sin cambios en base, main ni hosting | 28/11 |
+| Agustín (Codex) | `agustin/home-carrusel-azul` | Web pública, alcance ampliado por el dueño | Home, viajes estudiantiles, Turismo, páginas informativas y navegación. Diseño con fotos propias; sin cambios en backend, base, main ni hosting | 28/11 |
+
+## Web pública — alcance ampliado el 28/11/2026
+
+El dueño confirmó «Ampliar a toda la web pública», tomando Travel Rock como referencia de jerarquía, no de identidad. El PR #70 pasa a cubrir la navegación pública unificada, estados activos, footer con enlaces a Nosotros/Contacto/Mi viaje; Home con destinos alternados de fotografías grandes y galería sin apilamiento; páginas estudiantiles con fotografías existentes; titulares, CTAs y espacios coherentes en las páginas informativas; contraste del hero y radios del catálogo de Turismo. Las galerías o videos sin archivos dejan de mostrar recuadros vacíos.
+
+Estilos de esta revisión en `assets/css/public-design.css`, cargados solo por `index.html`. Admin no carga ese archivo; servidor, permisos, datos, ficha, pagos, correo y lógica del portal no cambian. El encabezado y pie públicos sí se actualizan en las entradas a ficha/portal. Se conserva la distinción entre ficha de adhesión y consulta comercial.
+
+Verificación local: 287 pruebas aprobadas y 13 rutas públicas sin desbordamiento a 390 px; páginas estudiantiles/informativas y Turismo/fichas/portal comprobadas en escritorio; extremos a 320 px. Menú móvil abre, navega y se cierra; fotos cargan y las APIs usan únicamente la base local ficticia. La prueba del portal en esta revisión se limita a su entrada sin sesión. Sin enviar correos ni escribir en Supabase. No está publicado.
 
 ## Primera sección del Home — 28/11/2026
 
