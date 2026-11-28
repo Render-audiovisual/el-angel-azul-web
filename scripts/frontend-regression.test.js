@@ -333,7 +333,7 @@ test("los planes de pago se administran dentro del contrato con 1 a 18 cuotas", 
 
 test("la tabla de pasajeros muestra colegio, grado, división, plan y tutor", () => {
   const source = functionSource("renderAdminPasajerosTableRows", "bindAdminPasajerosProfileButtons");
-  for (const texto of ["planNombre", "responsableApellido", "group\.colegio", "group\.curso", "group\.division"]) {
+  for (const texto of ["payment.planPago", "responsableApellido", "group\.colegio", "group\.curso", "group\.division"]) {
     assert.match(source, new RegExp(texto));
   }
 });

@@ -4719,7 +4719,7 @@
                 <span>${escapeHtml(group.nivel)} · ${escapeHtml(group.curso)} ${escapeHtml(group.division)} · ${escapeHtml(group.viaje)}</span>
                 <span>Contrato: ${escapeHtml(passengerCodigoContrato(passenger) || "Pendiente")}</span>
               </td>
-              <td>${escapeHtml(fichaPlanTexto(passenger.planNombre, passenger.planCuotas) || "Pendiente")}</td>
+              <td>${escapeHtml(fichaPlanTexto(payment.planPago, payment.cuotas) || "Pendiente")}</td>
               <td><span class="admin-pasajeros-status ${adminStatusClass(payment.estadoPago)}">${escapeHtml(payment.estadoPago)}</span></td>
               <td><span class="admin-pasajeros-status ${adminStatusClass(passenger.documentacion)}">${escapeHtml(passenger.documentacion)}</span></td>
               <td><span class="admin-pasajeros-status ${adminStatusClass(passenger.estado)}">${escapeHtml(passenger.estado)}</span></td>
@@ -4778,6 +4778,7 @@
         const record = adminPasajerosSelectedRecord();
         if (!record) return "";
         const { group, passenger, payment } = record;
+        const account = adminCuentas.get(passengerPaymentKey(passenger, group));
         const installments = passengerInstallments(passenger);
         const paidInstallments = installments.filter((installment) => installment.status === "Pagada").length;
         const pendingInstallments = installments.length - paidInstallments;
@@ -4841,17 +4842,18 @@
                 <fieldset>
                   <legend>Contrato</legend>
                   <label>Contrato asociado <span class="admin-pasajeros-required">*</span>
-                    <select name="contratoId" required>
+                    ${account ? `<input readonly aria-label="Contrato confirmado" value="${escapeHtml(passengerCodigoContrato(passenger))}"><input type="hidden" name="contratoId" value="${escapeHtml(passenger.contratoId)}">` : `<select name="contratoId" required>
                       <option value="">Seleccionar contrato</option>
                       ${contractOptions.map((c) => `<option value="${escapeHtml(c.id)}" ${c.id === passenger.contratoId ? "selected" : ""}>${escapeHtml(c.codigo_contrato)}</option>`).join("")}
-                    </select>
+                    </select>`}
+                    ${account ? '<small>El contrato y el plan se conservan para mantener el historial de la cuenta confirmada.</small>' : ""}
                   </label>
                   ${contractOptions.length === 0 ? `<p class="admin-pasajeros-modal-note">No hay contratos disponibles para este grupo. Creá uno primero en la sección Contratos.</p>` : ""}
                   <label>Plan de pago
-                    <select name="planPagoId">
+                    ${account ? `<input readonly aria-label="Plan confirmado" value="${escapeHtml(fichaPlanTexto(payment.planPago, payment.cuotas))}"><input type="hidden" name="planPagoId" value="${escapeHtml(passenger.planPagoId)}">` : `<select name="planPagoId">
                       <option value="">Pendiente</option>
                       ${adminPlanesPago.filter((plan) => plan.contrato_id === passenger.contratoId && (plan.activo === "TRUE" || plan.id === passenger.planPagoId)).map((plan) => `<option value="${escapeHtml(plan.id)}" ${plan.id === passenger.planPagoId ? "selected" : ""}>${escapeHtml(fichaPlanTexto(plan.nombre, plan.cuotas))}</option>`).join("")}
-                    </select>
+                    </select>`}
                   </label>
                 </fieldset>
 
@@ -4873,9 +4875,9 @@
                     </select>
                   </label>
                   <label>Estado de pago
-                    <select name="pago">
+                    ${account ? `<input readonly aria-label="Estado calculado de la cuenta" value="${escapeHtml(payment.estadoPago)}"><input type="hidden" name="pago" value="${escapeHtml(passenger.pago || "Pendiente")}"><small>Se calcula con el saldo y los cobros registrados.</small>` : `<select name="pago">
                       ${["Pendiente", "Al día", "Vencido"].map((opt) => `<option ${passenger.pago === opt ? "selected" : ""}>${opt}</option>`).join("")}
-                    </select>
+                    </select>`}
                   </label>
                 </fieldset>
 
@@ -4930,7 +4932,7 @@
                 ${renderFichaValue("Curso", group.nivel)}
                 ${renderFichaValue("Grado/Año", group.curso)}
                 ${renderFichaValue("División", group.division)}
-                ${renderFichaValue("Plan", fichaPlanTexto(passenger.planNombre, passenger.planCuotas))}
+                ${renderFichaValue("Plan", fichaPlanTexto(payment.planPago, payment.cuotas))}
                 ${renderFichaValue("Contrato", passengerCodigoContrato(passenger))}
                 ${renderFichaValue("Tutor", fichaNombreCompleto(passenger.responsableApellido, passenger.responsable))}
               </dl>

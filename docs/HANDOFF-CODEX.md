@@ -9,7 +9,7 @@ Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerra
 |---|---|---|---|---|
 | Fran (Claude Code) | `fran/harness` | Harness: guardas, `AGENTS.md`, docs | `AGENTS.md`, `CLAUDE.md`, `package.json`, `scripts/guardas.test.js`, `scripts/helpers/sin-secretos.js`, docs | 25/11 |
 | Fran (Claude Code) | `fran/inicio-aldena` | Paso 8: rediseño del inicio inspirado en la web de referencia (Agustín dio su OK sobre el PR #8) | `index.html`, `assets/css/home.css`, `assets/css/public-experience.css`, `assets/js/modules/home-motion.js`, `renderHome` en `assets/js/app.js` | 27/11 |
-| Agustín (Codex) | `agustin/ecosistema-cuentas-integridad` | Conservar vínculos e identidad del plan al confirmar la cuenta | Migración 0011, lecturas de cuentas/portal, pruebas y docs. Solo PGlite | 27/11 |
+| Agustín (Codex) | `agustin/ecosistema-cuentas-edicion` | Aclarar qué campos de la ficha están protegidos al existir cuenta confirmada | `assets/js/app.js`, módulo de pagos, HTML, pruebas y docs. Solo PGlite | 27/11 |
 
 ## Ecosistema integral — nuevo encargo del 27/11/2026
 
@@ -30,6 +30,8 @@ Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerra
 - Servidor del portal individual: migración aditiva 0010, invitación de un uso por destinatario verificado por admin, tokens/sesiones solo como hashes, cookie HttpOnly/SameSite, revocación y control de pertenencia por recurso. Responsable con varios pasajeros, cuenta/cobros y PDF propio. No se envían correos ni se expone la API de pasajeros. Interfaz en el siguiente PR. Pruebas HTTP/PGlite: 8/8 (identidades separadas, permisos, PDF, expiración, concurrencia y RLS). Incluye lectura conjunta privada de cuentas para conectar los saldos del resto del panel; prueba financiera ampliada a 9/9.
 
 - Interfaz privada conectada: acceso individual sin formulario DNI/código, retiro del valor de acceso de la dirección, varios pasajeros por responsable, cuentas/cuotas/cobros y PDF propio. Admin genera/revoca desde la ficha de Pasajeros, verificando destinatario/canal. Las cuentas alimentan además saldos y cuotas del panel general. Se retiraron los prototipos locales antiguos. Revisión de paleta, Poppins/Bebas y vistas 320/390/1440 px con fuentes reales. Verificación: `npm run check`, 209 aprobadas, 0 fallas y 1 TODO previo; portal 12/12 (incluye descarga de PDF y cierre de sesión), cuentas 10/10, catálogo 12/12 y panel 37/37. Integridad completada en el siguiente PR: migración 0011 bloquea cambios de contrato/plan/viaje y bajas físicas de pasajeros con cuenta, conserva el nombre del plan al confirmar y valida en SQL el origen/condiciones. No reescribe filas anteriores; las etiquetas antiguas desconocidas se muestran como «Plan confirmado». Prueba financiera ampliada a 11/11.
+
+- Edición de Pasajeros alineada con la integridad de cuentas: contrato/plan confirmados se leen sin ofrecer cambios rechazados por el servidor, el estado de pago se muestra calculado y las correcciones personales siguen disponibles. Tabla y ficha muestran el nombre del plan guardado en la cuenta, aunque cambie el nombre para futuras cuentas. Verificación: 211 pruebas aprobadas, 1 TODO previo y portal 13/13 (incluye editar datos personales y conservar los vínculos).
 
 ## Revisión funcional y pagos manuales — 27/11/2026
 

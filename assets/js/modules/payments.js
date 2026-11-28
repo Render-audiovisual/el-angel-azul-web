@@ -16,7 +16,7 @@
     const account=passenger.cuenta;
     const valorViaje=account?Number(account.total_centavos)/100:passenger.valorViaje!==''&&passenger.valorViaje!=null?parseMoney(passenger.valorViaje):null;
     return {
-      planPago:passenger.planNombre||passenger.planPago||'Sin plan asignado',
+      planPago:account?.plan_nombre||passenger.planNombre||passenger.planPago||'Sin plan asignado',
       cuotas:account?account.cuotas.length:passenger.planCuotas||passenger.cuotas||'',
       valorViaje,pagado:account?Number(account.pagado_centavos)/100:centavos/100,saldo:account?Number(account.saldo_centavos)/100:valorViaje===null?null:Math.max(0,valorViaje-centavos/100),
       sena:null,proximaCuota:passenger.proximaCuota||'',estadoPago:account?(Number(account.saldo_centavos)===0?'Al día':'Saldo pendiente'):passenger.pago||'Pendiente',
