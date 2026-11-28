@@ -19,6 +19,15 @@ const fila = {
   created_at: "2026-09-15T12:00:00Z"
 };
 
+test("el PDF conserva fecha y bytes para reintentos idempotentes de correo", async () => {
+  const primero = await generarPdfFicha(fila);
+  const segundo = await generarPdfFicha(fila);
+  const documento = await PDFDocument.load(primero, { updateMetadata: false });
+  assert.equal(documento.getCreationDate().toISOString(), fila.created_at.replace("Z", ".000Z"));
+  assert.equal(documento.getModificationDate().toISOString(), fila.created_at.replace("Z", ".000Z"));
+  assert.deepEqual(Buffer.from(primero), Buffer.from(segundo));
+});
+
 test("genera un PDF A4 de una página con tildes, ñ y °", async () => {
   const bytes = await generarPdfFicha(fila);
   assert.equal(Buffer.from(bytes.subarray(0, 5)).toString(), "%PDF-");
