@@ -409,3 +409,11 @@ body[data-app-entry="admin"] .academic-admin .academic-tabs button[aria-pressed=
 .academic-admin [role="status"]:empty { display:none; }
 .academic-admin p { max-width:75ch; }
 @media(max-width:640px) { .academic-admin .academic-fields { grid-template-columns:minmax(0,1fr); } .academic-admin .academic-toolbar label { flex-basis:100%; } .academic-admin .academic-actions button { width:100%; } .academic-admin .academic-tabs button { flex:1 1 120px; } }
+.enrollment-admin { margin:24px 0; padding-top:24px; border-top:1px solid #c9dbea; }
+.enrollment-admin label { display:grid; gap:8px; min-width:0; }
+.enrollment-admin input:not([type="checkbox"]) { width:100%; min-width:0; }
+.enrollment-admin-actions { display:flex; flex-wrap:wrap; gap:12px; margin:12px 0; }
+.enrollment-admin .enrollment-check { display:flex; gap:12px; align-items:center; min-height:44px; margin-top:20px; }
+.enrollment-admin input[type="checkbox"] { width:22px; min-height:22px; height:22px; accent-color:#0765a4; }
+.enrollment-admin [role="alert"] { color:#a02b35; }
+@media(max-width:640px) { .enrollment-admin-actions button { width:100%; } }

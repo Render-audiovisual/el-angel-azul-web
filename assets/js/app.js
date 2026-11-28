@@ -2171,6 +2171,8 @@
         location.reload();
       }
 
+      window.addEventListener("eaa-admin-session-lost", handleAdminSessionLost);
+
       async function fetchAdminSession(force = false) {
         if (adminSessionChecked && !force) return adminSession;
         try {
@@ -5643,6 +5645,7 @@
                   <button type="submit">Guardar cambios</button>
                 </div>
               </form>
+              <section class="enrollment-admin" data-enrollment-admin data-contract-id="${escapeHtml(contract.id)}"></section>
               ${renderAdminContratoPlanes(contract)}
             </section>
           </div>
@@ -5814,6 +5817,8 @@
         `);
         bindAdminShell();
         bindAdminContratos();
+        const enrollmentRoot = document.querySelector("[data-enrollment-admin]");
+        window.ElAngelAzulEnrollment?.mountAdmin(enrollmentRoot, enrollmentRoot?.dataset.contractId);
       }
 
       function bindAdminContratos() {
@@ -7821,6 +7826,7 @@
         let colegiosCargados = false;
         let colegiosError = false;
         let contratoError = false;
+        let contratoEstado = "sin_contrato";
         // undefined = buscando; null = sin contrato; objeto = contrato encontrado.
         let contrato = null;
         let contractRequest = 0;
@@ -7929,6 +7935,10 @@
             contractResult.textContent = "No pudimos verificar el contrato en este momento. Podés continuar con la ficha; se volverá a consultar antes del envío.";
             return;
           }
+          if (["ambiguo","pausada"].includes(contratoEstado)) {
+            contractResult.textContent = contratoEstado === "ambiguo" ? "Hay más de un contrato para tu curso. Pedí a la agencia el enlace correcto antes de continuar." : "La inscripción de este grupo está pausada. Consultá con la agencia antes de continuar.";
+            return;
+          }
           if (contrato) {
             contractResult.classList.add("is-ok");
             contractResult.innerHTML = `
@@ -7981,6 +7991,7 @@
               if (requestId !== contractRequest) return;
               contratoError = !response.ok || !payload.ok;
               contrato = contratoError ? null : payload.contrato;
+              contratoEstado = payload.estado || "sin_contrato";
             } catch (_) {
               if (requestId !== contractRequest) return;
               contrato = null;
@@ -8005,14 +8016,30 @@
           divisionField.value = divisionField.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 3);
           refreshContract();
         });
-        form.addEventListener("submit", (event) => {
+        form.addEventListener("submit", async (event) => {
           event.preventDefault();
+          if (nextButton.disabled) return;
           const s = seleccion();
           if (!seleccionValida(s)) {
             errorMessage.textContent = requiredMessage;
             errorMessage.hidden = false;
             errorMessage.focus();
             return;
+          }
+          if (s.colegioId) {
+            nextButton.disabled = true;
+            try {
+              const query = new URLSearchParams({colegioId:s.colegioId,nivel:s.nivel,viaje:`${s.destino} ${s.anio}`,grado:s.grado,division:s.division});
+              const response = await fetch(`/api/public/inscripcion-context?${query}`,{cache:"no-store"});
+              const payload = await response.json();
+              if (!response.ok || !payload.ok) throw Error("No pudimos verificar el contrato. Revisá tu conexión y volvé a intentar.");
+              if (["ambiguo","pausada"].includes(payload.estado)) throw Error(payload.estado === "ambiguo" ? "Hay más de un contrato para este curso. Pedí a la agencia el enlace del grupo correcto." : "La inscripción del grupo está pausada. Consultá con la agencia.");
+            } catch (error) {
+              errorMessage.textContent = error.message;
+              errorMessage.hidden = false;
+              errorMessage.focus();
+              return;
+            } finally { nextButton.disabled = false; }
           }
           location.hash = `/inscripcion/ficha-adhesion?${new URLSearchParams(s).toString()}`;
         });
@@ -8046,7 +8073,8 @@
           colegioTexto: params.get("colegioTexto") || "",
           colegioNombre: params.get("colegioNombre") || params.get("colegioTexto") || "",
           grado: params.get("grado") || "",
-          division: params.get("division") || ""
+          division: params.get("division") || "",
+          ...(params.get("contrato") ? { inscripcionCodigo: params.get("contrato") } : {})
         };
       }
 
@@ -8189,7 +8217,7 @@
                 <strong>${escapeHtml(contexto.colegioNombre)} · ${escapeHtml(contexto.nivel)} ${escapeHtml(contexto.grado)} ${escapeHtml(contexto.division)}</strong>
                 <p>${escapeHtml(contexto.destino)} ${escapeHtml(contexto.anio)} · Contrato: <strong data-ficha-contrato>${contexto.colegioId ? "buscando…" : "se vincula en administración"}</strong></p>
                 ${["colegio", "nivel", "grado", "division", "destino", "anio"].map(fichaCampoError).join("")}
-                <a class="ficha-adhesion-context-edit" href="#/inscripcion?${escapeHtml(new URLSearchParams(contexto).toString())}">Cambiar viaje o colegio</a>
+                <a class="ficha-adhesion-context-edit" href="#/inscripcion?${escapeHtml(contexto.inscripcionCodigo ? new URLSearchParams({contrato:contexto.inscripcionCodigo}).toString() : new URLSearchParams(contexto).toString())}">${contexto.inscripcionCodigo ? "Revisar grupo del enlace" : "Cambiar viaje o colegio"}</a>
               </div>
               <div class="ficha-adhesion-help" data-reveal-light>
                 <strong>Antes de empezar</strong>
@@ -8494,7 +8522,8 @@
             nivel: contextoInscripcion.nivel,
             viaje: `${contextoInscripcion.destino} ${contextoInscripcion.anio}`,
             grado: contextoInscripcion.grado,
-            division: contextoInscripcion.division
+            division: contextoInscripcion.division,
+            ...(contextoInscripcion.inscripcionCodigo ? { codigo: contextoInscripcion.inscripcionCodigo } : {})
           });
           planesEnCurso = fetch(`/api/public/inscripcion-context?${params}`, { cache: "no-store" })
             .then((response) => {
@@ -8502,6 +8531,7 @@
               return response.json();
             })
             .then((payload) => {
+              if (["ambiguo","pausada","enlace_invalido"].includes(payload.estado)) throw new Error(payload.estado === "ambiguo" ? "Hay más de un contrato para tu curso. Pedí a la agencia el enlace de tu grupo." : "La inscripción del grupo está pausada o el enlace ya no está vigente. Consultá con la agencia.");
               const planes = Array.isArray(payload.planes) ? payload.planes : [];
               planesDisponibles = planes.map((plan) => plan.id);
               if (contratoNode) contratoNode.textContent = payload.contrato?.codigo || "se vincula en administración";
@@ -8515,8 +8545,8 @@
               planesCargados = true;
               return true;
             })
-            .catch(() => {
-              if (contratoNode) contratoNode.textContent = "se vincula en administración";
+            .catch((error) => {
+              if (contratoNode) contratoNode.textContent = error.message === "contexto" ? "no pudimos verificarlo; volvé a intentar" : error.message;
               return false;
             })
             .finally(() => { planesEnCurso = null; });
@@ -8859,6 +8889,10 @@
         // Ficha v2: la inscripción ya no hidrata Grupos/Contratos en el
         // navegador; consulta colegios y contrato exacto en /api/public/*.
         if (path === "/inscripcion") {
+          if (currentHashParams().get("contrato")) {
+            window.ElAngelAzulEnrollment.open(document.getElementById("app"), currentHashParams().get("contrato"));
+            return;
+          }
           renderInscripcion();
           return;
         }

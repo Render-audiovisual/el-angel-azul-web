@@ -13,6 +13,7 @@
     try { response = await fetch('/api/admin/academico' + path, { credentials: 'same-origin', cache: 'no-store', ...(body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {}) }); }
     catch (_) { throw Error('No recibimos la confirmación. Conservamos los campos: volvé a consultar antes de guardar otra vez.'); }
     const data = await response.json();
+    if (response.status === 401) { state = fresh(); window.dispatchEvent(new Event('eaa-admin-session-lost')); }
     if (!response.ok || !data.ok) throw Error(data.error || 'No pudimos consultar la organización del viaje.');
     return data;
   }

@@ -11317,3 +11317,16 @@ body.portal-private-page > main#app { padding-inline: 0; }
 [data-portal-details] { min-width: 0; }
 body:not([data-app-entry="admin"]) .angel-passenger-portal h1 { font-weight: 400; }
 body.portal-private-page:not([data-app-entry="admin"]) #app .angel-passenger-portal :is(h2,h3) { font-family: var(--font-body, "Poppins", sans-serif); font-weight: 600; letter-spacing: normal; line-height: 1.3; }
+
+.enrollment-entry { padding-top:clamp(112px,12vw,170px); padding-bottom:80px; max-width:850px; min-height:70vh; }
+.enrollment-entry h1 { font-family:'Bebas Neue',sans-serif; font-size:clamp(2.5rem,6vw,4rem); color:#07528d; }
+.enrollment-entry p { max-width:65ch; }
+.enrollment-entry dl { display:grid; grid-template-columns:1fr 1fr; gap:24px; padding:24px 0; margin:24px 0; border-block:1px solid #c9dbea; }
+.enrollment-entry dt { color:#45617a; font-size:.875rem; }
+.enrollment-entry dd { margin:6px 0 0; font-weight:600; color:#0a3258; overflow-wrap:anywhere; }
+.enrollment-entry a,.enrollment-entry button { min-height:44px; display:inline-flex; align-items:center; padding:12px 20px; margin:8px 8px 8px 0; border:1px solid #07528d; border-radius:12px; color:#07528d; text-decoration:none; }
+.enrollment-entry a.enrollment-continue { background:#07528d; color:#fff; }
+.enrollment-entry a.enrollment-continue:hover { background:#063c67; }
+.enrollment-entry :focus-visible { outline:3px solid #d22976; outline-offset:4px; }
+.enrollment-entry [role="alert"] { color:#a02b35; }
+@media(max-width:600px) { .enrollment-entry dl { grid-template-columns:1fr; gap:18px; } .enrollment-entry a,.enrollment-entry button { width:100%; justify-content:center; box-sizing:border-box; } }
