@@ -3,6 +3,7 @@ const fs = require("fs");
 const http = require("http");
 const path = require("path");
 const { URL } = require("url");
+const academic = require('./lib/academic');
 const passengerPortal = require('./lib/passenger-portal');
 const studentAccounts = require('./lib/student-accounts');
 const db = require("./lib/db");
@@ -1210,6 +1211,32 @@ async function handleAdminPayments(req, res, url) {
   }
 }
 
+async function handleAcademic(req,res,url) {
+  const session=currentAdminSession(req);
+  if(!session)return json(res,401,{ok:false,error:"Iniciá sesión para administrar promociones y salidas."});
+  if(!POSTGRES_MIGRATION_ENABLED)return json(res,503,{ok:false,error:"La organización académica requiere la base de datos habilitada."});
+  if(req.method==="POST" && requireSameOrigin(req,res))return;
+  try {
+    if(url.pathname==="/api/admin/academico" && req.method==="GET")return json(res,200,{ok:true,...await academic.metadata()});
+    if(req.method!=="POST")return json(res,405,{ok:false,error:"Método no permitido"});
+    const body=await readJsonBody(req,100000);
+    if(!body||typeof body!=="object"||Array.isArray(body))return json(res,400,{ok:false,error:"Enviá un objeto con los datos del registro."});
+    const collection=/^\/api\/admin\/academico\/(promociones|contingentes)$/.exec(url.pathname);
+    if(collection){const result=await academic.save(collection[1],body,session.user);return json(res,result.creado?201:200,{ok:true,...result});}
+    const group=/^\/api\/admin\/academico\/grupos\/([^/]+)$/.exec(url.pathname);
+    if(group)return json(res,200,{ok:true,grupo:await academic.linkGroup(safeDecode(group[1]),body,session.user)});
+    const passenger=/^\/api\/admin\/academico\/pasajeros\/([^/]+)$/.exec(url.pathname);
+    if(passenger)return json(res,200,{ok:true,...await academic.assignPassenger(safeDecode(passenger[1]),body,session.user)});
+    return json(res,405,{ok:false,error:"Método no permitido"});
+  } catch(error) {
+    if(error.code==="42P01"||error.code==="42703")return json(res,503,{ok:false,error:"La organización académica todavía no está habilitada en esta base."});
+    if(error.code==="23505")return json(res,409,{ok:false,error:error.constraint==="contingentes_identidad_uk"?"Ya existe una salida de ese viaje con el mismo nombre y fecha.":"Ya existe una promoción con ese colegio, nivel, año y nombre."});
+    if(error.code==="23503")return json(res,409,{ok:false,error:"La relación cambió o tiene pasajeros asignados. Revisá los vínculos antes de guardar."});
+    if(error.code==="23514")return json(res,400,{ok:false,error:"Revisá los datos y que el nivel de la promoción corresponda al grupo."});
+    throw error;
+  }
+}
+
 const portalAttempts = new Map();
 function portalCookie(token,req) {
   const age=token?passengerPortal.SESSION_SECONDS:0;
@@ -1234,9 +1261,15 @@ async function handlePassengerPortal(req,res,url) {
     if(url.pathname==="/api/portal/acceso" && req.method==="POST") {
       const key=clientIp(req);
       if(genericRateLimited(portalAttempts,key,30,15*60*1000))return json(res,429,{ok:false,error:"Demasiados intentos. Esperá unos minutos antes de volver a intentar."});
-      registerGenericAttempt(portalAttempts,key,15*60*1000);
-      const token=await passengerPortal.consume(body.token,raw);
-      res.setHeader("Set-Cookie",portalCookie(token,req));return json(res,200,{ok:true});
+      try {
+        const token=await passengerPortal.consume(body.token,raw);
+        res.setHeader("Set-Cookie",portalCookie(token,req));return json(res,200,{ok:true});
+      } catch(error) {
+        // Una reunión de familias puede compartir Wi-Fi: se cuentan fallos,
+        // nunca accesos válidos de distintos responsables detrás de una IP.
+        if(error.statusCode===401)registerGenericAttempt(portalAttempts,key,15*60*1000);
+        throw error;
+      }
     }
     if(url.pathname==="/api/portal/logout" && req.method==="POST") {
       await passengerPortal.logout(raw);res.setHeader("Set-Cookie",portalCookie("",req));return json(res,200,{ok:true});
@@ -1314,6 +1347,7 @@ function createAppServer() {
         const row = await catalog.duplicate(decodeURIComponent(duplicatePackage[1]),body.version,session.user);
         return json(res,201,{ok:true,paquete:row});
       }
+      if (url.pathname === "/api/admin/academico" || url.pathname.startsWith("/api/admin/academico/")) return await handleAcademic(req,res,url);
       if (url.pathname.startsWith("/api/portal/") || url.pathname.startsWith("/api/admin/portal/")) return await handlePassengerPortal(req,res,url);
       if (url.pathname.startsWith("/api/admin/finanzas/")) return await handleStudentAccounts(req,res,url);
       if (url.pathname === "/api/admin/pagos" || url.pathname.startsWith("/api/admin/pagos/")) return await handleAdminPayments(req, res, url);

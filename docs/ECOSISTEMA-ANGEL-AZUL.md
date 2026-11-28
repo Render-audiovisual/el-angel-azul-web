@@ -135,3 +135,12 @@ La interfaz del portal reemplaza el acceso por DNI/código y se integra con la f
 
 
 La migración 0011 protege el vínculo de una cuenta confirmada con pasajero/contrato/plan/viaje y captura el nombre del plan al crearla. No se cambian ni adivinan nombres históricos. Borrar físicamente un pasajero con cuenta se reemplaza por una indicación de usar Baja; los cambios personales y de estado siguen disponibles. La corrección de acuerdos ya confirmados necesita una revisión explícita posterior, no una sobrescritura silenciosa del historial.
+
+
+## Implementación académica y salidas — revisión local
+
+La migración 0012 distingue la promoción (colegio, nivel y año de egreso) del grupo académico y de la salida/contingente operativo. Un colegio puede mantener varias promociones. Varios grupos, incluso de colegios distintos, pueden compartir una salida del mismo viaje. Un grupo puede participar en varias salidas: cada pasajero se asigna explícitamente a una de las salidas habilitadas para su grupo, sin adivinarla ni modificar contrato, cuotas o importes.
+
+Los vínculos se validan con claves foráneas compuestas, comprobación de nivel, versiones y auditoría. Quitar una relación con pasajeros asignados se bloquea; primero se revisa su asignación. Archivar conserva las relaciones históricas. No se permite cambiar silenciosamente el colegio/nivel de una promoción vinculada ni el viaje de una salida con grupos. El portal toma las fechas de la salida concreta y muestra la promoción si fueron asignadas.
+
+Las restricciones añadidas sobre relaciones heredadas pasajero/grupo/viaje/contrato/plan se crean `NOT VALID`: protegen nuevas escrituras y no clasifican, reparan ni borran registros viejos. Antes de la publicación corresponde revisar esos datos en lectura y validar las restricciones con autorización; las pruebas locales no acreditan que la base oficial esté libre de inconsistencias.

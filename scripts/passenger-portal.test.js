@@ -62,3 +62,7 @@ test('vencimiento y cambios de vínculo se aplican en el servidor; todas las tab
  await pool.query("update portal_sesiones set expires_at=now()-interval '1 minute'");assert.equal((await request('/api/portal/me',null,cookie)).status,401);
  for(const name of ['portal_identidades','portal_invitaciones','portal_sesiones'])assert.equal((await pool.query('select relrowsecurity from pg_class where relname=$1',[name])).rows[0].relrowsecurity,true);
 });
+
+test('más de treinta accesos válidos desde una misma conexión no bloquean una reunión de familias',async()=>{
+ for(let i=0;i<35;i++){const raw=await invite();assert.equal((await access(raw)).status,200);}
+});
