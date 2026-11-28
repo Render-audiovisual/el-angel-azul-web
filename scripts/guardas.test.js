@@ -103,7 +103,7 @@ function cuerpoDeFuncion(texto, nombre) {
   return siguiente === -1 ? texto.slice(inicio) : texto.slice(inicio, inicio + 1 + siguiente);
 }
 
-test("la base verifica el certificado de Supabase por defecto", { todo: "Paso 3: rejectUnauthorized:false en lib/db.js" }, () => {
+test("la base verifica el certificado de Supabase por defecto", () => {
   assert.doesNotMatch(leer("lib/db.js"), /rejectUnauthorized:\s*false/);
 });
 

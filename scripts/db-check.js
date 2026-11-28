@@ -3,6 +3,7 @@
 // Uso local: node --env-file=.env scripts/db-check.js
 // Uso con la variable ya exportada en el entorno (Hostinger, CI): node scripts/db-check.js
 const { Pool } = require("pg");
+const { postgresTlsOptions } = require("../lib/postgres-tls");
 
 const REQUIRED_TABLES = [
   "colegios",
@@ -40,25 +41,8 @@ async function main() {
     return;
   }
 
-  const ca = String(process.env.SUPABASE_DB_CA_CERT || "").replace(/\\n/g, "\n").trim();
-  const verifyFull = process.env.EAA_POSTGRES_TLS_VERIFY_FULL === "true";
-  if (verifyFull && !ca) {
-    console.error("EAA_POSTGRES_TLS_VERIFY_FULL=true requiere SUPABASE_DB_CA_CERT.");
-    process.exitCode = 1;
-    return;
-  }
-
-  const connectionUrl = new URL(process.env.DATABASE_URL);
-  if (verifyFull) {
-    ["sslmode", "sslcert", "sslkey", "sslrootcert"].forEach((key) => connectionUrl.searchParams.delete(key));
-  }
-
-  const pool = new Pool({
-    connectionString: connectionUrl.toString(),
-    ssl: verifyFull
-      ? { rejectUnauthorized: true, ca }
-      : { rejectUnauthorized: false }
-  });
+  // Misma configuración TLS que la app: siempre verifica el certificado.
+  const pool = new Pool(postgresTlsOptions(process.env.DATABASE_URL));
 
   try {
     const ping = await pool.query("select now() as now");
