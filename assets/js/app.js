@@ -2189,15 +2189,9 @@
           <div class="admin-login-screen">
             <section class="admin-login-card" aria-label="Acceso interno El Ángel Azul">
               <div class="admin-login-panel">
-                <span class="admin-login-orb admin-login-orb-one" aria-hidden="true"></span>
-                <span class="admin-login-orb admin-login-orb-two" aria-hidden="true"></span>
                 <div class="admin-login-panel-top">
                   <a class="admin-login-logo-link" href="#/" aria-label="El Ángel Azul - Inicio">
-                    <img src="assets/img/favicon-esfera-blanca.svg" alt="">
-                    <span>
-                      <strong>El Ángel Azul</strong>
-                      <small>Panel interno</small>
-                    </span>
+                    <img src="assets/img/logo-completo-azul.svg" alt="El Ángel Azul">
                   </a>
                 </div>
                 <div class="admin-login-brand">
@@ -2205,10 +2199,7 @@
                   <p>Operá inscripciones, pasajeros, pagos y turismo desde un panel privado.</p>
                 </div>
                 <div class="admin-login-highlights" aria-label="Módulos disponibles">
-                  <span><strong>✎</strong> Inscripciones</span>
-                  <span><strong>P</strong> Pasajeros</span>
-                  <span><strong>$</strong> Pagos</span>
-                  <span><strong>✈</strong> Turismo</span>
+                  ${adminModules.filter((module) => module.id !== "home").map((module) => `<span>${adminIconSvg(module.icon)}${escapeHtml(module.label)}</span>`).join("")}
                 </div>
                 <p class="admin-login-footer">© El Ángel Azul · Acceso restringido</p>
               </div>
@@ -2227,8 +2218,14 @@
                   <label>
                     Contraseña
                     <span class="admin-login-password">
-                      <input name="password" type="password" autocomplete="current-password" placeholder="Contraseña" required>
-                      <button type="button" data-admin-password-toggle aria-label="Mostrar contraseña" aria-pressed="false">Ver</button>
+                      <input id="admin-password-field" name="password" type="password" autocomplete="current-password" placeholder="Contraseña" required>
+                      <button type="button" data-admin-password-toggle aria-label="Mostrar contraseña" aria-controls="admin-password-field" aria-pressed="false" title="Mostrar contraseña">
+                        <svg class="admin-password-eye" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+                          <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/>
+                          <circle cx="12" cy="12" r="3"/>
+                          <path class="admin-password-eye-slash" d="m3 3 18 18"/>
+                        </svg>
+                      </button>
                     </span>
                   </label>
                   ${errorMessage || adminLoginNotice ? `<p class="admin-login-error" role="alert">${escapeHtml(errorMessage || adminLoginNotice)}</p>` : ""}
@@ -2250,7 +2247,7 @@
           input.type = shouldShow ? "text" : "password";
           toggle.setAttribute("aria-pressed", shouldShow ? "true" : "false");
           toggle.setAttribute("aria-label", shouldShow ? "Ocultar contraseña" : "Mostrar contraseña");
-          toggle.textContent = shouldShow ? "Ocultar" : "Ver";
+          toggle.title = shouldShow ? "Ocultar contraseña" : "Mostrar contraseña";
         });
 
         document.querySelector("[data-admin-login-form]")?.addEventListener("submit", async (event) => {
@@ -2263,7 +2260,7 @@
             renderAdminLogin("Completá usuario y contraseña para ingresar.");
             return;
           }
-          const button = form.querySelector("button");
+          const button = form.querySelector('button[type="submit"]');
           if (button) {
             button.disabled = true;
             button.textContent = "Ingresando...";
@@ -2311,9 +2308,14 @@
 
             <div class="admin-shell">
               <aside class="admin-sidebar" aria-label="Navegación interna">
-                <nav>
+                <button type="button" class="admin-nav-toggle" data-admin-nav-toggle aria-expanded="false" aria-controls="admin-module-nav">
+                  <span>${escapeHtml(adminVisibleModules().find((module) => module.id === moduleId)?.label || "Navegación")}</span>
+                  <span class="admin-nav-toggle-hint">Cambiar sección</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <nav id="admin-module-nav">
                   ${adminVisibleModules().map((module) => `
-                    <a class="${module.id === moduleId ? "active" : ""}" href="${adminRouteHref(module.path)}">
+                    <a class="${module.id === moduleId ? "active" : ""}" ${module.id === moduleId ? 'aria-current="page"' : ""} href="${adminRouteHref(module.path)}">
                       ${adminIconSvg(module.icon, "admin-nav-icon")}
                       <span>${module.label}</span>
                     </a>
@@ -2329,6 +2331,19 @@
       }
 
       function bindAdminShell() {
+        const sidebar = document.querySelector(".admin-sidebar");
+        const toggle = sidebar?.querySelector("[data-admin-nav-toggle]");
+        toggle?.addEventListener("click", () => {
+          const open = toggle.getAttribute("aria-expanded") !== "true";
+          toggle.setAttribute("aria-expanded", String(open));
+          sidebar.classList.toggle("is-open", open);
+        });
+        sidebar?.addEventListener("keydown", (event) => {
+          if (event.key !== "Escape" || toggle?.getAttribute("aria-expanded") !== "true") return;
+          toggle.setAttribute("aria-expanded", "false");
+          sidebar.classList.remove("is-open");
+          toggle.focus();
+        });
         document.querySelector("[data-admin-logout]")?.addEventListener("click", async () => {
           try {
             await fetch("/api/admin/logout", {
@@ -2814,7 +2829,7 @@
               </div>
             </form>
             <div class="admin-pasajeros-table-wrap">
-              <table class="admin-pasajeros-table">
+              <table class="admin-pasajeros-table admin-colegios-table">
                 <thead><tr><th>Nombre</th><th>Provincia</th><th>Localidad</th><th>Estado</th><th><span class="sr-only">Acciones</span></th></tr></thead>
                 <tbody>
                   ${filas.length ? filas.map((colegio) => `
@@ -5341,8 +5356,10 @@
               ${renderAdminPasajerosSelect("colegio", adminPasajerosFilterColegio, allColegios, "Colegio")}
               ${renderAdminPasajerosSelect("curso", adminPasajerosFilterCurso, allCursos, "Curso")}
               ${renderAdminPasajerosSelect("estado", adminPasajerosFilterEstado, allEstados, "Estado")}
-              <button type="button" class="admin-pasajeros-secondary-button" data-admin-pasajeros-clear-filters>Limpiar</button>
-              <button type="button" class="admin-pasajeros-secondary-button" data-admin-pasajeros-export>Exportar a Excel</button>
+              <div class="admin-filter-actions">
+                <button type="button" class="admin-pasajeros-secondary-button" data-admin-pasajeros-clear-filters>Limpiar</button>
+                <button type="button" class="admin-pasajeros-secondary-button" data-admin-pasajeros-export>Exportar a Excel</button>
+              </div>
             </div>
           </section>
 
@@ -6649,7 +6666,6 @@
             <h1>Pagos y cuotas</h1>
             <p>Control de cobranza conectado a Pasajeros. Mantiene resumen, cuotas e historial preparado para registrar pagos reales más adelante.</p>
             <div class="admin-demo-banner" role="note">
-              <span class="admin-demo-banner-icon material-symbols-outlined" aria-hidden="true">info</span>
               <div>
                 <strong>Datos de ejemplo</strong>
                 <p>Los montos, cuotas, vencimientos y estados de pago que se ven acá son de muestra: <strong>no reflejan la cobranza real</strong>. Esta sección se conectará a los datos reales más adelante.</p>
@@ -6691,11 +6707,9 @@
             </div>
           </section>
 
-          <section class="admin-turismo-panel admin-payment-architecture">
-            <div>
-              <h2>Estructura preparada para pagos reales</h2>
-              <p>La pantalla ya separa los datos necesarios para pasar de control manual a registro real.</p>
-            </div>
+          <details class="admin-turismo-panel admin-payment-architecture" open>
+            <summary>Estructura preparada para pagos reales</summary>
+            <p>La pantalla ya separa los datos necesarios para pasar de control manual a registro real.</p>
             <div class="admin-payment-architecture-grid">
               <article>
                 <span>Resumen</span>
@@ -6714,7 +6728,7 @@
                 <strong>Comprobante, Mercado Pago, transferencia o caja</strong>
               </article>
             </div>
-          </section>
+          </details>
 
           <section class="admin-turismo-panel admin-pasajeros-table-panel">
             <div class="admin-pasajeros-table-head">
