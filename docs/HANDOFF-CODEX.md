@@ -9,7 +9,7 @@ Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerra
 |---|---|---|---|---|
 | Fran (Claude Code) | `fran/harness` | Harness: guardas, `AGENTS.md`, docs | `AGENTS.md`, `CLAUDE.md`, `package.json`, `scripts/guardas.test.js`, `scripts/helpers/sin-secretos.js`, docs | 25/11 |
 | Fran (Claude Code) | `fran/inicio-aldena` | Paso 8: rediseño del inicio inspirado en la web de referencia (Agustín dio su OK sobre el PR #8) | `index.html`, `assets/css/home.css`, `assets/css/public-experience.css`, `assets/js/modules/home-motion.js`, `renderHome` en `assets/js/app.js` | 27/11 |
-| Agustín (Codex) | `agustin/ecosistema-academico-panel` | Gestión de promociones, salidas y asignaciones en Grupos, con información propia en Mi viaje | Módulo académico, integración de app, HTML, CSS, E2E y docs. Solo PGlite | 27/11 |
+| Agustín (Codex) | `agustin/ecosistema-inscripcion-servidor` | Inscripción por enlace de contrato y resolución explícita de ambigüedades | Migración 0013, servicio de habilitación, contexto y validación del servidor, pruebas y docs. Solo PGlite | 27/11 |
 
 ## Ecosistema integral — nuevo encargo del 27/11/2026
 
@@ -36,6 +36,8 @@ Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerra
 - Servidor académico: migración 0012, promociones por colegio/nivel/año y salidas compartidas entre grupos. PAX se asigna explícitamente a una salida del mismo viaje vinculada a su grupo; no se toca su cuenta. Historial sin borrados, CAS/auditoría, restricciones por colegio/nivel/viaje y RLS. Las restricciones sobre datos heredados se añaden NOT VALID y requieren revisión/validación autorizada antes de publicar. Prueba HTTP/PGlite: 10/10 y comprobación de índices. Interfaz en el siguiente PR. Como integración de grupos numerosos, el portal cuenta intentos fallidos de acceso y no bloquea 35 enlaces válidos desde una conexión compartida; prueba agregada.
 
 - Interfaz académica en Grupos: Promociones, Salidas, vínculos por grupo y asignación individual. Borradores en memoria, conflictos sin pisar cambios, consulta y descarte explícitos, desactivación con historia. El buscador de colegios limita las opciones del padrón sin perder la selección. Mi viaje muestra promoción y fechas de la salida asignada, sin mezclar pasajeros. Pruebas locales: 11 recorridos con Chrome/PGlite y revisión en 320/390/1440 px; ninguna escritura real.
+
+- Servidor de inscripción por contrato: migración 0013 con enlace compartido renovable y pausa explícita. Un contrato activo con grupo/colegio activos habilita su contexto; varios contratos para un curso exigen enlace y nunca eligen el último automáticamente. El enlace no autentica personas ni da acceso a contratos/PDF/cuentas. El guardado verifica colegio/curso/viaje/plan y vuelve a bloquear/revalidar el contrato antes de insertar. Las solicitudes heredadas sin contrato se conservan como pendientes de revisión, sin afirmar inscripción confirmada. Pruebas nuevas con HTTP/PGlite; interfaz en el siguiente PR.
 
 ## Revisión funcional y pagos manuales — 27/11/2026
 

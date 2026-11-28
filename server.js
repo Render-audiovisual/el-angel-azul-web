@@ -4,6 +4,7 @@ const http = require("http");
 const path = require("path");
 const { URL } = require("url");
 const academic = require('./lib/academic');
+const enrollment = require('./lib/enrollment');
 const passengerPortal = require('./lib/passenger-portal');
 const studentAccounts = require('./lib/student-accounts');
 const db = require("./lib/db");
@@ -1065,15 +1066,23 @@ async function handlePublicFicha(req, res) {
       errores: { firma: error.friendlyMessage || "Firma inválida." }
     });
   }
-  const contexto = UUID_RE.test(previa.datos.colegioId)
+  if (body.inscripcionCodigo !== undefined && (typeof body.inscripcionCodigo !== "string" || !UUID_RE.test(body.inscripcionCodigo))) return json(res,400,{ok:false,error:"El enlace de inscripción no es válido."});
+  const contexto = (body.inscripcionCodigo || UUID_RE.test(previa.datos.colegioId))
     ? await db.contextoInscripcion({
       colegioId: previa.datos.colegioId,
       nivel: previa.datos.nivel,
       viaje: `${previa.datos.destino} ${previa.datos.anio}`,
       grado: previa.datos.grado,
-      division: previa.datos.division
+      division: previa.datos.division,
+      codigo: body.inscripcionCodigo
     })
     : { contrato: null, grupoId: null, planes: [] };
+  if (["ambiguo","pausada","enlace_invalido"].includes(contexto.estado)) return json(res,409,{ok:false,error:contexto.estado==="ambiguo"?"Hay más de un contrato para este curso. Pedí a la agencia el enlace del contrato correcto.":"La inscripción del grupo no está disponible. Pedí a la agencia un enlace vigente."});
+  if (body.inscripcionCodigo) {
+    const selected=contexto.seleccion;
+    const same=(a,b)=>String(a||"").trim().toLocaleLowerCase("es-AR")===String(b||"").trim().toLocaleLowerCase("es-AR");
+    if (!selected || !same(selected.colegioId,previa.datos.colegioId) || !same(selected.nivel,previa.datos.nivel) || !same(selected.viaje,`${previa.datos.destino} ${previa.datos.anio}`) || !same(selected.division,previa.datos.division) || String(selected.grado).replace(/\D/g,"")!==String(previa.datos.grado).replace(/\D/g,"")) return json(res,400,{ok:false,error:"Los datos del grupo no coinciden con el enlace de inscripción. Volvé a abrir el enlace de la agencia."});
+  }
   const validacion = fichaValidation.validarFichaPax(body, { planesDisponibles: contexto.planes.map((plan) => plan.id) });
   if (!validacion.ok) {
     return json(res, 400, { ok: false, error: "Revisá los datos marcados.", errores: validacion.errores });
@@ -1347,6 +1356,19 @@ function createAppServer() {
         const row = await catalog.duplicate(decodeURIComponent(duplicatePackage[1]),body.version,session.user);
         return json(res,201,{ok:true,paquete:row});
       }
+      const enrollmentRoute=/^\/api\/admin\/inscripciones\/contratos\/([^/]+)$/.exec(url.pathname);
+      if (enrollmentRoute) {
+        const session=currentAdminSession(req);
+        if(!session)return json(res,401,{ok:false,error:"Iniciá sesión para administrar la inscripción."});
+        if(!POSTGRES_MIGRATION_ENABLED)return json(res,503,{ok:false,error:"La inscripción por contrato requiere la base habilitada."});
+        if(req.method==="POST"&&requireSameOrigin(req,res))return;
+        const id=safeDecode(enrollmentRoute[1]);
+        if(req.method==="GET")return json(res,200,{ok:true,contrato:await enrollment.get(id)});
+        if(req.method!=="POST")return json(res,405,{ok:false,error:"Método no permitido"});
+        const body=await readJsonBody(req,10000);
+        if(!body||typeof body!=="object"||Array.isArray(body))return json(res,400,{ok:false,error:"Revisá los datos enviados."});
+        return json(res,200,{ok:true,contrato:await enrollment.configure(id,body,session.user)});
+      }
       if (url.pathname === "/api/admin/academico" || url.pathname.startsWith("/api/admin/academico/")) return await handleAcademic(req,res,url);
       if (url.pathname.startsWith("/api/portal/") || url.pathname.startsWith("/api/admin/portal/")) return await handlePassengerPortal(req,res,url);
       if (url.pathname.startsWith("/api/admin/finanzas/")) return await handleStudentAccounts(req,res,url);
@@ -1365,9 +1387,10 @@ function createAppServer() {
           nivel: params.get("nivel"),
           viaje: params.get("viaje"),
           grado: params.get("grado"),
-          division: params.get("division")
+          division: params.get("division"),
+          codigo: params.get("codigo")
         });
-        return json(res, 200, { ok: true, contrato: contexto.contrato, planes: contexto.planes });
+        return json(res, 200, { ok: true, contrato: contexto.contrato, planes: contexto.planes, estado: contexto.estado, seleccion: contexto.seleccion });
       }
       if (url.pathname === "/api/public/fichas" && req.method === "POST") return await handlePublicFicha(req, res);
       if (url.pathname === "/api/public/fichas-tutor" && req.method === "POST") return await handlePublicFichaTutor(req, res);

@@ -148,3 +148,9 @@ Las restricciones añadidas sobre relaciones heredadas pasajero/grupo/viaje/cont
 ### Interfaz académica conectada
 
 Grupos incorpora promociones y salidas, selección de promoción compatible con colegio/nivel, habilitación de varias salidas de un mismo viaje y asignación individual de PAX. No cambia contratos ni cuentas. Los borradores viven en memoria y sobreviven a la navegación; conflictos requieren volver a consultar y descartar explícitamente la edición. La desactivación conserva los vínculos históricos. El portal privado usa la promoción y la salida de su pasajero, incluidas sus fechas. Se verifican recorridos completos con PGlite y Chrome en escritorio y celular; no se aplicó la migración en Supabase.
+
+### Adhesión dirigida al contrato
+
+La migración 0013 añade un código de enlace compartido renovable y una pausa por contrato. Activar el contrato habilita su ficha cuando grupo/colegio también están activos. Ante varios contratos activos del mismo curso no se elige uno por fecha: la familia necesita el enlace correcto. La presentación pública devuelve selección y planes, nunca contratos privados ni datos personales. Se revalida la habilitación al guardar para cubrir pausas, cambios de plan o renovaciones concurrentes. El enlace compartido no sustituye el acceso individual a Mi viaje.
+
+Se conserva el flujo preexistente de solicitud sin contrato para colegios todavía no vinculados: queda pendiente de revisión administrativa y no constituye confirmación de plaza ni de condiciones económicas. La empresa debe decidir si mantiene esa recepción de consultas/solicitudes o exige exclusivamente el enlace. No se inventa una aceptación comercial automática.
