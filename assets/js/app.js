@@ -562,6 +562,7 @@
       const TURISMO_PUBLIC_JSON_URL = "assets/data/turismo-paquetes.json";
       const ADMIN_TURISMO_PREVIEW_MODE_KEY = "angelAzulTurismoPublicPreviewModeV1";
       let turismoPublicPackagesCache = null;
+      let turismoPublicLoadError = "";
 
       // Sin viajes cargados la web muestra el estado vacío: nunca viajes de demostración
       // con precios inventados (los viajes los carga el dueño desde el admin).
@@ -574,7 +575,7 @@
       }
 
       function isTurismoPublicPreviewMode() {
-        return localStorage.getItem(ADMIN_TURISMO_PREVIEW_MODE_KEY) === "true";
+        return false;
       }
 
       function setTurismoPublicPreviewMode(isActive) {
@@ -591,7 +592,7 @@
       }
 
       function turismoDisplayPrice(value, currency = "ARS") {
-        const raw = String(value || "").trim();
+        const raw = String(value ?? "").trim();
         if (!raw) return "";
         if (/[A-Za-z$]/.test(raw)) return raw;
         const numeric = Number(raw);
@@ -613,7 +614,7 @@
         const categories = Array.isArray(adminTrip.categorias) ? adminTrip.categorias : [];
         const firstCategory = categories[0] || "turismo";
         const title = adminTrip.titulo || adminTrip.destino || "Viaje";
-        const image = principalPhoto?.url || turismoFallbackPackages()[0]?.image;
+        const image = principalPhoto?.url || "";
         const visiblePrice = turismoDisplayPrice(adminTrip.precioDesde, adminTrip.moneda);
         return {
           id: adminTrip.id,
@@ -624,7 +625,7 @@
           categoria: turismoCategoryLabel(firstCategory),
           intenciones: categories,
           duracion: adminTrip.duracion || "A confirmar",
-          temporada: adminTrip.temporada || "Consultar disponibilidad",
+          temporada: adminTrip.temporada || "",
           fechaSalida: adminTrip.fechaSalida || "",
           fechaRegreso: adminTrip.fechaRegreso || "",
           salidaGarantizada: Boolean(adminTrip.salidaGarantizada),
@@ -632,43 +633,35 @@
           descripcion: adminTrip.descripcionLarga || adminTrip.descripcionCorta || "Viaje con asesoramiento de El Angel Azul.",
           incluye: Array.isArray(adminTrip.incluye) ? adminTrip.incluye : [],
           noIncluye: Array.isArray(adminTrip.noIncluye) ? adminTrip.noIncluye : [],
-          formasPago: Array.isArray(adminTrip.formasPago) && adminTrip.formasPago.length ? adminTrip.formasPago : ["Efectivo / transferencia", "Financiacion a consultar", "Reserva sujeta a disponibilidad"],
+          formasPago: Array.isArray(adminTrip.formasPago) ? adminTrip.formasPago : [],
           itinerario: Array.isArray(adminTrip.itinerario) ? adminTrip.itinerario : [],
           precio: visiblePrice || "Consultar disponibilidad",
           precioDesde: visiblePrice || "Consultar",
-          precioValor: adminTrip.precioValor,
+          precioValor: adminTrip.precioDesde === "" ? null : Number(adminTrip.precioDesde),
           precioBaseDoble: adminTrip.precioBaseDoble || "",
           suplementoSingle: adminTrip.suplementoSingle || "",
           precioMenor: adminTrip.precioMenor || "",
           condicionVenta: adminTrip.condicionVenta || "",
+          alojamiento:adminTrip.alojamiento,transporte:adminTrip.transporte,regimenComidas:adminTrip.regimenComidas,disponibilidad:adminTrip.disponibilidad||"a_confirmar",cupos:adminTrip.cupos===""?null:Number(adminTrip.cupos),promocion:adminTrip.promocion,videoUrl:adminTrip.videoUrl,
           moneda: adminTrip.moneda,
           image,
           gallery: gallery.length ? gallery : [image],
           destacado: Boolean(adminTrip.destacado),
           orden: Number(adminTrip.orden) || 999,
-          source: "admin-json"
+          source: "database"
         };
       }
 
       async function loadTurismoPublicPackages() {
-        if (turismoPublicPackagesCache) return turismoPublicPackagesCache;
-        if (isTurismoPublicPreviewMode()) {
-          const adminTrips = loadAdminTurismoTrips();
-          turismoPublicPackagesCache = adminTrips
-            .map(adminTripToPublicPackage)
-            .filter(Boolean)
-            .sort((a, b) => Number(b.destacado) - Number(a.destacado) || a.orden - b.orden);
-          return turismoPublicPackagesCache;
-        }
-
         // La base es la fuente de verdad: si responde, lo que devuelve es lo que se publica,
         // aunque no haya ningún viaje activo (entonces la web muestra el estado vacío).
         try {
-          const response = await fetch("/api/google-sheets?sheet=TURISMO", { cache: "no-store" });
+          const response = await fetch("/api/public/paquetes", { cache: "no-store" });
           if (response.ok) {
             const payload = await response.json();
-            if (payload.ok && Array.isArray(payload.rows)) {
-              turismoPublicPackagesCache = payload.rows
+            if (payload.ok && Array.isArray(payload.paquetes)) {
+              turismoPublicLoadError = "";
+              turismoPublicPackagesCache = payload.paquetes
                 .map(turismoRowToTrip)
                 .map(adminTripToPublicPackage)
                 .filter(Boolean)
@@ -677,8 +670,9 @@
             }
           }
         } catch (error) {
-          // Sin conexión con el servidor: se devuelve vacío sin guardarlo, así el próximo intento vuelve a consultar.
+          // Sin caché de éxito: el próximo intento vuelve a consultar.
         }
+        turismoPublicLoadError = "No pudimos cargar los viajes. Revisá tu conexión y volvé a intentar.";
         return [];
       }
 
@@ -697,24 +691,47 @@
 
       // Tarjeta compacta de viaje: toda la tarjeta lleva al detalle (pensada para elegir rápido entre muchos paquetes).
       function turismoPrecioNumero(packageItem) {
+        if (packageItem.precioValor === null || packageItem.precioValor === undefined || packageItem.precioValor === "") return null;
         const valor = Number(packageItem.precioValor);
-        if (Number.isFinite(valor) && valor > 0) return valor;
-        const digitos = String(packageItem.precioDesde || "").replace(/[^\d]/g, "");
-        return digitos ? Number(digitos) : null;
+        return Number.isFinite(valor) && valor >= 0 ? valor : null;
       }
 
       function turismoDias(packageItem) {
-        const match = String(packageItem.duracion || "").match(/\d+/);
-        return match ? Number(match[0]) : null;
+        const match = String(packageItem.duracion || "").match(/(\d+)\s*(?:d[ií]as?\b|d\b)/i);
+        return match ? Number(match[1]) : null;
       }
 
       const TURISMO_ARROW_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
+
+      function turismoDisponibilidad(packageItem) {
+        if(packageItem.disponibilidad==="sin_cupo"||packageItem.cupos===0)return "Sin cupos disponibles";
+        if(packageItem.disponibilidad==="disponible")return packageItem.cupos!==null&&packageItem.cupos!==undefined?`${packageItem.cupos} cupos informados`:"Disponible · consultá con la agencia";
+        return "Disponibilidad a confirmar";
+      }
+
+      function turismoVideoUrl(raw) {
+        try {
+          const url=new URL(raw);if(url.protocol!=="https:"||url.username||url.password)return "";
+          const host=url.hostname.replace(/^www\./,"");
+          let id=host==="youtu.be"?url.pathname.slice(1):["youtube.com","youtube-nocookie.com"].includes(host)?url.pathname==="/watch"?url.searchParams.get("v"):/^\/(?:embed|shorts)\/([^/]+)$/.exec(url.pathname)?.[1]:null;
+          if(id&&/^[a-z0-9_-]{11}$/i.test(id))return "https://www.youtube-nocookie.com/embed/"+id;
+          if(["vimeo.com","player.vimeo.com"].includes(host)){id=/^\/(?:video\/)?(\d{6,12})\/?$/.exec(url.pathname)?.[1];if(id)return "https://player.vimeo.com/video/"+id;}
+        } catch(_) {} return "";
+      }
+
+      function bindTurismoVideos(root=document) {
+        root.querySelectorAll("[data-tur-video-open]").forEach(button=>button.onclick=()=>{
+          const src=turismoVideoUrl(button.dataset.videoSrc);if(!src)return;
+          const frame=document.createElement("iframe");frame.src=src;frame.title=button.dataset.videoTitle||"Video del viaje";frame.allow="fullscreen; encrypted-media; picture-in-picture";frame.allowFullscreen=true;frame.referrerPolicy="no-referrer";frame.setAttribute("sandbox","allow-scripts allow-same-origin allow-presentation");
+          button.closest("[data-tur-video]").replaceChildren(frame);
+        });
+      }
 
       function renderTurismoPackageCard(packageItem) {
         const priceText = packageItem.precioDesde && packageItem.precioDesde !== "Consultar" ? packageItem.precioDesde : "";
         const destination = escapeHtml(packageItem.destino);
         const dias = turismoDias(packageItem);
-        const image = escapeHtml(safeMediaUrl((packageItem.gallery && packageItem.gallery[0]) || packageItem.image));
+        const image = escapeHtml(safeMediaUrl(packageItem.image || (packageItem.gallery && packageItem.gallery[0])));
         return `
           <article class="tur-card turismo-package-card">
             <a class="tur-card-link" href="#/turismo/${encodeURIComponent(String(packageItem.slug || ""))}">
@@ -725,9 +742,11 @@
               </span>
               <span class="tur-card-body">
                 <span class="tur-card-meta">${escapeHtml(packageItem.temporada || packageItem.tipo || "")}</span>
-                <h3>${destination}</h3>
+                <h3>${escapeHtml(packageItem.titulo || packageItem.destino)}</h3>
+                <span class="tur-card-availability">${escapeHtml(turismoDisponibilidad(packageItem))}</span>
+                ${packageItem.promocion?`<span class="tur-card-promotion">${escapeHtml(packageItem.promocion)}</span>`:""}
                 <span class="tur-card-foot">
-                  <span class="tur-price"><span>${priceText ? "Desde" : "Precio"}</span><strong>${priceText ? escapeHtml(priceText) : "A consultar"}</strong>${priceText ? "<small>por persona</small>" : ""}</span>
+                  <span class="tur-price"><span>${priceText ? "Desde" : "Precio"}</span><strong>${priceText ? escapeHtml(priceText) : "A consultar"}</strong></span>
                   <span class="tur-card-go" aria-hidden="true">${TURISMO_ARROW_SVG}</span>
                 </span>
               </span>
@@ -764,6 +783,7 @@
       }
 
       function renderTurismoEmptyState(sinViajes = false) {
+        if (turismoPublicLoadError) return `<div class="tur-empty" role="alert"><p>${escapeHtml(turismoPublicLoadError)}</p><button type="button" class="eaa-button eaa-button-ink" data-turismo-retry>Volver a intentar</button></div>`;
         return `
           <div class="tur-empty">
             <p>${sinViajes
@@ -789,7 +809,7 @@
       const TURISMO_FILTRO_QUIEN = [["", "Todos"], ["pareja", "Pareja"], ["familiar", "Familia"], ["grupo", "Grupo"]];
       const TURISMO_FILTRO_TIPO = [["", "Todos"], ["playa", "Playa"], ["nieve", "Nieve"], ["escapada", "Escapada"], ["nacional", "Nacional"], ["internacional", "Internacional"]];
       const TURISMO_FILTRO_DURACION = [["", "Cualquiera"], ["corto", "Hasta 4 días"], ["medio", "5 a 8 días"], ["largo", "9 días o más"]];
-      const TURISMO_ORDENES = [["destacados", "Destacados primero"], ["precio-asc", "Precio: de menor a mayor"], ["precio-desc", "Precio: de mayor a menor"], ["dias-asc", "Duración: más corta primero"], ["dias-desc", "Duración: más larga primero"]];
+      const TURISMO_ORDENES = [["destacados", "Destacados primero"], ["precio-asc", "Precio por moneda: menor a mayor"], ["precio-desc", "Precio por moneda: mayor a menor"], ["dias-asc", "Duración: más corta primero"], ["dias-desc", "Duración: más larga primero"]];
       const TURISMO_PAGINA = 24;
 
       function filtrarOrdenarTurismo(packages, filtros) {
@@ -797,10 +817,16 @@
         const quien = valida(TURISMO_FILTRO_QUIEN, filtros.quien);
         const tipo = valida(TURISMO_FILTRO_TIPO, filtros.tipo);
         const duracion = valida(TURISMO_FILTRO_DURACION, filtros.dur);
+        const date = value => /^\d{4}-\d{2}-\d{2}$/.test(value || "") ? value : "";
+        const desde = date(filtros.desde), hasta = date(filtros.hasta);
+        const destino = String(filtros.destino || "");
         const orden = TURISMO_ORDENES.some(([clave]) => clave === filtros.orden) ? filtros.orden : "destacados";
         const resultado = packages.filter((p) => {
           const intenciones = Array.isArray(p.intenciones) ? p.intenciones : [];
           const dias = turismoDias(p);
+          if (destino && p.destino !== destino) return false;
+          if (desde && (!p.fechaSalida || p.fechaSalida < desde)) return false;
+          if (hasta && (!p.fechaSalida || p.fechaSalida > hasta)) return false;
           if (quien && !intenciones.includes(quien)) return false;
           if (tipo && !intenciones.includes(tipo)) return false;
           if (duracion === "corto" && !(dias !== null && dias <= 4)) return false;
@@ -810,18 +836,18 @@
         });
         // El orden de entrada ya es «destacados primero»; los viajes sin precio o sin duración van al final.
         const clave = (p, fn) => { const v = fn(p); return v === null || v === undefined ? Infinity : v; };
-        if (orden === "precio-asc") resultado.sort((a, b) => clave(a, turismoPrecioNumero) - clave(b, turismoPrecioNumero));
-        if (orden === "precio-desc") resultado.sort((a, b) => (turismoPrecioNumero(b) ?? -1) - (turismoPrecioNumero(a) ?? -1));
+        if (orden === "precio-asc") resultado.sort((a, b) => String(a.moneda).localeCompare(String(b.moneda)) || clave(a, turismoPrecioNumero) - clave(b, turismoPrecioNumero));
+        if (orden === "precio-desc") resultado.sort((a, b) => String(a.moneda).localeCompare(String(b.moneda)) || (turismoPrecioNumero(b) ?? -1) - (turismoPrecioNumero(a) ?? -1));
         if (orden === "dias-asc") resultado.sort((a, b) => clave(a, turismoDias) - clave(b, turismoDias));
         if (orden === "dias-desc") resultado.sort((a, b) => (turismoDias(b) ?? -1) - (turismoDias(a) ?? -1));
-        return { resultado, filtros: { q: String(filtros.q || ""), quien, tipo, dur: duracion, orden } };
+        return { resultado, filtros: { q: String(filtros.q || ""), destino, desde, hasta, quien, tipo, dur: duracion, orden } };
       }
 
       // Página con todos los paquetes: filtros a la izquierda, tarjetas a la derecha, estado en la URL.
       async function renderTurismoPaquetes() {
         const packages = await loadTurismoPublicPackages();
         const params = currentHashParams();
-        const estado = { q: params.get("q") || "", quien: params.get("quien") || "", tipo: params.get("tipo") || "", dur: params.get("dur") || "", orden: params.get("orden") || "destacados", visibles: TURISMO_PAGINA };
+        const estado = { destino: params.get("destino") || "", desde: params.get("desde") || "", hasta: params.get("hasta") || "", q: params.get("q") || "", quien: params.get("quien") || "", tipo: params.get("tipo") || "", dur: params.get("dur") || "", orden: params.get("orden") || "destacados", visibles: TURISMO_PAGINA };
         const abierto = window.matchMedia("(min-width: 62rem)").matches;
         const radios = (nombre, opciones, actual) => opciones.map(([valor, etiqueta]) => `
           <label class="tur-radio"><input type="radio" name="${nombre}" value="${valor}"${valor === actual ? " checked" : ""}><span>${etiqueta}</span></label>`).join("");
@@ -844,6 +870,8 @@
                     <label class="tur-search" for="tur-q"><span>Buscar destino</span>
                       <input id="tur-q" name="q" type="search" value="${escapeHtml(inicial.q)}" placeholder="Ej: Bariloche, Cataratas, playa">
                     </label>
+                    <label class="tur-filter-label"><span>Destino</span><select name="destino"><option value="">Todos los destinos</option>${[...new Set(packages.map(item => item.destino))].sort().map(destino => `<option value="${escapeHtml(destino)}"${destino === inicial.destino ? " selected" : ""}>${escapeHtml(destino)}</option>`).join("")}</select></label>
+                    <fieldset><legend>Fecha de salida</legend><label class="tur-filter-label"><span>Desde</span><input type="date" name="desde" value="${escapeHtml(inicial.desde)}"></label><label class="tur-filter-label"><span>Hasta</span><input type="date" name="hasta" value="${escapeHtml(inicial.hasta)}"></label></fieldset>
                     <fieldset><legend>¿Cuántos viajan?</legend>${radios("quien", TURISMO_FILTRO_QUIEN, inicial.quien)}</fieldset>
                     <fieldset><legend>Tipo de viaje</legend>${radios("tipo", TURISMO_FILTRO_TIPO, inicial.tipo)}</fieldset>
                     <fieldset><legend>Duración</legend>${radios("dur", TURISMO_FILTRO_DURACION, inicial.dur)}</fieldset>
@@ -871,15 +899,17 @@
         const botonMas = document.querySelector("[data-tur-mas]");
         const leer = () => {
           const datos = new FormData(form);
-          return { q: datos.get("q") || "", quien: datos.get("quien") || "", tipo: datos.get("tipo") || "", dur: datos.get("dur") || "", orden: ordenSelect.value };
+          return { destino: datos.get("destino") || "", desde: datos.get("desde") || "", hasta: datos.get("hasta") || "", q: datos.get("q") || "", quien: datos.get("quien") || "", tipo: datos.get("tipo") || "", dur: datos.get("dur") || "", orden: ordenSelect.value };
         };
         const pintar = () => {
-          const { resultado, filtros } = filtrarOrdenarTurismo(packages, leer());
+          const selection=leer();
+          if(selection.desde&&selection.hasta&&selection.hasta<selection.desde){contador.textContent="Revisá las fechas";contenedor.innerHTML='<p role="alert" class="tur-date-error">La fecha hasta debe ser igual o posterior a la fecha desde.</p>';botonMas.hidden=true;return;}
+          const { resultado, filtros } = filtrarOrdenarTurismo(packages, selection);
           const url = new URLSearchParams();
           Object.entries(filtros).forEach(([clave, valor]) => { if (valor && !(clave === "orden" && valor === "destacados")) url.set(clave, valor); });
           history.replaceState(null, "", `#/turismo/paquetes${url.toString() ? `?${url}` : ""}`);
           const total = resultado.length;
-          contador.textContent = !packages.length ? "Todavía no hay viajes publicados" : total === 1 ? "1 viaje" : `${total} viajes`;
+          contador.textContent = turismoPublicLoadError ? "No pudimos consultar los viajes" : !packages.length ? "Todavía no hay viajes publicados" : total === 1 ? "1 viaje" : `${total} viajes`;
           const visibles = resultado.slice(0, estado.visibles);
           contenedor.innerHTML = visibles.length ? visibles.map(renderTurismoPackageCard).join("") : renderTurismoEmptyState(!packages.length);
           botonMas.hidden = total <= estado.visibles;
@@ -1031,8 +1061,9 @@
           fechasSalida ? ["Fechas", fechasSalida] : null,
           ["Duración", packageItem.duracion || "A confirmar"],
           ["Destino", packageItem.destino],
-          ["Temporada", packageItem.temporada],
+          packageItem.temporada?["Temporada", packageItem.temporada]:null,
           ["Tipo", packageItem.tipo],
+          ["Disponibilidad",turismoDisponibilidad(packageItem)],
           packageItem.salidaGarantizada ? ["Estado", "Salida garantizada"] : null
         ].filter(Boolean);
 
@@ -1049,6 +1080,7 @@
                   ${packageItem.duracion ? `<li>${escapeHtml(packageItem.duracion)}</li>` : ""}
                   ${fechasSalida ? `<li>${escapeHtml(fechasSalida)}</li>` : ""}
                   ${packageItem.temporada ? `<li>${escapeHtml(packageItem.temporada)}</li>` : ""}
+                  <li>${escapeHtml(turismoDisponibilidad(packageItem))}</li>
                   ${packageItem.salidaGarantizada ? `<li class="is-accent">Salida garantizada</li>` : ""}
                 </ul>
               </div>
@@ -1068,6 +1100,10 @@
                       ${gallery.slice(0, 5).map((image, index) => `<img class="${index === 0 ? "is-main" : ""}" src="${escapeHtml(safeMediaUrl(image))}" alt="${escapeHtml(packageItem.destino)} ${index + 1}" loading="lazy">`).join("")}
                     </div>
                   </section>` : ""}
+
+                  ${packageItem.alojamiento||packageItem.transporte||packageItem.regimenComidas?`<section class="tur-d-block"><h2>Servicios del paquete</h2><dl class="tur-services">${[["Alojamiento",packageItem.alojamiento],["Transporte",packageItem.transporte],["Comidas",packageItem.regimenComidas]].filter(([,value])=>value).map(([label,value])=>`<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>`).join("")}</dl></section>`:""}
+                  ${packageItem.promocion?`<section class="tur-d-block tur-d-promotion"><h2>Promoción del viaje</h2><p>${escapeHtml(packageItem.promocion)}</p></section>`:""}
+                  ${turismoVideoUrl(packageItem.videoUrl)?`<section class="tur-d-block"><h2>Conocé el viaje</h2><div class="tur-video" data-tur-video><p>El video se reproduce desde ${turismoVideoUrl(packageItem.videoUrl).includes("vimeo.com")?"Vimeo":"YouTube"} al abrirlo.</p><button type="button" class="eaa-button eaa-button-fill" data-tur-video-open data-video-src="${escapeHtml(turismoVideoUrl(packageItem.videoUrl))}" data-video-title="${escapeHtml(packageItem.titulo||packageItem.destino)}">Ver video del viaje</button></div></section>`:""}
 
                   ${incluye.length || noIncluye.length ? `
                   <section class="tur-d-block tur-d-lists">
@@ -1103,7 +1139,7 @@
                   <div class="tur-d-card">
                     <p class="tur-d-from">${precio ? "Desde" : "Precio"}</p>
                     <p class="tur-d-price">${precio ? escapeHtml(precio) : "A consultar"}</p>
-                    ${precio ? `<p class="tur-d-per">por persona</p>` : ""}
+
                     ${desglose.length ? `<dl class="tur-d-breakdown">${desglose.map(([etiqueta, valor]) => `<div><dt>${etiqueta}</dt><dd>${valor}</dd></div>`).join("")}</dl>` : ""}
                     <dl class="tur-d-facts">${datos.map(([etiqueta, valor]) => `<div><dt>${etiqueta}</dt><dd>${escapeHtml(valor)}</dd></div>`).join("")}</dl>
                     <a class="eaa-button eaa-button-fill" href="${whatsappHref}" target="_blank" rel="noopener">Consultar disponibilidad ${arrow}</a>
@@ -1132,6 +1168,7 @@
           </div>
         `;
         bindPackageDetailItinerario();
+        bindTurismoVideos();
       }
 
       function bindPackageDetailItinerario() {
@@ -1177,7 +1214,7 @@
         precioBaseDoble: "",
         suplementoSingle: "",
         precioMenor: "",
-        condicionVenta: "Precios por persona en base doble. Sujeto a cambios y disponibilidad.",
+        condicionVenta: "",
         categorias: [],
         descripcionCorta: "",
         descripcionLarga: "",
@@ -1188,12 +1225,14 @@
         fotos: [],
         estado: "borrador",
         destacado: false,
-        orden: 1
+        orden: 1,
+        alojamiento:"",transporte:"",regimenComidas:"",disponibilidad:"a_confirmar",cupos:"",promocion:"",videoUrl:"",archivado:false
       };
 
       let adminTurismoTrips = loadAdminTurismoTrips();
       let adminTurismoEditingId = adminTurismoTrips[0]?.id || null;
       let adminTurismoEditorOpen = false;
+      let adminTurismoEditorDraft = null;
       let adminTurismoSaveFeedback = null;
 
       function escapeHtml(value = "") {
@@ -1238,7 +1277,6 @@
       // server.js: desde el fix de concurrencia, omitir un id de "rows" ya NO lo borra solo,
       // porque ahora se fusiona con lo que ya existe en Sheets en vez de reemplazar todo).
       async function saveAdminTurismoTripsWithFeedback(deleteIds = []) {
-        localStorage.setItem(ADMIN_TURISMO_STORAGE_KEY, JSON.stringify(adminTurismoTrips.map(normalizeAdminTurismoTrip), null, 2));
         const config = window.ElAngelAzulPersistence.readGoogleSheetsConfig();
         if (!config.enabled || !config.endpoint) {
           adminTurismoSaveFeedback = { ok: false, message: "Guardado solo en este navegador. La base de datos no está conectada." };
@@ -1247,7 +1285,8 @@
         try {
           const rows = googleSheetsTurismoRows(new Date().toISOString());
           await window.ElAngelAzulPersistence.writeGoogleSheetRows("TURISMO", rows, deleteIds);
-          adminTurismoSaveFeedback = { ok: true, message: `Guardado en la base de datos: ${rows.length} ${rows.length === 1 ? "viaje" : "viajes"}.` };
+          localStorage.setItem(ADMIN_TURISMO_STORAGE_KEY, JSON.stringify(adminTurismoTrips.map(normalizeAdminTurismoTrip)));
+          adminTurismoSaveFeedback = { ok: true, message: "Cambios confirmados en la base de datos." };
           turismoPublicPackagesCache = null;
           return true;
         } catch (error) {
@@ -1311,6 +1350,7 @@
           suplemento_single: trip.suplementoSingle || "",
           precio_menor: trip.precioMenor || "",
           condicion_venta: trip.condicionVenta || "",
+          alojamiento:trip.alojamiento,transporte:trip.transporte,regimen_comidas:trip.regimenComidas,disponibilidad:trip.disponibilidad,cupos:trip.cupos,promocion:trip.promocion,video_url:trip.videoUrl,archivado:trip.archivado?"TRUE":"FALSE",
           categorias: (trip.categorias || []).join("|"),
           descripcion_corta: trip.descripcionCorta || "",
           descripcion_larga: trip.descripcionLarga || "",
@@ -1349,6 +1389,7 @@
           suplementoSingle: row.suplemento_single,
           precioMenor: row.precio_menor,
           condicionVenta: row.condicion_venta,
+          alojamiento:row.alojamiento,transporte:row.transporte,regimenComidas:row.regimen_comidas,disponibilidad:row.disponibilidad,cupos:row.cupos??"",promocion:row.promocion,videoUrl:row.video_url,archivado:String(row.archivado).toUpperCase()==="TRUE",
           categorias: splitPipe(row.categorias),
           descripcionCorta: row.descripcion_corta,
           descripcionLarga: row.descripcion_larga,
@@ -1408,6 +1449,7 @@
       }
 
       function adminTurismoCurrentTrip() {
+        if (adminTurismoEditorDraft?.id === adminTurismoEditingId) return adminTurismoEditorDraft;
         return adminTurismoTrips.find((trip) => trip.id === adminTurismoEditingId) || adminTurismoTrips[0] || { ...emptyAdminTurismoTrip };
       }
 
@@ -1484,13 +1526,14 @@
           fechaSalida: String(trip.fechaSalida || "").trim(),
           fechaRegreso: String(trip.fechaRegreso || "").trim(),
           salidaGarantizada: Boolean(trip.salidaGarantizada),
-          precioDesde: String(trip.precioDesde || "").trim(),
+          precioDesde: String(trip.precioDesde ?? "").trim(),
           precioValor,
           moneda,
           precioBaseDoble: String(trip.precioBaseDoble || "").trim(),
           suplementoSingle: String(trip.suplementoSingle || "").trim(),
           precioMenor: String(trip.precioMenor || "").trim(),
-          condicionVenta: String(trip.condicionVenta || "Precios por persona en base doble. Sujeto a cambios y disponibilidad.").trim(),
+          condicionVenta: String(trip.condicionVenta || "").trim(),
+          alojamiento:String(trip.alojamiento||"").trim(),transporte:String(trip.transporte||"").trim(),regimenComidas:String(trip.regimenComidas||"").trim(),disponibilidad:trip.disponibilidad||"a_confirmar",cupos:String(trip.cupos??"").trim(),promocion:String(trip.promocion||"").trim(),videoUrl:String(trip.videoUrl||"").trim(),archivado:trip.archivado===true||String(trip.archivado).toUpperCase()==="TRUE",
           categorias: normalizeAdminTurismoCategories(trip.categorias || trip.categoria),
           descripcionCorta: String(trip.descripcionCorta || "").trim(),
           descripcionLarga: String(trip.descripcionLarga || "").trim(),
@@ -1498,7 +1541,7 @@
           noIncluye: linesToArray(trip.noIncluye),
           formasPago: linesToArray(trip.formasPago),
           itinerario: Array.isArray(trip.itinerario)
-            ? trip.itinerario.map((d) => ({ dia: String(d.dia || "").trim(), titulo: String(d.titulo || "").trim(), descripcion: String(d.descripcion || "").trim() })).filter((d) => d.titulo || d.descripcion)
+            ? trip.itinerario.map((d) => ({ dia: String(d.dia || "").trim(), titulo: String(d.titulo || "").trim(), descripcion: String(d.descripcion || "").trim() })).filter((d) => d.dia || d.titulo || d.descripcion)
             : [],
           fotos: normalizeAdminTurismoPhotos(trip.fotos),
           estado: ["activo", "borrador", "revision", "inactivo"].includes(trip.estado) ? trip.estado : "borrador",
@@ -1521,17 +1564,13 @@
       function adminTurismoPublicationChecklist(trip) {
         const duplicateSlug = adminTurismoTrips.some((item) => item.id !== trip.id && item.slug === trip.slug);
         const validSlug = Boolean(trip.slug && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(trip.slug) && !duplicateSlug);
-        const hasPrincipalPhoto = trip.fotos.some((photo) => photo.principal);
         return [
           { label: "Destino cargado", ok: Boolean(trip.destino) },
           { label: "Título comercial", ok: Boolean(trip.titulo) },
           { label: "Slug válido", ok: validSlug },
           { label: "Descripción corta", ok: Boolean(trip.descripcionCorta) },
           { label: "Al menos 1 foto", ok: trip.fotos.length >= 1 },
-          { label: "Foto principal", ok: hasPrincipalPhoto },
-          { label: "Precio cargado", ok: Boolean(trip.precioDesde) },
-          { label: "Qué incluye", ok: trip.incluye.length > 0 },
-          { label: "Estado activo", ok: trip.estado === "activo" }
+          { label: "Duración cargada", ok: Boolean(trip.duracion) }
         ];
       }
 
@@ -1540,13 +1579,13 @@
         const normalizedTrip = normalizeAdminTurismoTrip(trip);
         const checklist = adminTurismoPublicationChecklist(normalizedTrip);
         const missing = checklist.filter((item) => !item.ok);
-        const publishedMap = loadAdminTurismoPublishedMap();
-        const publishedRecord = publishedMap[normalizedTrip.id];
-        const isPublished = Boolean(
-          publishedRecord &&
-          publishedRecord.slug === normalizedTrip.slug &&
-          publishedRecord.signature === adminTurismoTripSignature(normalizedTrip)
-        );
+        const isPublished = normalizedTrip.estado === "activo" && missing.length === 0;
+        const today = new Date().toLocaleDateString("sv-SE",{timeZone:"America/Argentina/Buenos_Aires"});
+        if(normalizedTrip.archivado)return {key:"archivado",label:"Archivado",tone:"neutral",canPublish:false,isPublished:false,missing,checklist,message:"El paquete está archivado. Restauralo como borrador para volver a publicarlo."};
+        if (normalizedTrip.estado === "activo" && ((normalizedTrip.fechaSalida && normalizedTrip.fechaSalida < today) || (normalizedTrip.fechaRegreso && normalizedTrip.fechaRegreso < today))) {
+          return { key: "vencido", label: "Salida vencida", tone: "neutral", canPublish: false, isPublished: false, missing, checklist, message: "La fecha de este paquete ya pasó. No aparece en el catálogo; actualizá las fechas o despublicalo." };
+        }
+
 
         if (normalizedTrip.estado === "inactivo") {
           return {
@@ -1570,7 +1609,7 @@
             isPublished: true,
             missing,
             checklist,
-            message: "Este viaje fue exportado desde el panel. Verificá en Turismo público después de reemplazar el JSON."
+            message: "Este viaje está publicado desde la base de datos. Los cambios se aplican al guardar."
           };
         }
 
@@ -1583,7 +1622,7 @@
             isPublished: false,
             missing,
             checklist,
-            message: "El viaje cumple el checklist. Podés exportarlo para publicar en la web."
+            message: "El viaje tiene el contenido necesario. Publicalo para que aparezca en la web."
           };
         }
 
@@ -1645,14 +1684,20 @@
           <section class="admin-turismo-panel admin-turismo-flow-actions">
             <div class="admin-turismo-guardar-banner">
               <div>
-                <strong>${esActivo ? "Estado: Activo — visible en la web" : "Estado: " + (trip.estado || "Borrador")}</strong>
-                <span>El estado se toma del acordeón Configuración. Guardá para aplicar cambios.</span>
+                <strong>${readiness.isPublished ? "Estado: Publicado en la web" : "Estado: " + readiness.label}</strong>
+                <span>Los cambios se publican cuando la base de datos confirma el guardado.</span>
               </div>
               <button type="button" class="admin-turismo-btn-guardar" data-admin-guardar-viaje>
-                💾 Guardar viaje
+                Guardar cambios
               </button>
             </div>
-            ${fb ? `<div class="admin-turismo-save-feedback ${fb.ok ? "is-ok" : "is-error"}">${fb.ok ? "✓" : "⚠️"} ${escapeHtml(fb.message)}</div>` : ""}
+            <div class="admin-turismo-action-buttons">
+              ${trip.archivado?"":`<button type="button" data-admin-publish>${esActivo ? "Guardar y mantener publicado" : "Guardar y publicar en la web"}</button>`}
+              ${window.ElAngelAzulPersistence.adminSheetVersion("TURISMO",trip.id)?`<button type="button" data-admin-archive="${trip.archivado?"restaurar":"archivar"}">${trip.archivado?"Restaurar como borrador":"Archivar paquete"}</button>`:""}
+              ${esActivo ? '<button type="button" data-admin-deactivate>Despublicar</button>' : ""}
+              ${window.ElAngelAzulPersistence.adminSheetVersion("TURISMO", trip.id) ? '<button type="button" data-admin-duplicate>Duplicar como borrador</button>' : ""}
+            </div>
+            ${fb ? `<div role="status" class="admin-turismo-save-feedback ${fb.ok ? "is-ok" : "is-error"}">${fb.ok ? "✓" : "⚠️"} ${escapeHtml(fb.message)}</div>` : ""}
           </section>
         `;
       }
@@ -1891,6 +1936,7 @@
 
         return `
           <form class="admin-turismo-form" id="admin-turismo-form" data-admin-turismo-form>
+            <input type="hidden" name="archivado" value="${trip.archivado?"TRUE":"FALSE"}">
             <section class="admin-turismo-quick-status" aria-labelledby="admin-turismo-status-title">
               <div class="admin-turismo-quick-status-head">
                 <span>
@@ -1908,7 +1954,7 @@
                   ["inactivo", "Inactivo", "Oculto temporalmente"]
                 ].map(([value, label, description]) => `
                   <label class="admin-turismo-status-option admin-turismo-status-option--${value}">
-                    <input name="estado" type="radio" value="${value}" ${(trip.estado || "borrador") === value ? "checked" : ""}>
+                    <input name="estado" type="radio" value="${value}" ${(trip.estado || "borrador") === value ? "checked" : ""} ${trip.archivado&&value==="activo"?"disabled":""}>
                     <span class="admin-turismo-status-indicator" aria-hidden="true"></span>
                     <span class="admin-turismo-status-copy">
                       <strong>${label}</strong>
@@ -1932,8 +1978,8 @@
 
             ${block("Fechas de salida", "Cuándo sale y cuándo vuelve.", `
               <div class="admin-turismo-form-grid admin-turismo-form-grid--compact">
-                ${field("Fecha de salida", `<input name="fechaSalida" value="${escapeHtml(trip.fechaSalida || "")}" placeholder="Ej: 28 de diciembre de 2026">`, "Texto libre: podés escribir '28 dic 2026' o 'Diciembre 2026'.", true)}
-                ${field("Fecha de regreso", `<input name="fechaRegreso" value="${escapeHtml(trip.fechaRegreso || "")}" placeholder="Ej: 4 de enero de 2027">`, "")}
+                ${field("Fecha de salida", `<input type="date" name="fechaSalida" value="${escapeHtml(trip.fechaSalida || "")}" placeholder="Ej: 28 de diciembre de 2026">`, "Opcional para paquetes sin salida definida.", false)}
+                ${field("Fecha de regreso", `<input type="date" name="fechaRegreso" value="${escapeHtml(trip.fechaRegreso || "")}" placeholder="Ej: 4 de enero de 2027">`, "")}
               </div>
               <label class="admin-turismo-check admin-turismo-check--featured">
                 <input name="salidaGarantizada" type="checkbox" ${trip.salidaGarantizada ? "checked" : ""}>
@@ -1945,11 +1991,11 @@
                   <small>Muestra el badge "Salida garantizada" en el flyer y la card.</small>
                 </span>
               </label>
-            `, statusBadge(fechasComplete))}
+            `, statusBadge(fechasComplete, true))}
 
             ${block("Precio", "Valor visible para el cliente y condición de venta.", `
               <div class="admin-turismo-form-grid admin-turismo-form-grid--compact">
-                ${field("Precio visible", `<input name="precioDesde" value="${escapeHtml(trip.precioDesde || "")}" placeholder="Ej: USD 1.436">`, "Texto exacto que ve el cliente en la card.", true)}
+                ${field("Precio visible", `<input type="number" min="0" step="0.01" name="precioDesde" value="${escapeHtml(trip.precioDesde || "")}" placeholder="Ej: 1436.50">`, "Solo el importe. La moneda se muestra por separado; vacío significa consultar.", false)}
                 ${field("Moneda", `
                   <select name="moneda">
                     ${adminTurismoCurrencies.map((c) => `<option value="${c}" ${(trip.moneda || "USD") === c ? "selected" : ""}>${c}</option>`).join("")}
@@ -1959,20 +2005,33 @@
                 ${field("Suplemento single", `<input name="suplementoSingle" value="${escapeHtml(trip.suplementoSingle || "")}" placeholder="Ej: 320">`, "Diferencia para habitación individual.")}
                 ${field("Precio menor", `<input name="precioMenor" value="${escapeHtml(trip.precioMenor || "")}" placeholder="Ej: 980">`, "Opcional.")}
               </div>
-              ${field("Condición de venta", `<textarea name="condicionVenta" rows="2">${escapeHtml(trip.condicionVenta || "Precios por persona en base doble. Sujeto a cambios y disponibilidad.")}</textarea>`, "Aparece al pie del detalle del paquete.")}
-            `, statusBadge(priceComplete))}
+              ${field("Condición de venta", `<textarea name="condicionVenta" rows="2">${escapeHtml(trip.condicionVenta || "")}</textarea>`, "Aparece al pie del detalle del paquete.")}
+            `, statusBadge(priceComplete, true))}
 
-            ${block("Fotos", "URLs de las imágenes del paquete.", `
+            ${block("Servicios y disponibilidad", "Información comercial confirmada por la agencia.", `
+              <div class="admin-turismo-form-grid admin-turismo-form-grid--compact">
+                ${field("Alojamiento",`<textarea name="alojamiento" rows="2" maxlength="2000">${escapeHtml(trip.alojamiento||"")}</textarea>`,"Opcional.")}
+                ${field("Transporte",`<textarea name="transporte" rows="2" maxlength="2000">${escapeHtml(trip.transporte||"")}</textarea>`,"Opcional.")}
+                ${field("Régimen de comidas",`<textarea name="regimenComidas" rows="2" maxlength="2000">${escapeHtml(trip.regimenComidas||"")}</textarea>`,"Opcional.")}
+                ${field("Disponibilidad",`<select name="disponibilidad">${Object.entries({a_confirmar:"A confirmar",disponible:"Disponible",sin_cupo:"Sin cupos"}).map(([value,text])=>`<option value="${value}" ${trip.disponibilidad===value?'selected':''}>${text}</option>`).join("")}</select>`,"Se informa al cliente; la consulta no reserva lugares.")}
+                ${field("Cupos disponibles · opcional",`<input type="number" name="cupos" min="0" step="1" value="${escapeHtml(trip.cupos??"")}">`,"Dejá vacío si se confirma con la agencia.")}
+                ${field("Promoción · opcional",`<textarea name="promocion" rows="2" maxlength="2000">${escapeHtml(trip.promocion||"")}</textarea>`,"Ingresá el beneficio y sus condiciones confirmadas.")}
+                ${field("Video · opcional",`<input type="url" name="videoUrl" value="${escapeHtml(trip.videoUrl||"")}">`,"Pegá el enlace de YouTube o Vimeo.")}
+              </div>
+            `,statusBadge(Boolean(trip.alojamiento||trip.transporte||trip.regimenComidas||trip.promocion||trip.videoUrl||trip.cupos!==""),true))}
+
+            ${block("Fotos", "Cargá fotos desde tu dispositivo y elegí la portada.", `
+              <div class="catalog-file-upload" data-catalog-photo-upload></div>
               <div class="admin-turismo-fotos-list" data-admin-turismo-fotos-list>
                 ${photos.length ? photos.map((photo, index) => `
                   <div class="admin-turismo-foto-row">
                     <div class="admin-turismo-foto-preview">
-                      <img src="${escapeHtml(photo.url)}" alt="Foto ${index + 1}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                      <div class="admin-turismo-foto-error" style="display:none">URL inválida</div>
+                      <img src="${escapeHtml(safeMediaUrl(photo.url))}" alt="Foto ${index + 1}" data-admin-catalog-photo>
+                      <div class="admin-turismo-foto-error" hidden>No pudimos cargar esta foto.</div>
                     </div>
                     <div class="admin-turismo-foto-fields">
-                      <input class="admin-turismo-foto-url" name="foto_url_${index}" value="${escapeHtml(photo.url)}" placeholder="https://... URL de la imagen" data-foto-index="${index}">
-                      <input name="foto_alt_${index}" value="${escapeHtml(photo.alt || "")}" placeholder="Descripción de la foto (opcional)">
+                      ${photo.url.startsWith("/api/public/catalogo/media/")?`<input type="hidden" name="foto_url_${index}" value="${escapeHtml(photo.url)}">`:`<label>Dirección de la imagen<input class="admin-turismo-foto-url" name="foto_url_${index}" value="${escapeHtml(photo.url)}" data-foto-index="${index}"></label>`}
+                      <label>Descripción de la foto · opcional<input name="foto_alt_${index}" value="${escapeHtml(photo.alt || "")}" maxlength="200"></label>
                       <label class="admin-turismo-foto-principal">
                         <input type="radio" name="fotoPrincipal" value="${index}" ${photo.principal ? "checked" : ""}>
                         <span class="admin-turismo-selection-icon" aria-hidden="true">
@@ -1987,7 +2046,7 @@
                     <button type="button" class="admin-turismo-foto-remove" data-remove-foto="${index}" aria-label="Quitar foto">×</button>
                   </div>
                 `).join("") : ""}
-                <div class="admin-turismo-foto-row admin-turismo-foto-row--new">
+                <details class="catalog-photo-url"><summary>Agregar una foto por enlace</summary><div class="admin-turismo-foto-row admin-turismo-foto-row--new">
                   <div class="admin-turismo-foto-preview admin-turismo-foto-preview--empty" id="new-foto-preview">
                     <span>Preview</span>
                   </div>
@@ -1996,7 +2055,7 @@
                     <input id="new-foto-alt" placeholder="Descripción (opcional)">
                   </div>
                   <button type="button" class="admin-turismo-primary-button" data-add-foto>+ Agregar foto</button>
-                </div>
+                </div></details>
               </div>
               <p class="admin-field-hint">La foto marcada como "Principal" aparece de portada en la card y el detalle.</p>
               <input type="hidden" name="fotos_count" value="${photos.length}">
@@ -2004,11 +2063,11 @@
 
             ${block("Incluye / No incluye", "Qué cubre el paquete y qué no.", `
               <div class="admin-turismo-form-grid">
-                ${field("Qué incluye", `<textarea name="incluye" rows="7" placeholder="Aéreos desde Asunción con LATAM&#10;Todo incluido&#10;7 noches de alojamiento&#10;Equipaje 12kg + 1 artículo personal&#10;Asistencia al viajero&#10;Traslados de llegada y salida">${escapeHtml(arrayToLines(trip.incluye))}</textarea>`, "Un ítem por línea.", true)}
+                ${field("Qué incluye", `<textarea name="incluye" rows="7" placeholder="Un servicio confirmado por línea">${escapeHtml(arrayToLines(trip.incluye))}</textarea>`, "Un ítem por línea. Cargá únicamente los servicios acordados.", false)}
                 ${field("Qué no incluye", `<textarea name="noIncluye" rows="5" placeholder="Gastos personales&#10;Excursiones opcionales&#10;Seguro de viaje">${escapeHtml(arrayToLines(trip.noIncluye))}</textarea>`, "Un ítem por línea.")}
               </div>
-              ${field("Formas de pago", `<textarea name="formasPago" rows="4" placeholder="50% de señal al reservar&#10;50% restante 30 días antes de la salida&#10;Cuotas con tarjeta (consultar)">${escapeHtml(arrayToLines(trip.formasPago))}</textarea>`, "Un ítem por línea. Aparece en la página de detalle.")}
-            `, statusBadge(includesComplete))}
+              ${field("Formas de pago", `<textarea name="formasPago" rows="4" placeholder="Cargá las formas y condiciones de pago confirmadas para este paquete">${escapeHtml(arrayToLines(trip.formasPago))}</textarea>`, "Un ítem por línea. Aparece en la página de detalle.")}
+            `, statusBadge(includesComplete, true))}
 
             ${block("Itinerario", "Programa día por día del viaje.", `
               <div class="admin-turismo-itinerario-list" data-admin-turismo-itinerario>
@@ -2166,6 +2225,8 @@
         try { sessionStorage.setItem(ADMIN_SESION_PERDIDA_KEY, "1"); } catch (_) { /* ver arriba */ }
         location.reload();
       }
+
+      window.addEventListener("eaa-admin-session-lost", handleAdminSessionLost);
 
       async function fetchAdminSession(force = false) {
         if (adminSessionChecked && !force) return adminSession;
@@ -2358,6 +2419,23 @@
           } catch (error) {
             // Si falla el logout remoto, se limpia igual la sesión visual.
           }
+          window.ElAngelAzulPersistence.clearPrivateCollections();
+          window.ElAngelAzulAccounts?.clear();
+          window.ElAngelAzulAcademic?.clear();
+          window.ElAngelAzulContractInformation?.clear();
+          window.ElAngelAzulDocuments?.clear("admin");
+          window.ElAngelAzulCatalogMedia?.clear();
+          adminPasajerosDemo = [];
+          adminContratosDemo = [];
+          adminFichasTutor = [];
+          adminPasajerosSelectedDni = "";
+          adminPasajerosSelectedKey = "";
+          adminTutorReviewDrafts.clear();
+          adminPagos = [];
+          adminCuentas.clear();
+          adminCuentasLoaded = false;
+          adminPagosLoaded = false;
+          googleSheetsHydrated = false;
           adminSession = null;
           adminSessionChecked = true;
           adminLoginNotice = "";
@@ -3124,13 +3202,15 @@
 
       const adminPasajerosCollection = window.ElAngelAzulPersistence.collection({
         key: ADMIN_PASAJEROS_STORAGE_KEY,
-        seed: createAdminPasajerosSeed,
+        privateData: true,
+        seed: () => [],
         normalize: normalizeAdminPasajerosGroup
       });
 
       const contratosCollection = window.ElAngelAzulPersistence.collection({
         key: CONTRATOS_STORAGE_KEY,
-        seed: () => createAdminContratosSeed(adminPasajerosCollection.load()),
+        privateData: true,
+        seed: () => [],
         normalize: (contract) => ({
           ...contract,
           id: String(contract.id || "").trim(),
@@ -3141,6 +3221,7 @@
 
       const fichaAdhesionCollection = window.ElAngelAzulPersistence.collection({
         key: FICHA_ADHESION_STORAGE_KEY,
+        privateData: true,
         seed: () => [],
         normalize: (ficha) => ficha
       });
@@ -3264,6 +3345,7 @@
       let adminPasajerosFilterCurso = "";
       let adminPasajerosFilterEstado = "";
       let adminPasajerosSelectedDni = "";
+      let adminPasajerosSelectedKey = "";
       let adminPasajerosGroupModal = null;
       let adminGruposFilterNivel = "";
       let adminGruposFilterViaje = "";
@@ -3280,6 +3362,8 @@
       let adminContratosEditError = "";
       // Ficha v2: filas planas tal cual llegan de /api/google-sheets.
       let adminFichasTutor = [];
+      const adminTutorReviewDrafts = new Map();
+      let adminTutorReviewSaving = false;
       let adminColegios = [];
       let adminPlanesPago = [];
       let adminFichasTipo = "pax";
@@ -3578,7 +3662,7 @@
         }
       }
 
-      function queueGoogleSheetsWrite(sheets = [], deleteIdsBySheet = {}) {
+      function queueGoogleSheetsWrite(sheets = [], deleteIdsBySheet = {}, pinnedVersionsBySheet = {}) {
         const config = window.ElAngelAzulPersistence.readGoogleSheetsConfig();
         if (!config.enabled || !config.endpoint) {
           googleSheetsSyncState = {
@@ -3605,7 +3689,7 @@
           if (uniqueSheets.includes("PLANES_PAGO")) rowsByTab.PLANES_PAGO = adminPlanesPago;
           for (const sheet of uniqueSheets) {
             if (!["GRUPOS", "CONTRATOS", "PASAJEROS", "FICHAS_ADHESION", "TURISMO", "FICHAS_TUTOR", "COLEGIOS", "PLANES_PAGO"].includes(sheet)) continue;
-            await window.ElAngelAzulPersistence.writeGoogleSheetRows(sheet, rowsByTab[sheet] || [], deleteIdsBySheet[sheet] || []);
+            await window.ElAngelAzulPersistence.writeGoogleSheetRows(sheet, rowsByTab[sheet] || [], deleteIdsBySheet[sheet] || [], pinnedVersionsBySheet[sheet] || {});
           }
           googleSheetsSyncState = {
             status: "ok",
@@ -3993,14 +4077,14 @@
         return [String(apellido || "").trim(), String(nombre || "").trim()].filter(Boolean).join(", ");
       }
 
-      function fichaTutoresAdicionales(dni) {
+      function fichaTutoresAdicionales(dni, pasajeroId = "") {
         const documento = normalizeFichaDni(dni);
         if (!documento) return [];
         // Un mismo tutor puede registrarse más de una vez: se muestra una sola
         // vez, con su registro más reciente (las filas llegan ordenadas así).
         const vistos = new Set();
         return adminFichasTutor.filter((tutor) => {
-          if (normalizeFichaDni(tutor.pasajero_dni) !== documento) return false;
+          if (!pasajeroId || tutor.estado_revision !== "revisada" || tutor.pasajero_id !== pasajeroId || normalizeFichaDni(tutor.pasajero_dni) !== documento) return false;
           const clave = normalizeFichaDni(tutor.numero_documento) || tutor.id;
           if (vistos.has(clave)) return false;
           vistos.add(clave);
@@ -4456,8 +4540,27 @@
         }).join("");
       }
 
-      // Fichas del formulario corto de Tutor: se revisan acá y se muestran
-      // también dentro de la ficha y del perfil del pasajero con el mismo DNI.
+      function renderTutorReviewForm(tutor) {
+        if (!adminTutorReviewDrafts.has(tutor.id)) adminTutorReviewDrafts.set(tutor.id, {
+          estado_revision:tutor.estado_revision,pasajero_id:tutor.pasajero_id||"",observaciones:tutor.observaciones||"",identidad_verificada:false,version:window.ElAngelAzulPersistence.adminSheetVersion("FICHAS_TUTOR",tutor.id),open:false
+        });
+        const draft=adminTutorReviewDrafts.get(tutor.id);
+        const matches=adminPasajerosDemo.flatMap(group=>(group.pasajeros||[]).filter(passenger=>normalizeFichaDni(passenger.dni)===normalizeFichaDni(tutor.pasajero_dni)).map(passenger=>({group,passenger})));
+        const label=({group})=>`${group.viaje} · ${group.colegio} · ${group.curso} ${group.division||""}`;
+        const current=matches.find(({passenger,group})=>passengerPaymentKey(passenger,group)===draft.pasajero_id);
+        return `<strong>${escapeHtml({pendiente:"Pendiente",revisada:"Verificado y vinculado",observada:"Requiere corrección",rechazada:"Rechazado"}[tutor.estado_revision]||tutor.estado_revision)}</strong><details class="admin-tutor-review-details" ${draft.open?"open":""}><summary>Revisar y vincular al viaje</summary><form class="admin-tutor-review" data-tutor-review="${escapeHtml(tutor.id)}"><fieldset ${adminTutorReviewSaving?"disabled":""}>
+          <label>Pasajero y viaje<select name="pasajero_id"><option value="">Elegí el viaje del pasajero</option>${matches.map(entry=>`<option value="${escapeHtml(passengerPaymentKey(entry.passenger,entry.group))}" ${passengerPaymentKey(entry.passenger,entry.group)===draft.pasajero_id?'selected':''}>${escapeHtml(label(entry))}</option>`).join("")}</select></label>
+          <p data-tutor-trip-context>${escapeHtml(current?label(current):matches.length?"Se muestran únicamente los viajes del DNI indicado.":"Primero registrá al pasajero en su grupo y viaje.")}</p>
+          <label>Estado<select name="estado_revision">${Object.entries({pendiente:"Pendiente",revisada:"Verificado y vinculado",observada:"Requiere corrección",rechazada:"Rechazado"}).map(([value,text])=>`<option value="${value}" ${draft.estado_revision===value?'selected':''}>${text}</option>`).join("")}</select></label>
+          <label class="admin-tutor-check"><input type="checkbox" name="identidad_verificada" ${draft.identidad_verificada?'checked':''}>Verifiqué la identidad y autorización de esta persona como responsable del viaje elegido.</label>
+          <label>Observaciones<textarea name="observaciones" rows="2" maxlength="1000">${escapeHtml(draft.observaciones)}</textarea></label>
+          <div class="admin-actions-row"><button type="submit">Guardar revisión del tutor</button><button type="button" data-tutor-discard="${escapeHtml(tutor.id)}">Descartar cambios</button><button type="button" data-tutor-refresh>Volver a consultar tutores</button></div>
+          <p role="${draft.error?"alert":"status"}" data-tutor-review-message>${escapeHtml(draft.error||"")}</p>
+        </fieldset></form></details>`;
+      }
+
+      // Solicitudes del formulario de Tutor: se verifican y vinculan a un
+      // pasajero/viaje concreto antes de aparecer como responsables.
       function renderAdminFichasTutorTabla(tutores = adminFichasTutor) {
         const search = normalizeFichaSearchText(adminFichasSearch);
         const visibles = tutores.filter((tutor) => !search || [tutor.nombre, tutor.apellido, tutor.numero_documento, tutor.pasajero_nombre, tutor.pasajero_apellido, tutor.pasajero_dni]
@@ -4468,13 +4571,13 @@
         ].filter(Boolean));
         return `
           <div class="admin-pasajeros-table-wrap">
-            <table class="admin-pasajeros-table admin-fichas-table">
+            <table class="admin-pasajeros-table admin-fichas-table admin-tutor-table">
               <thead>
                 <tr>
                   <th>Tutor</th>
                   <th>Pasajero a cargo</th>
                   <th>Contacto</th>
-                  <th>Estado</th>
+                  <th>Verificación y viaje</th>
                 </tr>
               </thead>
               <tbody>
@@ -4497,9 +4600,7 @@
                       <span>${escapeHtml(tutor.email)}</span>
                     </td>
                     <td>
-                      <select data-ficha-tutor-estado="${escapeHtml(tutor.id)}" aria-label="Estado de la ficha de tutor">
-                        ${["pendiente", "revisada", "observada", "rechazada"].map((estado) => `<option value="${estado}" ${estado === tutor.estado_revision ? "selected" : ""}>${estado}</option>`).join("")}
-                      </select>
+${renderTutorReviewForm(tutor)}
                     </td>
                   </tr>
                 `).join("") : `<tr><td colspan="4">No hay fichas de tutor.</td></tr>`}
@@ -4513,8 +4614,8 @@
         return window.ElAngelAzulPayments.parseMoney(value);
       }
 
-      function formatAdminMoney(value) {
-        if (value === null || value === undefined || value === "") return "Sin definir";
+      function formatAdminMoney(value, missing = "Sin definir") {
+        if (value === null || value === undefined || value === "") return missing;
         return parseAdminMoney(value).toLocaleString("es-AR", { style: "currency", currency: "ARS", minimumFractionDigits: 2, maximumFractionDigits: 2 });
       }
 
@@ -4525,16 +4626,18 @@
       function passengerPaymentData(passenger) {
         const group = adminPasajerosDemo.find((item) => item.pasajeros.includes(passenger));
         const key = passengerPaymentKey(passenger, group);
-        const payment = window.ElAngelAzulPayments.paymentData({ ...passenger, cobros: adminPagos.filter((pago) => pago.pasajero_legacy_id === key) });
-        return adminPagosLoaded ? payment : { ...payment, pagado: null, saldo: null, registros: 0 };
+        const payment = window.ElAngelAzulPayments.paymentData({ ...passenger, cuenta: adminCuentas.get(key), cobros: adminPagos.filter((pago) => pago.pasajero_legacy_id === key) });
+        return adminPagosLoaded ? { ...payment, cuentaConsultada: adminCuentasLoaded } : { ...payment, cuentaConsultada: false, pagado: null, saldo: null, registros: 0 };
       }
 
       function passengerInstallments(passenger) {
-        return window.ElAngelAzulPayments.installments(passenger);
+        const group = adminPasajerosDemo.find(item => item.pasajeros.includes(passenger));
+        return window.ElAngelAzulPayments.installments({ ...passenger, cuenta: adminCuentas.get(passengerPaymentKey(passenger, group)) });
       }
 
       function installmentSummary(passenger) {
-        return window.ElAngelAzulPayments.installmentSummary(passenger);
+        const rows = passengerInstallments(passenger);
+        return rows.length ? `${rows.filter(row => row.status === "Pagada").length}/${rows.length} pagadas` : "Cronograma pendiente";
       }
 
       function renderInstallmentCells(passenger) {
@@ -4629,10 +4732,10 @@
           || collator.compare(a.passenger.apellido || "", b.passenger.apellido || "")
         ));
         return sorted.map(({ group, passenger: p, payment }) => {
-          const f = fichas.find((item) => item.tipo !== "tutor" && normalizeFichaDni(item.pasajeroNumeroDocumento) === normalizeFichaDni(p.dni)) || {};
+          const f = fichas.find((item) => item.tipo !== "tutor" && normalizeFichaDni(item.pasajeroNumeroDocumento) === normalizeFichaDni(p.dni) && normalizeFichaSearchText(item.viaje) === normalizeFichaSearchText(group.viaje)) || {};
           return {
             "Colegio": group.colegio, "Curso": group.nivel, "Grado/Año": group.curso, "División": group.division,
-            "Contrato": p.codigoContrato || "", "Plan": p.planNombre || "", "Cuotas": p.planCuotas || "",
+            "Contrato": p.codigoContrato || "", "Plan": payment.planPago || p.planNombre || "", "Cuotas": payment.cuotas ?? p.planCuotas ?? "",
             "Apellido": p.apellido || "", "Nombre": p.nombre || "", "DNI": p.dni || "",
             "Nacimiento": p.nacimiento || f.pasajeroNacimiento || "", "Sexo": f.pasajeroSexo || "",
             "Tutor apellido": p.responsableApellido || f.responsableApellido || "",
@@ -4677,13 +4780,15 @@
       }
 
       function adminPasajerosSelectedRecord() {
-        if (!adminPasajerosSelectedDni) return null;
-        return adminPasajerosRows().find(({ passenger }) => String(passenger.dni) === String(adminPasajerosSelectedDni)) || null;
+        const rows=adminPasajerosRows();
+        if(adminPasajerosSelectedKey)return rows.find(({passenger,group})=>passengerPaymentKey(passenger,group)===adminPasajerosSelectedKey)||null;
+        const matches=rows.filter(({passenger})=>String(passenger.dni)===String(adminPasajerosSelectedDni));
+        return matches.length===1?matches[0]:null;
       }
 
       function renderAdminPasajerosTableRows(rows) {
         return rows.length ? rows.map(({ group, passenger, payment }) => {
-          const isSelected = String(passenger.dni) === String(adminPasajerosSelectedDni);
+          const isSelected = passengerPaymentKey(passenger,group) === adminPasajerosSelectedKey;
           return `
             <tr class="${isSelected ? "is-selected" : ""}">
               <td class="admin-pasajeros-passenger-cell">
@@ -4700,12 +4805,12 @@
                 <span>${escapeHtml(group.nivel)} · ${escapeHtml(group.curso)} ${escapeHtml(group.division)} · ${escapeHtml(group.viaje)}</span>
                 <span>Contrato: ${escapeHtml(passengerCodigoContrato(passenger) || "Pendiente")}</span>
               </td>
-              <td>${escapeHtml(fichaPlanTexto(passenger.planNombre, passenger.planCuotas) || "Pendiente")}</td>
+              <td>${escapeHtml(fichaPlanTexto(payment.planPago, payment.cuotas) || "Pendiente")}</td>
               <td><span class="admin-pasajeros-status ${adminStatusClass(payment.estadoPago)}">${escapeHtml(payment.estadoPago)}</span></td>
               <td><span class="admin-pasajeros-status ${adminStatusClass(passenger.documentacion)}">${escapeHtml(passenger.documentacion)}</span></td>
               <td><span class="admin-pasajeros-status ${adminStatusClass(passenger.estado)}">${escapeHtml(passenger.estado)}</span></td>
               <td>
-                <button type="button" class="admin-pasajeros-secondary-button" data-admin-pasajeros-open-profile="${escapeHtml(passenger.dni || "")}">
+                <button type="button" class="admin-pasajeros-secondary-button" data-admin-pasajeros-open-profile="${escapeHtml(passenger.dni || "")}" data-admin-pasajeros-record="${escapeHtml(passengerPaymentKey(passenger,group))}">
                   ${isSelected ? "Ficha abierta" : "Ver ficha"}
                 </button>
               </td>
@@ -4722,6 +4827,7 @@
         root.querySelectorAll("[data-admin-pasajeros-open-profile]").forEach((button) => {
           button.addEventListener("click", () => {
             adminPasajerosSelectedDni = button.dataset.adminPasajerosOpenProfile || "";
+            adminPasajerosSelectedKey = button.dataset.adminPasajerosRecord || "";
             adminPasajerosShowForm = false;
             adminPasajerosFormError = "";
             adminPasajerosEditMode = false;
@@ -4759,6 +4865,7 @@
         const record = adminPasajerosSelectedRecord();
         if (!record) return "";
         const { group, passenger, payment } = record;
+        const account = adminCuentas.get(passengerPaymentKey(passenger, group));
         const installments = passengerInstallments(passenger);
         const paidInstallments = installments.filter((installment) => installment.status === "Pagada").length;
         const pendingInstallments = installments.length - paidInstallments;
@@ -4822,17 +4929,18 @@
                 <fieldset>
                   <legend>Contrato</legend>
                   <label>Contrato asociado <span class="admin-pasajeros-required">*</span>
-                    <select name="contratoId" required>
+                    ${account ? `<input readonly aria-label="Contrato confirmado" value="${escapeHtml(passengerCodigoContrato(passenger))}"><input type="hidden" name="contratoId" value="${escapeHtml(passenger.contratoId)}">` : `<select name="contratoId" required>
                       <option value="">Seleccionar contrato</option>
                       ${contractOptions.map((c) => `<option value="${escapeHtml(c.id)}" ${c.id === passenger.contratoId ? "selected" : ""}>${escapeHtml(c.codigo_contrato)}</option>`).join("")}
-                    </select>
+                    </select>`}
+                    ${account ? '<small>El contrato y el plan se conservan para mantener el historial de la cuenta confirmada.</small>' : ""}
                   </label>
                   ${contractOptions.length === 0 ? `<p class="admin-pasajeros-modal-note">No hay contratos disponibles para este grupo. Creá uno primero en la sección Contratos.</p>` : ""}
                   <label>Plan de pago
-                    <select name="planPagoId">
+                    ${account ? `<input readonly aria-label="Plan confirmado" value="${escapeHtml(fichaPlanTexto(payment.planPago, payment.cuotas))}"><input type="hidden" name="planPagoId" value="${escapeHtml(passenger.planPagoId)}">` : `<select name="planPagoId">
                       <option value="">Pendiente</option>
                       ${adminPlanesPago.filter((plan) => plan.contrato_id === passenger.contratoId && (plan.activo === "TRUE" || plan.id === passenger.planPagoId)).map((plan) => `<option value="${escapeHtml(plan.id)}" ${plan.id === passenger.planPagoId ? "selected" : ""}>${escapeHtml(fichaPlanTexto(plan.nombre, plan.cuotas))}</option>`).join("")}
-                    </select>
+                    </select>`}
                   </label>
                 </fieldset>
 
@@ -4854,9 +4962,9 @@
                     </select>
                   </label>
                   <label>Estado de pago
-                    <select name="pago">
+                    ${account ? `<input readonly aria-label="Estado calculado de la cuenta" value="${escapeHtml(payment.estadoPago)}"><input type="hidden" name="pago" value="${escapeHtml(passenger.pago || "Pendiente")}"><small>Se calcula con el saldo y los cobros registrados.</small>` : `<select name="pago">
                       ${["Pendiente", "Al día", "Vencido"].map((opt) => `<option ${passenger.pago === opt ? "selected" : ""}>${opt}</option>`).join("")}
-                    </select>
+                    </select>`}
                   </label>
                 </fieldset>
 
@@ -4911,7 +5019,7 @@
                 ${renderFichaValue("Curso", group.nivel)}
                 ${renderFichaValue("Grado/Año", group.curso)}
                 ${renderFichaValue("División", group.division)}
-                ${renderFichaValue("Plan", fichaPlanTexto(passenger.planNombre, passenger.planCuotas))}
+                ${renderFichaValue("Plan", fichaPlanTexto(payment.planPago, payment.cuotas))}
                 ${renderFichaValue("Contrato", passengerCodigoContrato(passenger))}
                 ${renderFichaValue("Tutor", fichaNombreCompleto(passenger.responsableApellido, passenger.responsable))}
               </dl>
@@ -4940,7 +5048,7 @@
               </article>
               <article>
                 <span>Tutores adicionales</span>
-                ${fichaTutoresAdicionales(passenger.dni).length ? `<dl>${fichaTutoresAdicionales(passenger.dni).map((tutor) => `
+                ${fichaTutoresAdicionales(passenger.dni, passengerPaymentKey(passenger, group)).length ? `<dl>${fichaTutoresAdicionales(passenger.dni, passengerPaymentKey(passenger, group)).map((tutor) => `
                   <div><dt>${escapeHtml(tutor.parentesco)}</dt><dd>${escapeHtml(fichaNombreCompleto(tutor.apellido, tutor.nombre))} · ${escapeHtml(tutor.celular)} · ${escapeHtml(tutor.email)}</dd></div>
                 `).join("")}</dl>` : "<p>Sin tutores adicionales registrados.</p>"}
               </article>
@@ -4974,9 +5082,9 @@
                 <span>Pagos</span>
                 <strong>${escapeHtml(payment.estadoPago)}</strong>
                 <dl>
-                  <div><dt>Total</dt><dd>${escapeHtml(formatAdminMoney(payment.valorViaje))}</dd></div>
+                  <div><dt>Total</dt><dd>${escapeHtml(formatAdminMoney(payment.valorViaje, payment.cuentaConsultada ? "Sin definir" : "Sin consultar"))}</dd></div>
                   <div><dt>Pagado</dt><dd>${escapeHtml(formatAdminMoney(payment.pagado))}</dd></div>
-                  <div><dt>Saldo</dt><dd>${escapeHtml(formatAdminMoney(payment.saldo))}</dd></div>
+                  <div><dt>Saldo</dt><dd>${escapeHtml(formatAdminMoney(payment.saldo, payment.cuentaConsultada ? "Sin definir" : "Sin consultar"))}</dd></div>
                   <div><dt>Cuotas</dt><dd>${escapeHtml(installmentSummary(passenger))}</dd></div>
                   <div><dt>Estado cuotas</dt><dd>${passengerInstallments(passenger).length ? `${paidInstallments} pagas · ${pendingInstallments} pendientes` : "Cronograma pendiente"}</dd></div>
                 </dl>
@@ -4985,6 +5093,9 @@
                 <h3>Historial de cobros</h3>
                 ${adminPagosLoaded ? renderPaymentHistoryCells(passenger) : '<p>No se pudieron consultar los pagos. Entrá en Pagos para volver a intentar.</p>'}
               </article>
+              <article class="admin-payment-wide" data-passenger-information="${escapeHtml(passengerPaymentKey(passenger, group))}"></article>
+              <article class="admin-payment-wide" data-admin-documents data-document-type="pasajeros" data-document-owner="${escapeHtml(passengerPaymentKey(passenger, group))}"></article>
+              ${adminCanDelete() ? `<article class="admin-payment-wide portal-admin-access" data-portal-access-admin data-passenger-id="${escapeHtml(passengerPaymentKey(passenger, group))}"></article>` : ""}
               <article>
                 <span>Observaciones</span>
                 <p>${escapeHtml(passenger.observaciones || "Sin observaciones internas.")}</p>
@@ -5620,6 +5731,9 @@
                   <button type="submit">Guardar cambios</button>
                 </div>
               </form>
+              <section class="admin-document-section" data-admin-documents data-document-type="contratos" data-document-owner="${escapeHtml(contract.id)}"></section>
+              <section class="admin-document-section" data-contract-information="${escapeHtml(contract.id)}"></section>
+              <section class="enrollment-admin" data-enrollment-admin data-contract-id="${escapeHtml(contract.id)}"></section>
               ${renderAdminContratoPlanes(contract)}
             </section>
           </div>
@@ -5791,6 +5905,11 @@
         `);
         bindAdminShell();
         bindAdminContratos();
+        const enrollmentRoot = document.querySelector("[data-enrollment-admin]");
+        window.ElAngelAzulEnrollment?.mountAdmin(enrollmentRoot, enrollmentRoot?.dataset.contractId);
+        document.querySelectorAll("[data-contract-information]").forEach(root => window.ElAngelAzulContractInformation?.mount(root,{id:root.dataset.contractInformation}));
+        document.querySelectorAll("[data-passenger-information]").forEach(root => window.ElAngelAzulContractInformation?.mount(root,{id:root.dataset.passengerInformation,type:"pasajeros"}));
+        document.querySelectorAll("[data-admin-documents]").forEach(root => window.ElAngelAzulDocuments?.mount(root, {type:root.dataset.documentType,id:root.dataset.documentOwner}));
       }
 
       function bindAdminContratos() {
@@ -6070,6 +6189,11 @@
         `);
         bindAdminShell();
         bindAdminGrupos();
+        const organization = document.createElement("section");
+        organization.className = "admin-turismo-panel academic-admin";
+        organization.dataset.academicAdmin = "";
+        document.querySelector("[data-admin-grupos-filters]")?.closest("section").before(organization);
+        window.ElAngelAzulAcademic?.mount(organization);
       }
 
       function bindAdminGrupos() {
@@ -6202,6 +6326,10 @@
       }
 
       function bindAdminPasajeros() {
+        document.querySelectorAll("[data-contract-information]").forEach(root => window.ElAngelAzulContractInformation?.mount(root,{id:root.dataset.contractInformation}));
+        document.querySelectorAll("[data-passenger-information]").forEach(root => window.ElAngelAzulContractInformation?.mount(root,{id:root.dataset.passengerInformation,type:"pasajeros"}));
+        document.querySelectorAll("[data-admin-documents]").forEach(root => window.ElAngelAzulDocuments?.mount(root, {type:root.dataset.documentType,id:root.dataset.documentOwner}));
+        document.querySelectorAll("[data-portal-access-admin]").forEach(root => window.ElAngelAzulPortalAdmin?.mount(root, root.dataset.passengerId));
         document.querySelector("[data-admin-pasajeros-open-form]")?.addEventListener("click", () => {
           adminPasajerosShowForm = !adminPasajerosShowForm;
           adminPasajerosFormError = "";
@@ -6401,6 +6529,7 @@
         bindAdminPasajerosProfileButtons();
         document.querySelector("[data-admin-pasajeros-close-profile]")?.addEventListener("click", () => {
           adminPasajerosSelectedDni = "";
+          adminPasajerosSelectedKey = "";
           adminPasajerosEditMode = false;
           adminPasajerosEditError = "";
           renderAdminPasajeros();
@@ -6645,19 +6774,37 @@
           }
           await vincularColegio(adminFichasSelectedId, colegio.id, `Colegio “${nombre}” creado y vinculado.`);
         });
-        document.querySelectorAll("[data-ficha-tutor-estado]").forEach((select) => {
-          select.addEventListener("change", async () => {
-            const previous = adminFichasTutor;
-            select.disabled = true;
-            adminFichasTutor = adminFichasTutor.map((tutor) => (
-              tutor.id === select.dataset.fichaTutorEstado ? { ...tutor, estado_revision: select.value } : tutor
-            ));
-            const guardado = await queueGoogleSheetsWrite(["FICHAS_TUTOR"]);
-            if (!guardado) adminFichasTutor = previous;
-            adminFichasMessage = guardado ? "Estado de la ficha de tutor guardado." : googleSheetsSyncState.message;
-            renderAdminFichasRecibidas();
-          });
+        document.querySelectorAll("[data-tutor-review]").forEach(form=>{
+          const id=form.dataset.tutorReview,draft=adminTutorReviewDrafts.get(id);
+          const details=form.closest("details");details.ontoggle=()=>{draft.open=details.open;};
+          const read=()=>{draft.error="";form.querySelector("[data-tutor-review-message]").textContent="";draft.estado_revision=form.elements.estado_revision.value;draft.pasajero_id=form.elements.pasajero_id.value;draft.observaciones=form.elements.observaciones.value;draft.identidad_verificada=form.elements.identidad_verificada.checked;};
+          form.oninput=read;
+          form.onchange=event=>{
+            if(["pasajero_id","estado_revision"].includes(event.target.name)){form.elements.identidad_verificada.checked=false;const option=form.elements.pasajero_id.selectedOptions[0];form.querySelector("[data-tutor-trip-context]").textContent=option?.value?option.textContent:"Elegí el viaje al que corresponde la autorización.";}
+            read();
+          };
+          form.onsubmit=async event=>{
+            event.preventDefault();if(adminTutorReviewSaving)return;read();
+            const tutor=adminFichasTutor.find(row=>row.id===id),message=form.querySelector("[data-tutor-review-message]");
+            if(draft.estado_revision==="revisada"&&(!draft.pasajero_id||((tutor.estado_revision!=="revisada"||tutor.pasajero_id!==draft.pasajero_id)&&!draft.identidad_verificada))){message.textContent="Elegí el viaje y confirmá la verificación de identidad y autorización antes de vincular al tutor.";message.setAttribute("role","alert");return;}
+            const previous=adminFichasTutor;
+            adminTutorReviewSaving=true;
+            document.querySelectorAll("[data-tutor-review] fieldset").forEach(node=>node.disabled=true);
+            adminFichasTutor=adminFichasTutor.map(row=>row.id===id?{...row,estado_revision:draft.estado_revision,pasajero_id:draft.pasajero_id,observaciones:draft.observaciones,identidad_verificada:draft.identidad_verificada?"TRUE":""}:row);
+            const saved=await queueGoogleSheetsWrite(["FICHAS_TUTOR"],{},{FICHAS_TUTOR:{[id]:draft.version}});
+            adminTutorReviewSaving=false;
+            if(!saved){adminFichasTutor=previous;draft.error=googleSheetsSyncState.message;}else adminTutorReviewDrafts.delete(id);
+            adminFichasMessage=saved?"Revisión del tutor guardada. El vínculo corresponde únicamente al viaje elegido.":googleSheetsSyncState.message;
+            if(currentPath().startsWith("/admin/fichas"))renderAdminFichasRecibidas();
+          };
+          form.querySelector("[data-tutor-refresh]").onclick=async()=>{
+            if(adminTutorReviewSaving)return;adminTutorReviewSaving=true;form.querySelector("fieldset").disabled=true;
+            try{const source=await window.ElAngelAzulPersistence.fetchGoogleSheetRows("FICHAS_TUTOR");adminFichasTutor=source;window.ElAngelAzulPersistence.captureAdminSheet("FICHAS_TUTOR",source,source);adminFichasMessage="Solicitudes consultadas. Conservamos tus borradores; descartá los cambios para adoptar la versión actual.";}
+            catch(error){adminFichasMessage="No pudimos consultar los tutores. Conservamos tus cambios.";if(error.status===401)handleAdminSessionLost();}
+            finally{adminTutorReviewSaving=false;if(currentPath().startsWith("/admin/fichas"))renderAdminFichasRecibidas();}
+          };
         });
+        document.querySelectorAll("[data-tutor-discard]").forEach(button=>button.onclick=()=>{adminTutorReviewDrafts.delete(button.dataset.tutorDiscard);renderAdminFichasRecibidas();});
         document.querySelectorAll("[data-ficha-aprobar]").forEach((button) => {
           button.addEventListener("click", async () => {
             button.disabled = true;
@@ -6734,6 +6881,8 @@
       }
 
       let adminPagos = [];
+      let adminCuentas = new Map();
+      let adminCuentasLoaded = false;
       let adminPagoPassengerIds = new Map();
       let adminPagosError = "";
       let adminPagosLoaded = false;
@@ -6752,11 +6901,26 @@
         return { id: crypto.randomUUID(), pasajeroId: "", fecha: new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().slice(0, 10), monto: "", medio: "", concepto: "", referencia: "" };
       }
 
+      async function loadAdminCuentas() {
+        try {
+          const response = await fetch("/api/admin/finanzas/cuentas", { credentials: "same-origin", cache: "no-store" });
+          const payload = await response.json();
+          if (!response.ok || !payload.ok || !Array.isArray(payload.cuentas)) throw new Error("No se pudieron consultar las cuentas.");
+          adminCuentas = new Map(payload.cuentas.flatMap(account => [[account.legacy_id, account], [account.pasajero_id, account]]));
+          adminCuentasLoaded = true;
+        } catch (_) { adminCuentas.clear(); adminCuentasLoaded = false; }
+      }
+      window.addEventListener("eaa-cuentas-cambiadas", async () => {
+        await loadAdminCuentas();
+        if (currentPath() === "/admin/pasajeros" && !adminPasajerosEditMode && !adminPasajerosShowForm && !adminPasajerosGroupModal) renderAdminPasajeros();
+      });
+
       async function loadAdminPagos() {
         try {
           const [response, passengers] = await Promise.all([
             fetch("/api/admin/pagos", { credentials: "same-origin", cache: "no-store" }),
-            window.ElAngelAzulPersistence.fetchGoogleSheetRows("PASAJEROS")
+            window.ElAngelAzulPersistence.fetchGoogleSheetRows("PASAJEROS"),
+            loadAdminCuentas()
           ]);
           const payload = await response.json();
           if (response.status === 401) handleAdminSessionLost();
@@ -6781,6 +6945,7 @@
         if (response.status === 401) handleAdminSessionLost();
         if (!response.ok || !payload.ok || !payload.pago) throw new Error(payload.error || "No se pudo guardar el pago. Revisá el historial antes de volver a intentar.");
         adminPagos = [payload.pago, ...adminPagos.filter((pago) => pago.id !== payload.pago.id)];
+        await loadAdminCuentas();
         return payload;
       }
 
@@ -6803,7 +6968,7 @@
               <article><strong>${new Set(confirmed.map((pago) => pago.pasajero_legacy_id)).size}</strong><span>Pasajeros con cobros</span></article>
               <article><strong>${adminPagos.length - confirmed.length}</strong><span>Pagos anulados</span></article>
             </div>` : ""}
-            <p>El saldo y los vencimientos quedan pendientes hasta contar con el precio y el cronograma del contrato. Registrar un cobro no modifica automáticamente el estado de pago del pasajero.</p>
+            <p>Consultá saldos y vencimientos en «Planes, cuotas y saldos». Los cobros se asignan a cuotas de forma manual.</p>
             ${adminPagosError ? `<p role="alert" class="admin-form-error">${escapeHtml(adminPagosError)}</p><button class="admin-pasajeros-secondary" data-payment-retry>Volver a consultar pagos</button>` : ""}
             ${adminPagoMessage ? `<p role="status" class="admin-payment-feedback">${escapeHtml(adminPagoMessage)}</p>` : ""}
           </section>
@@ -6822,15 +6987,17 @@
               <p data-payment-error class="admin-form-error" role="alert">${escapeHtml(adminPagoError)}</p>
             </form>` : `<p>Primero cargá o aprobá un pasajero para registrar sus pagos.</p><a href="${adminRouteHref('/admin/pasajeros')}">Ir a Pasajeros</a>`}
           </section>
+          <section class="admin-turismo-panel admin-accounts" data-student-accounts></section>
           <section class="admin-turismo-panel admin-pasajeros-table-panel">
             <div class="admin-pasajeros-table-head"><h2>Historial de cobros</h2><button type="button" class="admin-pasajeros-secondary" data-payment-refresh ${adminPagoSaving ? "disabled" : ""}>Actualizar historial</button></div>
             <form data-payment-search-form class="admin-payment-search"><label>Buscar por pasajero, DNI, concepto o referencia<input type="search" name="buscar" value="${escapeHtml(adminPagoSearch)}"></label><button type="submit" class="admin-pasajeros-secondary">Buscar</button></form>
             <p>${filtered.length} movimientos${adminPagoSearch ? " encontrados" : " registrados"}. Los anulados se conservan para poder revisar el historial.</p>
             ${annul ? `<form data-payment-annul-form class="admin-payment-annul"><h3>Anular pago de ${escapeHtml(annul.pasajero_nombre)} ${escapeHtml(annul.pasajero_apellido)}</h3><p>${escapeHtml(formatAdminMoney(Number(annul.monto_centavos) / 100))} · ${escapeHtml(annul.concepto)}. Esta acción excluye el importe del total cobrado.</p><label>Motivo de anulación<textarea name="motivo" required minlength="3" maxlength="500" ${adminPagoSaving ? "disabled" : ""}>${escapeHtml(adminPagoMotivo)}</textarea></label><div class="admin-payment-actions"><button type="submit" class="admin-pasajeros-primary" ${adminPagoSaving ? "disabled" : ""}>${adminPagoSaving ? "Guardando…" : "Confirmar anulación"}</button><button type="button" class="admin-pasajeros-secondary" data-payment-annul-cancel ${adminPagoSaving ? "disabled" : ""}>Cancelar</button></div><p role="alert" data-payment-annul-error class="admin-form-error">${escapeHtml(adminPagoAnnulError)}</p></form>` : ""}
-            <div class="admin-pasajeros-table-wrap"><table class="admin-pasajeros-table admin-payment-ledger"><thead><tr><th>Fecha</th><th>Pasajero</th><th>Concepto y referencia</th><th>Medio</th><th>Importe (ARS)</th><th>Estado y responsable</th><th>Acciones</th></tr></thead><tbody>${filtered.map((pago)=>`<tr><td>${escapeHtml(pago.fecha.split('-').reverse().join('/'))}</td><td><strong>${escapeHtml([pago.pasajero_apellido,pago.pasajero_nombre].filter(Boolean).join(', '))}</strong><span>DNI ${escapeHtml(pago.pasajero_dni)}</span></td><td>${escapeHtml(pago.concepto)}<span>${escapeHtml(pago.referencia || "Sin referencia")}</span></td><td>${escapeHtml(adminPagoMedios[pago.medio] || pago.medio)}</td><td>${escapeHtml(formatAdminMoney(Number(pago.monto_centavos)/100))}</td><td><strong>${pago.estado === "anulado" ? "Anulado" : "Confirmado"}</strong><span>Cargó: ${escapeHtml(pago.actor_username)}</span>${pago.estado === "anulado" ? `<span>Anuló: ${escapeHtml(pago.anulado_por)} · ${escapeHtml(pago.motivo_anulacion)}</span>` : ""}</td><td><div class="admin-payment-actions"><button class="admin-pasajeros-secondary" data-payment-profile="${escapeHtml(pago.pasajero_dni)}">Ver ficha</button>${adminCanDelete() && pago.estado === "confirmado" ? `<button class="admin-pasajeros-secondary" data-payment-annul="${escapeHtml(pago.id)}" ${adminPagoSaving ? "disabled" : ""}>Anular pago</button>` : ""}</div></td></tr>`).join("") || `<tr><td colspan="7">${adminPagoSearch ? "No hay movimientos que coincidan con la búsqueda." : "Todavía no hay pagos registrados."}</td></tr>`}</tbody></table></div>
+            <div class="admin-pasajeros-table-wrap"><table class="admin-pasajeros-table admin-payment-ledger"><thead><tr><th>Fecha</th><th>Pasajero</th><th>Concepto y referencia</th><th>Medio</th><th>Importe (ARS)</th><th>Estado y responsable</th><th>Acciones</th></tr></thead><tbody>${filtered.map((pago)=>`<tr><td>${escapeHtml(pago.fecha.split('-').reverse().join('/'))}</td><td><strong>${escapeHtml([pago.pasajero_apellido,pago.pasajero_nombre].filter(Boolean).join(', '))}</strong><span>DNI ${escapeHtml(pago.pasajero_dni)}</span></td><td>${escapeHtml(pago.concepto)}<span>${escapeHtml(pago.referencia || "Sin referencia")}</span></td><td>${escapeHtml(adminPagoMedios[pago.medio] || pago.medio)}</td><td>${escapeHtml(formatAdminMoney(Number(pago.monto_centavos)/100))}</td><td><strong>${pago.estado === "anulado" ? "Anulado" : "Confirmado"}</strong><span>Cargó: ${escapeHtml(pago.actor_username)}</span>${pago.estado === "anulado" ? `<span>Anuló: ${escapeHtml(pago.anulado_por)} · ${escapeHtml(pago.motivo_anulacion)}</span>` : ""}</td><td><div class="admin-payment-actions"><button class="admin-pasajeros-secondary" data-payment-profile="${escapeHtml(pago.pasajero_dni)}" data-payment-passenger-id="${escapeHtml(pago.pasajero_legacy_id||pago.pasajero_id)}">Ver ficha</button>${adminCanDelete() && pago.estado === "confirmado" ? `<button class="admin-pasajeros-secondary" data-payment-annul="${escapeHtml(pago.id)}" ${adminPagoSaving ? "disabled" : ""}>Anular pago</button>` : ""}</div></td></tr>`).join("") || `<tr><td colspan="7">${adminPagoSearch ? "No hay movimientos que coincidan con la búsqueda." : "Todavía no hay pagos registrados."}</td></tr>`}</tbody></table></div>
           </section>` : ""}
         `);
         bindAdminShell();
+        window.ElAngelAzulAccounts?.mount(document.querySelector("[data-student-accounts]"), { initialPassenger: adminPagoDraft?.pasajeroId || "", onSessionLost: handleAdminSessionLost });
         document.querySelectorAll('[data-payment-retry], [data-payment-refresh]').forEach(button => button.addEventListener('click', async () => { if(adminPagoSaving) return; button.disabled = true; await loadAdminPagos(); if(currentPath() === '/admin/pagos') renderAdminPagos(); }));
         const form = document.querySelector('[data-payment-form]');
         const remember = () => { if(form) Object.assign(adminPagoDraft, Object.fromEntries(new FormData(form))); };
@@ -6855,7 +7022,7 @@
           if(currentPath() === '/admin/pagos') renderAdminPagos();
         });
         document.querySelector('[data-payment-search-form]')?.addEventListener('submit', event => { event.preventDefault(); adminPagoSearch = new FormData(event.currentTarget).get('buscar') || ''; renderAdminPagos(); });
-        document.querySelectorAll('[data-payment-profile]').forEach(button => button.addEventListener('click',()=> { adminPasajerosSelectedDni = button.dataset.paymentProfile; location.hash = '/admin/pasajeros'; }));
+        document.querySelectorAll('[data-payment-profile]').forEach(button => button.addEventListener('click',()=> { adminPasajerosSelectedDni = button.dataset.paymentProfile; adminPasajerosSelectedKey = button.dataset.paymentPassengerId; location.hash = '/admin/pasajeros'; }));
         document.querySelectorAll('[data-payment-annul]').forEach(button => button.addEventListener('click',()=> { remember(); adminPagoAnularId = button.dataset.paymentAnnul; adminPagoMotivo = ''; adminPagoAnnulError = ''; renderAdminPagos(); document.querySelector('[name="motivo"]')?.focus(); }));
         document.querySelector('[data-payment-annul-cancel]')?.addEventListener('click',()=> { adminPagoAnularId = ''; renderAdminPagos(); });
         document.querySelector('[data-payment-annul-form]')?.addEventListener('input', event => { adminPagoMotivo = event.currentTarget.elements.motivo.value; });
@@ -6883,7 +7050,7 @@
           const state = adminTurismoReadiness(item);
           acc.total += 1;
           acc[state.key] = (acc[state.key] || 0) + 1;
-          if (item.estado === "activo") acc.activos += 1;
+          if (state.isPublished) acc.activos += 1;
           return acc;
         }, { total: 0, activos: 0, listo: 0, publicado: 0, borrador: 0, incompleto: 0, inactivo: 0 });
         const editorHtml = adminTurismoEditorOpen ? `
@@ -6972,6 +7139,15 @@
         bindAdminShell();
         bindAdminTurismo();
         bindTurismoCardCarousels(document.querySelector(".admin-turismo-layout"));
+        const photoRoot=document.querySelector("[data-catalog-photo-upload]");
+        const photoKey=adminTurismoEditingId;
+        window.ElAngelAzulCatalogMedia?.mount(photoRoot,{key:photoKey,onPhoto:photo=>{
+          if(currentPath()!=="/admin/turismo"||adminTurismoEditingId!==photoKey)return false;
+          const form=document.querySelector("[data-admin-turismo-form]");if(!form||form.dataset.saving)return false;
+          const trip=readAdminTurismoForm(form);if(!trip.fotos.some(item=>item.url===photo.url))trip.fotos.push({url:photo.url,alt:(trip.titulo||"Foto del paquete").slice(0,200),principal:!trip.fotos.length});
+          adminTurismoEditorDraft=trip;renderAdminTurismo();return true;
+        }});
+        document.querySelectorAll("[data-admin-catalog-photo]").forEach(image=>{image.addEventListener("error",()=>{image.hidden=true;image.nextElementSibling.hidden=false;});});
       }
 
       function exportAdminTurismoJson() {
@@ -6985,6 +7161,80 @@
         URL.revokeObjectURL(url);
       }
 
+      function readAdminTurismoForm(form = document.querySelector("[data-admin-turismo-form]")) {
+        if (!form) return normalizeAdminTurismoTrip(adminTurismoCurrentTrip());
+          const formData = new FormData(form);
+          const id = adminTurismoEditingId || `viaje-${Date.now()}`;
+
+          // Leer fotos desde los campos individuales
+          const fotosCount = Number(formData.get("fotos_count") || 0);
+          const fotosArray = [];
+          for (let i = 0; i < fotosCount; i++) {
+            const url = String(formData.get(`foto_url_${i}`) || "").trim();
+            if (url) fotosArray.push({ url, alt: String(formData.get(`foto_alt_${i}`) || "").trim(), principal: false });
+          }
+          const principalIndex = Number(formData.get("fotoPrincipal") || 0);
+          if (fotosArray[principalIndex]) fotosArray[principalIndex].principal = true;
+          else if (fotosArray.length) fotosArray[0].principal = true;
+
+          // Leer itinerario desde campos dinámicos
+          const itinerarioArray = [];
+          let diaIndex = 0;
+          while (formData.get(`itinerario_titulo_${diaIndex}`) !== null || formData.get(`itinerario_desc_${diaIndex}`) !== null) {
+            const titulo = String(formData.get(`itinerario_titulo_${diaIndex}`) || "").trim();
+            const descripcion = String(formData.get(`itinerario_desc_${diaIndex}`) || "").trim();
+            if (titulo || descripcion) itinerarioArray.push({ dia: String(diaIndex + 1), titulo, descripcion });
+            diaIndex++;
+          }
+
+          const baseTrip = {
+            id,
+            slug: formData.get("slug") || "",
+            destino: formData.get("destino") || "",
+            titulo: formData.get("titulo") || "",
+            duracion: formData.get("duracion") || "",
+            temporada: formData.get("temporada") || "",
+            fechaSalida: formData.get("fechaSalida") || "",
+            fechaRegreso: formData.get("fechaRegreso") || "",
+            salidaGarantizada: formData.get("salidaGarantizada") === "on",
+            precioDesde: formData.get("precioDesde") || "",
+            precioValor: formData.get("precioBaseDoble") || null,
+            moneda: formData.get("moneda") || "USD",
+            precioBaseDoble: formData.get("precioBaseDoble") || "",
+            suplementoSingle: formData.get("suplementoSingle") || "",
+            precioMenor: formData.get("precioMenor") || "",
+            condicionVenta: formData.get("condicionVenta") || "",
+            alojamiento:formData.get("alojamiento")||"",transporte:formData.get("transporte")||"",regimenComidas:formData.get("regimenComidas")||"",disponibilidad:formData.get("disponibilidad")||"a_confirmar",cupos:formData.get("cupos")??"",promocion:formData.get("promocion")||"",videoUrl:formData.get("videoUrl")||"",archivado:formData.get("archivado")==="TRUE",
+            categorias: formData.getAll("categorias"),
+            descripcionCorta: formData.get("descripcionCorta") || "",
+            descripcionLarga: formData.get("descripcionLarga") || "",
+            incluye: formData.get("incluye") || "",
+            noIncluye: formData.get("noIncluye") || "",
+            formasPago: formData.get("formasPago") || "",
+            itinerario: itinerarioArray,
+            fotos: fotosArray,
+            estado: formData.get("estado") || "borrador",
+            destacado: formData.get("destacado") === "on",
+            orden: formData.get("orden") || 999
+          };
+          const nextTrip = normalizeAdminTurismoTrip(baseTrip);
+          nextTrip.fotos = fotosArray.length ? fotosArray : normalizeAdminTurismoPhotos(baseTrip.fotos);
+        return nextTrip;
+      }
+
+      function showAdminCatalogFeedback(feedback) {
+        const panel = document.querySelector(".admin-turismo-flow-actions");
+        if (!panel) return;
+        let message = panel.querySelector(".admin-turismo-save-feedback");
+        if (!message) {
+          message = document.createElement("p");
+          panel.appendChild(message);
+        }
+        message.className = `admin-turismo-save-feedback ${feedback.ok ? "is-ok" : "is-error"}`;
+        message.setAttribute("role", feedback.ok ? "status" : "alert");
+        message.textContent = feedback.message;
+      }
+
       function bindAdminTurismo() {
         document.querySelector("[data-admin-import-public-trips]")?.addEventListener("click", () => {
           importAdminTurismoPublicDefaults();
@@ -6992,6 +7242,8 @@
 
         document.querySelectorAll("[data-admin-edit], [data-admin-preview]").forEach((button) => {
           button.addEventListener("click", () => {
+            adminTurismoEditorDraft = null;
+            adminTurismoSaveFeedback = null;
             adminTurismoEditingId = button.dataset.adminEdit || button.dataset.adminPreview;
             adminTurismoEditorOpen = true;
             renderAdminTurismo();
@@ -6999,7 +7251,8 @@
         });
 
         document.querySelectorAll("[data-admin-delete]").forEach((button) => {
-          button.addEventListener("click", () => {
+          button.addEventListener("click", async () => {
+            const previous = adminTurismoTrips;
             const tripId = button.dataset.adminDelete;
             const trip = adminTurismoTrips.find((item) => item.id === tripId);
             const tripName = trip?.titulo || trip?.destino || "este viaje";
@@ -7011,40 +7264,20 @@
               adminTurismoEditingId = adminTurismoTrips[0]?.id || null;
               adminTurismoEditorOpen = false;
             }
+            button.disabled = true;
+            const saved = await saveAdminTurismoTripsWithFeedback([tripId]);
+            if (!saved) adminTurismoTrips = previous;
             renderAdminTurismo();
-            saveAdminTurismoTripsWithFeedback([tripId]).then(() => renderAdminTurismo()).catch(() => renderAdminTurismo());
           });
         });
 
         document.querySelectorAll("[data-admin-new]").forEach((button) => {
           button.addEventListener("click", () => {
             const id = `demo-${Date.now()}`;
-            adminTurismoTrips = [
-              {
-                id,
-                slug: "",
-                destino: "",
-                titulo: "",
-                duracion: "",
-                temporada: "",
-                precioDesde: "",
-                precioValor: null,
-                moneda: "ARS",
-                categorias: [],
-                descripcionCorta: "",
-                descripcionLarga: "",
-                incluye: [],
-                noIncluye: [],
-                fotos: [],
-                estado: "borrador",
-                destacado: false,
-                orden: adminTurismoTrips.length + 1
-              },
-              ...adminTurismoTrips
-            ];
+            adminTurismoEditorDraft = normalizeAdminTurismoTrip({ ...emptyAdminTurismoTrip, id });
             adminTurismoEditingId = id;
             adminTurismoEditorOpen = true;
-            saveAdminTurismoTrips();
+            adminTurismoSaveFeedback = null;
             renderAdminTurismo();
           });
         });
@@ -7066,80 +7299,51 @@
         });
 
         document.querySelector("[data-admin-publish]")?.addEventListener("click", () => {
-          const trip = normalizeAdminTurismoTrip(adminTurismoCurrentTrip());
-          const readiness = adminTurismoReadiness(trip);
-          if (!readiness.canPublish) {
-            window.alert(`No se puede publicar todavía.\n\nFalta:\n- ${readiness.missing.map((item) => item.label).join("\n- ")}`);
-            return;
-          }
-          const publishedMap = loadAdminTurismoPublishedMap();
-          publishedMap[trip.id] = {
-            slug: trip.slug,
-            signature: adminTurismoTripSignature(trip),
-            exportedAt: new Date().toISOString()
-          };
-          saveAdminTurismoPublishedMap(publishedMap);
-          exportAdminTurismoJson();
-          window.alert("Se exportó turismo-paquetes.json.\n\nPara verlo en la web pública, reemplazá assets/data/turismo-paquetes.json por este archivo y verificá en Turismo.");
-          renderAdminTurismo();
-        });
-
-        document.querySelector("[data-admin-preview-public]")?.addEventListener("click", () => {
-          const trip = normalizeAdminTurismoTrip(adminTurismoCurrentTrip());
-          const readiness = adminTurismoReadiness(trip);
-          if (!readiness.canPublish) {
-            window.alert(`No se puede activar la prueba pública todavía.\n\nFalta:\n- ${readiness.missing.map((item) => item.label).join("\n- ")}`);
-            return;
-          }
-          setTurismoPublicPreviewMode(true);
-          window.open("/#/turismo", "_blank");
-          renderAdminTurismo();
-        });
-
-        document.querySelector("[data-admin-disable-preview]")?.addEventListener("click", () => {
-          setTurismoPublicPreviewMode(false);
-          renderAdminTurismo();
-        });
-
-        document.querySelector("[data-admin-duplicate]")?.addEventListener("click", () => {
-          const trip = normalizeAdminTurismoTrip(adminTurismoCurrentTrip());
-          if (!trip.id) return;
-          const id = `viaje-${Date.now()}`;
-          const duplicated = normalizeAdminTurismoTrip({
-            ...trip,
-            id,
-            slug: `${trip.slug || "viaje"}-copia`,
-            titulo: `${trip.titulo || trip.destino || "Viaje"} copia`,
-            estado: "borrador",
-            orden: adminTurismoTrips.length + 1
-          });
-          duplicated.slug = uniqueAdminTurismoSlug(duplicated.slug, id);
-          adminTurismoTrips = [duplicated, ...adminTurismoTrips];
-          adminTurismoEditingId = id;
-          saveAdminTurismoTripsWithFeedback().finally(() => renderAdminTurismo());
+          const form = document.querySelector("[data-admin-turismo-form]");
+          if (!form) return;
+          form.elements.estado.value = "activo";
+          form.requestSubmit();
         });
 
         document.querySelector("[data-admin-deactivate]")?.addEventListener("click", () => {
-          const trip = normalizeAdminTurismoTrip(adminTurismoCurrentTrip());
-          if (!trip.id) return;
-          adminTurismoTrips = adminTurismoTrips.map((item) => item.id === trip.id ? { ...item, estado: "inactivo" } : item);
-          renderAdminTurismo();
-          saveAdminTurismoTripsWithFeedback().then(() => renderAdminTurismo()).catch(() => renderAdminTurismo());
+          const form = document.querySelector("[data-admin-turismo-form]");
+          if (!form) return;
+          form.elements.estado.value = "inactivo";
+          form.requestSubmit();
         });
 
-        // --- Aplicar estado rápido desde el panel de publicación ---
-        document.querySelector("[data-admin-turismo-apply-estado]")?.addEventListener("click", () => {
-          const trip = normalizeAdminTurismoTrip(adminTurismoCurrentTrip());
-          if (!trip.id) {
-            window.alert("Guardá el viaje primero antes de cambiar el estado.");
-            return;
+        document.querySelector("[data-admin-archive]")?.addEventListener("click",event=>{
+          const form=document.querySelector("[data-admin-turismo-form]");if(!form)return;
+          const archived=event.currentTarget.dataset.adminArchive==="archivar";
+          form.elements.archivado.value=archived?"TRUE":"FALSE";form.elements.estado.value=archived?"inactivo":"borrador";form.requestSubmit();
+        });
+        document.querySelector("[data-admin-duplicate]")?.addEventListener("click", async (event) => {
+          const trip = adminTurismoCurrentTrip();
+          const button = event.currentTarget;
+          button.disabled = true;
+          button.textContent = "Duplicando…";
+          try {
+            const response = await fetch(`/api/admin/paquetes/${encodeURIComponent(trip.id)}/duplicar`, {
+              method: "POST", headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ version: window.ElAngelAzulPersistence.adminSheetVersion("TURISMO", trip.id) })
+            });
+            const payload = await response.json();
+            if (!response.ok || !payload.ok) throw new Error(payload.error || "No se pudo duplicar el paquete.");
+            // Usar la respuesta confirmada; no repetir el alta si una recarga posterior falla.
+            const sourceRows = adminTurismoTrips.map(item => ({ id: item.id, _version: window.ElAngelAzulPersistence.adminSheetVersion("TURISMO", item.id) }));
+            adminTurismoTrips = [turismoRowToTrip(payload.paquete), ...adminTurismoTrips];
+            sourceRows.unshift(payload.paquete);
+            window.ElAngelAzulPersistence.captureAdminSheet("TURISMO", googleSheetsTurismoRows(), sourceRows);
+            localStorage.setItem(ADMIN_TURISMO_STORAGE_KEY, JSON.stringify(adminTurismoTrips));
+            adminTurismoEditorDraft = null;
+            adminTurismoEditingId = payload.paquete.id;
+            adminTurismoSaveFeedback = { ok: true, message: "Copia creada como borrador. Editala y publicala cuando esté lista." };
+            renderAdminTurismo();
+          } catch (error) {
+            button.disabled = false;
+            button.textContent = "Duplicar como borrador";
+            showAdminCatalogFeedback({ ok: false, message: error.message });
           }
-          const select = document.querySelector("[data-admin-turismo-estado-quick]");
-          if (!select) return;
-          const nuevoEstado = select.value;
-          adminTurismoTrips = adminTurismoTrips.map((item) => item.id === trip.id ? { ...item, estado: nuevoEstado } : item);
-          renderAdminTurismo();
-          saveAdminTurismoTripsWithFeedback().then(() => renderAdminTurismo()).catch(() => renderAdminTurismo());
         });
 
         document.querySelector("[data-admin-scroll-preview]")?.addEventListener("click", () => {
@@ -7184,12 +7388,10 @@
           if (!urlInput) return;
           const url = safeMediaUrl(urlInput.value);
           if (!url) { urlInput.focus(); return; }
-          const trip = normalizeAdminTurismoTrip(adminTurismoCurrentTrip());
+          const trip = readAdminTurismoForm();
           const newFoto = { url, alt: altInput?.value?.trim() || "", principal: trip.fotos.length === 0 };
           trip.fotos.push(newFoto);
-          const index = adminTurismoTrips.findIndex((t) => t.id === adminTurismoEditingId);
-          if (index >= 0) adminTurismoTrips[index] = { ...adminTurismoTrips[index], fotos: trip.fotos };
-          saveAdminTurismoTrips();
+          adminTurismoEditorDraft = trip;
           renderAdminTurismo();
         });
 
@@ -7197,23 +7399,19 @@
         document.querySelectorAll("[data-remove-foto]").forEach((btn) => {
           btn.addEventListener("click", () => {
             const fotoIndex = Number(btn.dataset.removeFoto);
-            const trip = normalizeAdminTurismoTrip(adminTurismoCurrentTrip());
+            const trip = readAdminTurismoForm();
             trip.fotos.splice(fotoIndex, 1);
             if (trip.fotos.length && !trip.fotos.some((f) => f.principal)) trip.fotos[0].principal = true;
-            const index = adminTurismoTrips.findIndex((t) => t.id === adminTurismoEditingId);
-            if (index >= 0) adminTurismoTrips[index] = { ...adminTurismoTrips[index], fotos: trip.fotos };
-            saveAdminTurismoTrips();
+            adminTurismoEditorDraft = trip;
             renderAdminTurismo();
           });
         });
 
         // --- Agregar día de itinerario ---
         document.querySelector("[data-add-dia]")?.addEventListener("click", () => {
-          const trip = normalizeAdminTurismoTrip(adminTurismoCurrentTrip());
+          const trip = readAdminTurismoForm();
           const itinerario = [...(trip.itinerario || []), { dia: String(trip.itinerario.length + 1), titulo: "", descripcion: "" }];
-          const index = adminTurismoTrips.findIndex((t) => t.id === adminTurismoEditingId);
-          if (index >= 0) adminTurismoTrips[index] = { ...adminTurismoTrips[index], itinerario };
-          saveAdminTurismoTrips();
+          adminTurismoEditorDraft = { ...trip, itinerario };
           renderAdminTurismo();
         });
 
@@ -7221,11 +7419,9 @@
         document.querySelectorAll("[data-remove-dia]").forEach((btn) => {
           btn.addEventListener("click", () => {
             const diaIndex = Number(btn.dataset.removeDia);
-            const trip = normalizeAdminTurismoTrip(adminTurismoCurrentTrip());
+            const trip = readAdminTurismoForm();
             trip.itinerario.splice(diaIndex, 1);
-            const index = adminTurismoTrips.findIndex((t) => t.id === adminTurismoEditingId);
-            if (index >= 0) adminTurismoTrips[index] = { ...adminTurismoTrips[index], itinerario: trip.itinerario };
-            saveAdminTurismoTrips();
+            adminTurismoEditorDraft = trip;
             renderAdminTurismo();
           });
         });
@@ -7284,64 +7480,13 @@
           });
         });
 
-        document.querySelector("[data-admin-turismo-form]")?.addEventListener("submit", (event) => {
+        document.querySelector("[data-admin-turismo-form]")?.addEventListener("submit", async (event) => {
           event.preventDefault();
-          const formData = new FormData(event.currentTarget);
-          const id = adminTurismoEditingId || `viaje-${Date.now()}`;
-
-          // Leer fotos desde los campos individuales
-          const fotosCount = Number(formData.get("fotos_count") || 0);
-          const fotosArray = [];
-          for (let i = 0; i < fotosCount; i++) {
-            const url = String(formData.get(`foto_url_${i}`) || "").trim();
-            if (url) fotosArray.push({ url, alt: String(formData.get(`foto_alt_${i}`) || "").trim(), principal: false });
-          }
-          const principalIndex = Number(formData.get("fotoPrincipal") || 0);
-          if (fotosArray[principalIndex]) fotosArray[principalIndex].principal = true;
-          else if (fotosArray.length) fotosArray[0].principal = true;
-
-          // Leer itinerario desde campos dinámicos
-          const itinerarioArray = [];
-          let diaIndex = 0;
-          while (formData.get(`itinerario_titulo_${diaIndex}`) !== null || formData.get(`itinerario_desc_${diaIndex}`) !== null) {
-            const titulo = String(formData.get(`itinerario_titulo_${diaIndex}`) || "").trim();
-            const descripcion = String(formData.get(`itinerario_desc_${diaIndex}`) || "").trim();
-            if (titulo || descripcion) itinerarioArray.push({ dia: String(diaIndex + 1), titulo, descripcion });
-            diaIndex++;
-          }
-
-          const baseTrip = {
-            id,
-            slug: formData.get("slug") || "",
-            destino: formData.get("destino") || "",
-            titulo: formData.get("titulo") || "",
-            duracion: formData.get("duracion") || "",
-            temporada: formData.get("temporada") || "",
-            fechaSalida: formData.get("fechaSalida") || "",
-            fechaRegreso: formData.get("fechaRegreso") || "",
-            salidaGarantizada: formData.get("salidaGarantizada") === "on",
-            precioDesde: formData.get("precioDesde") || "",
-            precioValor: formData.get("precioBaseDoble") || null,
-            moneda: formData.get("moneda") || "USD",
-            precioBaseDoble: formData.get("precioBaseDoble") || "",
-            suplementoSingle: formData.get("suplementoSingle") || "",
-            precioMenor: formData.get("precioMenor") || "",
-            condicionVenta: formData.get("condicionVenta") || "",
-            categorias: formData.getAll("categorias"),
-            descripcionCorta: formData.get("descripcionCorta") || "",
-            descripcionLarga: formData.get("descripcionLarga") || "",
-            incluye: formData.get("incluye") || "",
-            noIncluye: formData.get("noIncluye") || "",
-            formasPago: formData.get("formasPago") || "",
-            itinerario: itinerarioArray,
-            fotos: fotosArray,
-            estado: formData.get("estado") || "borrador",
-            destacado: formData.get("destacado") === "on",
-            orden: formData.get("orden") || 999
-          };
-          const nextTrip = normalizeAdminTurismoTrip(baseTrip);
-          nextTrip.slug = uniqueAdminTurismoSlug(nextTrip.slug, id);
-          nextTrip.fotos = fotosArray.length ? fotosArray : normalizeAdminTurismoPhotos(baseTrip.fotos);
+          const form = event.currentTarget;
+          if (form.dataset.saving) return;
+          const previousTrips = adminTurismoTrips.map(trip => ({ ...trip }));
+          const nextTrip = readAdminTurismoForm(form);
+          const id = nextTrip.id;
           const existingIndex = adminTurismoTrips.findIndex((trip) => trip.id === id);
           if (existingIndex >= 0) {
             adminTurismoTrips[existingIndex] = nextTrip;
@@ -7349,9 +7494,22 @@
             adminTurismoTrips.unshift(nextTrip);
           }
           adminTurismoEditingId = id;
-          // Render inmediato para mostrar el estado guardado, feedback llega async
-          renderAdminTurismo();
-          saveAdminTurismoTripsWithFeedback().then(() => renderAdminTurismo()).catch(() => renderAdminTurismo());
+          form.dataset.saving = "true";
+          const controls = [...document.querySelectorAll(".admin-layout button, .admin-layout input, .admin-layout select, .admin-layout textarea")];
+          const disabled = controls.map(control => control.disabled);
+          controls.forEach(control => { control.disabled = true; });
+          showAdminCatalogFeedback({ ok: true, message: "Guardando cambios…" });
+          const saved = await saveAdminTurismoTripsWithFeedback();
+          delete form.dataset.saving;
+          controls.forEach((control, index) => { control.disabled = disabled[index]; });
+          if (!saved) {
+            adminTurismoTrips = previousTrips;
+            localStorage.setItem(ADMIN_TURISMO_STORAGE_KEY, JSON.stringify(previousTrips));
+            showAdminCatalogFeedback(adminTurismoSaveFeedback);
+            return;
+          }
+          adminTurismoEditorDraft = null;
+          if (document.body.contains(form)) renderAdminTurismo();
         });
       }
 
@@ -7687,293 +7845,8 @@
         `;
       }
 
-      function portalStatusTone(value) {
-        return window.ElAngelAzulPortal.statusTone(value);
-      }
-
-      function portalPaymentStatus(record) {
-        return window.ElAngelAzulPortal.paymentStatus(record);
-      }
-
-      function portalDocumentationItems(record) {
-        return window.ElAngelAzulPortal.documentationItems(record);
-      }
-
-      function renderPortalDocumentation(record) {
-        const items = portalDocumentationItems(record);
-        const pendingItems = items.filter(item => !item.isComplete);
-        if (!pendingItems.length) {
-          return `
-            <div class="portal-doc-ok">
-              <strong>Documentación al día</strong>
-              <span>No figuran documentos pendientes para este pasajero.</span>
-            </div>
-          `;
-        }
-        return `
-          <div class="portal-doc-list">
-            ${pendingItems.map(item => `
-              <div class="portal-doc-item">
-                <span>${escapeHtml(item.label)}</span>
-                <strong>${escapeHtml(item.status)}</strong>
-              </div>
-            `).join("")}
-          </div>
-        `;
-      }
-
-      function portalWhatsappHref(record) {
-        return whatsappLink(window.ElAngelAzulPortal.whatsappMessage(record));
-      }
-
-      function renderPortalResult(record) {
-        const result = document.getElementById("portal-result");
-        const paymentStatus = portalPaymentStatus(record);
-        const paidPercentage = record.total > 0 ? Math.min(100, Math.max(0, Math.round((record.paid / record.total) * 100))) : 0;
-        const pendingDocs = portalDocumentationItems(record).filter(item => !item.isComplete).length;
-        const whatsappHref = portalWhatsappHref(record);
-        const nextActions = [
-          paymentStatus === "Al día" ? "Mantené tu comprobante guardado por cualquier revisión." : "Consultá el detalle de pago y próxima cuota.",
-          pendingDocs ? "Revisá la documentación pendiente con administración." : "La documentación figura sin pendientes cargados.",
-          "Guardá este acceso para volver a consultar tu viaje."
-        ];
-        result.innerHTML = `
-          <section class="portal-result portal-result-dashboard">
-            <div class="portal-result-head">
-              <div>
-                <span>Mi viaje</span>
-                <h2>${escapeHtml(record.name)}</h2>
-                <p>${escapeHtml(record.group.school || record.group.name || "Grupo pendiente")} · ${escapeHtml(record.group.course || "Curso pendiente")}</p>
-              </div>
-              <a href="${whatsappHref}" target="_blank" rel="noopener">Consultar por WhatsApp</a>
-            </div>
-
-            <div class="portal-trip-card">
-              <div>
-                <span>Viaje asignado</span>
-                <strong>${escapeHtml(record.trip.name || "Viaje pendiente")}</strong>
-                <p>${escapeHtml(record.group.name || "Grupo pendiente")} · Contrato ${escapeHtml(record.contractCode || "Pendiente")}</p>
-              </div>
-              <strong class="portal-status-pill ${portalStatusTone(record.generalStatus)}">${escapeHtml(record.generalStatus || "Consultar")}</strong>
-            </div>
-
-            <div class="portal-status-grid">
-              <article class="portal-status-card">
-                <span>Estado del viaje</span>
-                <strong>${escapeHtml(record.trip.status || record.passengerStatus || "En seguimiento")}</strong>
-                <small>${escapeHtml(record.trip.name || "Viaje pendiente")} · ${escapeHtml(record.trip.destination || "Destino pendiente")}</small>
-                <small>${escapeHtml(record.generalStatus || "Consultar estado")}</small>
-              </article>
-              <article class="portal-status-card">
-                <span>Estado de pagos</span>
-                <strong>${escapeHtml(paymentStatus)}</strong>
-                <small>${record.nextInstallment ? `Próxima cuota: ${escapeHtml(record.nextInstallment.cuota_nombre || `Cuota ${record.nextInstallment.cuota_numero}`)} · ${formatDate(record.nextInstallment.cuota_vencimiento)}` : "Sin cuotas pendientes cargadas"}</small>
-                ${record.hasReview ? `<small>Hay un pago en revisión administrativa.</small>` : ""}
-              </article>
-              <article class="portal-status-card">
-                <span>Documentación pendiente</span>
-                <strong>${pendingDocs ? `${pendingDocs} pendiente${pendingDocs > 1 ? "s" : ""}` : "Al día"}</strong>
-                <small>${pendingDocs ? "Revisá el detalle de documentación más abajo." : "No figuran pendientes cargados."}</small>
-              </article>
-            </div>
-
-            <div class="portal-next-actions">
-              <span>Próximos pasos</span>
-              ${nextActions.map((action, index) => `
-                <div>
-                  <strong>${index + 1}</strong>
-                  <p>${escapeHtml(action)}</p>
-                </div>
-              `).join("")}
-            </div>
-
-            <div class="portal-result-section">
-              <h3>Resumen del viaje</h3>
-              <div class="portal-summary">
-                <div><span>Viaje</span><strong>${escapeHtml(record.trip.name || "Pendiente")}</strong></div>
-                <div><span>Colegio / grupo</span><strong>${escapeHtml(record.group.name || "Pendiente")}</strong></div>
-                <div><span>Contrato</span><strong>${escapeHtml(record.contractCode || "Pendiente")}</strong></div>
-                <div><span>DNI</span><strong>${escapeHtml(record.dni || "Pendiente")}</strong></div>
-                <div><span>Estado del pasajero</span><strong class="portal-status-pill ${portalStatusTone(record.passengerStatus)}">${escapeHtml(record.passengerStatus || "En seguimiento")}</strong></div>
-                <div><span>Estado general</span><strong class="portal-status-pill ${portalStatusTone(record.generalStatus)}">${escapeHtml(record.generalStatus || "Consultar")}</strong></div>
-              </div>
-            </div>
-
-            <div class="portal-result-section">
-              <h3>Estado de pagos</h3>
-              ${record.total === null || record.total === undefined ? `
-                <p class="portal-notice">Todavía no cargamos el detalle de montos para este viaje. Tu estado de pago actual es <strong>${escapeHtml(paymentStatus)}</strong>. Para el monto exacto, consultanos por WhatsApp.</p>
-              ` : `
-                <div class="portal-payment-panel">
-                  <div class="portal-payment-meter" aria-label="Avance de pago">
-                    <span style="width: ${paidPercentage}%"></span>
-                  </div>
-                  <div class="portal-payment-summary">
-                    <div><span>Total del viaje</span><strong>${formatCurrency(record.total)}</strong></div>
-                    <div><span>Monto pagado</span><strong>${formatCurrency(record.paid)}</strong></div>
-                    <div><span>Saldo pendiente</span><strong>${formatCurrency(record.balance)}</strong></div>
-                    <div><span>Avance</span><strong>${paidPercentage}%</strong></div>
-                  </div>
-                </div>
-              `}
-              ${record.hasReview ? `<p class="portal-notice">Hay pagos en revisión.</p>` : ""}
-            </div>
-
-            <div class="portal-result-section">
-              <h3>Cuotas</h3>
-              <div class="portal-installments">
-                ${record.installments.length ? record.installments.map(installment => `
-                  <div class="portal-installment">
-                    <strong>${installment.cuota_nombre || `Cuota ${installment.cuota_numero}`}</strong>
-                    <span>${formatCurrency(parseNumber(installment.cuota_monto))}</span>
-                    <span>Vence: ${formatDate(installment.cuota_vencimiento)}</span>
-                    <span class="portal-status-pill ${portalStatusTone(installment.cuota_estado)}">${escapeHtml(installment.cuota_estado)}</span>
-                  </div>
-                `).join("") : `<p>Este contrato todavía no tiene cuotas cargadas.</p>`}
-              </div>
-            </div>
-
-            <div class="portal-result-section">
-              <h3>Documentación</h3>
-              ${renderPortalDocumentation(record)}
-            </div>
-
-            <div class="portal-whatsapp-panel">
-              <div>
-                <span>Atención directa</span>
-                <h3>Consultá por WhatsApp</h3>
-                <p>El mensaje ya incluye pasajero, DNI y contrato para que administración ubique rápido el caso.</p>
-              </div>
-              <a href="${whatsappHref}" target="_blank" rel="noopener">Abrir WhatsApp</a>
-            </div>
-          </section>
-        `;
-      }
-
-      function renderPortalNotFound() {
-        const result = document.getElementById("portal-result");
-        result.innerHTML = `
-          <section class="portal-empty">
-            <h2>No encontramos un pasajero con ese DNI.</h2>
-            <p>Revisá el número o consultanos por WhatsApp.</p>
-            <a href="${whatsappLink("Hola, quiero consultar por el portal de pasajeros de El Ángel Azul.")}" target="_blank" rel="noopener">Consultar por WhatsApp</a>
-          </section>
-        `;
-      }
-
-      // FIX: el portal leía de un archivo Excel hardcodeado ("...simulado_v1.xlsx") con
-      // datos de prueba, completamente desconectado de la base real (Google Sheets) que
-      // usa el resto del sistema. Por eso la ruta pública estaba deshabilitada (redirigía
-      // a Inscripción) - mostrar datos falsos a una familia real hubiera sido peor que no
-      // mostrar nada. Ahora busca sobre los GRUPOS/PASAJEROS reales (los mismos que ya
-      // sincroniza el admin con Sheets).
-      //
-      // Importante: el sistema hoy NO trackea montos reales de pago por pasajero (solo un
-      // estado: "Pendiente" / "Al día" / "Vencido"), así que NO se inventan cifras de saldo.
-      // Se muestra el estado real, y para el detalle de monto se deriva a WhatsApp - es
-      // preferible decir "consultá el monto por WhatsApp" antes que mostrar un número
-      // inventado que la familia podría tomar como real.
-      function buildRealPortalRecord(passenger, group) {
-        const contrato = contractById(passengerContratoId(passenger), group.id);
-        return {
-          contractCode: passengerCodigoContrato(passenger) || "Pendiente",
-          name: passenger.nombre || "Pasajero",
-          dni: passenger.dni || "",
-          passengerStatus: passenger.estado || "Pendiente",
-          trip: {
-            code: group.id || "",
-            name: group.viaje || "",
-            destination: group.viaje || "",
-            type: group.nivel || "",
-            status: group.estado || ""
-          },
-          group: {
-            code: group.id || "",
-            name: `${group.colegio || ""} · ${group.curso || ""} ${group.division || ""}`.trim(),
-            school: group.colegio || "",
-            course: `${group.curso || ""} ${group.division || ""}`.trim()
-          },
-          documentation: {
-            general: passenger.documentacion || "Pendiente de validar",
-            medical: passenger.fichaMedica || "Pendiente de validar",
-            authorization: String(contrato?.estado || "").toLowerCase() === "activo" ? "Aprobada" : "Pendiente de validar"
-          },
-          installments: [],
-          payments: [],
-          total: null,
-          paid: 0,
-          balance: null,
-          nextInstallment: null,
-          hasReview: false,
-          generalStatus: passenger.pago || "Consultar estado"
-        };
-      }
-
-      async function consultarPortalPasajeros(event) {
-        event.preventDefault();
-        const dni = document.getElementById("portal-dni").value.replace(/\D/g, "");
-        const accessCode = document.getElementById("portal-code").value.trim().toUpperCase();
-        const result = document.getElementById("portal-result");
-        result.innerHTML = `<section class="portal-empty"><p>Cargando datos del pasajero...</p></section>`;
-        try {
-          await hydrateGoogleSheetsData();
-          let foundPassenger = null;
-          let foundGroup = null;
-          for (const group of adminPasajerosDemo) {
-            const match = (group.pasajeros || []).find((item) => (
-              normalizeDni(item.dni) === dni &&
-              normalizeCode(passengerCodigoContrato(item)) === accessCode
-            ));
-            if (match) {
-              foundPassenger = match;
-              foundGroup = group;
-              break;
-            }
-          }
-          if (!foundPassenger) {
-            renderPortalNotFound();
-            return;
-          }
-          renderPortalResult(buildRealPortalRecord(foundPassenger, foundGroup));
-        } catch (error) {
-          result.innerHTML = `
-            <section class="portal-empty">
-              <h2>No pudimos cargar la base de pasajeros.</h2>
-              <p>Revisá que la base esté disponible o consultanos por WhatsApp.</p>
-            </section>
-          `;
-        }
-      }
-
       function renderPortalPasajeros() {
-        document.getElementById("app").innerHTML = `
-          <div class="layout portal-layout">
-            <section class="portal-hero">
-              <span>Mi viaje</span>
-              <h1>Estado de inscripción</h1>
-              <p>Consultá desde el celular tu viaje, documentación y estado de pagos con DNI y código de contrato.</p>
-            </section>
-
-            <section class="portal-panel">
-              <div class="portal-panel-head">
-                <span>Acceso rápido</span>
-                <h2>Ingresá tus datos</h2>
-                <p>El código figura en la ficha o contrato de viaje.</p>
-              </div>
-              <form class="portal-form" id="portal-form">
-                <label for="portal-dni">DNI del pasajero</label>
-                <input id="portal-dni" name="dni" inputmode="numeric" autocomplete="off" placeholder="Ingresá tu DNI" required>
-                <label for="portal-code">Código de contrato</label>
-                <input id="portal-code" name="code" autocomplete="off" placeholder="Ej: CON-PRI-RIO-PARANA-6TO-A-CARLOS-PAZ-2026" required>
-                <small class="portal-form-hint">Lo encontrás en tu ficha de adhesión o contrato de viaje.</small>
-                <button type="submit">Ver mi viaje</button>
-              </form>
-            </section>
-
-            <div id="portal-result" aria-live="polite"></div>
-          </div>
-        `;
-        document.getElementById("portal-form").addEventListener("submit", consultarPortalPasajeros);
+        return window.ElAngelAzulPortalPrivate.render(document.getElementById("app"));
       }
 
       const inscripcionDestinosPorNivel = {
@@ -8081,6 +7954,7 @@
         let colegiosCargados = false;
         let colegiosError = false;
         let contratoError = false;
+        let contratoEstado = "sin_contrato";
         // undefined = buscando; null = sin contrato; objeto = contrato encontrado.
         let contrato = null;
         let contractRequest = 0;
@@ -8189,6 +8063,10 @@
             contractResult.textContent = "No pudimos verificar el contrato en este momento. Podés continuar con la ficha; se volverá a consultar antes del envío.";
             return;
           }
+          if (["ambiguo","pausada"].includes(contratoEstado)) {
+            contractResult.textContent = contratoEstado === "ambiguo" ? "Hay más de un contrato para tu curso. Pedí a la agencia el enlace correcto antes de continuar." : "La inscripción de este grupo está pausada. Consultá con la agencia antes de continuar.";
+            return;
+          }
           if (contrato) {
             contractResult.classList.add("is-ok");
             contractResult.innerHTML = `
@@ -8241,6 +8119,7 @@
               if (requestId !== contractRequest) return;
               contratoError = !response.ok || !payload.ok;
               contrato = contratoError ? null : payload.contrato;
+              contratoEstado = payload.estado || "sin_contrato";
             } catch (_) {
               if (requestId !== contractRequest) return;
               contrato = null;
@@ -8265,14 +8144,30 @@
           divisionField.value = divisionField.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 3);
           refreshContract();
         });
-        form.addEventListener("submit", (event) => {
+        form.addEventListener("submit", async (event) => {
           event.preventDefault();
+          if (nextButton.disabled) return;
           const s = seleccion();
           if (!seleccionValida(s)) {
             errorMessage.textContent = requiredMessage;
             errorMessage.hidden = false;
             errorMessage.focus();
             return;
+          }
+          if (s.colegioId) {
+            nextButton.disabled = true;
+            try {
+              const query = new URLSearchParams({colegioId:s.colegioId,nivel:s.nivel,viaje:`${s.destino} ${s.anio}`,grado:s.grado,division:s.division});
+              const response = await fetch(`/api/public/inscripcion-context?${query}`,{cache:"no-store"});
+              const payload = await response.json();
+              if (!response.ok || !payload.ok) throw Error("No pudimos verificar el contrato. Revisá tu conexión y volvé a intentar.");
+              if (["ambiguo","pausada"].includes(payload.estado)) throw Error(payload.estado === "ambiguo" ? "Hay más de un contrato para este curso. Pedí a la agencia el enlace del grupo correcto." : "La inscripción del grupo está pausada. Consultá con la agencia.");
+            } catch (error) {
+              errorMessage.textContent = error.message;
+              errorMessage.hidden = false;
+              errorMessage.focus();
+              return;
+            } finally { nextButton.disabled = false; }
           }
           location.hash = `/inscripcion/ficha-adhesion?${new URLSearchParams(s).toString()}`;
         });
@@ -8306,7 +8201,8 @@
           colegioTexto: params.get("colegioTexto") || "",
           colegioNombre: params.get("colegioNombre") || params.get("colegioTexto") || "",
           grado: params.get("grado") || "",
-          division: params.get("division") || ""
+          division: params.get("division") || "",
+          ...(params.get("contrato") ? { inscripcionCodigo: params.get("contrato") } : {})
         };
       }
 
@@ -8323,140 +8219,6 @@
           /^[A-Z0-9]{1,3}$/.test(context.division) &&
           (context.colegioId || context.colegioTexto.trim().length >= 3)
         );
-      }
-
-      async function renderAdminPortal() {
-        document.getElementById("app").innerHTML = `
-          <div class="layout portal-layout">
-            <section class="portal-hero">
-              <h1>Admin portal</h1>
-              <p>Cargando estructura desde Excel simulado...</p>
-            </section>
-          </div>
-        `;
-
-        let data;
-        try {
-          data = await loadPortalExcelData();
-        } catch (error) {
-          document.getElementById("app").innerHTML = `
-            <div class="layout portal-layout">
-              <section class="portal-empty">
-                <h1>No se pudo cargar el Excel simulado</h1>
-                <p>La vista admin necesita el archivo ${portalExcelFile}.</p>
-              </section>
-            </div>
-          `;
-          return;
-        }
-
-        const tripCards = data.tripsGroups.map(group => {
-          const passengers = data.passengers.filter(passenger => (
-            normalizeCode(passenger.viaje_codigo) === normalizeCode(group.viaje_codigo) &&
-            normalizeCode(passenger.grupo_codigo) === normalizeCode(group.grupo_codigo)
-          ));
-          const records = passengers.map(passenger => getPassengerPortalRecord(passenger, data));
-          const total = records.reduce((sum, record) => sum + record.total, 0);
-          const paid = records.reduce((sum, record) => sum + record.paid, 0);
-          const balance = total - paid;
-          return `
-            <div class="admin-demo-card">
-              <h3>${group.viaje_nombre}</h3>
-              <p><strong>Código:</strong> ${group.viaje_codigo}</p>
-              <p><strong>Destino:</strong> ${group.destino}</p>
-              <p><strong>Tipo:</strong> ${group.tipo_viaje}</p>
-              <p><strong>Estado:</strong> ${group.estado_grupo}</p>
-              <p><strong>Grupo:</strong> ${group.grupo_nombre}</p>
-              <p><strong>Pasajeros:</strong> ${passengers.length}</p>
-              <p><strong>Total:</strong> ${formatCurrency(total)}</p>
-              <p><strong>Pagado:</strong> ${formatCurrency(paid)}</p>
-              <p><strong>Saldo:</strong> ${formatCurrency(balance)}</p>
-            </div>
-          `;
-        }).join("");
-
-        const groupCards = data.tripsGroups.map(group => {
-          const passengers = data.passengers.filter(passenger => normalizeCode(passenger.grupo_codigo) === normalizeCode(group.grupo_codigo));
-          return `
-            <div class="admin-demo-card">
-              <h3>${group.grupo_nombre}</h3>
-              <p><strong>Código:</strong> ${group.grupo_codigo}</p>
-              <p><strong>Viaje:</strong> ${group.viaje_nombre}</p>
-              <p><strong>Colegio:</strong> ${group.colegio}</p>
-              <p><strong>Curso:</strong> ${group.curso}</p>
-              <p><strong>Estado:</strong> ${group.estado_grupo}</p>
-              <p><strong>Pasajeros:</strong> ${passengers.length}</p>
-            </div>
-          `;
-        }).join("");
-
-        const passengerCards = data.passengers.map(passenger => {
-          const record = getPassengerPortalRecord(passenger, data);
-          return `
-            <div class="admin-demo-card">
-              <h3>${record.name}</h3>
-              <p><strong>DNI:</strong> ${record.dni}</p>
-              <p><strong>Contrato:</strong> ${record.contractCode}</p>
-              <p><strong>Viaje:</strong> ${record.trip.name}</p>
-              <p><strong>Grupo:</strong> ${record.group.name}</p>
-              <p><strong>Estado:</strong> ${record.generalStatus}</p>
-              <p><strong>Total:</strong> ${formatCurrency(record.total)}</p>
-              <p><strong>Pagado:</strong> ${formatCurrency(record.paid)}</p>
-              <p><strong>Saldo:</strong> ${formatCurrency(record.balance)}</p>
-            </div>
-          `;
-        }).join("");
-
-        const paymentCards = data.payments.map(payment => {
-          const passenger = data.passengers.find(item => (
-            normalizeDni(item.pasajero_dni) === normalizeDni(payment.pasajero_dni) &&
-            normalizeCode(item.contrato_codigo) === normalizeCode(payment.contrato_codigo)
-          ));
-          return `
-            <div class="admin-demo-card">
-              <h3>${passenger?.pasajero_nombre || "Pasajero no encontrado"}</h3>
-              <p><strong>Contrato:</strong> ${payment.contrato_codigo}</p>
-              <p><strong>Pago:</strong> ${formatCurrency(parseNumber(payment.pago_monto))}</p>
-              <p><strong>Fecha:</strong> ${formatDate(payment.pago_fecha)}</p>
-              <p><strong>Medio:</strong> ${payment.pago_medio || "Sin medio"}</p>
-              <p><strong>Cuota:</strong> ${payment.cuota_asociada || "Sin asociar"}</p>
-              <p><strong>Estado:</strong> ${payment.pago_estado}</p>
-            </div>
-          `;
-        }).join("");
-
-        document.getElementById("app").innerHTML = `
-          <div class="layout portal-layout">
-            <section class="portal-hero">
-              <h1>Admin portal</h1>
-              <p>Vista interna para validar estructura de viajes, grupos, pasajeros, cuotas y pagos.</p>
-            </section>
-
-            <section class="admin-demo-section">
-              <p class="portal-notice">Esta es una vista de solo lectura para revisar viajes, grupos, pasajeros, cuotas y pagos.</p>
-            </section>
-
-            <section class="admin-demo-section">
-              <h2>Viajes</h2>
-              <div class="admin-demo-grid">${tripCards}</div>
-            </section>
-
-            <section class="admin-demo-section">
-              <h2>Grupos</h2>
-              <div class="admin-demo-grid">${groupCards}</div>
-            </section>
-
-            <section class="admin-demo-section">
-              <h2>Pasajeros</h2>
-              <div class="admin-demo-grid">${passengerCards}</div>
-            </section>
-
-            <section class="admin-demo-section">
-              <h2>Resumen de pagos</h2>
-              <div class="admin-demo-grid">${paymentCards}</div>
-            </section>
-          </div>
-        `;
       }
 
       function fichaOpciones(lista, seleccionado = "", placeholder = "") {
@@ -8583,7 +8345,7 @@
                 <strong>${escapeHtml(contexto.colegioNombre)} · ${escapeHtml(contexto.nivel)} ${escapeHtml(contexto.grado)} ${escapeHtml(contexto.division)}</strong>
                 <p>${escapeHtml(contexto.destino)} ${escapeHtml(contexto.anio)} · Contrato: <strong data-ficha-contrato>${contexto.colegioId ? "buscando…" : "se vincula en administración"}</strong></p>
                 ${["colegio", "nivel", "grado", "division", "destino", "anio"].map(fichaCampoError).join("")}
-                <a class="ficha-adhesion-context-edit" href="#/inscripcion?${escapeHtml(new URLSearchParams(contexto).toString())}">Cambiar viaje o colegio</a>
+                <a class="ficha-adhesion-context-edit" href="#/inscripcion?${escapeHtml(contexto.inscripcionCodigo ? new URLSearchParams({contrato:contexto.inscripcionCodigo}).toString() : new URLSearchParams(contexto).toString())}">${contexto.inscripcionCodigo ? "Revisar grupo del enlace" : "Cambiar viaje o colegio"}</a>
               </div>
               <div class="ficha-adhesion-help" data-reveal-light>
                 <strong>Antes de empezar</strong>
@@ -8888,7 +8650,8 @@
             nivel: contextoInscripcion.nivel,
             viaje: `${contextoInscripcion.destino} ${contextoInscripcion.anio}`,
             grado: contextoInscripcion.grado,
-            division: contextoInscripcion.division
+            division: contextoInscripcion.division,
+            ...(contextoInscripcion.inscripcionCodigo ? { codigo: contextoInscripcion.inscripcionCodigo } : {})
           });
           planesEnCurso = fetch(`/api/public/inscripcion-context?${params}`, { cache: "no-store" })
             .then((response) => {
@@ -8896,6 +8659,7 @@
               return response.json();
             })
             .then((payload) => {
+              if (["ambiguo","pausada","enlace_invalido"].includes(payload.estado)) throw new Error(payload.estado === "ambiguo" ? "Hay más de un contrato para tu curso. Pedí a la agencia el enlace de tu grupo." : "La inscripción del grupo está pausada o el enlace ya no está vigente. Consultá con la agencia.");
               const planes = Array.isArray(payload.planes) ? payload.planes : [];
               planesDisponibles = planes.map((plan) => plan.id);
               if (contratoNode) contratoNode.textContent = payload.contrato?.codigo || "se vincula en administración";
@@ -8909,8 +8673,8 @@
               planesCargados = true;
               return true;
             })
-            .catch(() => {
-              if (contratoNode) contratoNode.textContent = "se vincula en administración";
+            .catch((error) => {
+              if (contratoNode) contratoNode.textContent = error.message === "contexto" ? "no pudimos verificarlo; volvé a intentar" : error.message;
               return false;
             })
             .finally(() => { planesEnCurso = null; });
@@ -9186,8 +8950,10 @@
 
       async function render() {
         const path = currentPath();
+        if (path === "/" || path.startsWith("/turismo")) turismoPublicPackagesCache = null;
         const page = routes[path] || routes["/"];
         document.body.classList.toggle("home-page", path === "/");
+        document.body.classList.toggle("portal-private-page", ["/portal-pasajeros", "/pasajeros", "/mi-viaje"].includes(path));
         document.body.classList.toggle("turismo-page", path.startsWith("/turismo"));
         document.body.classList.toggle("turismo-hero-page", path.startsWith("/turismo"));
         if (path !== "/" && path !== "/turismo" && path !== "/turismo/paquetes" && window.EAAHomeMotion) window.EAAHomeMotion.kill();
@@ -9210,6 +8976,10 @@
         }
         if (path.startsWith("/turismo/")) {
           const packageItem = await turismoPackageBySlug(path.replace("/turismo/", ""));
+          if (!packageItem && turismoPublicLoadError) {
+            document.getElementById("app").innerHTML = `<main class="layout"><h1>No pudimos abrir este viaje</h1>${renderTurismoEmptyState()}</main>`;
+            return;
+          }
           if (packageItem) {
             renderPackageDetail(packageItem);
             return;
@@ -9239,18 +9009,18 @@
           renderContacto();
           return;
         }
-        // FIX: el portal de pasajeros estaba desconectado del router (redirigía a
-        // Inscripción) porque su fuente de datos era un Excel simulado. Ahora que lee
-        // de la base real (ver buildRealPortalRecord / consultarPortalPasajeros), se
-        // reconecta la ruta pública.
+        // El portal utiliza una sesión propia; nunca hidrata colecciones del administrador.
         if (path === "/portal-pasajeros" || path === "/pasajeros" || path === "/mi-viaje") {
-          await hydrateGoogleSheetsData();
-          renderPortalPasajeros();
+          await renderPortalPasajeros();
           return;
         }
         // Ficha v2: la inscripción ya no hidrata Grupos/Contratos en el
         // navegador; consulta colegios y contrato exacto en /api/public/*.
         if (path === "/inscripcion") {
+          if (currentHashParams().get("contrato")) {
+            window.ElAngelAzulEnrollment.open(document.getElementById("app"), currentHashParams().get("contrato"));
+            return;
+          }
           renderInscripcion();
           return;
         }
@@ -9360,24 +9130,17 @@
         }
       }
 
+      document.addEventListener("click", async (event) => {
+        const retry = event.target.closest("[data-turismo-retry]");
+        if (!retry || retry.disabled) return;
+        retry.disabled = true;
+        retry.textContent = "Cargando viajes…";
+        turismoPublicPackagesCache = null;
+        await render();
+      });
+
       function setupPublicInternalAccess() {
-        document.querySelectorAll('.site-nav a[href="/admin/"]').forEach(link => {
-          if (link.textContent.trim() === "Iniciar sesión") {
-            link.remove();
-          }
-        });
-
-        const footerBottom = document.querySelector(".footer-bottom");
-        if (!footerBottom || footerBottom.querySelector(".footer-internal-access")) return;
-
-        const internalAccess = document.createElement("a");
-        internalAccess.className = "footer-internal-access";
-        // Entrar al panel por la misma ruta hash que usa toda la SPA. Así el
-        // acceso desde la portada no depende de una ruta física ni de una
-        // redirección intermedia del servidor.
-        internalAccess.href = adminRouteHref("/admin");
-        internalAccess.textContent = "Acceso interno";
-        footerBottom.appendChild(internalAccess);
+        document.querySelectorAll('.footer-internal-access, .site-nav a[href="/admin/"]').forEach(link => link.remove());
       }
 
       // Scroll suave global (Lenis) para el sitio público. Solo animaciones/

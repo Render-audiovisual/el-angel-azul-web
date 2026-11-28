@@ -51,10 +51,11 @@ test("la navegación interna del admin conserva rutas hash y no genera 404 físi
   assert.doesNotMatch(source, /return `\$\{path\}\//);
 });
 
-test("Acceso interno de la portada entra directamente por la ruta hash", () => {
+test("la portada elimina los accesos internos heredados", () => {
   const source = functionSource("setupPublicInternalAccess", "initLenisSmoothScroll");
-  assert.match(source, /internalAccess\.href = adminRouteHref\("\/admin"\)/);
-  assert.doesNotMatch(source, /internalAccess\.href = "\/admin\/"/);
+  assert.match(source, /footer-internal-access/);
+  assert.match(source, /link.remove\(\)/);
+  assert.doesNotMatch(source, /createElement|appendChild/);
 });
 
 test("Configuración queda bloqueada para cuentas de agente incluso por URL directa", () => {
@@ -332,7 +333,7 @@ test("los planes de pago se administran dentro del contrato con 1 a 18 cuotas", 
 
 test("la tabla de pasajeros muestra colegio, grado, división, plan y tutor", () => {
   const source = functionSource("renderAdminPasajerosTableRows", "bindAdminPasajerosProfileButtons");
-  for (const texto of ["planNombre", "responsableApellido", "group\.colegio", "group\.curso", "group\.division"]) {
+  for (const texto of ["payment.planPago", "responsableApellido", "group\.colegio", "group\.curso", "group\.division"]) {
     assert.match(source, new RegExp(texto));
   }
 });
@@ -470,9 +471,9 @@ test("Turismo público no muestra viajes de demostración cuando no hay viajes a
 
   // Control de flujo con la función real: filas inactivas -> vacío; servidor caído -> vacío sin guardarlo.
   const cargar = new Function("fetch", "turismoRowToTrip", "adminTripToPublicPackage", "isTurismoPublicPreviewMode", "state", `
-    ${fuente.replace("turismoPublicPackagesCache", "state.cache").replaceAll("turismoPublicPackagesCache", "state.cache")}
+    ${fuente.replaceAll("turismoPublicPackagesCache", "state.cache").replaceAll("turismoPublicLoadError", "state.error")}
     return loadTurismoPublicPackages;`);
-  const respuesta = (rows) => async () => ({ ok: true, json: async () => ({ ok: true, rows }) });
+  const respuesta = (rows) => async () => ({ ok: true, json: async () => ({ ok: true, paquetes: rows }) });
   const comoPublico = (fila) => (fila.estado === "activo" ? { ...fila, orden: 1, destacado: false } : null);
   for (const [nombre, fetchFalso, esperado, cacheado] of [
     ["todas inactivas", respuesta([{ estado: "inactivo" }, { estado: "borrador" }]), 0, true],
@@ -484,6 +485,7 @@ test("Turismo público no muestra viajes de demostración cuando no hay viajes a
     const resultado = await cargar(fetchFalso, (fila) => fila, comoPublico, () => false, state)();
     assert.equal(resultado.length, esperado, nombre);
     assert.equal(state.cache !== null, cacheado, `${nombre}: cache`);
+    assert.equal(Boolean(state.error), !cacheado, `${nombre}: error diferenciado del vacío`);
   }
 });
 

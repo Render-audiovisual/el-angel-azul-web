@@ -3,6 +3,12 @@ const fs = require("fs");
 const http = require("http");
 const path = require("path");
 const { URL } = require("url");
+const academic = require('./lib/academic');
+const enrollment = require('./lib/enrollment');
+const documents = require('./lib/documents');
+const contractInformation = require('./lib/contract-information');
+const passengerPortal = require('./lib/passenger-portal');
+const studentAccounts = require('./lib/student-accounts');
 const db = require("./lib/db");
 const fichaValidation = require("./assets/js/modules/ficha-validation.js");
 const fichaPdf = require("./lib/ficha-pdf");
@@ -10,6 +16,8 @@ const email = require("./lib/email");
 const storage = require("./lib/storage");
 const adminWrite = require("./lib/admin-write");
 const paymentsLedger = require("./lib/payments-ledger");
+const catalog = require("./lib/catalog");
+const catalogMedia = require("./lib/catalog-media");
 
 const PORT = Number(process.env.PORT || 8080);
 const ROOT = __dirname;
@@ -243,13 +251,13 @@ const SCHEMA = {
     "estado_revision", "documentacion_estado", "ficha_medica_estado", "autorizacion_estado", "motivo_rechazo", "observaciones",
     "email_estado", "email_error", "email_enviado_at", "created_at", "updated_at"
   ],
-  FICHAS_TUTOR: ["id", "tipo", "pasajero_nombre", "pasajero_apellido", "pasajero_dni", "nombre", "apellido", "tipo_documento", "numero_documento", "cuil_cuit", "celular", "email", "parentesco", "estado_revision", "observaciones", "created_at", "updated_at"],
+  FICHAS_TUTOR: ["id", "tipo", "pasajero_nombre", "pasajero_apellido", "pasajero_dni", "nombre", "apellido", "tipo_documento", "numero_documento", "cuil_cuit", "celular", "email", "parentesco", "estado_revision", "observaciones", "pasajero_id", "identidad_verificada", "created_at", "updated_at"],
   PLANES_PAGO: ["id", "contrato_id", "nombre", "cuotas", "descripcion", "activo", "orden"],
   COLEGIOS: ["id", "nombre", "provincia", "localidad", "codigo_oficial", "activo"],
   PAGOS: ["id", "pasajero_id", "pasajero_dni", "contrato_codigo", "fecha", "monto", "medio", "estado", "cuota_id", "comprobante_url", "observaciones", "created_at"],
   CUOTAS: ["id", "pasajero_id", "pasajero_dni", "contrato_codigo", "numero", "nombre", "monto", "vencimiento", "estado", "created_at", "updated_at"],
   CONFIG: ["clave", "valor", "descripcion", "updated_at"],
-  TURISMO: ["id", "slug", "destino", "titulo", "duracion", "temporada", "fecha_salida", "fecha_regreso", "salida_garantizada", "precio_desde", "precio_valor", "moneda", "precio_base_doble", "suplemento_single", "precio_menor", "condicion_venta", "categorias", "descripcion_corta", "descripcion_larga", "incluye", "no_incluye", "formas_pago", "itinerario", "fotos", "estado", "destacado", "orden", "created_at", "updated_at"]
+  TURISMO: ["id", "slug", "destino", "titulo", "duracion", "temporada", "fecha_salida", "fecha_regreso", "salida_garantizada", "precio_desde", "precio_valor", "moneda", "precio_base_doble", "suplemento_single", "precio_menor", "condicion_venta", "categorias", "descripcion_corta", "descripcion_larga", "incluye", "no_incluye", "formas_pago", "itinerario", "fotos", "estado", "destacado", "orden", "alojamiento", "transporte", "regimen_comidas", "disponibilidad", "cupos", "promocion", "video_url", "archivado", "created_at", "updated_at"]
 };
 
 const WRITE_ALLOWED = new Set(["GRUPOS", "CONTRATOS", "PASAJEROS", "FICHAS_ADHESION", "TURISMO", "FICHAS_TUTOR", "PLANES_PAGO", "COLEGIOS"]);
@@ -390,6 +398,7 @@ function securityHeaders(req) {
       "base-uri 'self'",
       "object-src 'none'",
       "frame-ancestors 'none'",
+      "frame-src 'self' https://www.youtube-nocookie.com https://player.vimeo.com",
       "form-action 'self'",
       "script-src 'self' https://cdn.jsdelivr.net",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net",
@@ -602,7 +611,7 @@ async function writeSheet(sheet, rows, deleteIds = []) {
   await sheetsRequest("PUT", `/values/${range}?valueInputOption=RAW`, { values });
 }
 
-// TURISMO/CONFIG son públicas por diseño (catálogo web). GRUPOS y CONTRATOS
+// Solo TURISMO tiene lectura pública (catálogo web). CONFIG requiere sesión. GRUPOS y CONTRATOS
 // ya no se entregan completos: la inscripción usa un endpoint de búsqueda
 // acotado que devuelve como máximo cinco coincidencias activas.
 // PASAJEROS, FICHAS_ADHESION, PAGOS y CUOTAS SÍ tienen datos
@@ -638,6 +647,7 @@ const LONG_FIELD_LIMITS = {
   itinerario: 20000,
   fotos: 10000,
   descripcion_larga: 5000,
+  alojamiento:2000,transporte:2000,regimen_comidas:2000,promocion:2000,
   observaciones: 3000,
   firma_data_url: 250000
 };
@@ -649,7 +659,7 @@ function fieldLimitFor(column) {
 function sanitizeRow(row, columns) {
   const clean = {};
   columns.forEach((column) => {
-    clean[column] = String(row && typeof row === "object" ? row[column] || "" : "").slice(0, fieldLimitFor(column));
+    clean[column] = String(row && typeof row === "object" ? row[column] ?? "" : "").slice(0, fieldLimitFor(column));
   });
   return clean;
 }
@@ -673,6 +683,10 @@ async function handleSheets(req, res, url) {
     const adminSession = currentAdminSession(req);
     if (!PUBLIC_READ_SHEETS.has(sheet) && !adminSession) {
       return json(res, 401, { ok: false, error: "Necesitás iniciar sesión para ver esta información" });
+    }
+    if (sheet === "TURISMO" && !adminSession) {
+      const rows = POSTGRES_SHEETS.has(sheet) ? await db.listTurismoAdmin({publicOnly:true}) : await readSheet(sheet);
+      return json(res, 200, { ok: true, sheet, rows: catalog.publicRows(rows) });
     }
     // La pantalla Configuración ya es solo para el rol admin: el servidor lo hace valer.
     if (sheet === "CONFIG" && adminSession.role !== "admin") {
@@ -871,7 +885,11 @@ function staticFile(req, res, url) {
     res.writeHead(405, { "Allow": "GET, HEAD", ...securityHeaders(req) });
     return res.end("Method not allowed");
   }
-  if (url.pathname === "/admin" || url.pathname.startsWith("/admin/") || url.pathname === "/admin-turismo" || url.pathname.startsWith("/admin-turismo/")) {
+  // Resolver únicamente entradas conocidas; nunca abrir carpetas del servidor.
+  const adminEntries = ["admin", "admin-turismo", ...["colegios", "configuracion", "contratos", "fichas", "grupos", "pagos", "pasajeros", "turismo"].map(name => `admin/${name}`)];
+  const decodedPath = safeDecode(url.pathname);
+  const requestedEntry = decodedPath.replace(/^\/+|\/+$/g, "");
+  if (requestedEntry === "admin" || requestedEntry.startsWith("admin/") || requestedEntry === "admin-turismo" || requestedEntry.startsWith("admin-turismo/")) {
     const session = currentAdminSession(req);
     if (!session) {
       res.writeHead(302, {
@@ -881,11 +899,11 @@ function staticFile(req, res, url) {
       return res.end();
     }
   }
-  const cleanPath = safeDecode(url.pathname === "/" ? "/index.html" : url.pathname);
+  const cleanPath = url.pathname === "/" ? "/index.html" : adminEntries.includes(requestedEntry) ? `/${requestedEntry}/index.html` : decodedPath;
   const publicPath = cleanPath.replace(/^\/+/, "");
   const normalizedPublicPath = path.posix.normalize(publicPath);
   const isPublicAsset = normalizedPublicPath.startsWith("assets/") && !normalizedPublicPath.includes("../");
-  const isPublicEntry = publicPath === "index.html" || publicPath === "admin/index.html" || publicPath === "admin-turismo/index.html";
+  const isPublicEntry = publicPath === "index.html" || adminEntries.some(entry => publicPath === `${entry}/index.html`);
   if (!isPublicAsset && !isPublicEntry) {
     res.writeHead(404, securityHeaders(req));
     return res.end("Not found");
@@ -1053,15 +1071,23 @@ async function handlePublicFicha(req, res) {
       errores: { firma: error.friendlyMessage || "Firma inválida." }
     });
   }
-  const contexto = UUID_RE.test(previa.datos.colegioId)
+  if (body.inscripcionCodigo !== undefined && (typeof body.inscripcionCodigo !== "string" || !UUID_RE.test(body.inscripcionCodigo))) return json(res,400,{ok:false,error:"El enlace de inscripción no es válido."});
+  const contexto = (body.inscripcionCodigo || UUID_RE.test(previa.datos.colegioId))
     ? await db.contextoInscripcion({
       colegioId: previa.datos.colegioId,
       nivel: previa.datos.nivel,
       viaje: `${previa.datos.destino} ${previa.datos.anio}`,
       grado: previa.datos.grado,
-      division: previa.datos.division
+      division: previa.datos.division,
+      codigo: body.inscripcionCodigo
     })
     : { contrato: null, grupoId: null, planes: [] };
+  if (["ambiguo","pausada","enlace_invalido"].includes(contexto.estado)) return json(res,409,{ok:false,error:contexto.estado==="ambiguo"?"Hay más de un contrato para este curso. Pedí a la agencia el enlace del contrato correcto.":"La inscripción del grupo no está disponible. Pedí a la agencia un enlace vigente."});
+  if (body.inscripcionCodigo) {
+    const selected=contexto.seleccion;
+    const same=(a,b)=>String(a||"").trim().toLocaleLowerCase("es-AR")===String(b||"").trim().toLocaleLowerCase("es-AR");
+    if (!selected || !same(selected.colegioId,previa.datos.colegioId) || !same(selected.nivel,previa.datos.nivel) || !same(selected.viaje,`${previa.datos.destino} ${previa.datos.anio}`) || !same(selected.division,previa.datos.division) || String(selected.grado).replace(/\D/g,"")!==String(previa.datos.grado).replace(/\D/g,"")) return json(res,400,{ok:false,error:"Los datos del grupo no coinciden con el enlace de inscripción. Volvé a abrir el enlace de la agencia."});
+  }
   const validacion = fichaValidation.validarFichaPax(body, { planesDisponibles: contexto.planes.map((plan) => plan.id) });
   if (!validacion.ok) {
     return json(res, 400, { ok: false, error: "Revisá los datos marcados.", errores: validacion.errores });
@@ -1199,6 +1225,158 @@ async function handleAdminPayments(req, res, url) {
   }
 }
 
+async function handleAcademic(req,res,url) {
+  const session=currentAdminSession(req);
+  if(!session)return json(res,401,{ok:false,error:"Iniciá sesión para administrar promociones y salidas."});
+  if(!POSTGRES_MIGRATION_ENABLED)return json(res,503,{ok:false,error:"La organización académica requiere la base de datos habilitada."});
+  if(req.method==="POST" && requireSameOrigin(req,res))return;
+  try {
+    if(url.pathname==="/api/admin/academico" && req.method==="GET")return json(res,200,{ok:true,...await academic.metadata()});
+    if(req.method!=="POST")return json(res,405,{ok:false,error:"Método no permitido"});
+    const body=await readJsonBody(req,100000);
+    if(!body||typeof body!=="object"||Array.isArray(body))return json(res,400,{ok:false,error:"Enviá un objeto con los datos del registro."});
+    const collection=/^\/api\/admin\/academico\/(promociones|contingentes)$/.exec(url.pathname);
+    if(collection){const result=await academic.save(collection[1],body,session.user);return json(res,result.creado?201:200,{ok:true,...result});}
+    const group=/^\/api\/admin\/academico\/grupos\/([^/]+)$/.exec(url.pathname);
+    if(group)return json(res,200,{ok:true,grupo:await academic.linkGroup(safeDecode(group[1]),body,session.user)});
+    const passenger=/^\/api\/admin\/academico\/pasajeros\/([^/]+)$/.exec(url.pathname);
+    if(passenger)return json(res,200,{ok:true,...await academic.assignPassenger(safeDecode(passenger[1]),body,session.user)});
+    return json(res,405,{ok:false,error:"Método no permitido"});
+  } catch(error) {
+    if(error.code==="42P01"||error.code==="42703")return json(res,503,{ok:false,error:"La organización académica todavía no está habilitada en esta base."});
+    if(error.code==="23505")return json(res,409,{ok:false,error:error.constraint==="contingentes_identidad_uk"?"Ya existe una salida de ese viaje con el mismo nombre y fecha.":"Ya existe una promoción con ese colegio, nivel, año y nombre."});
+    if(error.code==="23503")return json(res,409,{ok:false,error:"La relación cambió o tiene pasajeros asignados. Revisá los vínculos antes de guardar."});
+    if(error.code==="23514")return json(res,400,{ok:false,error:"Revisá los datos y que el nivel de la promoción corresponda al grupo."});
+    throw error;
+  }
+}
+
+async function handleDocuments(req,res,url) {
+  if(!POSTGRES_MIGRATION_ENABLED)return json(res,503,{ok:false,error:"Los documentos privados requieren la base habilitada."});
+  const adminRoute=url.pathname.startsWith("/api/admin/");
+  const admin=adminRoute?currentAdminSession(req):null;
+  const identity=adminRoute?null:await passengerPortal.session(parseCookies(req)[passengerPortal.COOKIE]);
+  if(!admin&&!identity)return json(res,401,{ok:false,error:"Necesitás una sesión vigente para acceder a documentos privados."});
+  if(req.method==="POST"&&requireSameOrigin(req,res))return;
+  try {
+    const adminList=/^\/api\/admin\/documentos\/(contratos|pasajeros)\/([^/]+)$/.exec(url.pathname);
+    const portalList=/^\/api\/portal\/pasajeros\/([^/]+)\/documentos$/.exec(url.pathname);
+    const download=adminRoute?/^\/api\/admin\/documentos\/([^/]+)\/archivo$/.exec(url.pathname):/^\/api\/portal\/pasajeros\/([^/]+)\/documentos\/([^/]+)\/archivo$/.exec(url.pathname);
+    if(download&&req.method==="GET") {
+      const file=await documents.download(safeDecode(download[adminRoute?1:2]),{identity,pasajeroId:adminRoute?null:safeDecode(download[1]),actor:admin?.user});
+      const filename=encodeURIComponent(file.nombre).replace(/[!'()*]/g,char=>"%"+char.charCodeAt(0).toString(16));
+      res.writeHead(200,{"Content-Type":file.mime,"Content-Length":file.bytes.length,"Content-Disposition":`attachment; filename="documento.${file.mime==="application/pdf"?"pdf":file.mime==="image/png"?"png":"jpg"}"; filename*=UTF-8''${filename}`,"Cache-Control":"no-store, private","X-Content-Type-Options":"nosniff","Content-Security-Policy":"sandbox; default-src 'none'","Cross-Origin-Resource-Policy":"same-origin"});return res.end(file.bytes);
+    }
+    if(adminList||portalList) {
+      const type=adminList?adminList[1]:"pasajeros",id=safeDecode(adminList?adminList[2]:portalList[1]);
+      if(req.method==="GET")return json(res,200,{ok:true,...await documents.list(type,id,{identity,antes:url.searchParams.get("antes")})});
+      if(req.method==="POST") {
+        const body=await readJsonBody(req,7*1024*1024+10000);
+        if(!body||typeof body!=="object"||Array.isArray(body))return json(res,400,{ok:false,error:"Elegí un documento para adjuntar."});
+        const result=await documents.upload(type,id,body,admin?.user||`portal:${identity.id}`,identity);
+        return json(res,result.creado?201:200,{ok:true,...result});
+      }
+    }
+    const review=/^\/api\/admin\/documentos\/([^/]+)\/revisar$/.exec(url.pathname);
+    if(review&&req.method==="POST") {
+      const body=await readJsonBody(req,10000);
+      if(!body||typeof body!=="object"||Array.isArray(body))return json(res,400,{ok:false,error:"Revisá el estado del documento."});
+      return json(res,200,{ok:true,documento:await documents.review(safeDecode(review[1]),body,admin.user)});
+    }
+    return json(res,405,{ok:false,error:"Método no permitido"});
+  } catch(error) {
+    if(error.code==="42P01"||error.code==="42703")return json(res,503,{ok:false,error:"La gestión de documentos privados todavía no está habilitada en esta base."});
+    if(error.code==="23503")return json(res,409,{ok:false,error:"El contrato o pasajero cambió. Volvé a consultar antes de adjuntar."});
+    if([502,503].includes(error.statusCode))return json(res,error.statusCode,{ok:false,error:error.message});
+    throw error;
+  }
+}
+
+const portalAttempts = new Map();
+function portalCookie(token,req) {
+  const age=token?passengerPortal.SESSION_SECONDS:0;
+  return `${passengerPortal.COOKIE}=${token}; HttpOnly; ${isHttpsRequest(req)?"Secure; ":""}SameSite=Strict; Path=/api/portal; Max-Age=${age}`;
+}
+async function handlePassengerPortal(req,res,url) {
+  if(!POSTGRES_MIGRATION_ENABLED)return json(res,503,{ok:false,error:"El portal privado todavía no está habilitado."});
+  const adminRoute = url.pathname.startsWith("/api/admin/portal/");
+  const admin = adminRoute ? currentAdminSession(req) : null;
+  if(adminRoute && !admin)return json(res,401,{ok:false,error:"Iniciá sesión para administrar accesos."});
+  if(adminRoute && admin.role!=="admin")return json(res,403,{ok:false,error:"Solo el administrador puede gestionar accesos privados."});
+  if(req.method==="POST" && requireSameOrigin(req,res))return;
+  try {
+    const raw = parseCookies(req)[passengerPortal.COOKIE];
+    const body = req.method==="POST" ? await readJsonBody(req,10000) : null;
+    if(req.method==="POST" && (!body||typeof body!=="object"||Array.isArray(body)))return json(res,400,{ok:false,error:"Enviá un objeto con los datos del acceso."});
+    const target=/^\/api\/admin\/portal\/pasajeros\/([^/]+)(\/(invitar|revocar))?$/.exec(url.pathname);
+    if(target && req.method==="GET" && !target[2])return json(res,200,{ok:true,...await passengerPortal.targets(safeDecode(target[1]))});
+    if(target && req.method==="POST" && target[3]==="invitar")return json(res,201,{ok:true,...await passengerPortal.invite(safeDecode(target[1]),body,admin.user)});
+    if(target && req.method==="POST" && target[3]==="revocar")return json(res,200,{ok:true,...await passengerPortal.revoke(safeDecode(target[1]),body,admin.user)});
+    if(adminRoute)return json(res,405,{ok:false,error:"Método no permitido"});
+    if(url.pathname==="/api/portal/acceso" && req.method==="POST") {
+      const key=clientIp(req);
+      if(genericRateLimited(portalAttempts,key,30,15*60*1000))return json(res,429,{ok:false,error:"Demasiados intentos. Esperá unos minutos antes de volver a intentar."});
+      try {
+        const token=await passengerPortal.consume(body.token,raw);
+        res.setHeader("Set-Cookie",portalCookie(token,req));return json(res,200,{ok:true});
+      } catch(error) {
+        // Una reunión de familias puede compartir Wi-Fi: se cuentan fallos,
+        // nunca accesos válidos de distintos responsables detrás de una IP.
+        if(error.statusCode===401)registerGenericAttempt(portalAttempts,key,15*60*1000);
+        throw error;
+      }
+    }
+    if(url.pathname==="/api/portal/logout" && req.method==="POST") {
+      await passengerPortal.logout(raw);res.setHeader("Set-Cookie",portalCookie("",req));return json(res,200,{ok:true});
+    }
+    const identity=await passengerPortal.session(raw);
+    if(!identity)return json(res,401,{ok:false,error:"Necesitás un acceso individual vigente. Pedilo a El Ángel Azul."});
+    if(url.pathname==="/api/portal/me" && req.method==="GET")return json(res,200,{ok:true,...await passengerPortal.me(identity)});
+    const resource=/^\/api\/portal\/pasajeros\/([^/]+)\/(cuenta|pagos|ficha.pdf)$/.exec(url.pathname);
+    if(resource && req.method==="GET") {
+      if(resource[2]==="cuenta")return json(res,200,{ok:true,...await passengerPortal.account(identity,resource[1])});
+      if(resource[2]==="pagos")return json(res,200,{ok:true,pagos:await passengerPortal.payments(identity,resource[1])});
+      const id=await passengerPortal.fichaId(identity,resource[1]);const [row]=await db.listFichasAdmin(id);
+      if(!row)return json(res,404,{ok:false,error:"Ficha no encontrada."});
+      const pdf=await fichaPdf.generarPdfFicha(await conFirmaEmbebida(row));
+      res.writeHead(200,{"Content-Type":"application/pdf","Content-Disposition":`attachment; filename="${fichaPdf.nombreArchivoPdf(row)}"`,"Cache-Control":"no-store",...securityHeaders(req)});return res.end(Buffer.from(pdf));
+    }
+    return json(res,405,{ok:false,error:"Método no permitido"});
+  } catch(error) {
+    if(error.code==="42P01")return json(res,503,{ok:false,error:"El portal privado todavía no está habilitado en esta base."});
+    throw error;
+  }
+}
+
+async function handleStudentAccounts(req, res, url) {
+  const session = currentAdminSession(req);
+  if (!session) return json(res,401,{ok:false,error:"Iniciá sesión para ver las cuentas."});
+  if (!POSTGRES_MIGRATION_ENABLED) return json(res,503,{ok:false,error:"Las cuentas requieren la base de datos habilitada."});
+  if (req.method === "POST" && requireSameOrigin(req,res)) return;
+  try {
+    const body = req.method === "POST" ? await readJsonBody(req,100000) : null;
+    if (req.method === "POST" && (!body || typeof body !== "object" || Array.isArray(body))) return json(res,400,{ok:false,error:"Enviá un objeto con los datos de la cuenta."});
+    if (url.pathname === "/api/admin/finanzas/cuentas" && req.method === "GET") return json(res,200,{ok:true,cuentas:await studentAccounts.list()});
+    const plan = /^\/api\/admin\/finanzas\/planes\/([^/]+)$/.exec(url.pathname);
+    const passenger = /^\/api\/admin\/finanzas\/pasajeros\/([^/]+)(\/confirmar)?$/.exec(url.pathname);
+    if (url.pathname === "/api/admin/finanzas/planes" && req.method === "GET") return json(res,200,{ok:true,planes:await studentAccounts.plans()});
+    if (plan && req.method === "POST") return json(res,200,{ok:true,plan:await studentAccounts.configure(decodeURIComponent(plan[1]),body,session.user)});
+    if (passenger && !passenger[2] && req.method === "GET") return json(res,200,{ok:true,...await studentAccounts.summary(decodeURIComponent(passenger[1]))});
+    if (passenger && passenger[2] && req.method === "POST") {
+      const result = await studentAccounts.confirm(decodeURIComponent(passenger[1]),body,session.user);
+      return json(res,result.creada?201:200,{ok:true,...result});
+    }
+    if (url.pathname === "/api/admin/finanzas/imputaciones" && req.method === "POST") {
+      const result = await studentAccounts.allocate(body,session.user);
+      return json(res,result.creada?201:200,{ok:true,...result});
+    }
+    return json(res,405,{ok:false,error:"Método no permitido"});
+  } catch(error) {
+    if(error.code === "42P01" || error.code === "42883") return json(res,503,{ok:false,error:"Las cuentas y cuotas todavía no están habilitadas en esta base."});
+    throw error;
+  }
+}
+
 function createAppServer() {
   return http.createServer(async (req, res) => {
     res.req = req;
@@ -1207,6 +1385,88 @@ function createAppServer() {
       if (url.pathname.startsWith("/api/") && apiRateLimited(req, url)) {
         return json(res, 429, { ok: false, error: "Demasiadas solicitudes. Probá de nuevo más tarde." });
       }
+      if (url.pathname === "/api/public/paquetes" && req.method === "GET") {
+        return json(res, 200, { ok: true, paquetes: await catalog.list(url.searchParams) });
+      }
+      const packageDetail = /^\/api\/public\/paquetes\/([a-z0-9-]+)$/.exec(url.pathname);
+      if (packageDetail && req.method === "GET") {
+        const row = (await catalog.list()).find(item => item.slug === packageDetail[1]);
+        return row ? json(res,200,{ok:true,paquete:row}) : json(res,404,{ok:false,error:"Paquete no disponible."});
+      }
+      const duplicatePackage = /^\/api\/admin\/paquetes\/([^/]+)\/duplicar$/.exec(url.pathname);
+      if (duplicatePackage && req.method === "POST") {
+        const session = currentAdminSession(req);
+        if (!session) return json(res,401,{ok:false,error:"Necesitás iniciar sesión."});
+        if (requireSameOrigin(req,res)) return;
+        const body = await readJsonBody(req,10000);
+        const row = await catalog.duplicate(decodeURIComponent(duplicatePackage[1]),body.version,session.user);
+        return json(res,201,{ok:true,paquete:row});
+      }
+      if(url.pathname==="/api/admin/catalogo/multimedia"||url.pathname.startsWith("/api/public/catalogo/media/")) {
+        try {
+          if(!POSTGRES_MIGRATION_ENABLED)return json(res,503,{ok:false,error:"La carga de fotos requiere la base habilitada."});
+          const photo=/^\/api\/public\/catalogo\/media\/([^/]+)$/.exec(url.pathname);
+          if(photo&&req.method==="GET") {
+            const result=await catalogMedia.read(safeDecode(photo[1]),!!currentAdminSession(req),req.headers["if-none-match"]);
+            const headers={"Cache-Control":"private, no-cache",ETag:result.etag,"X-Content-Type-Options":"nosniff","Cross-Origin-Resource-Policy":"same-origin"};
+            if(result.notModified){res.writeHead(304,headers);return res.end();}
+            res.writeHead(200,{...headers,"Content-Type":result.mime,"Content-Length":result.bytes.length});return res.end(result.bytes);
+          }
+          const session=currentAdminSession(req);
+          if(!session)return json(res,401,{ok:false,error:"Iniciá sesión para cargar fotos del catálogo."});
+          if(url.pathname!=="/api/admin/catalogo/multimedia")return json(res,405,{ok:false,error:"Método no permitido"});
+          if(req.method==="GET")return json(res,200,{ok:true,disponible:await catalogMedia.available()});
+          if(req.method!=="POST")return json(res,405,{ok:false,error:"Método no permitido"});
+          if(requireSameOrigin(req,res))return;
+          const body=await readJsonBody(req,7*1024*1024+10000);
+          if(!body||typeof body!=="object"||Array.isArray(body))return json(res,400,{ok:false,error:"Elegí una foto para cargar."});
+          const result=await catalogMedia.upload(body,session.user);return json(res,result.creada?201:200,{ok:true,...result});
+        }catch(error){
+          if(error.code==="42P01"||error.code==="42703")return json(res,503,{ok:false,error:"Las fotos del catálogo todavía no están habilitadas en esta base."});
+          if([502,503].includes(error.statusCode))return json(res,error.statusCode,{ok:false,error:"La foto no está disponible. Volvé a intentar o consultá con el administrador."});
+          throw error;
+        }
+      }
+      const contractInfo=/^\/api\/admin\/contratos\/([^/]+)\/informacion$/.exec(url.pathname);
+      const passengerInfo=/^\/api\/(admin|portal)\/pasajeros\/([^/]+)\/informacion$/.exec(url.pathname);
+      if(contractInfo||passengerInfo) {
+        if(!POSTGRES_MIGRATION_ENABLED)return json(res,503,{ok:false,error:"La información del contrato requiere la base habilitada."});
+        const isPortal=passengerInfo?.[1]==="portal";
+        const admin=isPortal?null:currentAdminSession(req);
+        const identity=isPortal?await passengerPortal.session(parseCookies(req)[passengerPortal.COOKIE]):null;
+        if(!admin&&!identity)return json(res,401,{ok:false,error:"Iniciá sesión para consultar la información del viaje."});
+        try {
+          const id=safeDecode(contractInfo?contractInfo[1]:passengerInfo[2]);
+          if(req.method==="GET")return json(res,200,{ok:true,...await (contractInfo?contractInformation.read(id):contractInformation.passenger(id,identity))});
+          if(contractInfo&&req.method==="POST") {
+            if(requireSameOrigin(req,res))return;
+            const body=await readJsonBody(req,150000);
+            if(!body||typeof body!=="object"||Array.isArray(body))return json(res,400,{ok:false,error:"Revisá la información del contrato."});
+            return json(res,200,{ok:true,...await contractInformation.save(id,body,admin.user)});
+          }
+          return json(res,405,{ok:false,error:"Método no permitido"});
+        }catch(error) {
+          if(error.code==="42P01"||error.code==="42703")return json(res,503,{ok:false,error:"Los requisitos y avisos todavía no están habilitados en esta base."});
+          throw error;
+        }
+      }
+      if(url.pathname.startsWith("/api/admin/documentos/") || /^\/api\/portal\/pasajeros\/[^/]+\/documentos(?:\/|$)/.test(url.pathname))return await handleDocuments(req,res,url);
+      const enrollmentRoute=/^\/api\/admin\/inscripciones\/contratos\/([^/]+)$/.exec(url.pathname);
+      if (enrollmentRoute) {
+        const session=currentAdminSession(req);
+        if(!session)return json(res,401,{ok:false,error:"Iniciá sesión para administrar la inscripción."});
+        if(!POSTGRES_MIGRATION_ENABLED)return json(res,503,{ok:false,error:"La inscripción por contrato requiere la base habilitada."});
+        if(req.method==="POST"&&requireSameOrigin(req,res))return;
+        const id=safeDecode(enrollmentRoute[1]);
+        if(req.method==="GET")return json(res,200,{ok:true,contrato:await enrollment.get(id)});
+        if(req.method!=="POST")return json(res,405,{ok:false,error:"Método no permitido"});
+        const body=await readJsonBody(req,10000);
+        if(!body||typeof body!=="object"||Array.isArray(body))return json(res,400,{ok:false,error:"Revisá los datos enviados."});
+        return json(res,200,{ok:true,contrato:await enrollment.configure(id,body,session.user)});
+      }
+      if (url.pathname === "/api/admin/academico" || url.pathname.startsWith("/api/admin/academico/")) return await handleAcademic(req,res,url);
+      if (url.pathname.startsWith("/api/portal/") || url.pathname.startsWith("/api/admin/portal/")) return await handlePassengerPortal(req,res,url);
+      if (url.pathname.startsWith("/api/admin/finanzas/")) return await handleStudentAccounts(req,res,url);
       if (url.pathname === "/api/admin/pagos" || url.pathname.startsWith("/api/admin/pagos/")) return await handleAdminPayments(req, res, url);
       if (url.pathname.startsWith("/api/admin/fichas/")) {
         if (await handleAdminFicha(req, res, url)) return;
@@ -1222,9 +1482,10 @@ function createAppServer() {
           nivel: params.get("nivel"),
           viaje: params.get("viaje"),
           grado: params.get("grado"),
-          division: params.get("division")
+          division: params.get("division"),
+          codigo: params.get("codigo")
         });
-        return json(res, 200, { ok: true, contrato: contexto.contrato, planes: contexto.planes });
+        return json(res, 200, { ok: true, contrato: contexto.contrato, planes: contexto.planes, estado: contexto.estado, seleccion: contexto.seleccion });
       }
       if (url.pathname === "/api/public/fichas" && req.method === "POST") return await handlePublicFicha(req, res);
       if (url.pathname === "/api/public/fichas-tutor" && req.method === "POST") return await handlePublicFichaTutor(req, res);

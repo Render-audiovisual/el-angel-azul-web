@@ -48,11 +48,53 @@ async function sembrar(pool) {
     estado: "Activo", observaciones: "Datos ficticios del entorno local."
   }]);
   if (seeded.failed.length) throw new Error("No se pudo preparar el pasajero ficticio local.");
+  // Condiciones exclusivamente ficticias y explícitas para revisar el cronograma.
+  const accounts = require("../lib/student-accounts");
+  const current = (await accounts.plans()).find(row => row.id === plan);
+  const configured = await accounts.configure(plan, {
+    version: current.version, planVersion: current.planVersion, moneda: "ARS", total: "1200",
+    condiciones: "CONDICIONES FICTICIAS para pruebas locales. No constituyen una oferta comercial.",
+    cuotas: Array.from({ length: 12 }, (_, i) => ({
+      concepto: `Cuota ficticia ${i + 1}`, vencimiento: `2027-${String(i + 1).padStart(2, "0")}-10`, monto: "100"
+    }))
+  }, "admin");
+  const pax = (await pool.query("select id from pasajeros where contrato_id=$1", [contrato])).rows[0].id;
+  await accounts.confirm(pax, { planId: plan, version: configured.version, planVersion: configured.planVersion }, "admin");
+  const promotion = (await pool.query("insert into promociones(colegio_id,nivel,anio_egreso,nombre) values($1,'Secundaria',2027,'Promoción ficticia 2027') returning id", [ids[0]])).rows[0].id;
+  await pool.query("update grupos set promocion_id=$1 where id=$2", [promotion, grupo]);
+  const departure = (await pool.query("insert into contingentes(viaje_id,nombre,fecha_salida,fecha_regreso) values($1,'Salida ficticia de noviembre','2027-11-10','2027-11-17') returning id", [viaje])).rows[0].id;
+  await pool.query("insert into contingente_grupos(contingente_id,grupo_id,viaje_id) values($1,$2,$3)", [departure, grupo, viaje]);
+  await pool.query("update pasajeros set contingente_id=$1 where id=$2", [departure, pax]);
+  await require("../lib/contract-information").save(contrato, {
+    revision: 0, requisitos: ["dni_frente"], avisos: [{
+      id: require("node:crypto").randomUUID(), titulo: "Aviso ficticio para recorrer el portal",
+      texto: "Entorno local de prueba. Los requisitos y las condiciones que ves acá son ficticios; no se envían documentos ni datos a servicios reales.", publicado: true
+    }]
+  }, "admin");
+  const catalog = await db.saveTurismoAdmin([{
+    id: "catalogo-local", slug: "iguazu-prueba-local", destino: "Iguazú", titulo: "Iguazú — paquete ficticio",
+    estado: "activo", moneda: "Consultar", duracion: "3 noches / 4 días", categorias: "Nacionales",
+    descripcion_corta: "Paquete ficticio para revisar el catálogo local. No es una oferta comercial.",
+    alojamiento: "Alojamiento ficticio para pruebas", transporte: "Transporte ficticio", regimen_comidas: "A confirmar",
+    disponibilidad: "a_confirmar", fotos: JSON.stringify([{url:"assets/img/turismo/hero/cataratas-iguazu.webp",alt:"Cataratas del Iguazú",principal:true}])
+  }], [], "admin");
+  if(catalog.failed.length)throw new Error("No se pudo preparar el catálogo ficticio local.");
 }
 
 (async () => {
   const pool = await crearPoolLocal();
   db.__test.setPool(pool);
+  // Objetos efímeros separados. Nunca llama a Supabase Storage.
+  const fakeStorage = () => {
+    const files = new Map();
+    return { configured: () => true,
+      put: async (path, bytes) => { files.set(path, Buffer.from(bytes)); },
+      get: async path => { if (!files.has(path)) throw new Error("Archivo local no encontrado."); return Buffer.from(files.get(path)); },
+      remove: async path => { files.delete(path); }
+    };
+  };
+  require("../lib/documents").__test.setStorage(fakeStorage());
+  require("../lib/catalog-media").__test.setStorage(fakeStorage());
   await sembrar(pool);
   const server = require("../server").createAppServer();
   if (accesoLibre) {
@@ -83,7 +125,8 @@ async function sembrar(pool) {
     server.on("request", async (req, res) => {
       const pathname = new URL(req.url, "http://127.0.0.1").pathname;
       try {
-        if (pathname.startsWith("/api/") && pathname !== "/api/admin/login") {
+        const entradaAdmin = /^\/admin(?:\/|$)/.test(pathname) || /^\/admin-turismo(?:\/|$)/.test(pathname);
+        if ((entradaAdmin || pathname.startsWith("/api/")) && pathname !== "/api/admin/login") {
           if (!cookieLocal || Date.now() >= cookieValidaHasta) await ingresarLocal();
           if (pathname === "/api/admin/logout") res.once("finish", () => { cookieLocal = ""; });
           const nombreCookie = cookieLocal.split("=")[0];
@@ -101,6 +144,6 @@ async function sembrar(pool) {
   server.listen(PORT, "127.0.0.1", () => {
     console.log(`Local listo: http://localhost:${server.address().port}`);
     console.log(accesoLibre ? "Acceso libre al administrador (solo local, con datos ficticios)." : "Acceso con la cuenta local de prueba.");
-    console.log("Datos de prueba: 3 colegios, Bariloche 2027, 5° B de Escuela Normal N° 1 con contrato LOCAL-001 y 2 planes. Un pasajero ficticio disponible para probar pagos.");
+    console.log("Datos de prueba: 3 colegios, Bariloche 2027, 5° B de Escuela Normal N° 1 con contrato LOCAL-001 y 2 planes. Un pasajero ficticio con promoción, salida y cuenta de 12 cuotas de $100. Archivos en memoria, sin servicios reales.");
   });
 })();

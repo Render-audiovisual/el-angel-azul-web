@@ -485,3 +485,23 @@ test("el rol agencia puede editar pero no eliminar registros; el administrador s
   const admin = await entrar("admin", "test-admin-password");
   assert.notEqual((await escribir(admin, { sheet: "GRUPOS", rows: [], deleteIds: ["00000000-0000-0000-0000-000000000001"] })).status, 403);
 });
+
+
+test("las entradas físicas del panel abren con sesión y redirigen al acceso cuando no la hay", async () => {
+  const response = await request({ method: "POST", path: "/api/admin/login", headers: { origin: `http://127.0.0.1:${port}` }, body: { username: "admin", password: "test-admin-password" } });
+  const cookie = String(response.headers["set-cookie"]?.[0] || "").split(";")[0];
+  for (const path of ["/admin", "/admin/", "/admin/index.html", "/admin/colegios/", "/admin/pagos/", "/admin/contratos", "/admin/fichas/", "/admin/grupos/", "/admin/pasajeros/", "/admin/turismo/", "/admin/configuracion/", "/admin-turismo/"]) {
+    const anonymous = await request({ path });
+    assert.equal(anonymous.status, 302, path);
+    assert.equal(anonymous.headers.location, "/#/admin");
+    const privateEntry = await request({ path, headers: { cookie } });
+    assert.equal(privateEntry.status, 200, path);
+    assert.match(privateEntry.raw, /data-app-entry="admin"/);
+    assert.match(privateEntry.headers["cache-control"], /no-store/);
+  }
+  // Codificar un carácter de la ruta no permite saltarse la sesión.
+  assert.equal((await request({ path: "/%61dmin/index.html" })).status, 302);
+  for (const path of ["/admin/no-existe/", "/server.js", "/package.json", "/lib/db.js", "/docs/HANDOFF-CODEX.md", "/supabase/migrations/0001_init.sql"]) {
+    assert.equal((await request({ path, headers: { cookie } })).status, 404, path);
+  }
+});

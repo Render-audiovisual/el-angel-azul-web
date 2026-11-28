@@ -123,6 +123,9 @@ test("inscripción online: selección, validación, guardado, tutor, admin y PDF
   assert.equal(pasajero.responsable_apellido, "Núñez");
   assert.equal(pasajero.responsable_email, "familia@example.com");
   assert.equal((await rows("FICHAS_ADHESION"))[0].estado_revision, "aprobada");
+  assert.equal((await pool.query("select count(*)::integer as cantidad from pasajero_responsables")).rows[0].cantidad,1);
+  const tutorPendiente=(await rows("FICHAS_TUTOR"))[0];
+  await save("FICHAS_TUTOR",{...tutorPendiente,estado_revision:"revisada",pasajero_id:pasajero.id,identidad_verificada:"TRUE"});
   const vinculos = await pool.query("select count(*)::integer as cantidad from pasajero_responsables");
   assert.equal(vinculos.rows[0].cantidad, 2);
   // El recibo nunca debe afirmar que se envió un correo inexistente.
