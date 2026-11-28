@@ -9,7 +9,13 @@ Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerra
 |---|---|---|---|---|
 | Fran (Claude Code) | `fran/harness` | Harness: guardas, `AGENTS.md`, docs | `AGENTS.md`, `CLAUDE.md`, `package.json`, `scripts/guardas.test.js`, `scripts/helpers/sin-secretos.js`, docs | 25/11 |
 | Fran (Claude Code) | `fran/inicio-aldena` | Paso 8: rediseño del inicio inspirado en la web de referencia (Agustín dio su OK sobre el PR #8) | `index.html`, `assets/css/home.css`, `assets/css/public-experience.css`, `assets/js/modules/home-motion.js`, `renderHome` en `assets/js/app.js` | 27/11 |
-| Agustín (Codex) | `agustin/ecosistema-auditoria` | Nuevo encargo integral: auditoría antes de ampliar catálogo, gestión estudiantil y portal. Referencia de flujo recibida del dueño | Auditoría y arquitectura; luego servidor/base y pruebas, después interfaz. Solo datos locales | 27/11 |
+| Agustín (Codex) | `agustin/ecosistema-catalogo-servidor` | Auditoría/investigación documentadas. Primer servidor: catálogo público separado, validación de publicación y duplicación auditada | `lib/catalog.js`, `lib/db.js`, `server.js`, pruebas y docs; interfaz después. Solo PGlite | 27/11 |
+
+## Ecosistema integral — nuevo encargo del 27/11/2026
+
+- Auditoría, investigación con fuentes primarias, arquitectura, datos confirmados/propuestos y criterios de aceptación en `docs/ECOSISTEMA-ANGEL-AZUL.md`. No equivale a afirmar que el alcance integral esté terminado.
+- Primer servidor: catálogo público separado (`/api/public/paquetes` y detalle por slug). La ruta pública heredada de TURISMO también filtra borradores, inactivos y salidas vencidas en servidor y no devuelve el DTO administrativo ni versiones. Publicar valida contenido, importes, fechas y multimedia; duplicar requiere sesión/origen/versión y genera borrador auditado.
+- Prueba HTTP con PGlite: crear borrador, publicar desde admin y leer desde cliente anónimo, cambiar precio/contenido, filtros, rechazos, duplicación, despublicación y vencimiento. Sin Supabase, correos ni cambios en main/hosting.
 
 ## Revisión funcional y pagos manuales — 27/11/2026
 

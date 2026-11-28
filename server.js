@@ -10,6 +10,7 @@ const email = require("./lib/email");
 const storage = require("./lib/storage");
 const adminWrite = require("./lib/admin-write");
 const paymentsLedger = require("./lib/payments-ledger");
+const catalog = require("./lib/catalog");
 
 const PORT = Number(process.env.PORT || 8080);
 const ROOT = __dirname;
@@ -674,6 +675,10 @@ async function handleSheets(req, res, url) {
     if (!PUBLIC_READ_SHEETS.has(sheet) && !adminSession) {
       return json(res, 401, { ok: false, error: "Necesitás iniciar sesión para ver esta información" });
     }
+    if (sheet === "TURISMO" && !adminSession) {
+      const rows = POSTGRES_SHEETS.has(sheet) ? await db.listTurismoAdmin({publicOnly:true}) : await readSheet(sheet);
+      return json(res, 200, { ok: true, sheet, rows: catalog.publicRows(rows) });
+    }
     // La pantalla Configuración ya es solo para el rol admin: el servidor lo hace valer.
     if (sheet === "CONFIG" && adminSession.role !== "admin") {
       return json(res, 403, { ok: false, error: "Esta información es solo para el administrador" });
@@ -1206,6 +1211,23 @@ function createAppServer() {
     try {
       if (url.pathname.startsWith("/api/") && apiRateLimited(req, url)) {
         return json(res, 429, { ok: false, error: "Demasiadas solicitudes. Probá de nuevo más tarde." });
+      }
+      if (url.pathname === "/api/public/paquetes" && req.method === "GET") {
+        return json(res, 200, { ok: true, paquetes: await catalog.list(url.searchParams) });
+      }
+      const packageDetail = /^\/api\/public\/paquetes\/([a-z0-9-]+)$/.exec(url.pathname);
+      if (packageDetail && req.method === "GET") {
+        const row = (await catalog.list()).find(item => item.slug === packageDetail[1]);
+        return row ? json(res,200,{ok:true,paquete:row}) : json(res,404,{ok:false,error:"Paquete no disponible."});
+      }
+      const duplicatePackage = /^\/api\/admin\/paquetes\/([^/]+)\/duplicar$/.exec(url.pathname);
+      if (duplicatePackage && req.method === "POST") {
+        const session = currentAdminSession(req);
+        if (!session) return json(res,401,{ok:false,error:"Necesitás iniciar sesión."});
+        if (requireSameOrigin(req,res)) return;
+        const body = await readJsonBody(req,10000);
+        const row = await catalog.duplicate(decodeURIComponent(duplicatePackage[1]),body.version,session.user);
+        return json(res,201,{ok:true,paquete:row});
       }
       if (url.pathname === "/api/admin/pagos" || url.pathname.startsWith("/api/admin/pagos/")) return await handleAdminPayments(req, res, url);
       if (url.pathname.startsWith("/api/admin/fichas/")) {
