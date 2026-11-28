@@ -246,7 +246,7 @@
     }])));
   }
 
-  async function writeGoogleSheetRows(sheet, rows = [], deleteIds = []) {
+  async function writeGoogleSheetRows(sheet, rows = [], deleteIds = [], pinnedVersions = {}) {
     const config = readGoogleSheetsConfig();
     if (!config.endpoint || config.enabled === false) {
       throw new Error("Google Sheets no configurado");
@@ -256,7 +256,7 @@
     const changed = rows.filter((row) => snapshot.get(String(row.id))?.content !== rowContent(row));
     // Las bajas siempre son explícitas; omitir una fila no significa borrarla.
     const expectedVersions = Object.fromEntries([...changed.map((row) => String(row.id)), ...deleteIds.map(String)]
-      .map((id) => [id, snapshot.get(id)?.version || null]));
+      .map((id) => [id, Object.hasOwn(pinnedVersions,id) ? pinnedVersions[id] : snapshot.get(id)?.version || null]));
     if (!changed.length && !deleteIds.length) return { ok: true, updated: 0 };
     const sent = changed.map((row) => ({ ...row }));
     const response = await fetch(config.endpoint, {

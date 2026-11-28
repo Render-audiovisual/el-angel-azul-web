@@ -2371,6 +2371,9 @@
           adminPasajerosDemo = [];
           adminContratosDemo = [];
           adminFichasTutor = [];
+          adminPasajerosSelectedDni = "";
+          adminPasajerosSelectedKey = "";
+          adminTutorReviewDrafts.clear();
           adminPagos = [];
           adminCuentas.clear();
           adminCuentasLoaded = false;
@@ -3285,6 +3288,7 @@
       let adminPasajerosFilterCurso = "";
       let adminPasajerosFilterEstado = "";
       let adminPasajerosSelectedDni = "";
+      let adminPasajerosSelectedKey = "";
       let adminPasajerosGroupModal = null;
       let adminGruposFilterNivel = "";
       let adminGruposFilterViaje = "";
@@ -3301,6 +3305,8 @@
       let adminContratosEditError = "";
       // Ficha v2: filas planas tal cual llegan de /api/google-sheets.
       let adminFichasTutor = [];
+      const adminTutorReviewDrafts = new Map();
+      let adminTutorReviewSaving = false;
       let adminColegios = [];
       let adminPlanesPago = [];
       let adminFichasTipo = "pax";
@@ -3599,7 +3605,7 @@
         }
       }
 
-      function queueGoogleSheetsWrite(sheets = [], deleteIdsBySheet = {}) {
+      function queueGoogleSheetsWrite(sheets = [], deleteIdsBySheet = {}, pinnedVersionsBySheet = {}) {
         const config = window.ElAngelAzulPersistence.readGoogleSheetsConfig();
         if (!config.enabled || !config.endpoint) {
           googleSheetsSyncState = {
@@ -3626,7 +3632,7 @@
           if (uniqueSheets.includes("PLANES_PAGO")) rowsByTab.PLANES_PAGO = adminPlanesPago;
           for (const sheet of uniqueSheets) {
             if (!["GRUPOS", "CONTRATOS", "PASAJEROS", "FICHAS_ADHESION", "TURISMO", "FICHAS_TUTOR", "COLEGIOS", "PLANES_PAGO"].includes(sheet)) continue;
-            await window.ElAngelAzulPersistence.writeGoogleSheetRows(sheet, rowsByTab[sheet] || [], deleteIdsBySheet[sheet] || []);
+            await window.ElAngelAzulPersistence.writeGoogleSheetRows(sheet, rowsByTab[sheet] || [], deleteIdsBySheet[sheet] || [], pinnedVersionsBySheet[sheet] || {});
           }
           googleSheetsSyncState = {
             status: "ok",
@@ -4014,14 +4020,14 @@
         return [String(apellido || "").trim(), String(nombre || "").trim()].filter(Boolean).join(", ");
       }
 
-      function fichaTutoresAdicionales(dni) {
+      function fichaTutoresAdicionales(dni, pasajeroId = "") {
         const documento = normalizeFichaDni(dni);
         if (!documento) return [];
         // Un mismo tutor puede registrarse más de una vez: se muestra una sola
         // vez, con su registro más reciente (las filas llegan ordenadas así).
         const vistos = new Set();
         return adminFichasTutor.filter((tutor) => {
-          if (normalizeFichaDni(tutor.pasajero_dni) !== documento) return false;
+          if (!pasajeroId || tutor.estado_revision !== "revisada" || tutor.pasajero_id !== pasajeroId || normalizeFichaDni(tutor.pasajero_dni) !== documento) return false;
           const clave = normalizeFichaDni(tutor.numero_documento) || tutor.id;
           if (vistos.has(clave)) return false;
           vistos.add(clave);
@@ -4477,8 +4483,27 @@
         }).join("");
       }
 
-      // Fichas del formulario corto de Tutor: se revisan acá y se muestran
-      // también dentro de la ficha y del perfil del pasajero con el mismo DNI.
+      function renderTutorReviewForm(tutor) {
+        if (!adminTutorReviewDrafts.has(tutor.id)) adminTutorReviewDrafts.set(tutor.id, {
+          estado_revision:tutor.estado_revision,pasajero_id:tutor.pasajero_id||"",observaciones:tutor.observaciones||"",identidad_verificada:false,version:window.ElAngelAzulPersistence.adminSheetVersion("FICHAS_TUTOR",tutor.id),open:false
+        });
+        const draft=adminTutorReviewDrafts.get(tutor.id);
+        const matches=adminPasajerosDemo.flatMap(group=>(group.pasajeros||[]).filter(passenger=>normalizeFichaDni(passenger.dni)===normalizeFichaDni(tutor.pasajero_dni)).map(passenger=>({group,passenger})));
+        const label=({group})=>`${group.viaje} · ${group.colegio} · ${group.curso} ${group.division||""}`;
+        const current=matches.find(({passenger,group})=>passengerPaymentKey(passenger,group)===draft.pasajero_id);
+        return `<strong>${escapeHtml({pendiente:"Pendiente",revisada:"Verificado y vinculado",observada:"Requiere corrección",rechazada:"Rechazado"}[tutor.estado_revision]||tutor.estado_revision)}</strong><details class="admin-tutor-review-details" ${draft.open?"open":""}><summary>Revisar y vincular al viaje</summary><form class="admin-tutor-review" data-tutor-review="${escapeHtml(tutor.id)}"><fieldset ${adminTutorReviewSaving?"disabled":""}>
+          <label>Pasajero y viaje<select name="pasajero_id"><option value="">Elegí el viaje del pasajero</option>${matches.map(entry=>`<option value="${escapeHtml(passengerPaymentKey(entry.passenger,entry.group))}" ${passengerPaymentKey(entry.passenger,entry.group)===draft.pasajero_id?'selected':''}>${escapeHtml(label(entry))}</option>`).join("")}</select></label>
+          <p data-tutor-trip-context>${escapeHtml(current?label(current):matches.length?"Se muestran únicamente los viajes del DNI indicado.":"Primero registrá al pasajero en su grupo y viaje.")}</p>
+          <label>Estado<select name="estado_revision">${Object.entries({pendiente:"Pendiente",revisada:"Verificado y vinculado",observada:"Requiere corrección",rechazada:"Rechazado"}).map(([value,text])=>`<option value="${value}" ${draft.estado_revision===value?'selected':''}>${text}</option>`).join("")}</select></label>
+          <label class="admin-tutor-check"><input type="checkbox" name="identidad_verificada" ${draft.identidad_verificada?'checked':''}>Verifiqué la identidad y autorización de esta persona como responsable del viaje elegido.</label>
+          <label>Observaciones<textarea name="observaciones" rows="2" maxlength="1000">${escapeHtml(draft.observaciones)}</textarea></label>
+          <div class="admin-actions-row"><button type="submit">Guardar revisión del tutor</button><button type="button" data-tutor-discard="${escapeHtml(tutor.id)}">Descartar cambios</button><button type="button" data-tutor-refresh>Volver a consultar tutores</button></div>
+          <p role="${draft.error?"alert":"status"}" data-tutor-review-message>${escapeHtml(draft.error||"")}</p>
+        </fieldset></form></details>`;
+      }
+
+      // Solicitudes del formulario de Tutor: se verifican y vinculan a un
+      // pasajero/viaje concreto antes de aparecer como responsables.
       function renderAdminFichasTutorTabla(tutores = adminFichasTutor) {
         const search = normalizeFichaSearchText(adminFichasSearch);
         const visibles = tutores.filter((tutor) => !search || [tutor.nombre, tutor.apellido, tutor.numero_documento, tutor.pasajero_nombre, tutor.pasajero_apellido, tutor.pasajero_dni]
@@ -4489,13 +4514,13 @@
         ].filter(Boolean));
         return `
           <div class="admin-pasajeros-table-wrap">
-            <table class="admin-pasajeros-table admin-fichas-table">
+            <table class="admin-pasajeros-table admin-fichas-table admin-tutor-table">
               <thead>
                 <tr>
                   <th>Tutor</th>
                   <th>Pasajero a cargo</th>
                   <th>Contacto</th>
-                  <th>Estado</th>
+                  <th>Verificación y viaje</th>
                 </tr>
               </thead>
               <tbody>
@@ -4518,9 +4543,7 @@
                       <span>${escapeHtml(tutor.email)}</span>
                     </td>
                     <td>
-                      <select data-ficha-tutor-estado="${escapeHtml(tutor.id)}" aria-label="Estado de la ficha de tutor">
-                        ${["pendiente", "revisada", "observada", "rechazada"].map((estado) => `<option value="${estado}" ${estado === tutor.estado_revision ? "selected" : ""}>${estado}</option>`).join("")}
-                      </select>
+${renderTutorReviewForm(tutor)}
                     </td>
                   </tr>
                 `).join("") : `<tr><td colspan="4">No hay fichas de tutor.</td></tr>`}
@@ -4652,10 +4675,10 @@
           || collator.compare(a.passenger.apellido || "", b.passenger.apellido || "")
         ));
         return sorted.map(({ group, passenger: p, payment }) => {
-          const f = fichas.find((item) => item.tipo !== "tutor" && normalizeFichaDni(item.pasajeroNumeroDocumento) === normalizeFichaDni(p.dni)) || {};
+          const f = fichas.find((item) => item.tipo !== "tutor" && normalizeFichaDni(item.pasajeroNumeroDocumento) === normalizeFichaDni(p.dni) && normalizeFichaSearchText(item.viaje) === normalizeFichaSearchText(group.viaje)) || {};
           return {
             "Colegio": group.colegio, "Curso": group.nivel, "Grado/Año": group.curso, "División": group.division,
-            "Contrato": p.codigoContrato || "", "Plan": p.planNombre || "", "Cuotas": p.planCuotas || "",
+            "Contrato": p.codigoContrato || "", "Plan": payment.planPago || p.planNombre || "", "Cuotas": payment.cuotas ?? p.planCuotas ?? "",
             "Apellido": p.apellido || "", "Nombre": p.nombre || "", "DNI": p.dni || "",
             "Nacimiento": p.nacimiento || f.pasajeroNacimiento || "", "Sexo": f.pasajeroSexo || "",
             "Tutor apellido": p.responsableApellido || f.responsableApellido || "",
@@ -4700,13 +4723,15 @@
       }
 
       function adminPasajerosSelectedRecord() {
-        if (!adminPasajerosSelectedDni) return null;
-        return adminPasajerosRows().find(({ passenger }) => String(passenger.dni) === String(adminPasajerosSelectedDni)) || null;
+        const rows=adminPasajerosRows();
+        if(adminPasajerosSelectedKey)return rows.find(({passenger,group})=>passengerPaymentKey(passenger,group)===adminPasajerosSelectedKey)||null;
+        const matches=rows.filter(({passenger})=>String(passenger.dni)===String(adminPasajerosSelectedDni));
+        return matches.length===1?matches[0]:null;
       }
 
       function renderAdminPasajerosTableRows(rows) {
         return rows.length ? rows.map(({ group, passenger, payment }) => {
-          const isSelected = String(passenger.dni) === String(adminPasajerosSelectedDni);
+          const isSelected = passengerPaymentKey(passenger,group) === adminPasajerosSelectedKey;
           return `
             <tr class="${isSelected ? "is-selected" : ""}">
               <td class="admin-pasajeros-passenger-cell">
@@ -4728,7 +4753,7 @@
               <td><span class="admin-pasajeros-status ${adminStatusClass(passenger.documentacion)}">${escapeHtml(passenger.documentacion)}</span></td>
               <td><span class="admin-pasajeros-status ${adminStatusClass(passenger.estado)}">${escapeHtml(passenger.estado)}</span></td>
               <td>
-                <button type="button" class="admin-pasajeros-secondary-button" data-admin-pasajeros-open-profile="${escapeHtml(passenger.dni || "")}">
+                <button type="button" class="admin-pasajeros-secondary-button" data-admin-pasajeros-open-profile="${escapeHtml(passenger.dni || "")}" data-admin-pasajeros-record="${escapeHtml(passengerPaymentKey(passenger,group))}">
                   ${isSelected ? "Ficha abierta" : "Ver ficha"}
                 </button>
               </td>
@@ -4745,6 +4770,7 @@
         root.querySelectorAll("[data-admin-pasajeros-open-profile]").forEach((button) => {
           button.addEventListener("click", () => {
             adminPasajerosSelectedDni = button.dataset.adminPasajerosOpenProfile || "";
+            adminPasajerosSelectedKey = button.dataset.adminPasajerosRecord || "";
             adminPasajerosShowForm = false;
             adminPasajerosFormError = "";
             adminPasajerosEditMode = false;
@@ -4965,7 +4991,7 @@
               </article>
               <article>
                 <span>Tutores adicionales</span>
-                ${fichaTutoresAdicionales(passenger.dni).length ? `<dl>${fichaTutoresAdicionales(passenger.dni).map((tutor) => `
+                ${fichaTutoresAdicionales(passenger.dni, passengerPaymentKey(passenger, group)).length ? `<dl>${fichaTutoresAdicionales(passenger.dni, passengerPaymentKey(passenger, group)).map((tutor) => `
                   <div><dt>${escapeHtml(tutor.parentesco)}</dt><dd>${escapeHtml(fichaNombreCompleto(tutor.apellido, tutor.nombre))} · ${escapeHtml(tutor.celular)} · ${escapeHtml(tutor.email)}</dd></div>
                 `).join("")}</dl>` : "<p>Sin tutores adicionales registrados.</p>"}
               </article>
@@ -6440,6 +6466,7 @@
         bindAdminPasajerosProfileButtons();
         document.querySelector("[data-admin-pasajeros-close-profile]")?.addEventListener("click", () => {
           adminPasajerosSelectedDni = "";
+          adminPasajerosSelectedKey = "";
           adminPasajerosEditMode = false;
           adminPasajerosEditError = "";
           renderAdminPasajeros();
@@ -6684,19 +6711,37 @@
           }
           await vincularColegio(adminFichasSelectedId, colegio.id, `Colegio “${nombre}” creado y vinculado.`);
         });
-        document.querySelectorAll("[data-ficha-tutor-estado]").forEach((select) => {
-          select.addEventListener("change", async () => {
-            const previous = adminFichasTutor;
-            select.disabled = true;
-            adminFichasTutor = adminFichasTutor.map((tutor) => (
-              tutor.id === select.dataset.fichaTutorEstado ? { ...tutor, estado_revision: select.value } : tutor
-            ));
-            const guardado = await queueGoogleSheetsWrite(["FICHAS_TUTOR"]);
-            if (!guardado) adminFichasTutor = previous;
-            adminFichasMessage = guardado ? "Estado de la ficha de tutor guardado." : googleSheetsSyncState.message;
-            renderAdminFichasRecibidas();
-          });
+        document.querySelectorAll("[data-tutor-review]").forEach(form=>{
+          const id=form.dataset.tutorReview,draft=adminTutorReviewDrafts.get(id);
+          const details=form.closest("details");details.ontoggle=()=>{draft.open=details.open;};
+          const read=()=>{draft.error="";form.querySelector("[data-tutor-review-message]").textContent="";draft.estado_revision=form.elements.estado_revision.value;draft.pasajero_id=form.elements.pasajero_id.value;draft.observaciones=form.elements.observaciones.value;draft.identidad_verificada=form.elements.identidad_verificada.checked;};
+          form.oninput=read;
+          form.onchange=event=>{
+            if(["pasajero_id","estado_revision"].includes(event.target.name)){form.elements.identidad_verificada.checked=false;const option=form.elements.pasajero_id.selectedOptions[0];form.querySelector("[data-tutor-trip-context]").textContent=option?.value?option.textContent:"Elegí el viaje al que corresponde la autorización.";}
+            read();
+          };
+          form.onsubmit=async event=>{
+            event.preventDefault();if(adminTutorReviewSaving)return;read();
+            const tutor=adminFichasTutor.find(row=>row.id===id),message=form.querySelector("[data-tutor-review-message]");
+            if(draft.estado_revision==="revisada"&&(!draft.pasajero_id||((tutor.estado_revision!=="revisada"||tutor.pasajero_id!==draft.pasajero_id)&&!draft.identidad_verificada))){message.textContent="Elegí el viaje y confirmá la verificación de identidad y autorización antes de vincular al tutor.";message.setAttribute("role","alert");return;}
+            const previous=adminFichasTutor;
+            adminTutorReviewSaving=true;
+            document.querySelectorAll("[data-tutor-review] fieldset").forEach(node=>node.disabled=true);
+            adminFichasTutor=adminFichasTutor.map(row=>row.id===id?{...row,estado_revision:draft.estado_revision,pasajero_id:draft.pasajero_id,observaciones:draft.observaciones,identidad_verificada:draft.identidad_verificada?"TRUE":""}:row);
+            const saved=await queueGoogleSheetsWrite(["FICHAS_TUTOR"],{},{FICHAS_TUTOR:{[id]:draft.version}});
+            adminTutorReviewSaving=false;
+            if(!saved){adminFichasTutor=previous;draft.error=googleSheetsSyncState.message;}else adminTutorReviewDrafts.delete(id);
+            adminFichasMessage=saved?"Revisión del tutor guardada. El vínculo corresponde únicamente al viaje elegido.":googleSheetsSyncState.message;
+            if(currentPath().startsWith("/admin/fichas"))renderAdminFichasRecibidas();
+          };
+          form.querySelector("[data-tutor-refresh]").onclick=async()=>{
+            if(adminTutorReviewSaving)return;adminTutorReviewSaving=true;form.querySelector("fieldset").disabled=true;
+            try{const source=await window.ElAngelAzulPersistence.fetchGoogleSheetRows("FICHAS_TUTOR");adminFichasTutor=source;window.ElAngelAzulPersistence.captureAdminSheet("FICHAS_TUTOR",source,source);adminFichasMessage="Solicitudes consultadas. Conservamos tus borradores; descartá los cambios para adoptar la versión actual.";}
+            catch(error){adminFichasMessage="No pudimos consultar los tutores. Conservamos tus cambios.";if(error.status===401)handleAdminSessionLost();}
+            finally{adminTutorReviewSaving=false;if(currentPath().startsWith("/admin/fichas"))renderAdminFichasRecibidas();}
+          };
         });
+        document.querySelectorAll("[data-tutor-discard]").forEach(button=>button.onclick=()=>{adminTutorReviewDrafts.delete(button.dataset.tutorDiscard);renderAdminFichasRecibidas();});
         document.querySelectorAll("[data-ficha-aprobar]").forEach((button) => {
           button.addEventListener("click", async () => {
             button.disabled = true;
@@ -6885,7 +6930,7 @@
             <form data-payment-search-form class="admin-payment-search"><label>Buscar por pasajero, DNI, concepto o referencia<input type="search" name="buscar" value="${escapeHtml(adminPagoSearch)}"></label><button type="submit" class="admin-pasajeros-secondary">Buscar</button></form>
             <p>${filtered.length} movimientos${adminPagoSearch ? " encontrados" : " registrados"}. Los anulados se conservan para poder revisar el historial.</p>
             ${annul ? `<form data-payment-annul-form class="admin-payment-annul"><h3>Anular pago de ${escapeHtml(annul.pasajero_nombre)} ${escapeHtml(annul.pasajero_apellido)}</h3><p>${escapeHtml(formatAdminMoney(Number(annul.monto_centavos) / 100))} · ${escapeHtml(annul.concepto)}. Esta acción excluye el importe del total cobrado.</p><label>Motivo de anulación<textarea name="motivo" required minlength="3" maxlength="500" ${adminPagoSaving ? "disabled" : ""}>${escapeHtml(adminPagoMotivo)}</textarea></label><div class="admin-payment-actions"><button type="submit" class="admin-pasajeros-primary" ${adminPagoSaving ? "disabled" : ""}>${adminPagoSaving ? "Guardando…" : "Confirmar anulación"}</button><button type="button" class="admin-pasajeros-secondary" data-payment-annul-cancel ${adminPagoSaving ? "disabled" : ""}>Cancelar</button></div><p role="alert" data-payment-annul-error class="admin-form-error">${escapeHtml(adminPagoAnnulError)}</p></form>` : ""}
-            <div class="admin-pasajeros-table-wrap"><table class="admin-pasajeros-table admin-payment-ledger"><thead><tr><th>Fecha</th><th>Pasajero</th><th>Concepto y referencia</th><th>Medio</th><th>Importe (ARS)</th><th>Estado y responsable</th><th>Acciones</th></tr></thead><tbody>${filtered.map((pago)=>`<tr><td>${escapeHtml(pago.fecha.split('-').reverse().join('/'))}</td><td><strong>${escapeHtml([pago.pasajero_apellido,pago.pasajero_nombre].filter(Boolean).join(', '))}</strong><span>DNI ${escapeHtml(pago.pasajero_dni)}</span></td><td>${escapeHtml(pago.concepto)}<span>${escapeHtml(pago.referencia || "Sin referencia")}</span></td><td>${escapeHtml(adminPagoMedios[pago.medio] || pago.medio)}</td><td>${escapeHtml(formatAdminMoney(Number(pago.monto_centavos)/100))}</td><td><strong>${pago.estado === "anulado" ? "Anulado" : "Confirmado"}</strong><span>Cargó: ${escapeHtml(pago.actor_username)}</span>${pago.estado === "anulado" ? `<span>Anuló: ${escapeHtml(pago.anulado_por)} · ${escapeHtml(pago.motivo_anulacion)}</span>` : ""}</td><td><div class="admin-payment-actions"><button class="admin-pasajeros-secondary" data-payment-profile="${escapeHtml(pago.pasajero_dni)}">Ver ficha</button>${adminCanDelete() && pago.estado === "confirmado" ? `<button class="admin-pasajeros-secondary" data-payment-annul="${escapeHtml(pago.id)}" ${adminPagoSaving ? "disabled" : ""}>Anular pago</button>` : ""}</div></td></tr>`).join("") || `<tr><td colspan="7">${adminPagoSearch ? "No hay movimientos que coincidan con la búsqueda." : "Todavía no hay pagos registrados."}</td></tr>`}</tbody></table></div>
+            <div class="admin-pasajeros-table-wrap"><table class="admin-pasajeros-table admin-payment-ledger"><thead><tr><th>Fecha</th><th>Pasajero</th><th>Concepto y referencia</th><th>Medio</th><th>Importe (ARS)</th><th>Estado y responsable</th><th>Acciones</th></tr></thead><tbody>${filtered.map((pago)=>`<tr><td>${escapeHtml(pago.fecha.split('-').reverse().join('/'))}</td><td><strong>${escapeHtml([pago.pasajero_apellido,pago.pasajero_nombre].filter(Boolean).join(', '))}</strong><span>DNI ${escapeHtml(pago.pasajero_dni)}</span></td><td>${escapeHtml(pago.concepto)}<span>${escapeHtml(pago.referencia || "Sin referencia")}</span></td><td>${escapeHtml(adminPagoMedios[pago.medio] || pago.medio)}</td><td>${escapeHtml(formatAdminMoney(Number(pago.monto_centavos)/100))}</td><td><strong>${pago.estado === "anulado" ? "Anulado" : "Confirmado"}</strong><span>Cargó: ${escapeHtml(pago.actor_username)}</span>${pago.estado === "anulado" ? `<span>Anuló: ${escapeHtml(pago.anulado_por)} · ${escapeHtml(pago.motivo_anulacion)}</span>` : ""}</td><td><div class="admin-payment-actions"><button class="admin-pasajeros-secondary" data-payment-profile="${escapeHtml(pago.pasajero_dni)}" data-payment-passenger-id="${escapeHtml(pago.pasajero_legacy_id||pago.pasajero_id)}">Ver ficha</button>${adminCanDelete() && pago.estado === "confirmado" ? `<button class="admin-pasajeros-secondary" data-payment-annul="${escapeHtml(pago.id)}" ${adminPagoSaving ? "disabled" : ""}>Anular pago</button>` : ""}</div></td></tr>`).join("") || `<tr><td colspan="7">${adminPagoSearch ? "No hay movimientos que coincidan con la búsqueda." : "Todavía no hay pagos registrados."}</td></tr>`}</tbody></table></div>
           </section>` : ""}
         `);
         bindAdminShell();
@@ -6914,7 +6959,7 @@
           if(currentPath() === '/admin/pagos') renderAdminPagos();
         });
         document.querySelector('[data-payment-search-form]')?.addEventListener('submit', event => { event.preventDefault(); adminPagoSearch = new FormData(event.currentTarget).get('buscar') || ''; renderAdminPagos(); });
-        document.querySelectorAll('[data-payment-profile]').forEach(button => button.addEventListener('click',()=> { adminPasajerosSelectedDni = button.dataset.paymentProfile; location.hash = '/admin/pasajeros'; }));
+        document.querySelectorAll('[data-payment-profile]').forEach(button => button.addEventListener('click',()=> { adminPasajerosSelectedDni = button.dataset.paymentProfile; adminPasajerosSelectedKey = button.dataset.paymentPassengerId; location.hash = '/admin/pasajeros'; }));
         document.querySelectorAll('[data-payment-annul]').forEach(button => button.addEventListener('click',()=> { remember(); adminPagoAnularId = button.dataset.paymentAnnul; adminPagoMotivo = ''; adminPagoAnnulError = ''; renderAdminPagos(); document.querySelector('[name="motivo"]')?.focus(); }));
         document.querySelector('[data-payment-annul-cancel]')?.addEventListener('click',()=> { adminPagoAnularId = ''; renderAdminPagos(); });
         document.querySelector('[data-payment-annul-form]')?.addEventListener('input', event => { adminPagoMotivo = event.currentTarget.elements.motivo.value; });

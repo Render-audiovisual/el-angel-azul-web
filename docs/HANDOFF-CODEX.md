@@ -9,7 +9,7 @@ Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerra
 |---|---|---|---|---|
 | Fran (Claude Code) | `fran/harness` | Harness: guardas, `AGENTS.md`, docs | `AGENTS.md`, `CLAUDE.md`, `package.json`, `scripts/guardas.test.js`, `scripts/helpers/sin-secretos.js`, docs | 25/11 |
 | Fran (Claude Code) | `fran/inicio-aldena` | Paso 8: rediseño del inicio inspirado en la web de referencia (Agustín dio su OK sobre el PR #8) | `index.html`, `assets/css/home.css`, `assets/css/public-experience.css`, `assets/js/modules/home-motion.js`, `renderHome` en `assets/js/app.js` | 27/11 |
-| Agustín (Codex) | `agustin/ecosistema-tutores-servidor` | Verificación explícita de tutores por pasajero y preservación de responsables adicionales | Migración 0015, vínculos de responsables, aprobación de tutores y pruebas. Solo PGlite | 27/11 |
+| Agustín (Codex) | `agustin/ecosistema-tutores-panel` | Verificación de tutores y selección del perfil por pasajero/viaje, sin confundir DNIs repetidos | Formularios y perfil del panel, versiones del borrador en persistencia, CSS, HTML, E2E y docs. Solo PGlite | 28/11 |
 
 ## Ecosistema integral — nuevo encargo del 27/11/2026
 
@@ -46,6 +46,8 @@ Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerra
 - Interfaz de documentos conectada: PDF firmado en el editor de contrato, documentos del PAX en su perfil y carga/consulta propia en Mi viaje. Selección del archivo y tipo sobreviven a errores y cambios entre pasajeros; se limpian al cerrar sesión. Una respuesta perdida se reintenta con el mismo identificador. Revisión, mensaje de corrección, visibilidad y descarga real están integradas. Las fotos de celular se ajustan a un tamaño procesable; el original no cambia. La cabecera del portal deja de transparentar datos y el acceso flotante de WhatsApp no tapa sus controles. Pruebas Chrome/PGlite con objetos ficticios, revisión en 320/390/1440 px; no se cargaron archivos reales.
 
 - Integridad de responsables: editar el PAX conserva responsables adicionales verificados/manuales. Una solicitud pública de tutor ya no concede vínculos automáticamente. Marcar «revisada» requiere seleccionar pasajero/viaje y verificar identidad/autorización; revocar esa revisión retira solo el vínculo creado por la solicitud y el portal comprueba la pertenencia nuevamente. Migración 0015 conserva datos heredados, permite verificar otro viaje mediante otra solicitud y protege un único principal. Antes de aplicarla: revisar vínculos heredados y posibles principales duplicados, sin revocaciones automáticas. Pruebas HTTP/PGlite; interfaz en el siguiente PR.
+
+- Interfaz de tutores: revisión explícita con selección del viaje y confirmación de identidad/autorización. Conserva el borrador y su versión inicial aunque se consulte una versión posterior; un conflicto no pisa cambios ajenos y requiere descartar para adoptar lo actual. La lista se adapta al celular. Corrección integrada: el perfil y los accesos desde Pagos seleccionan al pasajero por su identificador de viaje, no solo por DNI; dos viajes del mismo alumno muestran tutores separados. Excel limita los datos de adhesión al viaje correcto y conserva el nombre del plan confirmado. Prueba de navegador: 8/8, incluidos conflictos después de volver a consultar y 320/390/1440 px.
 
 ## Revisión funcional y pagos manuales — 27/11/2026
 

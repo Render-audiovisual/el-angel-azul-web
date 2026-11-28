@@ -45,3 +45,11 @@ test('colecciones públicas conservan su almacenamiento y las privadas funcionan
   privateCollection.save([{nombre:'Solo memoria'}]);
   assert.equal(privateCollection.load()[0].nombre,'Solo memoria');
 });
+test('una revisión conserva la versión que vio al comenzar aunque se consulte otra versión antes de guardar',async()=>{
+  const sent=[],window={location:{origin:'http://local.test'},localStorage:{getItem(){return null;},removeItem(){},setItem(){}}};
+  vm.runInNewContext(source,{window,URL,fetch:async(_url,options)=>{sent.push(JSON.parse(options.body));return {ok:false,status:409,json:async()=>({ok:false,error:'El registro cambió.'})};}});
+  const p=window.ElAngelAzulPersistence;
+  p.captureAdminSheet('FICHAS_TUTOR',[{id:'tutor',estado_revision:'pendiente'}],[{id:'tutor',_version:'v2'}]);
+  await assert.rejects(p.writeGoogleSheetRows('FICHAS_TUTOR',[{id:'tutor',estado_revision:'revisada'}],[],{tutor:'v1'}),/registro cambió/);
+  assert.equal(sent[0].expectedVersions.tutor,'v1');assert.equal(p.adminSheetVersion('FICHAS_TUTOR','tutor'),'v2');
+});

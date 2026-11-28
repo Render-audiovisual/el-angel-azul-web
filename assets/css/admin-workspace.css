@@ -417,3 +417,22 @@ body[data-app-entry="admin"] .academic-admin .academic-tabs button[aria-pressed=
 .enrollment-admin input[type="checkbox"] { width:22px; min-height:22px; height:22px; accent-color:#0765a4; }
 .enrollment-admin [role="alert"] { color:#a02b35; }
 @media(max-width:640px) { .enrollment-admin-actions button { width:100%; } }
+body[data-app-entry="admin"] .admin-tutor-table { min-width:0; table-layout:fixed; }
+body[data-app-entry="admin"] .admin-tutor-table th:last-child { width:42%; }
+.admin-tutor-review { display:grid; gap:12px; min-width:0; }
+.admin-tutor-review label { display:grid; gap:8px; white-space:normal; }
+.admin-tutor-review select,.admin-tutor-review textarea { width:100%; min-width:0; box-sizing:border-box; }
+.admin-tutor-review p { white-space:normal; overflow-wrap:anywhere; margin:0; }
+.admin-tutor-review .admin-tutor-check { display:flex; align-items:center; gap:12px; min-height:44px; }
+.admin-tutor-review input[type="checkbox"] { width:22px; min-width:22px; height:22px; min-height:22px; accent-color:#07528d; }
+.admin-tutor-review [role="alert"] { color:#a02b35; }
+@media(max-width:900px) {
+ body[data-app-entry="admin"] .admin-tutor-table thead { display:none; }
+ body[data-app-entry="admin"] .admin-tutor-table,body[data-app-entry="admin"] .admin-tutor-table tbody { display:block; width:100%; }
+ body[data-app-entry="admin"] .admin-tutor-table tr { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); border-top:1px solid #c9dbea; padding:16px 0; }
+ body[data-app-entry="admin"] .admin-tutor-table td { display:block; min-width:0; width:auto; white-space:normal; border:0; overflow-wrap:anywhere; }
+ body[data-app-entry="admin"] .admin-tutor-table td:last-child { grid-column:1/-1; }
+}
+@media(max-width:500px) { body[data-app-entry="admin"] .admin-tutor-table tr { grid-template-columns:minmax(0,1fr); } .admin-tutor-review .admin-actions-row button { width:100%; } }
+.admin-tutor-review-details summary { min-height:44px; align-content:center; cursor:pointer; white-space:normal; color:#07528d; }
+.admin-tutor-review fieldset { display:grid; gap:12px; border:0; padding:16px 0 0; margin:0; min-width:0; }
