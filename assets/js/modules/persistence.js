@@ -321,9 +321,31 @@
     return activeProvider;
   }
 
-  function collection({ key, seed = () => [], normalize = (item) => item }) {
+  const privateCollections = new Set();
+
+  function clearPrivateCollections() {
+    for (const clear of privateCollections) clear();
+    adminSnapshots.clear();
+  }
+
+  function adminSheetVersion(sheet, id) {
+    return adminSnapshots.get(sheet)?.get(String(id))?.version || null;
+  }
+
+  function collection({ key, seed = () => [], normalize = (item) => item, privateData = false }) {
+    // Los datos personales viven solo en memoria de esta pestaña. Borrar cachés
+    // heredadas también al arrancar una entrada pública, sin llegar a leerlas.
+    let privateItems = null;
+    if (privateData) {
+      const clear = () => {
+        privateItems = null;
+        try { window.localStorage.removeItem(key); } catch (_) { /* almacenamiento bloqueado */ }
+      };
+      privateCollections.add(clear);
+      clear();
+    }
     function load() {
-      const stored = activeProvider.read ? activeProvider.read(key, null) : null;
+      const stored = privateData ? privateItems : (activeProvider.read ? activeProvider.read(key, null) : null);
       if (!stored) {
         const initialData = seed();
         save(initialData);
@@ -334,7 +356,8 @@
 
     function save(items = []) {
       const normalized = Array.isArray(items) ? items.map(normalize) : [];
-      if (activeProvider.write) activeProvider.write(key, normalized);
+      if (privateData) privateItems = normalized;
+      else if (activeProvider.write) activeProvider.write(key, normalized);
       return normalized;
     }
 
@@ -477,6 +500,8 @@ function jsonResponse(data) {
     googleSheetsStatus,
     fetchGoogleSheetRows,
     captureAdminSheet,
+    adminSheetVersion,
+    clearPrivateCollections,
     writeGoogleSheetRows,
     toCsv,
     blankCsvPackage,

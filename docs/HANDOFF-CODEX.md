@@ -9,13 +9,19 @@ Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerra
 |---|---|---|---|---|
 | Fran (Claude Code) | `fran/harness` | Harness: guardas, `AGENTS.md`, docs | `AGENTS.md`, `CLAUDE.md`, `package.json`, `scripts/guardas.test.js`, `scripts/helpers/sin-secretos.js`, docs | 25/11 |
 | Fran (Claude Code) | `fran/inicio-aldena` | Paso 8: rediseño del inicio inspirado en la web de referencia (Agustín dio su OK sobre el PR #8) | `index.html`, `assets/css/home.css`, `assets/css/public-experience.css`, `assets/js/modules/home-motion.js`, `renderHome` en `assets/js/app.js` | 27/11 |
-| Agustín (Codex) | `agustin/ecosistema-catalogo-servidor` | Auditoría/investigación documentadas. Primer servidor: catálogo público separado, validación de publicación y duplicación auditada | `lib/catalog.js`, `lib/db.js`, `server.js`, pruebas y docs; interfaz después. Solo PGlite | 27/11 |
+| Agustín (Codex) | `agustin/ecosistema-catalogo-panel` | Catálogo conectado: publicación confirmada, duplicación, errores recuperables, filtros y privacidad del navegador | `assets/js/app.js`, persistencia, CSS, entradas HTML, pruebas y docs. Solo PGlite | 27/11 |
 
 ## Ecosistema integral — nuevo encargo del 27/11/2026
 
 - Auditoría, investigación con fuentes primarias, arquitectura, datos confirmados/propuestos y criterios de aceptación en `docs/ECOSISTEMA-ANGEL-AZUL.md`. No equivale a afirmar que el alcance integral esté terminado.
 - Primer servidor: catálogo público separado (`/api/public/paquetes` y detalle por slug). La ruta pública heredada de TURISMO también filtra borradores, inactivos y salidas vencidas en servidor y no devuelve el DTO administrativo ni versiones. Publicar valida contenido, importes, fechas y multimedia; duplicar requiere sesión/origen/versión y genera borrador auditado.
 - Prueba HTTP con PGlite: crear borrador, publicar desde admin y leer desde cliente anónimo, cambiar precio/contenido, filtros, rechazos, duplicación, despublicación y vencimiento. Sin Supabase, correos ni cambios en main/hosting.
+
+- Interfaz del catálogo sobre el servidor anterior: acciones explícitas Guardar/Publicar/Despublicar/Duplicar, API pública sin caché heredada de previsualización, filtros de destino/fecha y orden de importes agrupado por moneda (sin conversión inventada). Los campos de fechas e importes ahora coinciden con la validación del servidor.
+- Fotografías e itinerarios conservan el resto del formulario. El borrador en edición no se publica ni se inserta al abrir «Nuevo viaje». Si falla el guardado/conflicta, conserva los campos, revierte el modelo confirmado y permite corregir/reintentar. El precio y las condiciones comerciales opcionales no se inventan.
+- Fichas, pasajeros y contratos dejan de persistir en localStorage: colecciones en memoria, limpieza de cachés antiguas al arrancar y al cerrar sesión. Se retira el acceso interno del pie público. Esto no sustituye la autenticación privada del portal, todavía pendiente.
+- Verificación de esta interfaz: `npm run check`, 190 aprobadas, 0 fallas y 1 TODO previo de TLS; navegador local, 12/12 recorridos de catálogo (incluye filtros, conflictos y privacidad) y 37/37 de panel en escritorio/celular. Capturas revisadas en 320/390/1440 px; corregidos cabecera superpuesta y controles recortados en móvil.
+- Pendiente inmediato descubierto: la lista permitida de archivos estáticos bloquea `/admin/` incluso con sesión; corregir en un PR de servidor separado y probar entradas públicas/privadas. Después continuar con condiciones/cuotas y acceso privado individual, además de multimedia/disponibilidad del catálogo. El alcance integral del encargo sigue abierto.
 
 ## Revisión funcional y pagos manuales — 27/11/2026
 

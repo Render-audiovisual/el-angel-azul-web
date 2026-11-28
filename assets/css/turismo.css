@@ -54,7 +54,7 @@
 .tur-empty p { font: 400 clamp(1.75rem, 3vw, 3rem)/1.1 var(--h-font-display); color: var(--h-navy); max-width: 22em; text-wrap: balance; }
 
 /* --------------------------------------------------- página de todos los paquetes ---- */
-.tur-all-head { position: relative; isolation: isolate; padding: 168px 0 var(--space-3xl); overflow: clip; }
+.eaa-turismo-page .tur-all-head { position: relative; isolation: isolate; padding: 168px 0 var(--space-3xl); overflow: clip; }
 .tur-all-title { font-size: clamp(3.5rem, 8vw, 8rem); color: var(--h-on-dark); }
 .tur-all-head p { margin-top: var(--space-md); max-width: 46ch; color: var(--h-on-dark-2); font-size: var(--text-lg); }
 .tur-crumbs { display: flex; flex-wrap: wrap; gap: var(--space-xs); margin-bottom: var(--space-lg); font-size: var(--text-sm); color: var(--h-on-dark-2); }
@@ -62,13 +62,13 @@
 .tur-crumbs a:hover { color: var(--h-on-dark); }
 .tur-shop { padding-block: var(--space-2xl) var(--section-gap); background: var(--h-paper); }
 .tur-shop-grid { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: var(--space-2xl); align-items: start; }
-.tur-filters { position: sticky; top: 112px; padding: var(--space-lg); background: var(--h-paper-2); border-radius: var(--radius-card); }
+.tur-filters { min-width: 0; position: sticky; top: 112px; padding: var(--space-lg); background: var(--h-paper-2); border-radius: var(--radius-card); }
 .tur-filters summary { font: 400 2rem/1 var(--h-font-display); color: var(--h-navy); cursor: pointer; list-style: none; }
 .tur-filters summary::-webkit-details-marker { display: none; }
 .tur-filters-form { display: grid; gap: var(--space-lg); margin-top: var(--space-lg); }
 .tur-filters fieldset { margin: 0; padding: 0; border: 0; min-width: 0; display: flex; flex-wrap: wrap; gap: var(--space-xs); }
 .tur-filters legend { width: 100%; margin-bottom: var(--space-xs); padding: 0; color: var(--h-muted); font-size: var(--text-sm); font-weight: 500; }
-.tur-search { display: grid; gap: var(--space-xs); }
+.tur-search { min-width: 0; display: grid; gap: var(--space-xs); }
 .tur-search span { color: var(--h-muted); font-size: var(--text-sm); font-weight: 500; }
 .tur-search input { width: 100%; min-height: 48px; padding: 0 var(--space-md); border: 1px solid var(--h-rule); border-radius: var(--radius-control); background: var(--h-paper); color: var(--h-ink); font: 400 var(--text-md)/1 var(--h-font-body); transition: border-color var(--dur-micro) ease; }
 .tur-search input:hover { border-color: var(--h-navy); }
@@ -140,7 +140,7 @@
 }
 @media (max-width: 62rem) {
   .tur-intro-head { grid-template-columns: 1fr; gap: var(--space-md); }
-  .tur-shop-grid, .tur-d-grid { grid-template-columns: 1fr; gap: var(--space-xl); }
+  .tur-shop-grid, .tur-d-grid { grid-template-columns: minmax(0, 1fr); gap: var(--space-xl); }
   .tur-filters { position: static; }
   .tur-d-aside { position: static; order: -1; }
   .tur-d + .package-sticky-bar { display: flex; }
@@ -161,3 +161,18 @@
 
 /* En la página de un viaje la barra inferior ya trae el botón de WhatsApp: el flotante lo tapaba. */
 body:has(.tur-d) .whatsapp-fab { display: none; }
+
+/* Filtros de fecha y destino: mismo ritmo y foco que la búsqueda. */
+.tur-filter-label { display: grid; gap: var(--space-xs); min-width: 0; width: 100%; }
+.tur-filter-label span { color: var(--h-muted); font-size: var(--text-sm); font-weight: 500; }
+.tur-filter-label :is(input, select) { min-width: 0; width: 100%; min-height: 48px; padding: 10px 12px; border: 1px solid var(--h-rule); border-radius: var(--radius-control); background: var(--h-paper); color: var(--h-ink); font: inherit; }
+.tur-filter-label :is(input, select):focus-visible { outline: 3px solid var(--h-focus); outline-offset: 2px; }
+
+.tur-results { min-width: 0; }
+.tur-results-bar, .tur-sort { flex-wrap: wrap; }
+.tur-sort select { min-width: 0; max-width: 100%; }
+@media (max-width: 40rem) {
+  .eaa-turismo-page .tur-all-head { padding-top: 112px; }
+  .tur-sort { width: 100%; }
+  .tur-sort select { width: 100%; }
+}

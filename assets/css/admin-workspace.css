@@ -357,3 +357,8 @@ body[data-app-entry="admin"] .admin-payment-annul { border: 1px solid var(--admi
 body[data-app-entry="admin"] .admin-payment-annul textarea { display: block; width: 100%; margin: 8px 0 16px; }
 body[data-app-entry="admin"] .admin-form-error { color: #a12323; overflow-wrap: anywhere; }
 body[data-app-entry="admin"] .admin-payment-feedback { color: #145532; }
+
+@media (max-width: 40rem) {
+  body[data-app-entry="admin"] .admin-turismo-foto-row--new { grid-template-columns: 64px minmax(0, 1fr); }
+  body[data-app-entry="admin"] .admin-turismo-foto-row--new > button { grid-column: 1 / -1; }
+}

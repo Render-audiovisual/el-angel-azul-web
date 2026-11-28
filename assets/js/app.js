@@ -562,6 +562,7 @@
       const TURISMO_PUBLIC_JSON_URL = "assets/data/turismo-paquetes.json";
       const ADMIN_TURISMO_PREVIEW_MODE_KEY = "angelAzulTurismoPublicPreviewModeV1";
       let turismoPublicPackagesCache = null;
+      let turismoPublicLoadError = "";
 
       // Sin viajes cargados la web muestra el estado vacío: nunca viajes de demostración
       // con precios inventados (los viajes los carga el dueño desde el admin).
@@ -574,7 +575,7 @@
       }
 
       function isTurismoPublicPreviewMode() {
-        return localStorage.getItem(ADMIN_TURISMO_PREVIEW_MODE_KEY) === "true";
+        return false;
       }
 
       function setTurismoPublicPreviewMode(isActive) {
@@ -591,7 +592,7 @@
       }
 
       function turismoDisplayPrice(value, currency = "ARS") {
-        const raw = String(value || "").trim();
+        const raw = String(value ?? "").trim();
         if (!raw) return "";
         if (/[A-Za-z$]/.test(raw)) return raw;
         const numeric = Number(raw);
@@ -613,7 +614,7 @@
         const categories = Array.isArray(adminTrip.categorias) ? adminTrip.categorias : [];
         const firstCategory = categories[0] || "turismo";
         const title = adminTrip.titulo || adminTrip.destino || "Viaje";
-        const image = principalPhoto?.url || turismoFallbackPackages()[0]?.image;
+        const image = principalPhoto?.url || "";
         const visiblePrice = turismoDisplayPrice(adminTrip.precioDesde, adminTrip.moneda);
         return {
           id: adminTrip.id,
@@ -632,11 +633,11 @@
           descripcion: adminTrip.descripcionLarga || adminTrip.descripcionCorta || "Viaje con asesoramiento de El Angel Azul.",
           incluye: Array.isArray(adminTrip.incluye) ? adminTrip.incluye : [],
           noIncluye: Array.isArray(adminTrip.noIncluye) ? adminTrip.noIncluye : [],
-          formasPago: Array.isArray(adminTrip.formasPago) && adminTrip.formasPago.length ? adminTrip.formasPago : ["Efectivo / transferencia", "Financiacion a consultar", "Reserva sujeta a disponibilidad"],
+          formasPago: Array.isArray(adminTrip.formasPago) ? adminTrip.formasPago : [],
           itinerario: Array.isArray(adminTrip.itinerario) ? adminTrip.itinerario : [],
           precio: visiblePrice || "Consultar disponibilidad",
           precioDesde: visiblePrice || "Consultar",
-          precioValor: adminTrip.precioValor,
+          precioValor: adminTrip.precioDesde === "" ? null : Number(adminTrip.precioDesde),
           precioBaseDoble: adminTrip.precioBaseDoble || "",
           suplementoSingle: adminTrip.suplementoSingle || "",
           precioMenor: adminTrip.precioMenor || "",
@@ -646,29 +647,21 @@
           gallery: gallery.length ? gallery : [image],
           destacado: Boolean(adminTrip.destacado),
           orden: Number(adminTrip.orden) || 999,
-          source: "admin-json"
+          source: "database"
         };
       }
 
       async function loadTurismoPublicPackages() {
         if (turismoPublicPackagesCache) return turismoPublicPackagesCache;
-        if (isTurismoPublicPreviewMode()) {
-          const adminTrips = loadAdminTurismoTrips();
-          turismoPublicPackagesCache = adminTrips
-            .map(adminTripToPublicPackage)
-            .filter(Boolean)
-            .sort((a, b) => Number(b.destacado) - Number(a.destacado) || a.orden - b.orden);
-          return turismoPublicPackagesCache;
-        }
-
         // La base es la fuente de verdad: si responde, lo que devuelve es lo que se publica,
         // aunque no haya ningún viaje activo (entonces la web muestra el estado vacío).
         try {
-          const response = await fetch("/api/google-sheets?sheet=TURISMO", { cache: "no-store" });
+          const response = await fetch("/api/public/paquetes", { cache: "no-store" });
           if (response.ok) {
             const payload = await response.json();
-            if (payload.ok && Array.isArray(payload.rows)) {
-              turismoPublicPackagesCache = payload.rows
+            if (payload.ok && Array.isArray(payload.paquetes)) {
+              turismoPublicLoadError = "";
+              turismoPublicPackagesCache = payload.paquetes
                 .map(turismoRowToTrip)
                 .map(adminTripToPublicPackage)
                 .filter(Boolean)
@@ -677,8 +670,9 @@
             }
           }
         } catch (error) {
-          // Sin conexión con el servidor: se devuelve vacío sin guardarlo, así el próximo intento vuelve a consultar.
+          // Sin caché de éxito: el próximo intento vuelve a consultar.
         }
+        turismoPublicLoadError = "No pudimos cargar los viajes. Revisá tu conexión y volvé a intentar.";
         return [];
       }
 
@@ -697,10 +691,9 @@
 
       // Tarjeta compacta de viaje: toda la tarjeta lleva al detalle (pensada para elegir rápido entre muchos paquetes).
       function turismoPrecioNumero(packageItem) {
+        if (packageItem.precioValor === null || packageItem.precioValor === undefined || packageItem.precioValor === "") return null;
         const valor = Number(packageItem.precioValor);
-        if (Number.isFinite(valor) && valor > 0) return valor;
-        const digitos = String(packageItem.precioDesde || "").replace(/[^\d]/g, "");
-        return digitos ? Number(digitos) : null;
+        return Number.isFinite(valor) && valor >= 0 ? valor : null;
       }
 
       function turismoDias(packageItem) {
@@ -725,9 +718,9 @@
               </span>
               <span class="tur-card-body">
                 <span class="tur-card-meta">${escapeHtml(packageItem.temporada || packageItem.tipo || "")}</span>
-                <h3>${destination}</h3>
+                <h3>${escapeHtml(packageItem.titulo || packageItem.destino)}</h3>
                 <span class="tur-card-foot">
-                  <span class="tur-price"><span>${priceText ? "Desde" : "Precio"}</span><strong>${priceText ? escapeHtml(priceText) : "A consultar"}</strong>${priceText ? "<small>por persona</small>" : ""}</span>
+                  <span class="tur-price"><span>${priceText ? "Desde" : "Precio"}</span><strong>${priceText ? escapeHtml(priceText) : "A consultar"}</strong></span>
                   <span class="tur-card-go" aria-hidden="true">${TURISMO_ARROW_SVG}</span>
                 </span>
               </span>
@@ -764,6 +757,7 @@
       }
 
       function renderTurismoEmptyState(sinViajes = false) {
+        if (turismoPublicLoadError) return `<div class="tur-empty" role="alert"><p>${escapeHtml(turismoPublicLoadError)}</p><button type="button" class="eaa-button eaa-button-ink" data-turismo-retry>Volver a intentar</button></div>`;
         return `
           <div class="tur-empty">
             <p>${sinViajes
@@ -789,7 +783,7 @@
       const TURISMO_FILTRO_QUIEN = [["", "Todos"], ["pareja", "Pareja"], ["familiar", "Familia"], ["grupo", "Grupo"]];
       const TURISMO_FILTRO_TIPO = [["", "Todos"], ["playa", "Playa"], ["nieve", "Nieve"], ["escapada", "Escapada"], ["nacional", "Nacional"], ["internacional", "Internacional"]];
       const TURISMO_FILTRO_DURACION = [["", "Cualquiera"], ["corto", "Hasta 4 días"], ["medio", "5 a 8 días"], ["largo", "9 días o más"]];
-      const TURISMO_ORDENES = [["destacados", "Destacados primero"], ["precio-asc", "Precio: de menor a mayor"], ["precio-desc", "Precio: de mayor a menor"], ["dias-asc", "Duración: más corta primero"], ["dias-desc", "Duración: más larga primero"]];
+      const TURISMO_ORDENES = [["destacados", "Destacados primero"], ["precio-asc", "Precio por moneda: menor a mayor"], ["precio-desc", "Precio por moneda: mayor a menor"], ["dias-asc", "Duración: más corta primero"], ["dias-desc", "Duración: más larga primero"]];
       const TURISMO_PAGINA = 24;
 
       function filtrarOrdenarTurismo(packages, filtros) {
@@ -797,10 +791,16 @@
         const quien = valida(TURISMO_FILTRO_QUIEN, filtros.quien);
         const tipo = valida(TURISMO_FILTRO_TIPO, filtros.tipo);
         const duracion = valida(TURISMO_FILTRO_DURACION, filtros.dur);
+        const date = value => /^\d{4}-\d{2}-\d{2}$/.test(value || "") ? value : "";
+        const desde = date(filtros.desde), hasta = date(filtros.hasta);
+        const destino = String(filtros.destino || "");
         const orden = TURISMO_ORDENES.some(([clave]) => clave === filtros.orden) ? filtros.orden : "destacados";
         const resultado = packages.filter((p) => {
           const intenciones = Array.isArray(p.intenciones) ? p.intenciones : [];
           const dias = turismoDias(p);
+          if (destino && p.destino !== destino) return false;
+          if (desde && (!p.fechaSalida || p.fechaSalida < desde)) return false;
+          if (hasta && (!p.fechaSalida || p.fechaSalida > hasta)) return false;
           if (quien && !intenciones.includes(quien)) return false;
           if (tipo && !intenciones.includes(tipo)) return false;
           if (duracion === "corto" && !(dias !== null && dias <= 4)) return false;
@@ -810,18 +810,18 @@
         });
         // El orden de entrada ya es «destacados primero»; los viajes sin precio o sin duración van al final.
         const clave = (p, fn) => { const v = fn(p); return v === null || v === undefined ? Infinity : v; };
-        if (orden === "precio-asc") resultado.sort((a, b) => clave(a, turismoPrecioNumero) - clave(b, turismoPrecioNumero));
-        if (orden === "precio-desc") resultado.sort((a, b) => (turismoPrecioNumero(b) ?? -1) - (turismoPrecioNumero(a) ?? -1));
+        if (orden === "precio-asc") resultado.sort((a, b) => String(a.moneda).localeCompare(String(b.moneda)) || clave(a, turismoPrecioNumero) - clave(b, turismoPrecioNumero));
+        if (orden === "precio-desc") resultado.sort((a, b) => String(a.moneda).localeCompare(String(b.moneda)) || (turismoPrecioNumero(b) ?? -1) - (turismoPrecioNumero(a) ?? -1));
         if (orden === "dias-asc") resultado.sort((a, b) => clave(a, turismoDias) - clave(b, turismoDias));
         if (orden === "dias-desc") resultado.sort((a, b) => (turismoDias(b) ?? -1) - (turismoDias(a) ?? -1));
-        return { resultado, filtros: { q: String(filtros.q || ""), quien, tipo, dur: duracion, orden } };
+        return { resultado, filtros: { q: String(filtros.q || ""), destino, desde, hasta, quien, tipo, dur: duracion, orden } };
       }
 
       // Página con todos los paquetes: filtros a la izquierda, tarjetas a la derecha, estado en la URL.
       async function renderTurismoPaquetes() {
         const packages = await loadTurismoPublicPackages();
         const params = currentHashParams();
-        const estado = { q: params.get("q") || "", quien: params.get("quien") || "", tipo: params.get("tipo") || "", dur: params.get("dur") || "", orden: params.get("orden") || "destacados", visibles: TURISMO_PAGINA };
+        const estado = { destino: params.get("destino") || "", desde: params.get("desde") || "", hasta: params.get("hasta") || "", q: params.get("q") || "", quien: params.get("quien") || "", tipo: params.get("tipo") || "", dur: params.get("dur") || "", orden: params.get("orden") || "destacados", visibles: TURISMO_PAGINA };
         const abierto = window.matchMedia("(min-width: 62rem)").matches;
         const radios = (nombre, opciones, actual) => opciones.map(([valor, etiqueta]) => `
           <label class="tur-radio"><input type="radio" name="${nombre}" value="${valor}"${valor === actual ? " checked" : ""}><span>${etiqueta}</span></label>`).join("");
@@ -844,6 +844,8 @@
                     <label class="tur-search" for="tur-q"><span>Buscar destino</span>
                       <input id="tur-q" name="q" type="search" value="${escapeHtml(inicial.q)}" placeholder="Ej: Bariloche, Cataratas, playa">
                     </label>
+                    <label class="tur-filter-label"><span>Destino</span><select name="destino"><option value="">Todos los destinos</option>${[...new Set(packages.map(item => item.destino))].sort().map(destino => `<option value="${escapeHtml(destino)}"${destino === inicial.destino ? " selected" : ""}>${escapeHtml(destino)}</option>`).join("")}</select></label>
+                    <fieldset><legend>Fecha de salida</legend><label class="tur-filter-label"><span>Desde</span><input type="date" name="desde" value="${escapeHtml(inicial.desde)}"></label><label class="tur-filter-label"><span>Hasta</span><input type="date" name="hasta" value="${escapeHtml(inicial.hasta)}"></label></fieldset>
                     <fieldset><legend>¿Cuántos viajan?</legend>${radios("quien", TURISMO_FILTRO_QUIEN, inicial.quien)}</fieldset>
                     <fieldset><legend>Tipo de viaje</legend>${radios("tipo", TURISMO_FILTRO_TIPO, inicial.tipo)}</fieldset>
                     <fieldset><legend>Duración</legend>${radios("dur", TURISMO_FILTRO_DURACION, inicial.dur)}</fieldset>
@@ -871,7 +873,7 @@
         const botonMas = document.querySelector("[data-tur-mas]");
         const leer = () => {
           const datos = new FormData(form);
-          return { q: datos.get("q") || "", quien: datos.get("quien") || "", tipo: datos.get("tipo") || "", dur: datos.get("dur") || "", orden: ordenSelect.value };
+          return { destino: datos.get("destino") || "", desde: datos.get("desde") || "", hasta: datos.get("hasta") || "", q: datos.get("q") || "", quien: datos.get("quien") || "", tipo: datos.get("tipo") || "", dur: datos.get("dur") || "", orden: ordenSelect.value };
         };
         const pintar = () => {
           const { resultado, filtros } = filtrarOrdenarTurismo(packages, leer());
@@ -879,7 +881,7 @@
           Object.entries(filtros).forEach(([clave, valor]) => { if (valor && !(clave === "orden" && valor === "destacados")) url.set(clave, valor); });
           history.replaceState(null, "", `#/turismo/paquetes${url.toString() ? `?${url}` : ""}`);
           const total = resultado.length;
-          contador.textContent = !packages.length ? "Todavía no hay viajes publicados" : total === 1 ? "1 viaje" : `${total} viajes`;
+          contador.textContent = turismoPublicLoadError ? "No pudimos consultar los viajes" : !packages.length ? "Todavía no hay viajes publicados" : total === 1 ? "1 viaje" : `${total} viajes`;
           const visibles = resultado.slice(0, estado.visibles);
           contenedor.innerHTML = visibles.length ? visibles.map(renderTurismoPackageCard).join("") : renderTurismoEmptyState(!packages.length);
           botonMas.hidden = total <= estado.visibles;
@@ -1103,7 +1105,7 @@
                   <div class="tur-d-card">
                     <p class="tur-d-from">${precio ? "Desde" : "Precio"}</p>
                     <p class="tur-d-price">${precio ? escapeHtml(precio) : "A consultar"}</p>
-                    ${precio ? `<p class="tur-d-per">por persona</p>` : ""}
+
                     ${desglose.length ? `<dl class="tur-d-breakdown">${desglose.map(([etiqueta, valor]) => `<div><dt>${etiqueta}</dt><dd>${valor}</dd></div>`).join("")}</dl>` : ""}
                     <dl class="tur-d-facts">${datos.map(([etiqueta, valor]) => `<div><dt>${etiqueta}</dt><dd>${escapeHtml(valor)}</dd></div>`).join("")}</dl>
                     <a class="eaa-button eaa-button-fill" href="${whatsappHref}" target="_blank" rel="noopener">Consultar disponibilidad ${arrow}</a>
@@ -1177,7 +1179,7 @@
         precioBaseDoble: "",
         suplementoSingle: "",
         precioMenor: "",
-        condicionVenta: "Precios por persona en base doble. Sujeto a cambios y disponibilidad.",
+        condicionVenta: "",
         categorias: [],
         descripcionCorta: "",
         descripcionLarga: "",
@@ -1194,6 +1196,7 @@
       let adminTurismoTrips = loadAdminTurismoTrips();
       let adminTurismoEditingId = adminTurismoTrips[0]?.id || null;
       let adminTurismoEditorOpen = false;
+      let adminTurismoEditorDraft = null;
       let adminTurismoSaveFeedback = null;
 
       function escapeHtml(value = "") {
@@ -1238,7 +1241,6 @@
       // server.js: desde el fix de concurrencia, omitir un id de "rows" ya NO lo borra solo,
       // porque ahora se fusiona con lo que ya existe en Sheets en vez de reemplazar todo).
       async function saveAdminTurismoTripsWithFeedback(deleteIds = []) {
-        localStorage.setItem(ADMIN_TURISMO_STORAGE_KEY, JSON.stringify(adminTurismoTrips.map(normalizeAdminTurismoTrip), null, 2));
         const config = window.ElAngelAzulPersistence.readGoogleSheetsConfig();
         if (!config.enabled || !config.endpoint) {
           adminTurismoSaveFeedback = { ok: false, message: "Guardado solo en este navegador. La base de datos no está conectada." };
@@ -1247,7 +1249,8 @@
         try {
           const rows = googleSheetsTurismoRows(new Date().toISOString());
           await window.ElAngelAzulPersistence.writeGoogleSheetRows("TURISMO", rows, deleteIds);
-          adminTurismoSaveFeedback = { ok: true, message: `Guardado en la base de datos: ${rows.length} ${rows.length === 1 ? "viaje" : "viajes"}.` };
+          localStorage.setItem(ADMIN_TURISMO_STORAGE_KEY, JSON.stringify(adminTurismoTrips.map(normalizeAdminTurismoTrip)));
+          adminTurismoSaveFeedback = { ok: true, message: "Cambios confirmados en la base de datos." };
           turismoPublicPackagesCache = null;
           return true;
         } catch (error) {
@@ -1408,6 +1411,7 @@
       }
 
       function adminTurismoCurrentTrip() {
+        if (adminTurismoEditorDraft?.id === adminTurismoEditingId) return adminTurismoEditorDraft;
         return adminTurismoTrips.find((trip) => trip.id === adminTurismoEditingId) || adminTurismoTrips[0] || { ...emptyAdminTurismoTrip };
       }
 
@@ -1484,13 +1488,13 @@
           fechaSalida: String(trip.fechaSalida || "").trim(),
           fechaRegreso: String(trip.fechaRegreso || "").trim(),
           salidaGarantizada: Boolean(trip.salidaGarantizada),
-          precioDesde: String(trip.precioDesde || "").trim(),
+          precioDesde: String(trip.precioDesde ?? "").trim(),
           precioValor,
           moneda,
           precioBaseDoble: String(trip.precioBaseDoble || "").trim(),
           suplementoSingle: String(trip.suplementoSingle || "").trim(),
           precioMenor: String(trip.precioMenor || "").trim(),
-          condicionVenta: String(trip.condicionVenta || "Precios por persona en base doble. Sujeto a cambios y disponibilidad.").trim(),
+          condicionVenta: String(trip.condicionVenta || "").trim(),
           categorias: normalizeAdminTurismoCategories(trip.categorias || trip.categoria),
           descripcionCorta: String(trip.descripcionCorta || "").trim(),
           descripcionLarga: String(trip.descripcionLarga || "").trim(),
@@ -1498,7 +1502,7 @@
           noIncluye: linesToArray(trip.noIncluye),
           formasPago: linesToArray(trip.formasPago),
           itinerario: Array.isArray(trip.itinerario)
-            ? trip.itinerario.map((d) => ({ dia: String(d.dia || "").trim(), titulo: String(d.titulo || "").trim(), descripcion: String(d.descripcion || "").trim() })).filter((d) => d.titulo || d.descripcion)
+            ? trip.itinerario.map((d) => ({ dia: String(d.dia || "").trim(), titulo: String(d.titulo || "").trim(), descripcion: String(d.descripcion || "").trim() })).filter((d) => d.dia || d.titulo || d.descripcion)
             : [],
           fotos: normalizeAdminTurismoPhotos(trip.fotos),
           estado: ["activo", "borrador", "revision", "inactivo"].includes(trip.estado) ? trip.estado : "borrador",
@@ -1521,17 +1525,13 @@
       function adminTurismoPublicationChecklist(trip) {
         const duplicateSlug = adminTurismoTrips.some((item) => item.id !== trip.id && item.slug === trip.slug);
         const validSlug = Boolean(trip.slug && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(trip.slug) && !duplicateSlug);
-        const hasPrincipalPhoto = trip.fotos.some((photo) => photo.principal);
         return [
           { label: "Destino cargado", ok: Boolean(trip.destino) },
           { label: "Título comercial", ok: Boolean(trip.titulo) },
           { label: "Slug válido", ok: validSlug },
           { label: "Descripción corta", ok: Boolean(trip.descripcionCorta) },
           { label: "Al menos 1 foto", ok: trip.fotos.length >= 1 },
-          { label: "Foto principal", ok: hasPrincipalPhoto },
-          { label: "Precio cargado", ok: Boolean(trip.precioDesde) },
-          { label: "Qué incluye", ok: trip.incluye.length > 0 },
-          { label: "Estado activo", ok: trip.estado === "activo" }
+          { label: "Duración cargada", ok: Boolean(trip.duracion) }
         ];
       }
 
@@ -1540,13 +1540,12 @@
         const normalizedTrip = normalizeAdminTurismoTrip(trip);
         const checklist = adminTurismoPublicationChecklist(normalizedTrip);
         const missing = checklist.filter((item) => !item.ok);
-        const publishedMap = loadAdminTurismoPublishedMap();
-        const publishedRecord = publishedMap[normalizedTrip.id];
-        const isPublished = Boolean(
-          publishedRecord &&
-          publishedRecord.slug === normalizedTrip.slug &&
-          publishedRecord.signature === adminTurismoTripSignature(normalizedTrip)
-        );
+        const isPublished = normalizedTrip.estado === "activo" && missing.length === 0;
+        const today = new Date().toISOString().slice(0, 10);
+        if (normalizedTrip.estado === "activo" && ((normalizedTrip.fechaSalida && normalizedTrip.fechaSalida < today) || (normalizedTrip.fechaRegreso && normalizedTrip.fechaRegreso < today))) {
+          return { key: "vencido", label: "Salida vencida", tone: "neutral", canPublish: false, isPublished: false, missing, checklist, message: "La fecha de este paquete ya pasó. No aparece en el catálogo; actualizá las fechas o despublicalo." };
+        }
+
 
         if (normalizedTrip.estado === "inactivo") {
           return {
@@ -1570,7 +1569,7 @@
             isPublished: true,
             missing,
             checklist,
-            message: "Este viaje fue exportado desde el panel. Verificá en Turismo público después de reemplazar el JSON."
+            message: "Este viaje está publicado desde la base de datos. Los cambios se aplican al guardar."
           };
         }
 
@@ -1583,7 +1582,7 @@
             isPublished: false,
             missing,
             checklist,
-            message: "El viaje cumple el checklist. Podés exportarlo para publicar en la web."
+            message: "El viaje tiene el contenido necesario. Publicalo para que aparezca en la web."
           };
         }
 
@@ -1645,14 +1644,19 @@
           <section class="admin-turismo-panel admin-turismo-flow-actions">
             <div class="admin-turismo-guardar-banner">
               <div>
-                <strong>${esActivo ? "Estado: Activo — visible en la web" : "Estado: " + (trip.estado || "Borrador")}</strong>
-                <span>El estado se toma del acordeón Configuración. Guardá para aplicar cambios.</span>
+                <strong>${readiness.isPublished ? "Estado: Publicado en la web" : "Estado: " + readiness.label}</strong>
+                <span>Los cambios se publican cuando la base de datos confirma el guardado.</span>
               </div>
               <button type="button" class="admin-turismo-btn-guardar" data-admin-guardar-viaje>
-                💾 Guardar viaje
+                Guardar cambios
               </button>
             </div>
-            ${fb ? `<div class="admin-turismo-save-feedback ${fb.ok ? "is-ok" : "is-error"}">${fb.ok ? "✓" : "⚠️"} ${escapeHtml(fb.message)}</div>` : ""}
+            <div class="admin-turismo-action-buttons">
+              <button type="button" data-admin-publish>${esActivo ? "Guardar y mantener publicado" : "Guardar y publicar en la web"}</button>
+              ${esActivo ? '<button type="button" data-admin-deactivate>Despublicar</button>' : ""}
+              ${window.ElAngelAzulPersistence.adminSheetVersion("TURISMO", trip.id) ? '<button type="button" data-admin-duplicate>Duplicar como borrador</button>' : ""}
+            </div>
+            ${fb ? `<div role="status" class="admin-turismo-save-feedback ${fb.ok ? "is-ok" : "is-error"}">${fb.ok ? "✓" : "⚠️"} ${escapeHtml(fb.message)}</div>` : ""}
           </section>
         `;
       }
@@ -1932,8 +1936,8 @@
 
             ${block("Fechas de salida", "Cuándo sale y cuándo vuelve.", `
               <div class="admin-turismo-form-grid admin-turismo-form-grid--compact">
-                ${field("Fecha de salida", `<input name="fechaSalida" value="${escapeHtml(trip.fechaSalida || "")}" placeholder="Ej: 28 de diciembre de 2026">`, "Texto libre: podés escribir '28 dic 2026' o 'Diciembre 2026'.", true)}
-                ${field("Fecha de regreso", `<input name="fechaRegreso" value="${escapeHtml(trip.fechaRegreso || "")}" placeholder="Ej: 4 de enero de 2027">`, "")}
+                ${field("Fecha de salida", `<input type="date" name="fechaSalida" value="${escapeHtml(trip.fechaSalida || "")}" placeholder="Ej: 28 de diciembre de 2026">`, "Opcional para paquetes sin salida definida.", false)}
+                ${field("Fecha de regreso", `<input type="date" name="fechaRegreso" value="${escapeHtml(trip.fechaRegreso || "")}" placeholder="Ej: 4 de enero de 2027">`, "")}
               </div>
               <label class="admin-turismo-check admin-turismo-check--featured">
                 <input name="salidaGarantizada" type="checkbox" ${trip.salidaGarantizada ? "checked" : ""}>
@@ -1945,11 +1949,11 @@
                   <small>Muestra el badge "Salida garantizada" en el flyer y la card.</small>
                 </span>
               </label>
-            `, statusBadge(fechasComplete))}
+            `, statusBadge(fechasComplete, true))}
 
             ${block("Precio", "Valor visible para el cliente y condición de venta.", `
               <div class="admin-turismo-form-grid admin-turismo-form-grid--compact">
-                ${field("Precio visible", `<input name="precioDesde" value="${escapeHtml(trip.precioDesde || "")}" placeholder="Ej: USD 1.436">`, "Texto exacto que ve el cliente en la card.", true)}
+                ${field("Precio visible", `<input type="number" min="0" step="0.01" name="precioDesde" value="${escapeHtml(trip.precioDesde || "")}" placeholder="Ej: 1436.50">`, "Solo el importe. La moneda se muestra por separado; vacío significa consultar.", false)}
                 ${field("Moneda", `
                   <select name="moneda">
                     ${adminTurismoCurrencies.map((c) => `<option value="${c}" ${(trip.moneda || "USD") === c ? "selected" : ""}>${c}</option>`).join("")}
@@ -1959,8 +1963,8 @@
                 ${field("Suplemento single", `<input name="suplementoSingle" value="${escapeHtml(trip.suplementoSingle || "")}" placeholder="Ej: 320">`, "Diferencia para habitación individual.")}
                 ${field("Precio menor", `<input name="precioMenor" value="${escapeHtml(trip.precioMenor || "")}" placeholder="Ej: 980">`, "Opcional.")}
               </div>
-              ${field("Condición de venta", `<textarea name="condicionVenta" rows="2">${escapeHtml(trip.condicionVenta || "Precios por persona en base doble. Sujeto a cambios y disponibilidad.")}</textarea>`, "Aparece al pie del detalle del paquete.")}
-            `, statusBadge(priceComplete))}
+              ${field("Condición de venta", `<textarea name="condicionVenta" rows="2">${escapeHtml(trip.condicionVenta || "")}</textarea>`, "Aparece al pie del detalle del paquete.")}
+            `, statusBadge(priceComplete, true))}
 
             ${block("Fotos", "URLs de las imágenes del paquete.", `
               <div class="admin-turismo-fotos-list" data-admin-turismo-fotos-list>
@@ -2004,11 +2008,11 @@
 
             ${block("Incluye / No incluye", "Qué cubre el paquete y qué no.", `
               <div class="admin-turismo-form-grid">
-                ${field("Qué incluye", `<textarea name="incluye" rows="7" placeholder="Aéreos desde Asunción con LATAM&#10;Todo incluido&#10;7 noches de alojamiento&#10;Equipaje 12kg + 1 artículo personal&#10;Asistencia al viajero&#10;Traslados de llegada y salida">${escapeHtml(arrayToLines(trip.incluye))}</textarea>`, "Un ítem por línea.", true)}
+                ${field("Qué incluye", `<textarea name="incluye" rows="7" placeholder="Un servicio confirmado por línea">${escapeHtml(arrayToLines(trip.incluye))}</textarea>`, "Un ítem por línea. Cargá únicamente los servicios acordados.", false)}
                 ${field("Qué no incluye", `<textarea name="noIncluye" rows="5" placeholder="Gastos personales&#10;Excursiones opcionales&#10;Seguro de viaje">${escapeHtml(arrayToLines(trip.noIncluye))}</textarea>`, "Un ítem por línea.")}
               </div>
-              ${field("Formas de pago", `<textarea name="formasPago" rows="4" placeholder="50% de señal al reservar&#10;50% restante 30 días antes de la salida&#10;Cuotas con tarjeta (consultar)">${escapeHtml(arrayToLines(trip.formasPago))}</textarea>`, "Un ítem por línea. Aparece en la página de detalle.")}
-            `, statusBadge(includesComplete))}
+              ${field("Formas de pago", `<textarea name="formasPago" rows="4" placeholder="Cargá las formas y condiciones de pago confirmadas para este paquete">${escapeHtml(arrayToLines(trip.formasPago))}</textarea>`, "Un ítem por línea. Aparece en la página de detalle.")}
+            `, statusBadge(includesComplete, true))}
 
             ${block("Itinerario", "Programa día por día del viaje.", `
               <div class="admin-turismo-itinerario-list" data-admin-turismo-itinerario>
@@ -2358,6 +2362,13 @@
           } catch (error) {
             // Si falla el logout remoto, se limpia igual la sesión visual.
           }
+          window.ElAngelAzulPersistence.clearPrivateCollections();
+          adminPasajerosDemo = [];
+          adminContratosDemo = [];
+          adminFichasTutor = [];
+          adminPagos = [];
+          adminPagosLoaded = false;
+          googleSheetsHydrated = false;
           adminSession = null;
           adminSessionChecked = true;
           adminLoginNotice = "";
@@ -3124,13 +3135,15 @@
 
       const adminPasajerosCollection = window.ElAngelAzulPersistence.collection({
         key: ADMIN_PASAJEROS_STORAGE_KEY,
-        seed: createAdminPasajerosSeed,
+        privateData: true,
+        seed: () => [],
         normalize: normalizeAdminPasajerosGroup
       });
 
       const contratosCollection = window.ElAngelAzulPersistence.collection({
         key: CONTRATOS_STORAGE_KEY,
-        seed: () => createAdminContratosSeed(adminPasajerosCollection.load()),
+        privateData: true,
+        seed: () => [],
         normalize: (contract) => ({
           ...contract,
           id: String(contract.id || "").trim(),
@@ -3141,6 +3154,7 @@
 
       const fichaAdhesionCollection = window.ElAngelAzulPersistence.collection({
         key: FICHA_ADHESION_STORAGE_KEY,
+        privateData: true,
         seed: () => [],
         normalize: (ficha) => ficha
       });
@@ -6883,7 +6897,7 @@
           const state = adminTurismoReadiness(item);
           acc.total += 1;
           acc[state.key] = (acc[state.key] || 0) + 1;
-          if (item.estado === "activo") acc.activos += 1;
+          if (state.isPublished) acc.activos += 1;
           return acc;
         }, { total: 0, activos: 0, listo: 0, publicado: 0, borrador: 0, incompleto: 0, inactivo: 0 });
         const editorHtml = adminTurismoEditorOpen ? `
@@ -6985,6 +6999,79 @@
         URL.revokeObjectURL(url);
       }
 
+      function readAdminTurismoForm(form = document.querySelector("[data-admin-turismo-form]")) {
+        if (!form) return normalizeAdminTurismoTrip(adminTurismoCurrentTrip());
+          const formData = new FormData(form);
+          const id = adminTurismoEditingId || `viaje-${Date.now()}`;
+
+          // Leer fotos desde los campos individuales
+          const fotosCount = Number(formData.get("fotos_count") || 0);
+          const fotosArray = [];
+          for (let i = 0; i < fotosCount; i++) {
+            const url = String(formData.get(`foto_url_${i}`) || "").trim();
+            if (url) fotosArray.push({ url, alt: String(formData.get(`foto_alt_${i}`) || "").trim(), principal: false });
+          }
+          const principalIndex = Number(formData.get("fotoPrincipal") || 0);
+          if (fotosArray[principalIndex]) fotosArray[principalIndex].principal = true;
+          else if (fotosArray.length) fotosArray[0].principal = true;
+
+          // Leer itinerario desde campos dinámicos
+          const itinerarioArray = [];
+          let diaIndex = 0;
+          while (formData.get(`itinerario_titulo_${diaIndex}`) !== null || formData.get(`itinerario_desc_${diaIndex}`) !== null) {
+            const titulo = String(formData.get(`itinerario_titulo_${diaIndex}`) || "").trim();
+            const descripcion = String(formData.get(`itinerario_desc_${diaIndex}`) || "").trim();
+            if (titulo || descripcion) itinerarioArray.push({ dia: String(diaIndex + 1), titulo, descripcion });
+            diaIndex++;
+          }
+
+          const baseTrip = {
+            id,
+            slug: formData.get("slug") || "",
+            destino: formData.get("destino") || "",
+            titulo: formData.get("titulo") || "",
+            duracion: formData.get("duracion") || "",
+            temporada: formData.get("temporada") || "",
+            fechaSalida: formData.get("fechaSalida") || "",
+            fechaRegreso: formData.get("fechaRegreso") || "",
+            salidaGarantizada: formData.get("salidaGarantizada") === "on",
+            precioDesde: formData.get("precioDesde") || "",
+            precioValor: formData.get("precioBaseDoble") || null,
+            moneda: formData.get("moneda") || "USD",
+            precioBaseDoble: formData.get("precioBaseDoble") || "",
+            suplementoSingle: formData.get("suplementoSingle") || "",
+            precioMenor: formData.get("precioMenor") || "",
+            condicionVenta: formData.get("condicionVenta") || "",
+            categorias: formData.getAll("categorias"),
+            descripcionCorta: formData.get("descripcionCorta") || "",
+            descripcionLarga: formData.get("descripcionLarga") || "",
+            incluye: formData.get("incluye") || "",
+            noIncluye: formData.get("noIncluye") || "",
+            formasPago: formData.get("formasPago") || "",
+            itinerario: itinerarioArray,
+            fotos: fotosArray,
+            estado: formData.get("estado") || "borrador",
+            destacado: formData.get("destacado") === "on",
+            orden: formData.get("orden") || 999
+          };
+          const nextTrip = normalizeAdminTurismoTrip(baseTrip);
+          nextTrip.fotos = fotosArray.length ? fotosArray : normalizeAdminTurismoPhotos(baseTrip.fotos);
+        return nextTrip;
+      }
+
+      function showAdminCatalogFeedback(feedback) {
+        const panel = document.querySelector(".admin-turismo-flow-actions");
+        if (!panel) return;
+        let message = panel.querySelector(".admin-turismo-save-feedback");
+        if (!message) {
+          message = document.createElement("p");
+          panel.appendChild(message);
+        }
+        message.className = `admin-turismo-save-feedback ${feedback.ok ? "is-ok" : "is-error"}`;
+        message.setAttribute("role", feedback.ok ? "status" : "alert");
+        message.textContent = feedback.message;
+      }
+
       function bindAdminTurismo() {
         document.querySelector("[data-admin-import-public-trips]")?.addEventListener("click", () => {
           importAdminTurismoPublicDefaults();
@@ -6992,6 +7079,8 @@
 
         document.querySelectorAll("[data-admin-edit], [data-admin-preview]").forEach((button) => {
           button.addEventListener("click", () => {
+            adminTurismoEditorDraft = null;
+            adminTurismoSaveFeedback = null;
             adminTurismoEditingId = button.dataset.adminEdit || button.dataset.adminPreview;
             adminTurismoEditorOpen = true;
             renderAdminTurismo();
@@ -6999,7 +7088,8 @@
         });
 
         document.querySelectorAll("[data-admin-delete]").forEach((button) => {
-          button.addEventListener("click", () => {
+          button.addEventListener("click", async () => {
+            const previous = adminTurismoTrips;
             const tripId = button.dataset.adminDelete;
             const trip = adminTurismoTrips.find((item) => item.id === tripId);
             const tripName = trip?.titulo || trip?.destino || "este viaje";
@@ -7011,40 +7101,20 @@
               adminTurismoEditingId = adminTurismoTrips[0]?.id || null;
               adminTurismoEditorOpen = false;
             }
+            button.disabled = true;
+            const saved = await saveAdminTurismoTripsWithFeedback([tripId]);
+            if (!saved) adminTurismoTrips = previous;
             renderAdminTurismo();
-            saveAdminTurismoTripsWithFeedback([tripId]).then(() => renderAdminTurismo()).catch(() => renderAdminTurismo());
           });
         });
 
         document.querySelectorAll("[data-admin-new]").forEach((button) => {
           button.addEventListener("click", () => {
             const id = `demo-${Date.now()}`;
-            adminTurismoTrips = [
-              {
-                id,
-                slug: "",
-                destino: "",
-                titulo: "",
-                duracion: "",
-                temporada: "",
-                precioDesde: "",
-                precioValor: null,
-                moneda: "ARS",
-                categorias: [],
-                descripcionCorta: "",
-                descripcionLarga: "",
-                incluye: [],
-                noIncluye: [],
-                fotos: [],
-                estado: "borrador",
-                destacado: false,
-                orden: adminTurismoTrips.length + 1
-              },
-              ...adminTurismoTrips
-            ];
+            adminTurismoEditorDraft = normalizeAdminTurismoTrip({ ...emptyAdminTurismoTrip, id });
             adminTurismoEditingId = id;
             adminTurismoEditorOpen = true;
-            saveAdminTurismoTrips();
+            adminTurismoSaveFeedback = null;
             renderAdminTurismo();
           });
         });
@@ -7066,80 +7136,46 @@
         });
 
         document.querySelector("[data-admin-publish]")?.addEventListener("click", () => {
-          const trip = normalizeAdminTurismoTrip(adminTurismoCurrentTrip());
-          const readiness = adminTurismoReadiness(trip);
-          if (!readiness.canPublish) {
-            window.alert(`No se puede publicar todavía.\n\nFalta:\n- ${readiness.missing.map((item) => item.label).join("\n- ")}`);
-            return;
-          }
-          const publishedMap = loadAdminTurismoPublishedMap();
-          publishedMap[trip.id] = {
-            slug: trip.slug,
-            signature: adminTurismoTripSignature(trip),
-            exportedAt: new Date().toISOString()
-          };
-          saveAdminTurismoPublishedMap(publishedMap);
-          exportAdminTurismoJson();
-          window.alert("Se exportó turismo-paquetes.json.\n\nPara verlo en la web pública, reemplazá assets/data/turismo-paquetes.json por este archivo y verificá en Turismo.");
-          renderAdminTurismo();
-        });
-
-        document.querySelector("[data-admin-preview-public]")?.addEventListener("click", () => {
-          const trip = normalizeAdminTurismoTrip(adminTurismoCurrentTrip());
-          const readiness = adminTurismoReadiness(trip);
-          if (!readiness.canPublish) {
-            window.alert(`No se puede activar la prueba pública todavía.\n\nFalta:\n- ${readiness.missing.map((item) => item.label).join("\n- ")}`);
-            return;
-          }
-          setTurismoPublicPreviewMode(true);
-          window.open("/#/turismo", "_blank");
-          renderAdminTurismo();
-        });
-
-        document.querySelector("[data-admin-disable-preview]")?.addEventListener("click", () => {
-          setTurismoPublicPreviewMode(false);
-          renderAdminTurismo();
-        });
-
-        document.querySelector("[data-admin-duplicate]")?.addEventListener("click", () => {
-          const trip = normalizeAdminTurismoTrip(adminTurismoCurrentTrip());
-          if (!trip.id) return;
-          const id = `viaje-${Date.now()}`;
-          const duplicated = normalizeAdminTurismoTrip({
-            ...trip,
-            id,
-            slug: `${trip.slug || "viaje"}-copia`,
-            titulo: `${trip.titulo || trip.destino || "Viaje"} copia`,
-            estado: "borrador",
-            orden: adminTurismoTrips.length + 1
-          });
-          duplicated.slug = uniqueAdminTurismoSlug(duplicated.slug, id);
-          adminTurismoTrips = [duplicated, ...adminTurismoTrips];
-          adminTurismoEditingId = id;
-          saveAdminTurismoTripsWithFeedback().finally(() => renderAdminTurismo());
+          const form = document.querySelector("[data-admin-turismo-form]");
+          if (!form) return;
+          form.elements.estado.value = "activo";
+          form.requestSubmit();
         });
 
         document.querySelector("[data-admin-deactivate]")?.addEventListener("click", () => {
-          const trip = normalizeAdminTurismoTrip(adminTurismoCurrentTrip());
-          if (!trip.id) return;
-          adminTurismoTrips = adminTurismoTrips.map((item) => item.id === trip.id ? { ...item, estado: "inactivo" } : item);
-          renderAdminTurismo();
-          saveAdminTurismoTripsWithFeedback().then(() => renderAdminTurismo()).catch(() => renderAdminTurismo());
+          const form = document.querySelector("[data-admin-turismo-form]");
+          if (!form) return;
+          form.elements.estado.value = "inactivo";
+          form.requestSubmit();
         });
 
-        // --- Aplicar estado rápido desde el panel de publicación ---
-        document.querySelector("[data-admin-turismo-apply-estado]")?.addEventListener("click", () => {
-          const trip = normalizeAdminTurismoTrip(adminTurismoCurrentTrip());
-          if (!trip.id) {
-            window.alert("Guardá el viaje primero antes de cambiar el estado.");
-            return;
+        document.querySelector("[data-admin-duplicate]")?.addEventListener("click", async (event) => {
+          const trip = adminTurismoCurrentTrip();
+          const button = event.currentTarget;
+          button.disabled = true;
+          button.textContent = "Duplicando…";
+          try {
+            const response = await fetch(`/api/admin/paquetes/${encodeURIComponent(trip.id)}/duplicar`, {
+              method: "POST", headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ version: window.ElAngelAzulPersistence.adminSheetVersion("TURISMO", trip.id) })
+            });
+            const payload = await response.json();
+            if (!response.ok || !payload.ok) throw new Error(payload.error || "No se pudo duplicar el paquete.");
+            // Usar la respuesta confirmada; no repetir el alta si una recarga posterior falla.
+            const sourceRows = adminTurismoTrips.map(item => ({ id: item.id, _version: window.ElAngelAzulPersistence.adminSheetVersion("TURISMO", item.id) }));
+            adminTurismoTrips = [turismoRowToTrip(payload.paquete), ...adminTurismoTrips];
+            sourceRows.unshift(payload.paquete);
+            window.ElAngelAzulPersistence.captureAdminSheet("TURISMO", googleSheetsTurismoRows(), sourceRows);
+            localStorage.setItem(ADMIN_TURISMO_STORAGE_KEY, JSON.stringify(adminTurismoTrips));
+            adminTurismoEditorDraft = null;
+            adminTurismoEditingId = payload.paquete.id;
+            adminTurismoSaveFeedback = { ok: true, message: "Copia creada como borrador. Editala y publicala cuando esté lista." };
+            renderAdminTurismo();
+          } catch (error) {
+            button.disabled = false;
+            button.textContent = "Duplicar como borrador";
+            showAdminCatalogFeedback({ ok: false, message: error.message });
           }
-          const select = document.querySelector("[data-admin-turismo-estado-quick]");
-          if (!select) return;
-          const nuevoEstado = select.value;
-          adminTurismoTrips = adminTurismoTrips.map((item) => item.id === trip.id ? { ...item, estado: nuevoEstado } : item);
-          renderAdminTurismo();
-          saveAdminTurismoTripsWithFeedback().then(() => renderAdminTurismo()).catch(() => renderAdminTurismo());
         });
 
         document.querySelector("[data-admin-scroll-preview]")?.addEventListener("click", () => {
@@ -7184,12 +7220,10 @@
           if (!urlInput) return;
           const url = safeMediaUrl(urlInput.value);
           if (!url) { urlInput.focus(); return; }
-          const trip = normalizeAdminTurismoTrip(adminTurismoCurrentTrip());
+          const trip = readAdminTurismoForm();
           const newFoto = { url, alt: altInput?.value?.trim() || "", principal: trip.fotos.length === 0 };
           trip.fotos.push(newFoto);
-          const index = adminTurismoTrips.findIndex((t) => t.id === adminTurismoEditingId);
-          if (index >= 0) adminTurismoTrips[index] = { ...adminTurismoTrips[index], fotos: trip.fotos };
-          saveAdminTurismoTrips();
+          adminTurismoEditorDraft = trip;
           renderAdminTurismo();
         });
 
@@ -7197,23 +7231,19 @@
         document.querySelectorAll("[data-remove-foto]").forEach((btn) => {
           btn.addEventListener("click", () => {
             const fotoIndex = Number(btn.dataset.removeFoto);
-            const trip = normalizeAdminTurismoTrip(adminTurismoCurrentTrip());
+            const trip = readAdminTurismoForm();
             trip.fotos.splice(fotoIndex, 1);
             if (trip.fotos.length && !trip.fotos.some((f) => f.principal)) trip.fotos[0].principal = true;
-            const index = adminTurismoTrips.findIndex((t) => t.id === adminTurismoEditingId);
-            if (index >= 0) adminTurismoTrips[index] = { ...adminTurismoTrips[index], fotos: trip.fotos };
-            saveAdminTurismoTrips();
+            adminTurismoEditorDraft = trip;
             renderAdminTurismo();
           });
         });
 
         // --- Agregar día de itinerario ---
         document.querySelector("[data-add-dia]")?.addEventListener("click", () => {
-          const trip = normalizeAdminTurismoTrip(adminTurismoCurrentTrip());
+          const trip = readAdminTurismoForm();
           const itinerario = [...(trip.itinerario || []), { dia: String(trip.itinerario.length + 1), titulo: "", descripcion: "" }];
-          const index = adminTurismoTrips.findIndex((t) => t.id === adminTurismoEditingId);
-          if (index >= 0) adminTurismoTrips[index] = { ...adminTurismoTrips[index], itinerario };
-          saveAdminTurismoTrips();
+          adminTurismoEditorDraft = { ...trip, itinerario };
           renderAdminTurismo();
         });
 
@@ -7221,11 +7251,9 @@
         document.querySelectorAll("[data-remove-dia]").forEach((btn) => {
           btn.addEventListener("click", () => {
             const diaIndex = Number(btn.dataset.removeDia);
-            const trip = normalizeAdminTurismoTrip(adminTurismoCurrentTrip());
+            const trip = readAdminTurismoForm();
             trip.itinerario.splice(diaIndex, 1);
-            const index = adminTurismoTrips.findIndex((t) => t.id === adminTurismoEditingId);
-            if (index >= 0) adminTurismoTrips[index] = { ...adminTurismoTrips[index], itinerario: trip.itinerario };
-            saveAdminTurismoTrips();
+            adminTurismoEditorDraft = trip;
             renderAdminTurismo();
           });
         });
@@ -7284,64 +7312,13 @@
           });
         });
 
-        document.querySelector("[data-admin-turismo-form]")?.addEventListener("submit", (event) => {
+        document.querySelector("[data-admin-turismo-form]")?.addEventListener("submit", async (event) => {
           event.preventDefault();
-          const formData = new FormData(event.currentTarget);
-          const id = adminTurismoEditingId || `viaje-${Date.now()}`;
-
-          // Leer fotos desde los campos individuales
-          const fotosCount = Number(formData.get("fotos_count") || 0);
-          const fotosArray = [];
-          for (let i = 0; i < fotosCount; i++) {
-            const url = String(formData.get(`foto_url_${i}`) || "").trim();
-            if (url) fotosArray.push({ url, alt: String(formData.get(`foto_alt_${i}`) || "").trim(), principal: false });
-          }
-          const principalIndex = Number(formData.get("fotoPrincipal") || 0);
-          if (fotosArray[principalIndex]) fotosArray[principalIndex].principal = true;
-          else if (fotosArray.length) fotosArray[0].principal = true;
-
-          // Leer itinerario desde campos dinámicos
-          const itinerarioArray = [];
-          let diaIndex = 0;
-          while (formData.get(`itinerario_titulo_${diaIndex}`) !== null || formData.get(`itinerario_desc_${diaIndex}`) !== null) {
-            const titulo = String(formData.get(`itinerario_titulo_${diaIndex}`) || "").trim();
-            const descripcion = String(formData.get(`itinerario_desc_${diaIndex}`) || "").trim();
-            if (titulo || descripcion) itinerarioArray.push({ dia: String(diaIndex + 1), titulo, descripcion });
-            diaIndex++;
-          }
-
-          const baseTrip = {
-            id,
-            slug: formData.get("slug") || "",
-            destino: formData.get("destino") || "",
-            titulo: formData.get("titulo") || "",
-            duracion: formData.get("duracion") || "",
-            temporada: formData.get("temporada") || "",
-            fechaSalida: formData.get("fechaSalida") || "",
-            fechaRegreso: formData.get("fechaRegreso") || "",
-            salidaGarantizada: formData.get("salidaGarantizada") === "on",
-            precioDesde: formData.get("precioDesde") || "",
-            precioValor: formData.get("precioBaseDoble") || null,
-            moneda: formData.get("moneda") || "USD",
-            precioBaseDoble: formData.get("precioBaseDoble") || "",
-            suplementoSingle: formData.get("suplementoSingle") || "",
-            precioMenor: formData.get("precioMenor") || "",
-            condicionVenta: formData.get("condicionVenta") || "",
-            categorias: formData.getAll("categorias"),
-            descripcionCorta: formData.get("descripcionCorta") || "",
-            descripcionLarga: formData.get("descripcionLarga") || "",
-            incluye: formData.get("incluye") || "",
-            noIncluye: formData.get("noIncluye") || "",
-            formasPago: formData.get("formasPago") || "",
-            itinerario: itinerarioArray,
-            fotos: fotosArray,
-            estado: formData.get("estado") || "borrador",
-            destacado: formData.get("destacado") === "on",
-            orden: formData.get("orden") || 999
-          };
-          const nextTrip = normalizeAdminTurismoTrip(baseTrip);
-          nextTrip.slug = uniqueAdminTurismoSlug(nextTrip.slug, id);
-          nextTrip.fotos = fotosArray.length ? fotosArray : normalizeAdminTurismoPhotos(baseTrip.fotos);
+          const form = event.currentTarget;
+          if (form.dataset.saving) return;
+          const previousTrips = adminTurismoTrips.map(trip => ({ ...trip }));
+          const nextTrip = readAdminTurismoForm(form);
+          const id = nextTrip.id;
           const existingIndex = adminTurismoTrips.findIndex((trip) => trip.id === id);
           if (existingIndex >= 0) {
             adminTurismoTrips[existingIndex] = nextTrip;
@@ -7349,9 +7326,22 @@
             adminTurismoTrips.unshift(nextTrip);
           }
           adminTurismoEditingId = id;
-          // Render inmediato para mostrar el estado guardado, feedback llega async
-          renderAdminTurismo();
-          saveAdminTurismoTripsWithFeedback().then(() => renderAdminTurismo()).catch(() => renderAdminTurismo());
+          form.dataset.saving = "true";
+          const controls = [...document.querySelectorAll(".admin-layout button, .admin-layout input, .admin-layout select, .admin-layout textarea")];
+          const disabled = controls.map(control => control.disabled);
+          controls.forEach(control => { control.disabled = true; });
+          showAdminCatalogFeedback({ ok: true, message: "Guardando cambios…" });
+          const saved = await saveAdminTurismoTripsWithFeedback();
+          delete form.dataset.saving;
+          controls.forEach((control, index) => { control.disabled = disabled[index]; });
+          if (!saved) {
+            adminTurismoTrips = previousTrips;
+            localStorage.setItem(ADMIN_TURISMO_STORAGE_KEY, JSON.stringify(previousTrips));
+            showAdminCatalogFeedback(adminTurismoSaveFeedback);
+            return;
+          }
+          adminTurismoEditorDraft = null;
+          if (document.body.contains(form)) renderAdminTurismo();
         });
       }
 
@@ -9186,6 +9176,7 @@
 
       async function render() {
         const path = currentPath();
+        if (path === "/" || path.startsWith("/turismo")) turismoPublicPackagesCache = null;
         const page = routes[path] || routes["/"];
         document.body.classList.toggle("home-page", path === "/");
         document.body.classList.toggle("turismo-page", path.startsWith("/turismo"));
@@ -9210,6 +9201,10 @@
         }
         if (path.startsWith("/turismo/")) {
           const packageItem = await turismoPackageBySlug(path.replace("/turismo/", ""));
+          if (!packageItem && turismoPublicLoadError) {
+            document.getElementById("app").innerHTML = `<main class="layout"><h1>No pudimos abrir este viaje</h1>${renderTurismoEmptyState()}</main>`;
+            return;
+          }
           if (packageItem) {
             renderPackageDetail(packageItem);
             return;
@@ -9360,24 +9355,17 @@
         }
       }
 
+      document.addEventListener("click", async (event) => {
+        const retry = event.target.closest("[data-turismo-retry]");
+        if (!retry || retry.disabled) return;
+        retry.disabled = true;
+        retry.textContent = "Cargando viajes…";
+        turismoPublicPackagesCache = null;
+        await render();
+      });
+
       function setupPublicInternalAccess() {
-        document.querySelectorAll('.site-nav a[href="/admin/"]').forEach(link => {
-          if (link.textContent.trim() === "Iniciar sesión") {
-            link.remove();
-          }
-        });
-
-        const footerBottom = document.querySelector(".footer-bottom");
-        if (!footerBottom || footerBottom.querySelector(".footer-internal-access")) return;
-
-        const internalAccess = document.createElement("a");
-        internalAccess.className = "footer-internal-access";
-        // Entrar al panel por la misma ruta hash que usa toda la SPA. Así el
-        // acceso desde la portada no depende de una ruta física ni de una
-        // redirección intermedia del servidor.
-        internalAccess.href = adminRouteHref("/admin");
-        internalAccess.textContent = "Acceso interno";
-        footerBottom.appendChild(internalAccess);
+        document.querySelectorAll('.footer-internal-access, .site-nav a[href="/admin/"]').forEach(link => link.remove());
       }
 
       // Scroll suave global (Lenis) para el sitio público. Solo animaciones/
