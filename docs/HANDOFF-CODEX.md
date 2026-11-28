@@ -9,7 +9,7 @@ Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerra
 |---|---|---|---|---|
 | Fran (Claude Code) | `fran/harness` | Harness: guardas, `AGENTS.md`, docs | `AGENTS.md`, `CLAUDE.md`, `package.json`, `scripts/guardas.test.js`, `scripts/helpers/sin-secretos.js`, docs | 25/11 |
 | Fran (Claude Code) | `fran/inicio-aldena` | Paso 8: rediseño del inicio inspirado en la web de referencia (Agustín dio su OK sobre el PR #8) | `index.html`, `assets/css/home.css`, `assets/css/public-experience.css`, `assets/js/modules/home-motion.js`, `renderHome` en `assets/js/app.js` | 27/11 |
-| Agustín (Codex) | `agustin/ecosistema-catalogo-operativo-panel` | Editor/publicación con servicios, disponibilidad, archivo, videos y carga de fotos sin URL | App, preparación compartida de archivos, módulo de fotos, HTML/CSS y E2E. Solo PGlite/objetos ficticios | 28/11 |
+| Agustín (Codex) | `agustin/ecosistema-revision-integrada` | Revisión integrada y entorno local de recorrido | Servidor local aislado, pruebas y documentación. Sin main, hosting ni base oficial | 28/11 |
 
 ## Ecosistema integral — nuevo encargo del 27/11/2026
 

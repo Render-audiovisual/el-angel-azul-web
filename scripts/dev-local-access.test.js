@@ -45,6 +45,14 @@ test('modo local libre: entra sin clave, tolera cookies viejas y conserva la pro
     assert.equal(usuario.role, 'admin');
     assert.equal(colegios.status, 200);
     assert.equal((await colegios.json()).rows.length, 3);
+    assert.equal((await (await fetch(local.base + '/api/admin/catalogo/multimedia')).json()).disponible, true);
+    const financial = await (await fetch(local.base + '/api/admin/finanzas/cuentas')).json();
+    assert.equal(financial.cuentas.length, 1);
+    assert.equal(financial.cuentas[0].total_centavos, '120000');
+    assert.equal(financial.cuentas[0].cuotas.length, 12);
+    const contracts = await (await fetch(local.base + '/api/google-sheets?sheet=CONTRATOS')).json();
+    const documents = await (await fetch(local.base + '/api/admin/documentos/contratos/' + contracts.rows[0].id)).json();
+    assert.equal(documents.almacenamientoDisponible, true);
     const bloqueado = await fetch(local.base + '/api/google-sheets', {
       method: 'POST', headers: { 'Content-Type': 'application/json', Origin: 'https://otro-sitio.invalid' },
       body: JSON.stringify({ sheet: 'COLEGIOS', rows: [] })
