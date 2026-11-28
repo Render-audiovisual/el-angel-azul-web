@@ -1,0 +1,130 @@
+/* Web pública · Poppins, Bebas Neue y la paleta existente de El Ángel Azul.
+   Refinamiento visual: no afecta al administrador ni a las APIs. */
+body:not([data-app-entry="admin"]):not(.portal-private-page) .site-header {
+  top: 20px; left: 50%; right: auto; transform: translateX(-50%);
+  width: min(84vw, 1120px); max-width: calc(100% - 32px);
+  min-height: 72px; padding: 6px 14px; gap: 24px;
+  background: var(--h-night); border-radius: 999px; pointer-events: auto;
+}
+body:not([data-app-entry="admin"]):not(.portal-private-page) .brand-link { background: transparent; padding: 0 12px; flex-shrink: 0; }
+body:not([data-app-entry="admin"]):not(.portal-private-page) .brand-logo { width: 116px; height: 52px; object-fit: cover; }
+body:not([data-app-entry="admin"]):not(.portal-private-page) .site-nav { margin-left: auto; background: transparent; padding: 0; }
+body:not([data-app-entry="admin"]) .site-nav a[aria-current="page"]:not(.eaa-nav-enroll) { background: var(--h-navy); }
+body:not([data-app-entry="admin"]) :is(.estudiantil-layout, .student-detail-layout, .institutional-layout) {
+  max-width: 1200px; margin-inline: auto; padding: 0 32px 80px; gap: 64px;
+}
+body:not([data-app-entry="admin"]) :is(.estudiantil-hero, .student-detail-hero, .institutional-hero) {
+  display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  align-items: center; gap: 48px; min-height: 0; margin: 0;
+  padding: 64px 40px; background: var(--h-blue); color: var(--h-on-dark);
+  border: 0; border-radius: 16px;
+}
+body:not([data-app-entry="admin"]) :is(.estudiantil-hero-content, .student-detail-hero-content) { min-height: 0; gap: 24px; }
+body:not([data-app-entry="admin"]) :is(.estudiantil-hero, .student-detail-hero, .institutional-hero) h1 {
+  font-size: clamp(3rem, 4.6vw, 4.75rem); line-height: .98; color: var(--h-on-dark); text-shadow: none;
+}
+body:not([data-app-entry="admin"]) :is(.estudiantil-hero, .student-detail-hero, .institutional-hero) p { font-size: 1rem; line-height: 1.7; color: var(--h-on-dark); max-width: 48ch; }
+body:not([data-app-entry="admin"]) :is(.hero-kicker, .section-kicker, .student-path-kicker) { display: none; }
+body:not([data-app-entry="admin"]) :is(.estudiantil-hero, .student-detail-hero)::after {
+  content: ""; display: block; width: 100%; aspect-ratio: 4 / 5; max-height: 420px;
+  border-radius: 12px; background: url('../img/home/carrusel-viajes/bariloche-lago-montana-grupo.webp') center / cover;
+}
+body:not([data-app-entry="admin"]) [data-public-destination="carlos-paz"] .student-detail-hero::after { background-image: url('../img/home/carrusel-viajes/carlos-paz-reloj-cucu-grupo.webp'); }
+body:not([data-app-entry="admin"]) .institutional-logo { width: 100%; max-width: 300px; justify-self: center; filter: brightness(0) invert(1); }
+body:not([data-app-entry="admin"]) :is(.student-path-heading, .student-experience, .student-detail-experience, .institutional-contact-strip) { padding: 32px 0; background: transparent; border: 0; }
+body:not([data-app-entry="admin"]) :is(.student-path-heading, .student-experience, .student-detail-experience, .estudiantil-trust, .student-detail-benefits, .institutional-split, .contact-options) h2 { font-size: clamp(2.25rem, 3.8vw, 3.75rem); line-height: 1.05; color: var(--h-navy); text-wrap: balance; }
+body:not([data-app-entry="admin"]) :is(.student-path-heading, .student-experience, .student-detail-experience) p { max-width: 68ch; margin-top: 16px; line-height: 1.7; }
+body:not([data-app-entry="admin"]) .student-path-grid { gap: 24px; }
+body:not([data-app-entry="admin"]) .student-path-card { overflow: hidden; border: 0; border-radius: 12px; box-shadow: none; background: var(--h-paper-2); }
+body:not([data-app-entry="admin"]) .student-path-visual { aspect-ratio: 4 / 3; min-height: 0; background: url('../img/home/carrusel-viajes/carlos-paz-reloj-cucu-grupo.webp') center / cover; }
+body:not([data-app-entry="admin"]) .student-path-visual.is-secondary-bariloche { background-image: url('../img/home/carrusel-viajes/bariloche-lago-montana-grupo.webp'); }
+body:not([data-app-entry="admin"]) .student-path-visual.is-secondary-carlos-paz { background-image: url('../img/home/carrusel-viajes/carlos-paz-escape-room-grupo.webp'); }
+body:not([data-app-entry="admin"]) .student-path-visual::after { content: none; }
+body:not([data-app-entry="admin"]) .student-path-body { padding: 24px; display: grid; gap: 16px; }
+body:not([data-app-entry="admin"]) .student-path-body h3 { font-size: 2.5rem; line-height: 1; color: var(--h-navy); }
+body:not([data-app-entry="admin"]) :is(.estudiantil-trust .items, .institutional-split, .contact-options) { gap: 32px; background: transparent; border: 0; }
+body:not([data-app-entry="admin"]) :is(.estudiantil-trust .item, .institutional-split article, .contact-options article) { padding: 24px; background: var(--h-paper-2); border: 0; border-radius: 12px; box-shadow: none; }
+body:not([data-app-entry="admin"]) :is(.estudiantil-hero-actions, .student-detail-hero-actions, .institutional-actions, .student-detail-cta-actions) { display: flex; flex-wrap: wrap; gap: 12px; }
+body:not([data-app-entry="admin"]) :is(.estudiantil-layout, .student-detail-layout, .institutional-layout) a {
+  min-height: 48px; display: inline-flex; align-items: center; justify-content: center;
+  padding: 12px 22px; border: 1px solid var(--h-navy); border-radius: 999px;
+  font: 600 .875rem/1.4 var(--h-font-body); background: var(--h-navy); color: var(--h-on-dark); text-align: center;
+}
+body:not([data-app-entry="admin"]) :is(.estudiantil-layout, .student-detail-layout, .institutional-layout) :is(.estudiantil-hero-actions, .student-detail-hero-actions, .institutional-actions) a { background: var(--h-paper); border-color: var(--h-paper); color: var(--h-navy); }
+body:not([data-app-entry="admin"]) :is(.estudiantil-layout, .student-detail-layout, .institutional-layout) :is(.estudiantil-hero-actions, .student-detail-hero-actions, .institutional-actions) a + a { background: transparent; color: var(--h-on-dark); }
+body:not([data-app-entry="admin"]) :is(.estudiantil-layout, .student-detail-layout, .institutional-layout) a:hover { background: var(--h-navy-deep); color: var(--h-on-dark); }
+body:not([data-app-entry="admin"]) :is(.estudiantil-layout, .student-detail-layout, .institutional-layout) a:focus-visible { outline: 3px solid var(--h-focus); outline-offset: 4px; }
+body:not([data-app-entry="admin"]) :is(.estudiantil-cta, .student-detail-cta) { padding: 48px 32px; background: var(--h-paper-2); color: var(--h-navy); border: 0; border-radius: 16px; }
+body:not([data-app-entry="admin"]) :is(.estudiantil-cta, .student-detail-cta) h2 { color: var(--h-navy); font-size: clamp(2.5rem, 4vw, 4rem); }
+body:not([data-app-entry="admin"]) :is(.estudiantil-cta, .student-detail-cta) p { color: var(--h-muted); }
+/* Home: destinos en escenas alternadas y galería editorial, sin fondos borrosos. */
+.eaa-home:not(.eaa-turismo-page) { --radius-card: 12px; --radius-control: 999px; --section-gap: clamp(64px, 8vw, 112px); }
+.eaa-home:not(.eaa-turismo-page) .eaa-works { display: grid; gap: 64px; padding: 80px max(24px, 6vw); background: var(--h-paper); }
+.eaa-home:not(.eaa-turismo-page) .eaa-work { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); grid-template-rows: 1fr auto; column-gap: 64px; row-gap: 24px; min-height: 0; max-width: 1200px; width: 100%; margin: auto; padding: 0; overflow: visible; background: transparent; color: var(--h-navy); }
+.eaa-home:not(.eaa-turismo-page) .eaa-work::before { content: none; }
+.eaa-home:not(.eaa-turismo-page) .eaa-work-head { display: flex; flex-direction: column-reverse; justify-content: end; padding: 24px 0 0; width: auto; gap: 20px; }
+.eaa-home:not(.eaa-turismo-page) .eaa-work-head h3 { font-size: clamp(3.5rem, 5vw, 5.5rem); color: var(--h-navy); }
+.eaa-home:not(.eaa-turismo-page) .eaa-work-head p { color: var(--h-muted); line-height: 1.7; }
+.eaa-home:not(.eaa-turismo-page) .eaa-work-tag { background: var(--h-paper-2); color: var(--h-blue); align-self: start; }
+.eaa-home:not(.eaa-turismo-page) .eaa-work-thumb { grid-column: 2; grid-row: 1 / 3; width: 100%; aspect-ratio: 4 / 3; border-radius: 12px; }
+.eaa-home:not(.eaa-turismo-page) .eaa-work-thumb img { height: 100%; }
+.eaa-home:not(.eaa-turismo-page) .eaa-work-link { justify-self: start; align-self: start; color: var(--h-navy); margin-bottom: 24px; }
+.eaa-home:not(.eaa-turismo-page) .eaa-work:nth-of-type(even) { grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); }
+.eaa-home:not(.eaa-turismo-page) .eaa-work:nth-of-type(even) .eaa-work-thumb { grid-column: 1; }
+.eaa-home:not(.eaa-turismo-page) .eaa-work:nth-of-type(even) :is(.eaa-work-head, .eaa-work-link) { grid-column: 2; }
+.eaa-home .eaa-process-list li { opacity: 1; }
+.eaa-home:not(.eaa-turismo-page) .eaa-ticker { display: none; }
+.eaa-home:not(.eaa-turismo-page) .eaa-stack { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; margin-top: 40px; }
+.eaa-home:not(.eaa-turismo-page) .eaa-stack-card { position: static; display: block; margin: 0; padding: 0; background: transparent; }
+.eaa-home:not(.eaa-turismo-page) .eaa-stack-card:first-child { grid-column: 1 / -1; }
+.eaa-home:not(.eaa-turismo-page) .eaa-stack-card figcaption { padding: 16px 0 0; color: var(--h-on-dark); font-size: 2rem; }
+.eaa-home:not(.eaa-turismo-page) .eaa-cta { min-height: 640px; padding-block: 80px; }
+.eaa-home:not(.eaa-turismo-page) .eaa-cta-title { font-size: clamp(3.5rem, 8vw, 6rem) !important; white-space: normal; }
+.eaa-home:not(.eaa-turismo-page) .eaa-corner { display: none; }
+/* Turismo mantiene su catálogo y filtros: se ordena la portada y los controles. */
+.eaa-turismo-page { --radius-card: 12px; --radius-control: 999px; }
+.eaa-turismo-page .eaa-hero { min-height: 680px; height: 85svh; max-height: 900px; }
+.eaa-turismo-page .eaa-hero-inner { padding-top: 144px; }
+.eaa-turismo-page .eaa-hero .eaa-wordmark { font-size: clamp(3.5rem, 7vw, 6rem) !important; white-space: normal; }
+.eaa-turismo-page .eaa-grain { display: none; }
+.eaa-turismo-page .eaa-hero-shade { background: color-mix(in srgb, var(--h-night) 64%, transparent); }
+.eaa-turismo-page .tur-card:hover { box-shadow: none; }
+body:not([data-app-entry="admin"]) .site-footer { padding-top: 64px; }
+body:not([data-app-entry="admin"]) .footer-links { gap: 12px; }
+body:not([data-app-entry="admin"]) .footer-wordmark { margin-top: 24px; max-height: 160px; }
+body:not([data-app-entry="admin"]) #app section[id] { scroll-margin-top: 112px; }
+@media (min-width: 1050px) {
+  body:not([data-app-entry="admin"]) .student-path-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (min-width: 741px) {
+  body:not([data-app-entry="admin"]):not(.portal-private-page) .site-nav { display: flex; position: static; }
+  body:not([data-app-entry="admin"]):not(.portal-private-page) .mobile-header-actions { display: none; }
+}
+@media (max-width: 1049px) and (min-width: 741px) {
+  body:not([data-app-entry="admin"]):not(.portal-private-page) .site-nav a { padding-inline: 12px; font-size: 12px; }
+  body:not([data-app-entry="admin"]):not(.portal-private-page) .site-header { gap: 12px; }
+}
+@media (max-width: 740px) {
+  body:not([data-app-entry="admin"]):not(.portal-private-page) .site-header { top: 12px; width: calc(100% - 32px); min-height: 64px; padding: 6px 10px; }
+  body:not([data-app-entry="admin"]):not(.portal-private-page) .brand-logo { width: 104px; height: 44px; }
+  body:not([data-app-entry="admin"]):not(.portal-private-page) .site-nav { display: none; position: absolute; top: calc(100% + 8px); left: 0; right: 0; margin: 0; padding: 8px; background: var(--h-night); border-radius: 16px; }
+  body.nav-open:not([data-app-entry="admin"]):not(.portal-private-page) .site-nav { display: grid; }
+  body:not([data-app-entry="admin"]):not(.portal-private-page) .mobile-header-actions { display: flex; }
+  body:not([data-app-entry="admin"]) :is(.estudiantil-layout, .student-detail-layout, .institutional-layout) { padding-inline: 16px; gap: 40px; }
+  body:not([data-app-entry="admin"]) :is(.estudiantil-hero, .student-detail-hero, .institutional-hero) { grid-template-columns: 1fr; padding: 32px 24px; gap: 32px; }
+  body:not([data-app-entry="admin"]) :is(.estudiantil-hero, .student-detail-hero)::after { aspect-ratio: 4 / 3; max-height: 300px; }
+  body:not([data-app-entry="admin"]) :is(.estudiantil-hero, .student-detail-hero, .institutional-hero) h1 { font-size: clamp(2.75rem, 10vw, 3.75rem); }
+  body:not([data-app-entry="admin"]) .student-path-grid { grid-template-columns: 1fr; }
+  .eaa-home:not(.eaa-turismo-page) .eaa-works { padding: 56px 20px; gap: 48px; }
+  .eaa-home:not(.eaa-turismo-page) .eaa-work, .eaa-home:not(.eaa-turismo-page) .eaa-work:nth-of-type(even) { display: flex; flex-direction: column; gap: 24px; }
+  .eaa-home:not(.eaa-turismo-page) .eaa-work-head { padding: 0; }
+  .eaa-home:not(.eaa-turismo-page) .eaa-work-thumb { aspect-ratio: 4 / 3; }
+  .eaa-home:not(.eaa-turismo-page) .eaa-work-link { margin: 0; }
+  .eaa-home:not(.eaa-turismo-page) .eaa-stack { grid-template-columns: 1fr; }
+  .eaa-home:not(.eaa-turismo-page) .eaa-cta { min-height: 520px; padding: 64px 20px; }
+  .eaa-home:not(.eaa-turismo-page) .eaa-cta .eaa-actions { flex-direction: column; width: 100%; }
+  .eaa-home:not(.eaa-turismo-page) .eaa-cta .eaa-button { white-space: normal; text-align: center; }
+  .eaa-turismo-page .eaa-hero { min-height: 720px; height: auto; }
+  .eaa-turismo-page .eaa-hero-inner { min-height: 720px; padding-top: 120px; gap: 40px; }
+  .eaa-turismo-page .eaa-hero .eaa-wordmark { font-size: 3.5rem !important; }
+}

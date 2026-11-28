@@ -58,6 +58,65 @@
   }
   function revealOnFocus(el, tween) { el.addEventListener("focusin", () => tween.progress(1)); }
 
+  // Carrusel independiente del Home; no modifica el hero de Turismo.
+  function initHomeCarousel(root) {
+    const carousel = root.querySelector("[data-home-carousel]");
+    if (!carousel) return;
+    const slides = [...carousel.querySelectorAll("[data-home-slide]")];
+    const dots = [...carousel.querySelectorAll("[data-home-dot]")];
+    const toggle = carousel.querySelector("[data-home-autoplay]");
+    const icon = carousel.querySelector("[data-home-pause-icon]");
+    const stage = carousel.querySelector(".eaa-home-carousel-stage");
+    const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (slides.length < 2 || !toggle) return;
+    let index = 0, timer = null, playing = !motionPreference.matches, hovering = false, explicitPlayback = false;
+    const clearTimer = () => { clearTimeout(timer); timer = null; };
+    function schedule() {
+      clearTimer();
+      if (playing && !document.hidden && (explicitPlayback || (!hovering && !carousel.contains(document.activeElement)))) {
+        timer = setTimeout(() => show((index + 1) % slides.length), 4000);
+      }
+    }
+    function updatePlayback() {
+      toggle.setAttribute("aria-label", playing ? "Pausar carrusel" : "Reproducir carrusel");
+      icon?.setAttribute("d", playing ? "M9 5v14M15 5v14" : "M8 5l11 7-11 7Z");
+      stage.setAttribute("aria-live", playing ? "off" : "polite");
+      schedule();
+    }
+    function show(next) {
+      index = next;
+      slides.forEach((slide, i) => {
+        slide.classList.toggle("is-active", i === index);
+        slide.setAttribute("aria-hidden", String(i !== index));
+        dots[i]?.setAttribute("aria-pressed", String(i === index));
+      });
+      schedule();
+    }
+    dots.forEach((dot, i) => dot.addEventListener("click", () => { playing = false; updatePlayback(); show(i); }));
+    toggle.addEventListener("click", () => { playing = !playing; explicitPlayback = playing; updatePlayback(); });
+    const onEnter = () => { hovering = true; explicitPlayback = false; clearTimer(); };
+    const onLeave = () => { hovering = false; schedule(); };
+    const onFocusIn = () => { explicitPlayback = false; clearTimer(); };
+    const onFocusOut = () => { explicitPlayback = false; clearTimer(); timer = setTimeout(schedule, 0); };
+    const onMotionChange = () => { if (motionPreference.matches) { playing = false; updatePlayback(); } };
+    carousel.addEventListener("mouseenter", onEnter);
+    carousel.addEventListener("mouseleave", onLeave);
+    carousel.addEventListener("focusin", onFocusIn);
+    carousel.addEventListener("focusout", onFocusOut);
+    document.addEventListener("visibilitychange", schedule);
+    motionPreference.addEventListener("change", onMotionChange);
+    state.cleanups.push(() => {
+      clearTimer();
+      carousel.removeEventListener("mouseenter", onEnter);
+      carousel.removeEventListener("mouseleave", onLeave);
+      carousel.removeEventListener("focusin", onFocusIn);
+      carousel.removeEventListener("focusout", onFocusOut);
+      document.removeEventListener("visibilitychange", schedule);
+      motionPreference.removeEventListener("change", onMotionChange);
+    });
+    updatePlayback();
+  }
+
   // Fotos del hero: cambia sola cada pocos segundos (se detiene si la persona usa las flechas o tras unas vueltas),
   // con contador, barra de progreso y descripción. Funciona también con "reducir movimiento" (sin avance automático).
   function initHero(root) {
@@ -185,6 +244,7 @@
     state.cleanups.push(() => window.removeEventListener("resize", refit));
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(refit);
     initHero(root);
+    initHomeCarousel(root);
     if (reduced() || !ready()) return;
     try {
       gsap.registerPlugin(ScrollTrigger);

@@ -93,32 +93,19 @@
         const img = (src, alt, extra = "") => `<img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" ${extra}>`;
         document.getElementById("app").innerHTML = `
           <div class="eaa-home">
-            <section class="eaa-hero eaa-dark" aria-label="El Ángel Azul" data-hero>
-              <div class="eaa-hero-slides" data-hero-slides>
-                ${heroSlides.map(([name, alt, caption], i) => `<figure class="eaa-hero-slide${i === 0 ? " is-active" : ""}" data-hero-slide data-caption="${escapeHtml(caption)}">${img(`assets/img/home/hero-carousel/${name}.webp`, alt, `width="2000" height="1333"${i === 0 ? ' fetchpriority="high"' : ' loading="lazy"'}`)}</figure>`).join("")}
-              </div>
-              <div class="eaa-grain" aria-hidden="true"></div>
-              <div class="eaa-hero-shade" aria-hidden="true"></div>
-              <div class="eaa-hero-inner">
-                <h1 class="eaa-wordmark" data-fit data-hero-title aria-label="El Ángel Azul">El Ángel Azul</h1>
-                <div class="eaa-hero-foot">
-                  <div class="eaa-hero-tag">
-                    <p class="eaa-hero-claim" data-rise>El viaje pasa.<br>La historia queda.</p>
-                    <p class="eaa-hero-sub" data-rise>Viajes estudiantiles y turismo, organizados desde Corrientes con acompañamiento real.</p>
-                    <div class="eaa-actions" data-rise>
-                      <a class="eaa-button eaa-button-fill" href="#/estudiantil" data-scroll-target="eaa-destinos">Viajes estudiantiles ${arrow}</a>
-                      <a class="eaa-button eaa-button-line" href="#/turismo" data-scroll-target="eaa-turismo">Turismo ${arrow}</a>
-                    </div>
+            <section class="eaa-home-hero" aria-labelledby="home-hero-title">
+              <h1 id="home-hero-title">EL MEJOR VIAJE <span>DE TU VIDA</span></h1>
+              <div class="eaa-home-carousel" data-home-carousel role="region" aria-roledescription="carrusel" aria-label="Experiencias de El Ángel Azul">
+                <div class="eaa-home-carousel-stage" id="home-carousel-photos" aria-live="off">
+                  ${heroSlides.map(([name, alt, caption], i) => `<figure class="eaa-home-carousel-slide${i === 0 ? " is-active" : ""}" data-home-slide role="group" aria-roledescription="diapositiva" aria-label="${i + 1} de ${heroSlides.length}: ${escapeHtml(caption)}" aria-hidden="${i !== 0}">${img(`assets/img/home/hero-carousel/${name}.webp`, alt, `width="2000" height="1333"${i === 0 ? ' fetchpriority="high"' : ' loading="lazy"'}`)}</figure>`).join("")}
+                </div>
+                <div class="eaa-home-carousel-controls">
+                  <div class="eaa-home-carousel-dots" role="group" aria-label="Elegir fotografía">
+                    ${heroSlides.map(([, , caption], i) => `<button type="button" class="eaa-home-carousel-dot" data-home-dot="${i}" aria-label="Ver foto ${i + 1}: ${escapeHtml(caption)}" aria-pressed="${i === 0}" aria-controls="home-carousel-photos"><span aria-hidden="true"></span></button>`).join("")}
                   </div>
-                  <div class="eaa-hero-panel" role="group" aria-label="Fotos del inicio">
-                    <div class="eaa-hero-progress" aria-hidden="true"><span data-hero-bar></span></div>
-                    <div class="eaa-hero-controls">
-                      <button type="button" data-hero-prev aria-label="Foto anterior">${arrow}</button>
-                      <button type="button" data-hero-next aria-label="Foto siguiente">${arrow}</button>
-                      <span class="eaa-hero-count" data-hero-count aria-live="off">01/0${heroSlides.length}</span>
-                    </div>
-                    <p class="eaa-hero-caption" data-hero-caption aria-live="polite">${heroSlides[0][2]}</p>
-                  </div>
+                  <button type="button" class="eaa-home-carousel-pause" data-home-autoplay aria-label="Pausar carrusel" aria-controls="home-carousel-photos">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path data-home-pause-icon d="M9 5v14M15 5v14"/></svg>
+                  </button>
                 </div>
               </div>
             </section>
@@ -142,20 +129,16 @@
 
             <section class="eaa-works" id="eaa-destinos" aria-labelledby="eaa-works-title">
               <h2 id="eaa-works-title" class="visually-hidden">Destinos de viajes estudiantiles</h2>
-              ${works.map((w, i) => `
-              <article class="eaa-work eaa-dark" data-work>
-                <div class="eaa-work-bg" aria-hidden="true"><img src="${escapeHtml(w.bg)}" alt="" loading="lazy" data-work-bg></div>
-                <div class="eaa-grain" aria-hidden="true"></div>
-                <p class="eaa-work-type" aria-hidden="true" data-work-type>${w.name} ${w.name} ${w.name}</p>
-                <div class="eaa-work-head eaa-wrap">
+              ${works.map((w) => `
+              <article class="eaa-work eaa-dark">
+                <div class="eaa-work-head">
                   <div><h3 data-split>${w.name}</h3><p>${w.text}</p></div>
                   <span class="eaa-work-tag">${w.tag}</span>
                 </div>
                 <a class="eaa-work-thumb" href="${escapeHtml(w.href)}"${w.external ? ' target="_blank" rel="noopener"' : ""} aria-label="${w.name}: ${w.cta}">
-                  ${img(w.thumb, w.alt, `width="1600" height="1067" loading="lazy" data-work-thumb`)}
+                  ${img(w.thumb, w.alt, 'width="1600" height="1067" loading="lazy"')}
                 </a>
                 <a class="eaa-work-link eaa-link" href="${escapeHtml(w.href)}"${w.external ? ' target="_blank" rel="noopener"' : ""}>${w.cta} ${arrow}</a>
-                <p class="eaa-work-index" aria-hidden="true">0${i + 1}/0${works.length}</p>
               </article>`).join("")}
             </section>
 
@@ -196,10 +179,10 @@
               <div class="eaa-wrap">
                 <h2 id="eaa-moments-title" data-split>Momentos reales, recuerdos para siempre</h2>
                 <div class="eaa-stack">
-                  ${moments.map(([name, alt, caption], i) => `
-                  <figure class="eaa-stack-card" data-stack-card style="--i:${i}">
+                  ${moments.map(([name, alt, caption]) => `
+                  <figure class="eaa-stack-card">
                     <div class="eaa-frame">${img(`assets/img/home/carrusel-viajes/${name}.webp`, alt, 'loading="lazy"')}</div>
-                    <figcaption><span class="eaa-n" aria-hidden="true">0${i + 1}</span>${caption}</figcaption>
+                    <figcaption>${caption}</figcaption>
                   </figure>`).join("")}
                 </div>
               </div>
@@ -7601,7 +7584,7 @@ ${renderTutorReviewForm(tutor)}
 
       function renderPrimariaCarlosPaz() {
         document.getElementById("app").innerHTML = `
-          <div class="layout student-detail-layout">
+          <div class="layout student-detail-layout" data-public-destination="carlos-paz">
             <section class="student-detail-hero primary">
               <div class="student-detail-hero-content">
                 <p class="hero-kicker">Primaria</p>
@@ -7650,10 +7633,7 @@ ${renderTutorReviewForm(tutor)}
             `).join("");
           }
 
-          return Array.from(
-            { length: item.gallerySlots || 3 },
-            () => `<div class="bariloche-gallery-slot"></div>`
-          ).join("");
+          return "";
         };
 
         const renderExperienceVideo = item => {
@@ -7665,7 +7645,7 @@ ${renderTutorReviewForm(tutor)}
             `).join("");
           }
 
-          return `<div class="bariloche-experience-video" aria-label="Video de ${item.name}"></div>`;
+          return "";
         };
 
         const renderExperienceCategory = category => `
@@ -7690,7 +7670,7 @@ ${renderTutorReviewForm(tutor)}
         `;
 
         document.getElementById("app").innerHTML = `
-          <div class="layout student-detail-layout">
+          <div class="layout student-detail-layout" data-public-destination="bariloche">
             <section class="student-detail-hero">
               <div class="student-detail-hero-content">
                 <p class="hero-kicker">Secundaria</p>
@@ -7723,7 +7703,7 @@ ${renderTutorReviewForm(tutor)}
 
       function renderSecundariaCarlosPaz() {
         document.getElementById("app").innerHTML = `
-          <div class="layout student-detail-layout">
+          <div class="layout student-detail-layout" data-public-destination="carlos-paz">
             <section class="student-detail-hero">
               <div class="student-detail-hero-content">
                 <p class="hero-kicker">Secundaria</p>
@@ -8953,6 +8933,11 @@ ${renderTutorReviewForm(tutor)}
         if (path === "/" || path.startsWith("/turismo")) turismoPublicPackagesCache = null;
         const page = routes[path] || routes["/"];
         document.body.classList.toggle("home-page", path === "/");
+        document.querySelectorAll('.site-nav a').forEach(link => {
+          const target = link.getAttribute('href')?.slice(1);
+          if (target && (path === target || path.startsWith(`${target}/`))) link.setAttribute('aria-current', 'page');
+          else link.removeAttribute('aria-current');
+        });
         document.body.classList.toggle("portal-private-page", ["/portal-pasajeros", "/pasajeros", "/mi-viaje"].includes(path));
         document.body.classList.toggle("turismo-page", path.startsWith("/turismo"));
         document.body.classList.toggle("turismo-hero-page", path.startsWith("/turismo"));
@@ -9182,7 +9167,7 @@ ${renderTutorReviewForm(tutor)}
           event.preventDefault();
           const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
           if (window.__lenisInstance && !reduceMotion) {
-            window.__lenisInstance.scrollTo(target, { offset: -88, duration: 1.4 });
+            window.__lenisInstance.scrollTo(target, { offset: -112, duration: 1.4 });
             return;
           }
           target.scrollIntoView({

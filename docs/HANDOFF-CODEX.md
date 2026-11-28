@@ -9,7 +9,21 @@ Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerra
 |---|---|---|---|---|
 | Fran (Claude Code) | `fran/harness` | Harness: guardas, `AGENTS.md`, docs | `AGENTS.md`, `CLAUDE.md`, `package.json`, `scripts/guardas.test.js`, `scripts/helpers/sin-secretos.js`, docs | 25/11 |
 | Fran (Claude Code) | `fran/inicio-aldena` | Paso 8: rediseño del inicio inspirado en la web de referencia (Agustín dio su OK sobre el PR #8) | `index.html`, `assets/css/home.css`, `assets/css/public-experience.css`, `assets/js/modules/home-motion.js`, `renderHome` en `assets/js/app.js` | 27/11 |
-| Agustín (Codex) | `agustin/correo-automatico` | Activación segura del correo de fichas | lib/email.js, PDF estable para reintentos, consulta de recuperación, pruebas y docs. Sin activar claves ni enviar correos todavía | 28/11 |
+| Agustín (Codex) | `agustin/home-carrusel-azul` | Web pública, alcance ampliado por el dueño | Home, viajes estudiantiles, Turismo, páginas informativas y navegación. Diseño con fotos propias; sin cambios en backend, base, main ni hosting | 28/11 |
+
+## Web pública — alcance ampliado el 28/11/2026
+
+El dueño confirmó «Ampliar a toda la web pública», tomando Travel Rock como referencia de jerarquía, no de identidad. El PR #70 pasa a cubrir la navegación pública unificada, estados activos, footer con enlaces a Nosotros/Contacto/Mi viaje; Home con destinos alternados de fotografías grandes y galería sin apilamiento; páginas estudiantiles con fotografías existentes; titulares, CTAs y espacios coherentes en las páginas informativas; contraste del hero y radios del catálogo de Turismo. Las galerías o videos sin archivos dejan de mostrar recuadros vacíos.
+
+Estilos de esta revisión en `assets/css/public-design.css`, cargados solo por `index.html`. Admin no carga ese archivo; servidor, permisos, datos, ficha, pagos, correo y lógica del portal no cambian. El encabezado y pie públicos sí se actualizan en las entradas a ficha/portal. Se conserva la distinción entre ficha de adhesión y consulta comercial.
+
+Verificación local: 287 pruebas aprobadas y 13 rutas públicas sin desbordamiento a 390 px; páginas estudiantiles/informativas y Turismo/fichas/portal comprobadas en escritorio; extremos a 320 px. Menú móvil abre, navega y se cierra; fotos cargan y las APIs usan únicamente la base local ficticia. La prueba del portal en esta revisión se limita a su entrada sin sesión. Sin enviar correos ni escribir en Supabase. No está publicado.
+
+## Primera sección del Home — 28/11/2026
+
+Propuesta en `agustin/home-carrusel-azul`, basada en main `1e93b64`, PR #70 en borrador. Fondo sólido `--color-primary` (#0d69a1), titular «EL MEJOR VIAJE DE TU VIDA» en dos líneas con énfasis en «DE TU VIDA» y carrusel 16:9 con fotos existentes. Navbar compacto alineado al ancho del carrusel, logo a la izquierda y Viajes estudiantiles, Turismo e Inscripción online a la derecha; las otras rutas conservan sus etiquetas y estilos. La referencia de Travel Rock guía la jerarquía, manteniendo una composición propia de El Ángel Azul. El resto de las secciones del Home y el hero de Turismo se mantienen.
+
+Rotación cada 4 segundos, indicadores manuales y pausa/reproducción. Se pausa al interactuar y con la pestaña oculta; con reducir movimiento comienza detenido. Los temporizadores se limpian al cambiar de ruta. Verificado en navegador local con datos ficticios: escritorio, tablet y celular; contrato de navegación a Turismo e inscripción, selección de fotos y reproducción manual. `npm run check`: 287 aprobadas, sin fallas ni TODO. No está integrado a main ni publicado en Hostinger.
 
 ## Estado actual de la propuesta — 28/11/2026
 
