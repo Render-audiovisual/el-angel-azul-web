@@ -329,6 +329,14 @@ function safeDecode(value) {
   }
 }
 
+// Ingresos y salidas del panel quedan en la auditoría (sin IP ni claves). Si la base falla, el login no se corta.
+function auditSession(accion, session) {
+  if (!POSTGRES_MIGRATION_ENABLED) return;
+  db.getPool()
+    .query("insert into eventos_administrativos(entidad,accion,actor_username,detalle) values('sesion_admin',$1,$2,$3::jsonb)", [accion, session.user, JSON.stringify({ rol: session.role })])
+    .catch((error) => console.error("No se pudo auditar la sesión:", safeErrorForLog(error)));
+}
+
 function sessionCookie(token, maxAgeSeconds, isSecureRequest = false) {
   const secureFlag = isSecureRequest ? " Secure;" : "";
   return `${ADMIN_SESSION_COOKIE}=${encodeURIComponent(token)}; HttpOnly;${secureFlag} SameSite=Strict; Path=/; Max-Age=${maxAgeSeconds}; Priority=High`;
@@ -731,6 +739,10 @@ async function handleSheets(req, res, url) {
     if (POSTGRES_SHEETS.has(sheet)) {
       return json(res, 200, { ok: true, sheet, rows: adminWrite.versionedRows(await POSTGRES_LIST_FN[sheet]()) });
     }
+    // PAGOS y CUOTAS ya no viven en hojas: pagos y cuentas se leen por /api/admin/pagos y /api/admin/finanzas.
+    if (POSTGRES_MIGRATION_ENABLED && (sheet === "PAGOS" || sheet === "CUOTAS")) {
+      return json(res, 410, { ok: false, error: "Esta hoja ya no se usa. Los pagos y las cuotas están en el módulo de pagos." });
+    }
     return json(res, 200, { ok: true, sheet, rows: await readSheet(sheet) });
   }
   if (req.method === "POST") {
@@ -869,6 +881,7 @@ async function handleAdminAuth(req, res, url) {
       expiresAt: Date.now() + ADMIN_SESSION_TTL_MS
     };
     adminSessions.set(token, session);
+    auditSession("ingresar", session);
     return jsonWithHeaders(req, res, 200, { ok: true, ...adminSessionPayload(session) }, {
       "Set-Cookie": sessionCookie(token, Math.floor(ADMIN_SESSION_TTL_MS / 1000), isHttpsRequest(req))
     });
@@ -876,7 +889,10 @@ async function handleAdminAuth(req, res, url) {
   if (url.pathname === "/api/admin/logout" && req.method === "POST") {
     if (requireSameOrigin(req, res)) return;
     const session = currentAdminSession(req);
-    if (session) adminSessions.delete(session.token);
+    if (session) {
+      adminSessions.delete(session.token);
+      auditSession("salir", session);
+    }
     return jsonWithHeaders(req, res, 200, { ok: true, authenticated: false }, {
       "Set-Cookie": sessionCookie("", 0, isHttpsRequest(req))
     });
@@ -970,7 +986,8 @@ function staticFile(req, res, url) {
   if (revalidated) {
     const info = fs.statSync(target);
     headers.ETag = `W/"${info.size.toString(16)}-${Math.floor(info.mtimeMs).toString(16)}"`;
-    if (req.headers["if-none-match"] === headers.ETag) {
+    const coincide = String(req.headers["if-none-match"] || "").split(",").some((t) => t.trim().replace(/^W\//, "") === headers.ETag.replace(/^W\//, ""));
+    if (coincide) {
       res.writeHead(304, { "Cache-Control": cacheControl, ETag: headers.ETag, ...securityHeaders(req) });
       return res.end();
     }
