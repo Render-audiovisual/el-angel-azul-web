@@ -58,6 +58,7 @@
           const result=await request(path,{id:draft.id,tipo:draft.tipo,...draft.prepared});
           draft.file=null;draft.id=null;draft.prepared=null;
           data.documentos=[result.documento,...data.documentos.filter(doc=>doc.id!==result.documento.id)];
+          window.dispatchEvent(new CustomEvent('eaa-document-updated',{detail:{id}}));
           render('Archivo guardado. '+(states[result.documento.estado]||'Pendiente de revisión')+'.');
         }catch(error){notice(output,error);}
         finally{busy=false;unlock();}
@@ -70,7 +71,7 @@
           event.preventDefault();if(busy)return;read();
           if(doc.contrato_id&&value.visibleFamilia&&value.estado==='aprobado'&&(!doc.visible_familia||doc.estado!=='aprobado')&&!confirm('¿Compartir este PDF con todos los pasajeros y responsables de este contrato? Verificá que no contenga datos privados de otras personas.'))return;
           busy=true;lock();
-          try{const result=await request('/api/admin/documentos/'+encodeURIComponent(doc.id)+'/revisar',value);data.documentos=data.documentos.map(row=>row.id===doc.id?result.documento:row);draft.reviews.delete(doc.id);render('Revisión guardada.');}
+          try{const result=await request('/api/admin/documentos/'+encodeURIComponent(doc.id)+'/revisar',value);data.documentos=data.documentos.map(row=>row.id===doc.id?result.documento:row);draft.reviews.delete(doc.id);window.dispatchEvent(new CustomEvent('eaa-document-updated',{detail:{id}}));render('Revisión guardada.');}
           catch(error){notice(form.querySelector('[data-document-review-message]'),error);}
           finally{busy=false;unlock();}
         };

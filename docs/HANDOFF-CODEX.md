@@ -9,7 +9,7 @@ Una fila por persona o agente. Cada uno edita solo su fila al empezar y al cerra
 |---|---|---|---|---|
 | Fran (Claude Code) | `fran/harness` | Harness: guardas, `AGENTS.md`, docs | `AGENTS.md`, `CLAUDE.md`, `package.json`, `scripts/guardas.test.js`, `scripts/helpers/sin-secretos.js`, docs | 25/11 |
 | Fran (Claude Code) | `fran/inicio-aldena` | Paso 8: rediseño del inicio inspirado en la web de referencia (Agustín dio su OK sobre el PR #8) | `index.html`, `assets/css/home.css`, `assets/css/public-experience.css`, `assets/js/modules/home-motion.js`, `renderHome` en `assets/js/app.js` | 27/11 |
-| Agustín (Codex) | `agustin/ecosistema-informacion-servidor` | Requisitos documentales y avisos privados por contrato | Servidor, migración aditiva y pruebas. Sin main, hosting ni base oficial | 28/11 |
+| Agustín (Codex) | `agustin/ecosistema-informacion-panel` | Requisitos documentales y avisos privados conectados al panel/portal | Interfaz, pruebas de navegador y documentación. Sin main, hosting ni base oficial | 28/11 |
 
 ## Ecosistema integral — nuevo encargo del 27/11/2026
 
@@ -250,3 +250,7 @@ La conexión a Postgres verifica el certificado por defecto, utiliza las raíces
 ### Información operativa del contrato — servidor
 
 Migración aditiva 0017: requisitos documentales seleccionados por el operador y avisos de texto con publicación explícita. Sin requisitos predeterminados, términos inventados ni efectos sobre cobros/cuentas. Las familias solo leen avisos publicados de sus propios pasajeros y el estado de los documentos requeridos. Guardado con revisión, bloqueo y auditoría anterior/posterior; avisos guardados no se eliminan, se despublican. Cinco pruebas HTTP/PGlite verifican permisos, concurrencia, privacidad, validación y seguimiento de archivos. Interfaz en el siguiente PR. Sin aplicar migraciones reales.
+
+### Información operativa del contrato — interfaz
+
+El editor de contrato configura documentos requeridos y avisos, con publicación explícita y conservación del historial. El borrador conserva su revisión al consultar una versión posterior; descartarlo es una acción separada. El perfil PAX y Mi viaje muestran requisitos/estados y avisos publicados del contrato correcto. Cargar o revisar un archivo actualiza el seguimiento. Siete recorridos de Chrome/PGlite verifican guardado, privacidad, texto seguro, red/conflictos, despublicación y 320/390/1440 px. La revisión visual corrigió la precedencia CSS de WhatsApp que todavía tapaba un campo del portal. Todo local, sin servicios reales.

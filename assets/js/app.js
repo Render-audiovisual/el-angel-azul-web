@@ -2422,6 +2422,7 @@
           window.ElAngelAzulPersistence.clearPrivateCollections();
           window.ElAngelAzulAccounts?.clear();
           window.ElAngelAzulAcademic?.clear();
+          window.ElAngelAzulContractInformation?.clear();
           window.ElAngelAzulDocuments?.clear("admin");
           window.ElAngelAzulCatalogMedia?.clear();
           adminPasajerosDemo = [];
@@ -5092,6 +5093,7 @@ ${renderTutorReviewForm(tutor)}
                 <h3>Historial de cobros</h3>
                 ${adminPagosLoaded ? renderPaymentHistoryCells(passenger) : '<p>No se pudieron consultar los pagos. Entrá en Pagos para volver a intentar.</p>'}
               </article>
+              <article class="admin-payment-wide" data-passenger-information="${escapeHtml(passengerPaymentKey(passenger, group))}"></article>
               <article class="admin-payment-wide" data-admin-documents data-document-type="pasajeros" data-document-owner="${escapeHtml(passengerPaymentKey(passenger, group))}"></article>
               ${adminCanDelete() ? `<article class="admin-payment-wide portal-admin-access" data-portal-access-admin data-passenger-id="${escapeHtml(passengerPaymentKey(passenger, group))}"></article>` : ""}
               <article>
@@ -5730,6 +5732,7 @@ ${renderTutorReviewForm(tutor)}
                 </div>
               </form>
               <section class="admin-document-section" data-admin-documents data-document-type="contratos" data-document-owner="${escapeHtml(contract.id)}"></section>
+              <section class="admin-document-section" data-contract-information="${escapeHtml(contract.id)}"></section>
               <section class="enrollment-admin" data-enrollment-admin data-contract-id="${escapeHtml(contract.id)}"></section>
               ${renderAdminContratoPlanes(contract)}
             </section>
@@ -5904,6 +5907,8 @@ ${renderTutorReviewForm(tutor)}
         bindAdminContratos();
         const enrollmentRoot = document.querySelector("[data-enrollment-admin]");
         window.ElAngelAzulEnrollment?.mountAdmin(enrollmentRoot, enrollmentRoot?.dataset.contractId);
+        document.querySelectorAll("[data-contract-information]").forEach(root => window.ElAngelAzulContractInformation?.mount(root,{id:root.dataset.contractInformation}));
+        document.querySelectorAll("[data-passenger-information]").forEach(root => window.ElAngelAzulContractInformation?.mount(root,{id:root.dataset.passengerInformation,type:"pasajeros"}));
         document.querySelectorAll("[data-admin-documents]").forEach(root => window.ElAngelAzulDocuments?.mount(root, {type:root.dataset.documentType,id:root.dataset.documentOwner}));
       }
 
@@ -6321,6 +6326,8 @@ ${renderTutorReviewForm(tutor)}
       }
 
       function bindAdminPasajeros() {
+        document.querySelectorAll("[data-contract-information]").forEach(root => window.ElAngelAzulContractInformation?.mount(root,{id:root.dataset.contractInformation}));
+        document.querySelectorAll("[data-passenger-information]").forEach(root => window.ElAngelAzulContractInformation?.mount(root,{id:root.dataset.passengerInformation,type:"pasajeros"}));
         document.querySelectorAll("[data-admin-documents]").forEach(root => window.ElAngelAzulDocuments?.mount(root, {type:root.dataset.documentType,id:root.dataset.documentOwner}));
         document.querySelectorAll("[data-portal-access-admin]").forEach(root => window.ElAngelAzulPortalAdmin?.mount(root, root.dataset.passengerId));
         document.querySelector("[data-admin-pasajeros-open-form]")?.addEventListener("click", () => {

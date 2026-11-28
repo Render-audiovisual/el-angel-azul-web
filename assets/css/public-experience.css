@@ -75,3 +75,5 @@ body:not([data-app-entry="admin"]) .footer-internal-access { color: var(--h-mute
 /* Poppins en controles públicos; Bebas Neue únicamente para titulares. */
 body:not([data-app-entry="admin"]) :is(button,input,select,textarea,summary) { font-family: var(--font-ui); }
 body:not([data-app-entry="admin"]) .whatsapp-fab, body.home-page:not([data-app-entry="admin"]) .whatsapp-fab { display: flex; width: 52px; height: 52px; right: 20px; bottom: 20px; background: var(--color-whatsapp); color: var(--color-text); box-shadow: none; border: 2px solid var(--eaa-paper); }
+
+body.portal-private-page:not([data-app-entry="admin"]) .whatsapp-fab { display:none; }
